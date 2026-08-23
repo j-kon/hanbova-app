@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:qr_flutter/qr_flutter.dart';
 import '../../../core/currency/currency_provider.dart';
+import '../../../core/lightning/lightning_service.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_radius.dart';
 import '../../../core/theme/app_spacing.dart';
@@ -23,6 +24,7 @@ class ReceiveScreen extends ConsumerStatefulWidget {
 class _ReceiveScreenState extends ConsumerState<ReceiveScreen> {
   final _amountController = TextEditingController(text: '10000');
   String _generatedInvoice = '';
+  bool _isGenerating = false;
 
   @override
   void initState() {
@@ -36,11 +38,28 @@ class _ReceiveScreenState extends ConsumerState<ReceiveScreen> {
     super.dispose();
   }
 
-  void _generateInvoice() {
+  Future<void> _generateInvoice() async {
     final sats = int.tryParse(_amountController.text.trim()) ?? 10000;
     setState(() {
+      _isGenerating = true;
       _generatedInvoice = 'lnbc${sats}u1pjhnbvareceive${DateTime.now().millisecondsSinceEpoch}';
     });
+
+    try {
+      final lightningService = ref.read(lightningServiceProvider);
+      final invoice = await lightningService.createInvoice(
+        amountSats: sats,
+        description: 'Hanbova Lightning Receive ($sats sats)',
+      );
+      if (mounted && invoice.bolt11.isNotEmpty) {
+        setState(() {
+          _generatedInvoice = invoice.bolt11;
+          _isGenerating = false;
+        });
+      }
+    } catch (_) {
+      if (mounted) setState(() => _isGenerating = false);
+    }
   }
 
   void _simulateReceive() {
@@ -109,16 +128,25 @@ class _ReceiveScreenState extends ConsumerState<ReceiveScreen> {
                 child: Column(
                   children: [
                     Container(
+                      height: 224,
+                      width: 224,
+                      alignment: Alignment.center,
                       padding: const EdgeInsets.all(12),
                       decoration: BoxDecoration(
                         color: Colors.white,
                         borderRadius: AppRadius.mdRadius,
                       ),
-                      child: QrImageView(
-                        data: _generatedInvoice,
-                        version: QrVersions.auto,
-                        size: 200,
-                      ),
+                      child: _isGenerating
+                          ? const SizedBox(
+                              width: 32,
+                              height: 32,
+                              child: CircularProgressIndicator(strokeWidth: 2),
+                            )
+                          : QrImageView(
+                              data: _generatedInvoice,
+                              version: QrVersions.auto,
+                              size: 200,
+                            ),
                     ),
                     const SizedBox(height: AppSpacing.md),
                     Text(

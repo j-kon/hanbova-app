@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../../core/currency/currency_provider.dart';
+import '../../../core/lightning/lightning_service.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_radius.dart';
 import '../../../core/theme/app_spacing.dart';
@@ -51,26 +52,38 @@ class _SendScreenState extends ConsumerState<SendScreen> {
     final amountSats = int.tryParse(_amountController.text.trim()) ?? 1000;
     final invoice = _invoiceController.text.trim();
 
-    await Future.delayed(const Duration(milliseconds: 600));
+    try {
+      final lightningService = ref.read(lightningServiceProvider);
+      final result = await lightningService.payInvoice(bolt11: invoice);
 
-    ref.read(walletStateProvider.notifier).deductBalance(amountSats);
-    ref.read(transactionsProvider.notifier).addTransaction(
-          TransactionModel(
-            id: 'ln_pay_${DateTime.now().millisecondsSinceEpoch}',
-            type: TransactionType.instantSend,
-            status: TransactionStatus.completed,
-            amountSats: amountSats,
-            recipientOrSender: invoice.length > 20 ? '${invoice.substring(0, 16)}...' : invoice,
-            description: 'Instant Lightning Payment',
-            createdAt: DateTime.now(),
-          ),
-        );
+      ref.read(walletStateProvider.notifier).deductBalance(amountSats);
+      ref.read(transactionsProvider.notifier).addTransaction(
+            TransactionModel(
+              id: 'ln_pay_${DateTime.now().millisecondsSinceEpoch}',
+              type: TransactionType.instantSend,
+              status: TransactionStatus.completed,
+              amountSats: result.amountSats > 0 ? result.amountSats : amountSats,
+              recipientOrSender: invoice.length > 20 ? '${invoice.substring(0, 16)}...' : invoice,
+              description: 'Instant Lightning Payment (fee: ${result.feeSats} sats)',
+              createdAt: DateTime.now(),
+            ),
+          );
 
-    if (!mounted) return;
-    setState(() {
-      _isLoading = false;
-      _isSuccess = true;
-    });
+      if (!mounted) return;
+      setState(() {
+        _isLoading = false;
+        _isSuccess = true;
+      });
+    } catch (e) {
+      if (!mounted) return;
+      setState(() => _isLoading = false);
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Payment failed: $e'),
+          backgroundColor: Colors.redAccent,
+        ),
+      );
+    }
   }
 
   @override
