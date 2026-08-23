@@ -11,6 +11,7 @@ import '../../../core/theme/app_radius.dart';
 import '../../../core/theme/app_spacing.dart';
 import '../../../core/theme/app_typography.dart';
 import '../../auth/providers/auth_provider.dart';
+import '../../transactions/presentation/transactions_provider.dart';
 
 class DeveloperOptionsScreen extends ConsumerStatefulWidget {
   const DeveloperOptionsScreen({super.key});
@@ -247,16 +248,44 @@ class _DeveloperOptionsScreenState extends ConsumerState<DeveloperOptionsScreen>
 
             _SectionHeader(title: 'Cashu Protocol Support'),
             const _InfoTile(label: 'NUT-00 to NUT-06', value: 'Supported (Mint, Keysets, Tokens, Split, Melt)'),
-            const _InfoTile(label: 'NUT-07', value: 'Supported (Token State Check)'),
-            const _InfoTile(label: 'NUT-10', value: 'Supported (Spending Conditions)'),
-            const _InfoTile(label: 'NUT-11', value: 'Supported (P2PK & Locktime Refund)'),
-            const SizedBox(height: AppSpacing.md),
-
-            _SectionHeader(title: 'Security & Keystore'),
-            const _InfoTile(label: 'Keystore Provider', value: 'FlutterSecureStorage (Keychain / Keystore)'),
-            const _InfoTile(label: 'Wallet Key Architecture', value: 'Client-side secp256k1 + X25519 (Zero Backend Custody)'),
-            const _InfoTile(label: 'Account Auth', value: 'Argon2id + JWT + Rotating Refresh Tokens'),
-            const SizedBox(height: AppSpacing.lg),
+            _SectionHeader(title: 'Presentation & Demo Controls'),
+            Container(
+              margin: const EdgeInsets.only(bottom: AppSpacing.md),
+              padding: const EdgeInsets.all(AppSpacing.md),
+              decoration: BoxDecoration(
+                color: colors.surfaceCard,
+                borderRadius: AppRadius.mdRadius,
+                border: Border.all(color: colors.primary.withValues(alpha: 0.3)),
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  Row(
+                    children: [
+                      Icon(Icons.slideshow_rounded, color: colors.primary),
+                      const SizedBox(width: AppSpacing.sm),
+                      Text('Fellowship Demo Seeder', style: AppTypography.titleSmall.copyWith(color: colors.textPrimary)),
+                    ],
+                  ),
+                  const SizedBox(height: AppSpacing.xs),
+                  Text(
+                    'Populate realistic African commerce transactions (Instant Lightning, Protected Escrow, Claims, and Auto-Refunds) for live pitch demos.',
+                    style: AppTypography.bodySmall.copyWith(color: colors.textSecondary, fontSize: 12),
+                  ),
+                  const SizedBox(height: AppSpacing.md),
+                  ElevatedButton.icon(
+                    onPressed: () {
+                      ref.read(transactionsProvider.notifier).seedDemoTransactions();
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(content: Text('Populated demo transactions across all 4 categories!')),
+                      );
+                    },
+                    icon: const Icon(Icons.auto_fix_high_rounded, size: 18),
+                    label: const Text('Seed Demo Transactions'),
+                  ),
+                ],
+              ),
+            ),
 
             OutlinedButton(
               onPressed: () {

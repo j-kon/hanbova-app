@@ -7,32 +7,86 @@ final transactionsProvider =
 });
 
 class TransactionsNotifier extends StateNotifier<List<TransactionModel>> {
-  TransactionsNotifier()
-      : super([
-          TransactionModel(
-            id: 'tx_demo_1',
-            type: TransactionType.protectedSend,
-            status: TransactionStatus.claimable,
-            amountSats: 25000,
-            recipientOrSender: 'amina@hanbova.africa',
-            description: 'Design mockups milestone',
-            createdAt: DateTime.now().subtract(const Duration(hours: 2)),
-            expiresAt: DateTime.now().add(const Duration(hours: 22)),
-            claimReference: 'hnbv_claim_9281a',
-          ),
-          TransactionModel(
-            id: 'tx_demo_2',
-            type: TransactionType.instantReceive,
-            status: TransactionStatus.completed,
-            amountSats: 50000,
-            recipientOrSender: 'kofi@hanbova.me',
-            description: 'Settlement for equipment',
-            createdAt: DateTime.now().subtract(const Duration(days: 1)),
-          ),
-        ]);
+  TransactionsNotifier() : super(_initialTransactions);
+
+  static final List<TransactionModel> _initialTransactions = [
+    TransactionModel(
+      id: 'tx_demo_1',
+      type: TransactionType.protectedSend,
+      status: TransactionStatus.claimable,
+      amountSats: 25000,
+      recipientOrSender: 'amina@hanbova.africa',
+      description: 'Design mockups milestone',
+      createdAt: DateTime.now().subtract(const Duration(hours: 2)),
+      expiresAt: DateTime.now().add(const Duration(hours: 22)),
+      claimReference: 'hnbv_claim_9281a',
+    ),
+    TransactionModel(
+      id: 'tx_demo_2',
+      type: TransactionType.instantReceive,
+      status: TransactionStatus.completed,
+      amountSats: 50000,
+      recipientOrSender: 'kofi@hanbova.me',
+      description: 'Settlement for equipment',
+      createdAt: DateTime.now().subtract(const Duration(days: 1)),
+    ),
+  ];
 
   void addTransaction(TransactionModel tx) {
     state = [tx, ...state];
+  }
+
+  void seedDemoTransactions() {
+    final now = DateTime.now();
+    state = [
+      TransactionModel(
+        id: 'tx_demo_1',
+        type: TransactionType.protectedSend,
+        status: TransactionStatus.claimable,
+        amountSats: 25000,
+        recipientOrSender: 'amina@hanbova.africa',
+        description: 'Design mockups milestone (Escrow)',
+        createdAt: now.subtract(const Duration(hours: 2)),
+        expiresAt: now.add(const Duration(hours: 22)),
+        claimReference: 'hnbv_claim_9281a',
+      ),
+      TransactionModel(
+        id: 'tx_demo_2',
+        type: TransactionType.instantReceive,
+        status: TransactionStatus.completed,
+        amountSats: 50000,
+        recipientOrSender: 'kofi@hanbova.me',
+        description: 'Instant settlement for solar equipment',
+        createdAt: now.subtract(const Duration(days: 1)),
+      ),
+      TransactionModel(
+        id: 'tx_demo_3',
+        type: TransactionType.protectedClaim,
+        status: TransactionStatus.completed,
+        amountSats: 15000,
+        recipientOrSender: 'tarik@hanbova.africa',
+        description: 'Agricultural produce delivery claim',
+        createdAt: now.subtract(const Duration(days: 2)),
+      ),
+      TransactionModel(
+        id: 'tx_demo_4',
+        type: TransactionType.instantSend,
+        status: TransactionStatus.completed,
+        amountSats: 8500,
+        recipientOrSender: 'zara@hanbova.me',
+        description: 'Mobile data topup via Lightning',
+        createdAt: now.subtract(const Duration(days: 3)),
+      ),
+      TransactionModel(
+        id: 'tx_demo_5',
+        type: TransactionType.protectedRefund,
+        status: TransactionStatus.refunded,
+        amountSats: 30000,
+        recipientOrSender: 'seller_dispute@market.ng',
+        description: 'Auto-refund after unfulfilled delivery window',
+        createdAt: now.subtract(const Duration(days: 5)),
+      ),
+    ];
   }
 
   void updateTransactionStatus(String id, TransactionStatus newStatus) {
