@@ -27,19 +27,31 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
     showModalBottomSheet(
       context: context,
       backgroundColor: colors.surfaceCard,
+      isScrollControlled: true,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(AppRadius.lg)),
       ),
       builder: (context) {
         return SafeArea(
           child: Padding(
-            padding: const EdgeInsets.all(AppSpacing.lg),
+            padding: const EdgeInsets.fromLTRB(AppSpacing.lg, AppSpacing.sm, AppSpacing.lg, AppSpacing.lg),
             child: Column(
               mainAxisSize: MainAxisSize.min,
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                Text('Appearance', style: AppTypography.titleMedium.copyWith(color: colors.textPrimary)),
+                Center(
+                  child: Container(
+                    width: 36,
+                    height: 4,
+                    decoration: BoxDecoration(
+                      color: colors.textTertiary.withValues(alpha: 0.3),
+                      borderRadius: BorderRadius.circular(2),
+                    ),
+                  ),
+                ),
                 const SizedBox(height: AppSpacing.md),
+                Text('Appearance', style: AppTypography.titleMedium.copyWith(color: colors.textPrimary)),
+                const SizedBox(height: AppSpacing.sm),
                 ListTile(
                   title: const Text('System default'),
                   leading: const Icon(Icons.settings_suggest_outlined),
@@ -82,31 +94,53 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
     showModalBottomSheet(
       context: context,
       backgroundColor: colors.surfaceCard,
+      isScrollControlled: true,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(AppRadius.lg)),
       ),
       builder: (context) {
         return SafeArea(
-          child: Padding(
-            padding: const EdgeInsets.all(AppSpacing.lg),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                Text('Display Currency', style: AppTypography.titleMedium.copyWith(color: colors.textPrimary)),
-                const SizedBox(height: AppSpacing.md),
-                ...FiatCurrency.values.map((c) {
-                  final isSelected = c == currentCurrency;
-                  return ListTile(
-                    title: Text('${c.code} (${c.symbol})'),
-                    trailing: isSelected ? Icon(Icons.check, color: colors.primary) : null,
-                    onTap: () {
-                      ref.read(currencyProvider.notifier).setCurrency(c);
-                      Navigator.pop(context);
-                    },
-                  );
-                }),
-              ],
+          child: ConstrainedBox(
+            constraints: BoxConstraints(
+              maxHeight: MediaQuery.of(context).size.height * 0.7,
+            ),
+            child: Padding(
+              padding: const EdgeInsets.fromLTRB(AppSpacing.lg, AppSpacing.sm, AppSpacing.lg, AppSpacing.lg),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  Center(
+                    child: Container(
+                      width: 36,
+                      height: 4,
+                      decoration: BoxDecoration(
+                        color: colors.textTertiary.withValues(alpha: 0.3),
+                        borderRadius: BorderRadius.circular(2),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: AppSpacing.md),
+                  Text('Display Currency', style: AppTypography.titleMedium.copyWith(color: colors.textPrimary)),
+                  const SizedBox(height: AppSpacing.xs),
+                  Flexible(
+                    child: ListView(
+                      shrinkWrap: true,
+                      children: FiatCurrency.values.map((c) {
+                        final isSelected = c == currentCurrency;
+                        return ListTile(
+                          title: Text('${c.code} (${c.symbol})'),
+                          trailing: isSelected ? Icon(Icons.check, color: colors.primary) : null,
+                          onTap: () {
+                            ref.read(currencyProvider.notifier).setCurrency(c);
+                            Navigator.pop(context);
+                          },
+                        );
+                      }).toList(),
+                    ),
+                  ),
+                ],
+              ),
             ),
           ),
         );
