@@ -9,6 +9,7 @@ import '../../../core/theme/app_spacing.dart';
 import '../../../core/theme/app_typography.dart';
 import '../../../core/theme/theme_controller.dart';
 import '../../auth/providers/auth_provider.dart';
+import '../../security/presentation/backup_seed_screen.dart';
 
 class ProfileScreen extends ConsumerStatefulWidget {
   const ProfileScreen({super.key});
@@ -289,7 +290,30 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
             const SizedBox(height: AppSpacing.md),
 
             // Security Section
-            _SectionTitle(title: 'Security'),
+            _SectionTitle(title: 'Security & Backup'),
+            _SettingTile(
+              icon: Icons.key_rounded,
+              title: 'Recovery Phrase Backup',
+              subtitle: '12-word seed for restoring funds on any device',
+              trailing: ref.watch(walletBackupStatusProvider)
+                  ? Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                      decoration: BoxDecoration(
+                        color: colors.success.withValues(alpha: 0.15),
+                        borderRadius: BorderRadius.circular(4),
+                      ),
+                      child: Text('Backed up', style: AppTypography.labelSmall.copyWith(color: colors.success)),
+                    )
+                  : Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                      decoration: BoxDecoration(
+                        color: Colors.amber.withValues(alpha: 0.15),
+                        borderRadius: BorderRadius.circular(4),
+                      ),
+                      child: Text('Needs Backup', style: AppTypography.labelSmall.copyWith(color: Colors.amber)),
+                    ),
+              onTap: () => context.push('/backup-seed'),
+            ),
             _SettingTile(
               icon: Icons.fingerprint,
               title: 'Biometric Login / Face ID',
@@ -300,19 +324,11 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
               ),
             ),
             _SettingTile(
-              icon: Icons.pin_outlined,
-              title: 'App PIN & Passcode',
-              trailing: Text('Configured', style: AppTypography.bodySmall.copyWith(color: colors.textSecondary)),
-              onTap: () {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(content: Text('App PIN is active and protecting transactions.')),
-                );
-              },
-            ),
-            _SettingTile(
-              icon: Icons.timer_outlined,
-              title: 'Auto-Lock',
-              trailing: Text('Immediately', style: AppTypography.bodySmall.copyWith(color: colors.textSecondary)),
+              icon: Icons.account_balance_rounded,
+              title: 'Connected Cashu Mints',
+              subtitle: 'Multi-mint management & live NUT-11 validation',
+              trailing: Icon(Icons.chevron_right, color: colors.textTertiary),
+              onTap: () => context.push('/mints'),
             ),
             const SizedBox(height: AppSpacing.md),
 

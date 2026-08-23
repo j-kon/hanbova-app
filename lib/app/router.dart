@@ -9,6 +9,7 @@ import '../features/auth/screens/sign_up_screen.dart';
 import '../features/auth/screens/wallet_setup_screen.dart';
 import '../features/auth/screens/welcome_screen.dart';
 import '../features/home/presentation/home_screen.dart';
+import '../features/mints/presentation/mints_screen.dart';
 import '../features/notifications/screens/notifications_screen.dart';
 import '../features/profile/screens/developer_options_screen.dart';
 import '../features/profile/screens/profile_screen.dart';
@@ -17,6 +18,8 @@ import '../features/protected_send/presentation/claim_payment_screen.dart';
 import '../features/protected_send/presentation/protected_send_screen.dart';
 import '../features/receive/presentation/receive_screen.dart';
 import '../features/scan/screens/scan_screen.dart';
+import '../features/security/presentation/backup_seed_screen.dart';
+import '../features/security/presentation/restore_seed_screen.dart';
 import '../features/send/presentation/send_screen.dart';
 import '../features/transactions/domain/transaction_model.dart';
 import '../features/transactions/presentation/transaction_details_screen.dart';
@@ -187,6 +190,21 @@ final appRouterProvider = Provider<GoRouter>((ref) {
         path: '/developer-options',
         parentNavigatorKey: _rootNavigatorKey,
         builder: (context, state) => const DeveloperOptionsScreen(),
+      ),
+      GoRoute(
+        path: '/backup-seed',
+        parentNavigatorKey: _rootNavigatorKey,
+        builder: (context, state) => const BackupSeedScreen(),
+      ),
+      GoRoute(
+        path: '/restore-seed',
+        parentNavigatorKey: _rootNavigatorKey,
+        builder: (context, state) => const RestoreSeedScreen(),
+      ),
+      GoRoute(
+        path: '/mints',
+        parentNavigatorKey: _rootNavigatorKey,
+        builder: (context, state) => const MintsScreen(),
       ),
     ],
   );
