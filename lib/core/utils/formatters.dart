@@ -8,6 +8,11 @@ class Formatters {
     return '${_numberFormat.format(sats)} sats';
   }
 
+  /// Formats raw number with commas without suffix (e.g. 100,000).
+  static String formatSatsNumber(int sats) {
+    return _numberFormat.format(sats);
+  }
+
   /// Estimated USD equivalent (mock conversion rate for UI).
   static String satsToUsd(int sats, {double btcUsdRate = 95000.0}) {
     final btc = sats / 100000000.0;

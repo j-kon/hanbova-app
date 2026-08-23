@@ -110,6 +110,30 @@ class HomeScreen extends ConsumerWidget {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
+                      Container(
+                        margin: const EdgeInsets.only(bottom: AppSpacing.sm),
+                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                        decoration: BoxDecoration(
+                          color: Colors.amber.withValues(alpha: 0.12),
+                          borderRadius: AppRadius.xsRadius,
+                          border: Border.all(color: Colors.amber.withValues(alpha: 0.3)),
+                        ),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            const Icon(Icons.science_outlined, color: Colors.amber, size: 14),
+                            const SizedBox(width: 4),
+                            Text(
+                              'TEST MODE • No monetary value',
+                              style: AppTypography.labelSmall.copyWith(
+                                color: Colors.amber,
+                                fontSize: 10,
+                                fontWeight: FontWeight.w700,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
                       Row(
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
@@ -143,7 +167,7 @@ class HomeScreen extends ConsumerWidget {
 
                       // Sats display
                       Text(
-                        isBalanceVisible ? Formatters.formatSats(totalBalanceSats) : '•••• sats',
+                        isBalanceVisible ? '${Formatters.formatSatsNumber(totalBalanceSats)} test sats' : '•••• test sats',
                         style: AppTypography.titleSmall.copyWith(
                           color: colors.primary,
                           fontWeight: FontWeight.w600,
@@ -160,7 +184,7 @@ class HomeScreen extends ConsumerWidget {
                           Expanded(
                             child: _BalanceSubItem(
                               label: 'Spendable',
-                              amount: isBalanceVisible ? Formatters.formatSats(wallet.spendableSats) : '••••',
+                              amount: isBalanceVisible ? '${Formatters.formatSatsNumber(wallet.spendableSats)} test sats' : '••••',
                               color: colors.success,
                             ),
                           ),
@@ -170,7 +194,7 @@ class HomeScreen extends ConsumerWidget {
                               padding: const EdgeInsets.only(left: AppSpacing.md),
                               child: _BalanceSubItem(
                                 label: 'Protected',
-                                amount: isBalanceVisible ? Formatters.formatSats(wallet.protectedOutgoingSats) : '••••',
+                                amount: isBalanceVisible ? '${Formatters.formatSatsNumber(wallet.protectedOutgoingSats)} test sats' : '••••',
                                 color: colors.protected,
                               ),
                             ),

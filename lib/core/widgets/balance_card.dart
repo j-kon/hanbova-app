@@ -13,6 +13,7 @@ class BalanceCard extends StatelessWidget {
   final int protectedIncomingSats;
   final String formattedFiat;
   final bool isBalanceVisible;
+  final bool isTestMode;
   final VoidCallback? onToggleVisibility;
 
   const BalanceCard({
@@ -23,12 +24,14 @@ class BalanceCard extends StatelessWidget {
     this.protectedIncomingSats = 0,
     required this.formattedFiat,
     this.isBalanceVisible = true,
+    this.isTestMode = true,
     this.onToggleVisibility,
   });
 
   @override
   Widget build(BuildContext context) {
     final colors = context.colors;
+    final satsSuffix = isTestMode ? 'test sats' : 'sats';
 
     return Container(
       padding: const EdgeInsets.all(AppSpacing.lg),
@@ -41,6 +44,32 @@ class BalanceCard extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          if (isTestMode) ...[
+            Container(
+              margin: const EdgeInsets.only(bottom: AppSpacing.sm),
+              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+              decoration: BoxDecoration(
+                color: Colors.amber.withValues(alpha: 0.12),
+                borderRadius: AppRadius.xsRadius,
+                border: Border.all(color: Colors.amber.withValues(alpha: 0.3)),
+              ),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  const Icon(Icons.science_outlined, color: Colors.amber, size: 14),
+                  const SizedBox(width: 4),
+                  Text(
+                    'TEST MODE • No monetary value',
+                    style: AppTypography.labelSmall.copyWith(
+                      color: Colors.amber,
+                      fontSize: 10,
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
@@ -71,7 +100,7 @@ class BalanceCard extends StatelessWidget {
           ),
           const SizedBox(height: 2),
           Text(
-            isBalanceVisible ? Formatters.formatSats(totalSats) : '•••• sats',
+            isBalanceVisible ? '${Formatters.formatSatsNumber(totalSats)} $satsSuffix' : '•••• $satsSuffix',
             style: AppTypography.titleSmall.copyWith(
               color: colors.primary,
               fontWeight: FontWeight.w600,
@@ -95,7 +124,7 @@ class BalanceCard extends StatelessWidget {
                     ),
                     const SizedBox(height: 2),
                     Text(
-                      isBalanceVisible ? Formatters.formatSats(spendableSats) : '••••',
+                      isBalanceVisible ? '${Formatters.formatSatsNumber(spendableSats)} $satsSuffix' : '••••',
                       style: AppTypography.titleSmall.copyWith(color: colors.textPrimary, fontSize: 13),
                     ),
                   ],
@@ -117,7 +146,7 @@ class BalanceCard extends StatelessWidget {
                       ),
                       const SizedBox(height: 2),
                       Text(
-                        isBalanceVisible ? Formatters.formatSats(protectedOutgoingSats) : '••••',
+                        isBalanceVisible ? '${Formatters.formatSatsNumber(protectedOutgoingSats)} $satsSuffix' : '••••',
                         style: AppTypography.titleSmall.copyWith(color: colors.textPrimary, fontSize: 13),
                       ),
                     ],

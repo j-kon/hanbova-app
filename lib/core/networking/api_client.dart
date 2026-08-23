@@ -70,6 +70,24 @@ class ApiClient {
     }
   }
 
+  Future<Map<String, dynamic>> put(String path, {Map<String, dynamic>? body}) async {
+    try {
+      final uri = Uri.parse('$baseUrl$path');
+      final response = await _httpClient
+          .put(
+            uri,
+            headers: _buildHeaders(),
+            body: body != null ? jsonEncode(body) : null,
+          )
+          .timeout(const Duration(seconds: 10));
+
+      return _handleResponse(response);
+    } catch (e) {
+      if (e is AppFailure) rethrow;
+      throw AppFailure(message: 'Network request failed: $e', originalError: e);
+    }
+  }
+
   Future<Map<String, dynamic>> delete(String path) async {
     try {
       final uri = Uri.parse('$baseUrl$path');
