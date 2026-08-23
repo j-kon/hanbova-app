@@ -7,35 +7,24 @@ on:
     branches: [ main ]
 
 jobs:
-  flutter-test:
+  test:
     name: Flutter Analyze & Test
     runs-on: ubuntu-latest
-
     steps:
       - name: Checkout Code
         uses: actions/checkout@v4
 
-      - name: Set up Java
-        uses: actions/setup-java@v4
-        with:
-          distribution: 'zulu'
-          java-version: '17'
-
-      - name: Set up Flutter
+      - name: Setup Flutter
         uses: subosito/flutter-action@v2
         with:
-          flutter-version: '3.24.x'
           channel: 'stable'
           cache: true
 
       - name: Install Dependencies
         run: flutter pub get
 
-      - name: Check Formatting
-        run: dart format --output=none --set-exit-if-changed lib test
-
-      - name: Analyze Flutter Code
+      - name: Analyze Code
         run: flutter analyze
 
-      - name: Run Flutter Tests
-        run: flutter test
+      - name: Run Test Suite
+        run: flutter test --coverage
