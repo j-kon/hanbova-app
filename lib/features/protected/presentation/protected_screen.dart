@@ -232,7 +232,11 @@ class _FilterChip extends StatelessWidget {
         child: Text(
           label,
           style: AppTypography.labelMedium.copyWith(
-            color: isSelected ? const Color(0xFF003822) : colors.textSecondary,
+            color: isSelected
+                ? (Theme.of(context).brightness == Brightness.dark
+                    ? AppColors.deepForest
+                    : Colors.white)
+                : colors.textSecondary,
             fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
           ),
         ),

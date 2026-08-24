@@ -185,7 +185,12 @@ class _ProtectedSendScreenState extends ConsumerState<ProtectedSendScreen> {
                       selectedColor: colors.primary,
                       backgroundColor: colors.surfaceElevated,
                       labelStyle: AppTypography.labelMedium.copyWith(
-                        color: isSelected ? const Color(0xFF003822) : colors.textSecondary,
+                        color: isSelected
+                            ? (Theme.of(context).brightness == Brightness.dark
+                                ? AppColors.deepForest
+                                : Colors.white)
+                            : colors.textSecondary,
+                        fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
                       ),
                       onSelected: (_) => setState(() => _selectedExpirationSeconds = opt['seconds'] as int),
                     ),

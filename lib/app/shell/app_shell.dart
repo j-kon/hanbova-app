@@ -82,10 +82,12 @@ class AppShell extends StatelessWidget {
                         ),
                       ],
                     ),
-                    child: const Center(
+                    child: Center(
                       child: Icon(
                         Icons.swap_horiz_rounded,
-                        color: Color(0xFF003822),
+                        color: Theme.of(context).brightness == Brightness.dark
+                            ? AppColors.deepForest
+                            : Colors.white,
                         size: 28,
                       ),
                     ),

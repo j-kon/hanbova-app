@@ -264,7 +264,9 @@ class HomeScreen extends ConsumerWidget {
                         label: const Text('Send'),
                         style: ElevatedButton.styleFrom(
                           backgroundColor: colors.primary,
-                          foregroundColor: const Color(0xFF003822),
+                          foregroundColor: Theme.of(context).brightness == Brightness.dark
+                              ? AppColors.deepForest
+                              : Colors.white,
                           padding: const EdgeInsets.symmetric(vertical: 14),
                         ),
                       ),

@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import '../theme/app_colors.dart';
+import '../theme/app_typography.dart';
 
 class StatusBadge extends StatelessWidget {
   final String status;
@@ -7,19 +9,22 @@ class StatusBadge extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final (label, bgColor, fgColor) = _getStatusConfig(status.toLowerCase());
+    final colors = context.colors;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final (label, bgColor, fgColor) = _getStatusConfig(status.toLowerCase(), colors, isDark);
 
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
       decoration: BoxDecoration(
         color: bgColor,
         borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: fgColor.withValues(alpha: 0.2), width: 1),
       ),
       child: Text(
         label,
-        style: TextStyle(
+        style: AppTypography.labelSmall.copyWith(
           color: fgColor,
-          fontSize: 12,
+          fontSize: 11,
           fontWeight: FontWeight.w600,
           letterSpacing: 0.2,
         ),
@@ -27,25 +32,53 @@ class StatusBadge extends StatelessWidget {
     );
   }
 
-  (String, Color, Color) _getStatusConfig(String status) {
+  (String, Color, Color) _getStatusConfig(String status, HanbovaColors colors, bool isDark) {
     switch (status) {
       case 'claimable':
-        return ('Claimable', const Color(0xFF065F46), const Color(0xFF34D399));
+        return (
+          'Claimable',
+          colors.success.withValues(alpha: isDark ? 0.18 : 0.12),
+          colors.success,
+        );
       case 'claimed':
       case 'succeeded':
       case 'completed':
-        return ('Claimed', const Color(0xFF1E3A8A), const Color(0xFF60A5FA));
+        return (
+          'Claimed',
+          colors.primary.withValues(alpha: isDark ? 0.18 : 0.12),
+          colors.primary,
+        );
       case 'pending':
-        return ('Pending', const Color(0xFF78350F), const Color(0xFFFBBF24));
+        return (
+          'Pending',
+          colors.gold.withValues(alpha: isDark ? 0.18 : 0.15),
+          isDark ? colors.gold : const Color(0xFFB87700),
+        );
       case 'expired':
-        return ('Expired', const Color(0xFF4C1D95), const Color(0xFFA78BFA));
+        return (
+          'Expired',
+          colors.textTertiary.withValues(alpha: isDark ? 0.18 : 0.12),
+          colors.textSecondary,
+        );
       case 'refunded':
-        return ('Refunded', const Color(0xFF134E4A), const Color(0xFF2DD4BF));
+        return (
+          'Refunded',
+          colors.primary.withValues(alpha: isDark ? 0.18 : 0.12),
+          colors.primary,
+        );
       case 'failed':
-        return ('Failed', const Color(0xFF7F1D1D), const Color(0xFFF87171));
+        return (
+          'Failed',
+          colors.error.withValues(alpha: isDark ? 0.18 : 0.12),
+          colors.error,
+        );
       case 'created':
       default:
-        return (status.toUpperCase(), const Color(0xFF334155), const Color(0xFF94A3B8));
+        return (
+          status.toUpperCase(),
+          colors.surfaceElevated,
+          colors.textSecondary,
+        );
     }
   }
 }
