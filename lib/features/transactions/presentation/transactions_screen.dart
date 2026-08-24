@@ -375,13 +375,19 @@ class _ActivityItemTile extends ConsumerWidget {
                     Text(
                       tx.recipientOrSender,
                       style: AppTypography.titleSmall.copyWith(color: colors.textPrimary),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
                     ),
                     const SizedBox(height: 2),
                     Row(
                       children: [
-                        Text(
-                          Formatters.formatDate(tx.createdAt),
-                          style: AppTypography.bodySmall.copyWith(color: colors.textTertiary, fontSize: 11),
+                        Flexible(
+                          child: Text(
+                            Formatters.formatDate(tx.createdAt),
+                            style: AppTypography.bodySmall.copyWith(color: colors.textTertiary, fontSize: 11),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                          ),
                         ),
                         if (tx.type == TransactionType.protectedSend) ...[
                           const SizedBox(width: 6),
@@ -402,8 +408,10 @@ class _ActivityItemTile extends ConsumerWidget {
                   ],
                 ),
               ),
+              const SizedBox(width: AppSpacing.xs),
               Column(
                 crossAxisAlignment: CrossAxisAlignment.end,
+                mainAxisSize: MainAxisSize.min,
                 children: [
                   Text(
                     '$prefix${Formatters.formatSats(tx.amountSats)}',
