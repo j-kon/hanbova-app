@@ -27,10 +27,6 @@ import '../features/transactions/presentation/transactions_screen.dart';
 import 'shell/app_shell.dart';
 
 final GlobalKey<NavigatorState> _rootNavigatorKey = GlobalKey<NavigatorState>();
-final GlobalKey<NavigatorState> _shellNavigatorHomeKey = GlobalKey<NavigatorState>();
-final GlobalKey<NavigatorState> _shellNavigatorActivityKey = GlobalKey<NavigatorState>();
-final GlobalKey<NavigatorState> _shellNavigatorProtectedKey = GlobalKey<NavigatorState>();
-final GlobalKey<NavigatorState> _shellNavigatorMeKey = GlobalKey<NavigatorState>();
 
 class _RouterNotifier extends ChangeNotifier {
   final Ref _ref;
@@ -113,7 +109,6 @@ final appRouterProvider = Provider<GoRouter>((ref) {
         branches: [
           // Branch 0: Home
           StatefulShellBranch(
-            navigatorKey: _shellNavigatorHomeKey,
             routes: [
               GoRoute(
                 path: '/home',
@@ -123,7 +118,6 @@ final appRouterProvider = Provider<GoRouter>((ref) {
           ),
           // Branch 1: Activity
           StatefulShellBranch(
-            navigatorKey: _shellNavigatorActivityKey,
             routes: [
               GoRoute(
                 path: '/activity',
@@ -133,7 +127,6 @@ final appRouterProvider = Provider<GoRouter>((ref) {
           ),
           // Branch 2: Protected
           StatefulShellBranch(
-            navigatorKey: _shellNavigatorProtectedKey,
             routes: [
               GoRoute(
                 path: '/protected',
@@ -143,7 +136,6 @@ final appRouterProvider = Provider<GoRouter>((ref) {
           ),
           // Branch 3: Me
           StatefulShellBranch(
-            navigatorKey: _shellNavigatorMeKey,
             routes: [
               GoRoute(
                 path: '/me',
