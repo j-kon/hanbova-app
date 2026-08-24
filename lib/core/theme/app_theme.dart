@@ -44,11 +44,11 @@ class AppTheme {
         margin: EdgeInsets.zero,
       ),
       bottomNavigationBarTheme: const BottomNavigationBarThemeData(
-        backgroundColor: AppColors.darkBackground,
+        backgroundColor: Colors.transparent,
+        elevation: 0,
         selectedItemColor: AppColors.leafGreen,
         unselectedItemColor: AppColors.darkTextTertiary,
         type: BottomNavigationBarType.fixed,
-        elevation: 8,
       ),
       dividerTheme: const DividerThemeData(
         color: AppColors.darkDivider,
@@ -146,11 +146,11 @@ class AppTheme {
         margin: EdgeInsets.zero,
       ),
       bottomNavigationBarTheme: const BottomNavigationBarThemeData(
-        backgroundColor: AppColors.lightBackground,
+        backgroundColor: Colors.transparent,
+        elevation: 0,
         selectedItemColor: AppColors.forestGreen,
         unselectedItemColor: AppColors.lightTextTertiary,
         type: BottomNavigationBarType.fixed,
-        elevation: 8,
       ),
       dividerTheme: const DividerThemeData(
         color: AppColors.lightDivider,

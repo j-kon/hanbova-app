@@ -246,7 +246,7 @@ class _TransactionsScreenState extends ConsumerState<TransactionsScreen> {
                       ),
                     )
                   : ListView.separated(
-                      padding: const EdgeInsets.symmetric(horizontal: AppSpacing.md, vertical: AppSpacing.sm),
+                      padding: const EdgeInsets.fromLTRB(AppSpacing.md, AppSpacing.sm, AppSpacing.md, 100),
                       itemCount: filtered.length,
                       separatorBuilder: (_, __) => const SizedBox(height: AppSpacing.xs),
                       itemBuilder: (context, index) {

@@ -418,6 +418,7 @@ class HomeScreen extends ConsumerWidget {
                           child: _TransactionCard(tx: tx),
                         ),
                       ),
+                const SizedBox(height: 90),
               ],
             ),
           ),
