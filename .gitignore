@@ -44,3 +44,6 @@ migrate_working_dir/
 *.pem
 *.key
 *.p12
+
+# Local iOS Frameworks build artifacts
+/ios/Frameworks/
