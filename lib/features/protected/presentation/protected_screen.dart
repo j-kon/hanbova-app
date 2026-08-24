@@ -13,6 +13,12 @@ import '../../transactions/domain/transaction_model.dart';
 import '../../transactions/presentation/transactions_provider.dart';
 import '../../wallet/presentation/wallet_provider.dart';
 
+enum ProtectedFilter {
+  active,
+  incoming,
+  completed,
+}
+
 class ProtectedScreen extends ConsumerStatefulWidget {
   const ProtectedScreen({super.key});
 
@@ -20,14 +26,16 @@ class ProtectedScreen extends ConsumerStatefulWidget {
   ConsumerState<ProtectedScreen> createState() => _ProtectedScreenState();
 }
 
-class _ProtectedScreenState extends ConsumerState<ProtectedScreen> with SingleTickerProviderStateMixin {
-  late TabController _tabController;
+class _ProtectedScreenState extends ConsumerState<ProtectedScreen> {
+  ProtectedFilter _selectedFilter = ProtectedFilter.active;
+  bool _isSearchVisible = false;
+  String _searchQuery = '';
+  final TextEditingController _searchController = TextEditingController();
   Timer? _timer;
 
   @override
   void initState() {
     super.initState();
-    _tabController = TabController(length: 3, vsync: this);
     _timer = Timer.periodic(const Duration(seconds: 1), (_) {
       if (mounted) setState(() {});
     });
@@ -36,7 +44,7 @@ class _ProtectedScreenState extends ConsumerState<ProtectedScreen> with SingleTi
   @override
   void dispose() {
     _timer?.cancel();
-    _tabController.dispose();
+    _searchController.dispose();
     super.dispose();
   }
 
@@ -61,38 +69,173 @@ class _ProtectedScreenState extends ConsumerState<ProtectedScreen> with SingleTi
             (t.status == TransactionStatus.completed || t.status == TransactionStatus.refunded))
         .toList();
 
+    List<TransactionModel> currentList;
+    switch (_selectedFilter) {
+      case ProtectedFilter.active:
+        currentList = activeOutgoing;
+        break;
+      case ProtectedFilter.incoming:
+        currentList = incoming;
+        break;
+      case ProtectedFilter.completed:
+        currentList = completed;
+        break;
+    }
+
+    if (_searchQuery.isNotEmpty) {
+      final q = _searchQuery.toLowerCase();
+      currentList = currentList.where((t) {
+        return t.recipientOrSender.toLowerCase().contains(q) ||
+            (t.description?.toLowerCase().contains(q) ?? false) ||
+            t.id.toLowerCase().contains(q);
+      }).toList();
+    }
+
     return Scaffold(
       backgroundColor: colors.background,
       appBar: AppBar(
-        title: const Text('Protected Payments'),
+        title: const Text('Protected'),
         automaticallyImplyLeading: false,
         actions: [
+          IconButton(
+            icon: Icon(_isSearchVisible ? Icons.close : Icons.search),
+            tooltip: 'Search protected payments',
+            onPressed: () {
+              setState(() {
+                _isSearchVisible = !_isSearchVisible;
+                if (!_isSearchVisible) {
+                  _searchController.clear();
+                  _searchQuery = '';
+                }
+              });
+            },
+          ),
           IconButton(
             icon: const Icon(Icons.add),
             tooltip: 'New Protected Send',
             onPressed: () => context.push('/protected-send'),
           ),
         ],
-        bottom: TabBar(
-          controller: _tabController,
-          indicatorColor: colors.primary,
-          labelColor: colors.primary,
-          unselectedLabelColor: colors.textSecondary,
-          labelStyle: AppTypography.labelLarge,
-          tabs: [
-            Tab(text: 'Active (${activeOutgoing.length})'),
-            Tab(text: 'Incoming (${incoming.length})'),
-            Tab(text: 'Completed (${completed.length})'),
+      ),
+      body: SafeArea(
+        child: Column(
+          children: [
+            // Optional Search Bar
+            if (_isSearchVisible)
+              Padding(
+                padding: const EdgeInsets.fromLTRB(AppSpacing.md, 0, AppSpacing.md, AppSpacing.xs),
+                child: TextField(
+                  controller: _searchController,
+                  autofocus: true,
+                  decoration: InputDecoration(
+                    hintText: 'Search by handle, claim code, or memo...',
+                    prefixIcon: const Icon(Icons.search, size: 20),
+                    suffixIcon: _searchQuery.isNotEmpty
+                        ? IconButton(
+                            icon: const Icon(Icons.clear, size: 18),
+                            onPressed: () {
+                              _searchController.clear();
+                              setState(() => _searchQuery = '');
+                            },
+                          )
+                        : null,
+                    isDense: true,
+                    contentPadding: const EdgeInsets.symmetric(vertical: 10, horizontal: 12),
+                  ),
+                  onChanged: (val) => setState(() => _searchQuery = val.trim()),
+                ),
+              ),
+
+            // Modern Pill Filter Chips (matching Activity screen)
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: AppSpacing.md, vertical: AppSpacing.xs),
+              child: SingleChildScrollView(
+                scrollDirection: Axis.horizontal,
+                child: Row(
+                  children: [
+                    _FilterChip(
+                      label: 'Active (${activeOutgoing.length})',
+                      isSelected: _selectedFilter == ProtectedFilter.active,
+                      onTap: () => setState(() => _selectedFilter = ProtectedFilter.active),
+                    ),
+                    const SizedBox(width: AppSpacing.xs),
+                    _FilterChip(
+                      label: 'Incoming (${incoming.length})',
+                      isSelected: _selectedFilter == ProtectedFilter.incoming,
+                      onTap: () => setState(() => _selectedFilter = ProtectedFilter.incoming),
+                    ),
+                    const SizedBox(width: AppSpacing.xs),
+                    _FilterChip(
+                      label: 'Completed (${completed.length})',
+                      isSelected: _selectedFilter == ProtectedFilter.completed,
+                      onTap: () => setState(() => _selectedFilter = ProtectedFilter.completed),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+            const SizedBox(height: AppSpacing.xs),
+
+            // Tab Content
+            Expanded(
+              child: AnimatedSwitcher(
+                duration: const Duration(milliseconds: 200),
+                child: _buildCurrentTab(currentList),
+              ),
+            ),
           ],
         ),
       ),
-      body: TabBarView(
-        controller: _tabController,
-        children: [
-          _ActiveTab(items: activeOutgoing),
-          _IncomingTab(items: incoming),
-          _CompletedTab(items: completed),
-        ],
+    );
+  }
+
+  Widget _buildCurrentTab(List<TransactionModel> items) {
+    switch (_selectedFilter) {
+      case ProtectedFilter.active:
+        return _ActiveTab(key: const ValueKey('active_tab'), items: items);
+      case ProtectedFilter.incoming:
+        return _IncomingTab(key: const ValueKey('incoming_tab'), items: items);
+      case ProtectedFilter.completed:
+        return _CompletedTab(key: const ValueKey('completed_tab'), items: items);
+    }
+  }
+}
+
+class _FilterChip extends StatelessWidget {
+  final String label;
+  final bool isSelected;
+  final VoidCallback onTap;
+
+  const _FilterChip({
+    required this.label,
+    required this.isSelected,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = context.colors;
+
+    return GestureDetector(
+      onTap: onTap,
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 180),
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+        decoration: BoxDecoration(
+          color: isSelected ? colors.primary : colors.surfaceElevated,
+          borderRadius: AppRadius.fullRadius,
+          border: Border.all(
+            color: isSelected ? colors.primary : colors.border,
+            width: 1,
+          ),
+        ),
+        child: Text(
+          label,
+          style: AppTypography.labelMedium.copyWith(
+            color: isSelected ? const Color(0xFF003822) : colors.textSecondary,
+            fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
+          ),
+        ),
       ),
     );
   }
@@ -101,7 +244,7 @@ class _ProtectedScreenState extends ConsumerState<ProtectedScreen> with SingleTi
 class _ActiveTab extends ConsumerWidget {
   final List<TransactionModel> items;
 
-  const _ActiveTab({required this.items});
+  const _ActiveTab({super.key, required this.items});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -115,13 +258,21 @@ class _ActiveTab extends ConsumerWidget {
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Icon(Icons.shield_outlined, color: colors.textTertiary, size: 54),
-              const SizedBox(height: AppSpacing.sm),
+              Container(
+                width: 68,
+                height: 68,
+                decoration: BoxDecoration(
+                  color: colors.protected.withValues(alpha: 0.1),
+                  shape: BoxShape.circle,
+                ),
+                child: Icon(Icons.shield_outlined, color: colors.protected, size: 36),
+              ),
+              const SizedBox(height: AppSpacing.md),
               Text(
                 'No active protected payments',
-                style: AppTypography.titleMedium.copyWith(color: colors.textSecondary),
+                style: AppTypography.titleMedium.copyWith(color: colors.textPrimary),
               ),
-              const SizedBox(height: 4),
+              const SizedBox(height: 6),
               Text(
                 'Send money with timelocked recipient claiming and self-service refund protection.',
                 style: AppTypography.bodySmall.copyWith(color: colors.textTertiary),
@@ -140,7 +291,7 @@ class _ActiveTab extends ConsumerWidget {
     }
 
     return ListView.separated(
-      padding: const EdgeInsets.all(AppSpacing.md),
+      padding: const EdgeInsets.symmetric(horizontal: AppSpacing.md, vertical: AppSpacing.sm),
       itemCount: items.length,
       separatorBuilder: (_, __) => const SizedBox(height: AppSpacing.sm),
       itemBuilder: (context, index) {
@@ -156,7 +307,10 @@ class _ActiveTab extends ConsumerWidget {
           decoration: BoxDecoration(
             color: colors.surfaceCard,
             borderRadius: AppRadius.mdRadius,
-            border: Border.all(color: isExpired ? colors.primary.withValues(alpha: 0.5) : colors.border, width: 1),
+            border: Border.all(
+              color: isExpired ? colors.primary.withValues(alpha: 0.5) : colors.border,
+              width: 1,
+            ),
           ),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -164,39 +318,50 @@ class _ActiveTab extends ConsumerWidget {
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  Row(
-                    children: [
-                      Container(
-                        padding: const EdgeInsets.all(8),
-                        decoration: BoxDecoration(
-                          color: colors.protected.withValues(alpha: 0.12),
-                          shape: BoxShape.circle,
+                  Expanded(
+                    child: Row(
+                      children: [
+                        Container(
+                          width: 40,
+                          height: 40,
+                          decoration: BoxDecoration(
+                            color: colors.protected.withValues(alpha: 0.12),
+                            borderRadius: AppRadius.smRadius,
+                          ),
+                          child: Icon(Icons.shield_outlined, color: colors.protected, size: 20),
                         ),
-                        child: Icon(Icons.shield_outlined, color: colors.protected, size: 20),
-                      ),
-                      const SizedBox(width: AppSpacing.xs),
-                      Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            tx.recipientOrSender,
-                            style: AppTypography.titleSmall.copyWith(color: colors.textPrimary),
+                        const SizedBox(width: AppSpacing.sm),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                tx.recipientOrSender,
+                                style: AppTypography.titleSmall.copyWith(color: colors.textPrimary),
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                              const SizedBox(height: 2),
+                              Text(
+                                Formatters.formatDate(tx.createdAt),
+                                style: AppTypography.bodySmall.copyWith(color: colors.textTertiary, fontSize: 11),
+                              ),
+                            ],
                           ),
-                          Text(
-                            Formatters.formatDate(tx.createdAt),
-                            style: AppTypography.bodySmall.copyWith(color: colors.textTertiary, fontSize: 11),
-                          ),
-                        ],
-                      ),
-                    ],
+                        ),
+                      ],
+                    ),
                   ),
+                  const SizedBox(width: AppSpacing.xs),
                   Column(
                     crossAxisAlignment: CrossAxisAlignment.end,
+                    mainAxisSize: MainAxisSize.min,
                     children: [
                       Text(
                         Formatters.formatSats(tx.amountSats),
                         style: AppTypography.titleSmall.copyWith(color: colors.textPrimary, fontWeight: FontWeight.w700),
                       ),
+                      const SizedBox(height: 2),
                       Text(
                         currency.format(tx.amountSats),
                         style: AppTypography.bodySmall.copyWith(color: colors.textTertiary, fontSize: 11),
@@ -209,7 +374,7 @@ class _ActiveTab extends ConsumerWidget {
 
               if (tx.claimReference != null) ...[
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: AppSpacing.sm, vertical: 6),
+                  padding: const EdgeInsets.symmetric(horizontal: AppSpacing.sm, vertical: 8),
                   decoration: BoxDecoration(
                     color: colors.surfaceElevated,
                     borderRadius: AppRadius.xsRadius,
@@ -224,14 +389,17 @@ class _ActiveTab extends ConsumerWidget {
                         child: Text(
                           tx.claimReference!,
                           style: AppTypography.bodySmall.copyWith(color: colors.primary, fontFamily: 'monospace', fontSize: 11),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
                         ),
                       ),
+                      const SizedBox(width: 4),
                       GestureDetector(
                         onTap: () {
                           Clipboard.setData(ClipboardData(text: tx.claimReference!));
                           ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Claim code copied!')));
                         },
-                        child: Icon(Icons.copy, size: 14, color: colors.primary),
+                        child: Icon(Icons.copy, size: 15, color: colors.primary),
                       ),
                     ],
                   ),
@@ -319,7 +487,7 @@ class _ActiveTab extends ConsumerWidget {
 class _IncomingTab extends ConsumerWidget {
   final List<TransactionModel> items;
 
-  const _IncomingTab({required this.items});
+  const _IncomingTab({super.key, required this.items});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -332,13 +500,21 @@ class _IncomingTab extends ConsumerWidget {
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Icon(Icons.inbox_outlined, color: colors.textTertiary, size: 54),
-              const SizedBox(height: AppSpacing.sm),
+              Container(
+                width: 68,
+                height: 68,
+                decoration: BoxDecoration(
+                  color: colors.primary.withValues(alpha: 0.1),
+                  shape: BoxShape.circle,
+                ),
+                child: Icon(Icons.inbox_outlined, color: colors.primary, size: 36),
+              ),
+              const SizedBox(height: AppSpacing.md),
               Text(
                 'No incoming protected payments',
-                style: AppTypography.titleMedium.copyWith(color: colors.textSecondary),
+                style: AppTypography.titleMedium.copyWith(color: colors.textPrimary),
               ),
-              const SizedBox(height: 4),
+              const SizedBox(height: 6),
               Text(
                 'When someone sends you a protected payment, you can claim it here.',
                 style: AppTypography.bodySmall.copyWith(color: colors.textTertiary),
@@ -357,7 +533,7 @@ class _IncomingTab extends ConsumerWidget {
     }
 
     return ListView.separated(
-      padding: const EdgeInsets.all(AppSpacing.md),
+      padding: const EdgeInsets.symmetric(horizontal: AppSpacing.md, vertical: AppSpacing.sm),
       itemCount: items.length,
       separatorBuilder: (_, __) => const SizedBox(height: AppSpacing.sm),
       itemBuilder: (context, index) {
@@ -371,15 +547,35 @@ class _IncomingTab extends ConsumerWidget {
           ),
           child: Row(
             children: [
+              Container(
+                width: 40,
+                height: 40,
+                decoration: BoxDecoration(
+                  color: colors.incoming.withValues(alpha: 0.12),
+                  borderRadius: AppRadius.smRadius,
+                ),
+                child: Icon(Icons.check_circle_outline, color: colors.incoming, size: 20),
+              ),
+              const SizedBox(width: AppSpacing.sm),
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(tx.recipientOrSender, style: AppTypography.titleSmall.copyWith(color: colors.textPrimary)),
-                    Text(Formatters.formatSats(tx.amountSats), style: AppTypography.bodyMedium.copyWith(color: colors.success)),
+                    Text(
+                      tx.recipientOrSender,
+                      style: AppTypography.titleSmall.copyWith(color: colors.textPrimary),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      Formatters.formatSats(tx.amountSats),
+                      style: AppTypography.bodyMedium.copyWith(color: colors.success, fontWeight: FontWeight.w700),
+                    ),
                   ],
                 ),
               ),
+              const SizedBox(width: AppSpacing.xs),
               ElevatedButton(
                 onPressed: () {
                   ref.read(walletStateProvider.notifier).creditBalance(tx.amountSats);
@@ -401,7 +597,7 @@ class _IncomingTab extends ConsumerWidget {
 class _CompletedTab extends ConsumerWidget {
   final List<TransactionModel> items;
 
-  const _CompletedTab({required this.items});
+  const _CompletedTab({super.key, required this.items});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -409,19 +605,36 @@ class _CompletedTab extends ConsumerWidget {
 
     if (items.isEmpty) {
       return Center(
-        child: Text(
-          'No completed protected payments yet',
-          style: AppTypography.bodyMedium.copyWith(color: colors.textTertiary),
+        child: Padding(
+          padding: const EdgeInsets.all(AppSpacing.xl),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(Icons.history_toggle_off, color: colors.textTertiary, size: 48),
+              const SizedBox(height: AppSpacing.sm),
+              Text(
+                'No completed protected payments yet',
+                style: AppTypography.titleSmall.copyWith(color: colors.textSecondary),
+              ),
+              const SizedBox(height: 4),
+              Text(
+                'Claimed and refunded protected payments will show here.',
+                style: AppTypography.bodySmall.copyWith(color: colors.textTertiary),
+              ),
+            ],
+          ),
         ),
       );
     }
 
     return ListView.separated(
-      padding: const EdgeInsets.all(AppSpacing.md),
+      padding: const EdgeInsets.symmetric(horizontal: AppSpacing.md, vertical: AppSpacing.sm),
       itemCount: items.length,
       separatorBuilder: (_, __) => const SizedBox(height: AppSpacing.sm),
       itemBuilder: (context, index) {
         final tx = items[index];
+        final isRefunded = tx.status == TransactionStatus.refunded;
+
         return Container(
           padding: const EdgeInsets.all(AppSpacing.md),
           decoration: BoxDecoration(
@@ -430,19 +643,44 @@ class _CompletedTab extends ConsumerWidget {
             border: Border.all(color: colors.border, width: 1),
           ),
           child: Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(tx.recipientOrSender, style: AppTypography.titleSmall.copyWith(color: colors.textPrimary)),
-                  Text(Formatters.formatDate(tx.createdAt), style: AppTypography.bodySmall.copyWith(color: colors.textTertiary, fontSize: 11)),
-                ],
+              Container(
+                width: 40,
+                height: 40,
+                decoration: BoxDecoration(
+                  color: (isRefunded ? colors.primary : colors.success).withValues(alpha: 0.12),
+                  borderRadius: AppRadius.smRadius,
+                ),
+                child: Icon(
+                  isRefunded ? Icons.replay : Icons.check_circle_outline,
+                  color: isRefunded ? colors.primary : colors.success,
+                  size: 20,
+                ),
               ),
+              const SizedBox(width: AppSpacing.sm),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      tx.recipientOrSender,
+                      style: AppTypography.titleSmall.copyWith(color: colors.textPrimary),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      '${Formatters.formatDate(tx.createdAt)} • ${isRefunded ? "REFUNDED" : "CLAIMED"}',
+                      style: AppTypography.bodySmall.copyWith(color: colors.textTertiary, fontSize: 11),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(width: AppSpacing.xs),
               Text(
                 Formatters.formatSats(tx.amountSats),
                 style: AppTypography.titleSmall.copyWith(
-                  color: tx.status == TransactionStatus.refunded ? colors.primary : colors.success,
+                  color: isRefunded ? colors.primary : colors.success,
                   fontWeight: FontWeight.w700,
                 ),
               ),
