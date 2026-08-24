@@ -1,7 +1,7 @@
+import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import '../../core/theme/app_colors.dart';
-import '../../core/theme/app_radius.dart';
 import '../../core/theme/app_typography.dart';
 import 'pay_action_sheet.dart';
 
@@ -35,79 +35,91 @@ class AppShell extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final colors = context.colors;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     final selectedIndex = _calculateSelectedIndex();
 
     return Scaffold(
       body: navigationShell,
+      extendBody: true,
       bottomNavigationBar: Container(
+        margin: const EdgeInsets.fromLTRB(16, 0, 16, 14),
         decoration: BoxDecoration(
-          color: colors.surfaceCard,
-          border: Border(top: BorderSide(color: colors.border, width: 1)),
+          borderRadius: BorderRadius.circular(28),
+          boxShadow: [
+            BoxShadow(
+              color: isDark
+                  ? Colors.black.withValues(alpha: 0.45)
+                  : const Color(0xFF012D1B).withValues(alpha: 0.08),
+              blurRadius: 24,
+              offset: const Offset(0, 8),
+              spreadRadius: -2,
+            ),
+          ],
         ),
-        child: SafeArea(
-          child: SizedBox(
-            height: 64,
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceAround,
-              children: [
-                _NavItem(
-                  icon: Icons.home_outlined,
-                  activeIcon: Icons.home_rounded,
-                  label: 'Home',
-                  isSelected: selectedIndex == 0,
-                  onTap: () => _onTap(context, 0),
+        child: ClipRRect(
+          borderRadius: BorderRadius.circular(28),
+          child: BackdropFilter(
+            filter: ImageFilter.blur(sigmaX: 20, sigmaY: 20),
+            child: Container(
+              height: 68,
+              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
+              decoration: BoxDecoration(
+                color: isDark
+                    ? AppColors.forestGreen.withValues(alpha: 0.88)
+                    : Colors.white.withValues(alpha: 0.92),
+                borderRadius: BorderRadius.circular(28),
+                border: Border.all(
+                  color: isDark
+                      ? AppColors.ribbonGreen.withValues(alpha: 0.8)
+                      : const Color(0xFFE8E3D8).withValues(alpha: 0.9),
+                  width: 1,
                 ),
-                _NavItem(
-                  icon: Icons.receipt_long_outlined,
-                  activeIcon: Icons.receipt_long_rounded,
-                  label: 'Activity',
-                  isSelected: selectedIndex == 1,
-                  onTap: () => _onTap(context, 1),
-                ),
-                // Center Pay button
-                GestureDetector(
-                  onTap: () => _onTap(context, 2),
-                  child: Container(
-                    width: 48,
-                    height: 48,
-                    decoration: BoxDecoration(
-                      color: colors.primary,
-                      shape: BoxShape.circle,
-                      boxShadow: [
-                        BoxShadow(
-                          color: colors.primary.withValues(alpha: 0.35),
-                          blurRadius: 10,
-                          offset: const Offset(0, 3),
-                        ),
-                      ],
-                    ),
-                    child: Center(
-                      child: Icon(
-                        Icons.swap_horiz_rounded,
-                        color: Theme.of(context).brightness == Brightness.dark
-                            ? AppColors.deepForest
-                            : Colors.white,
-                        size: 28,
-                      ),
-                    ),
+              ),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                children: [
+                  // 1. Home
+                  _IosNavItem(
+                    icon: Icons.home_outlined,
+                    activeIcon: Icons.home_rounded,
+                    label: 'Home',
+                    isSelected: selectedIndex == 0,
+                    onTap: () => _onTap(context, 0),
                   ),
-                ),
-                _NavItem(
-                  icon: Icons.shield_outlined,
-                  activeIcon: Icons.shield_rounded,
-                  label: 'Protected',
-                  isSelected: selectedIndex == 3,
-                  onTap: () => _onTap(context, 3),
-                ),
-                _NavItem(
-                  icon: Icons.person_outline_rounded,
-                  activeIcon: Icons.person_rounded,
-                  label: 'Me',
-                  isSelected: selectedIndex == 4,
-                  onTap: () => _onTap(context, 4),
-                ),
-              ],
+
+                  // 2. Activity
+                  _IosNavItem(
+                    icon: Icons.receipt_long_outlined,
+                    activeIcon: Icons.receipt_long_rounded,
+                    label: 'Activity',
+                    isSelected: selectedIndex == 1,
+                    onTap: () => _onTap(context, 1),
+                  ),
+
+                  // 3. Center Pay Floating Action Button
+                  _CenterPayButton(
+                    onTap: () => _onTap(context, 2),
+                  ),
+
+                  // 4. Protected
+                  _IosNavItem(
+                    icon: Icons.shield_outlined,
+                    activeIcon: Icons.shield_rounded,
+                    label: 'Protected',
+                    isSelected: selectedIndex == 3,
+                    onTap: () => _onTap(context, 3),
+                  ),
+
+                  // 5. Me / Profile
+                  _IosNavItem(
+                    icon: Icons.person_outline_rounded,
+                    activeIcon: Icons.person_rounded,
+                    label: 'Me',
+                    isSelected: selectedIndex == 4,
+                    onTap: () => _onTap(context, 4),
+                  ),
+                ],
+              ),
             ),
           ),
         ),
@@ -116,14 +128,81 @@ class AppShell extends StatelessWidget {
   }
 }
 
-class _NavItem extends StatelessWidget {
+class _CenterPayButton extends StatefulWidget {
+  final VoidCallback onTap;
+
+  const _CenterPayButton({required this.onTap});
+
+  @override
+  State<_CenterPayButton> createState() => _CenterPayButtonState();
+}
+
+class _CenterPayButtonState extends State<_CenterPayButton> {
+  bool _isPressed = false;
+
+  @override
+  Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
+    return GestureDetector(
+      onTapDown: (_) => setState(() => _isPressed = true),
+      onTapUp: (_) {
+        setState(() => _isPressed = false);
+        widget.onTap();
+      },
+      onTapCancel: () => setState(() => _isPressed = false),
+      child: AnimatedScale(
+        scale: _isPressed ? 0.92 : 1.0,
+        duration: const Duration(milliseconds: 120),
+        curve: Curves.easeInOut,
+        child: Container(
+          width: 50,
+          height: 50,
+          decoration: BoxDecoration(
+            shape: BoxShape.circle,
+            gradient: LinearGradient(
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+              colors: isDark
+                  ? [
+                      AppColors.lightLeaf,
+                      AppColors.leafGreen,
+                    ]
+                  : [
+                      AppColors.ribbonGreen,
+                      AppColors.forestGreen,
+                    ],
+            ),
+            boxShadow: [
+              BoxShadow(
+                color: (isDark ? AppColors.leafGreen : AppColors.forestGreen)
+                    .withValues(alpha: 0.38),
+                blurRadius: 12,
+                offset: const Offset(0, 4),
+              ),
+            ],
+          ),
+          child: Center(
+            child: Icon(
+              Icons.swap_horiz_rounded,
+              color: isDark ? AppColors.deepForest : Colors.white,
+              size: 26,
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _IosNavItem extends StatelessWidget {
   final IconData icon;
   final IconData activeIcon;
   final String label;
   final bool isSelected;
   final VoidCallback onTap;
 
-  const _NavItem({
+  const _IosNavItem({
     required this.icon,
     required this.activeIcon,
     required this.label,
@@ -133,29 +212,47 @@ class _NavItem extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final colors = context.colors;
-    final color = isSelected ? colors.primary : colors.textTertiary;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final activeColor = isDark ? AppColors.leafGreen : AppColors.forestGreen;
+    final inactiveColor = isDark ? const Color(0xFF7D8F87) : AppColors.softCharcoal;
 
     return InkWell(
       onTap: onTap,
-      borderRadius: AppRadius.fullRadius,
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+      borderRadius: BorderRadius.circular(18),
+      splashColor: activeColor.withValues(alpha: 0.1),
+      highlightColor: Colors.transparent,
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 200),
+        curve: Curves.easeInOut,
+        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+        decoration: BoxDecoration(
+          color: isSelected
+              ? activeColor.withValues(alpha: isDark ? 0.16 : 0.09)
+              : Colors.transparent,
+          borderRadius: BorderRadius.circular(16),
+        ),
         child: Column(
           mainAxisSize: MainAxisSize.min,
+          mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(
-              isSelected ? activeIcon : icon,
-              color: color,
-              size: 22,
+            AnimatedScale(
+              scale: isSelected ? 1.08 : 1.0,
+              duration: const Duration(milliseconds: 200),
+              curve: Curves.easeOutBack,
+              child: Icon(
+                isSelected ? activeIcon : icon,
+                color: isSelected ? activeColor : inactiveColor,
+                size: 22,
+              ),
             ),
             const SizedBox(height: 3),
             Text(
               label,
               style: AppTypography.labelSmall.copyWith(
-                color: color,
-                fontSize: 10,
-                fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
+                color: isSelected ? activeColor : inactiveColor,
+                fontSize: 10.5,
+                fontWeight: isSelected ? FontWeight.w600 : FontWeight.w500,
+                letterSpacing: -0.1,
               ),
             ),
           ],
