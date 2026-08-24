@@ -21,14 +21,13 @@ void main() {
       final prefixes = {local.storagePrefix, testnet.storagePrefix, mainnet.storagePrefix};
       expect(prefixes.length, 3);
 
-      // Verify Mainnet settings
+      // Verify Mainnet settings are locked for safety
       expect(mainnet.isTestMode, isFalse);
-      expect(mainnet.isEnabled, isTrue);
-      expect(mainnet.defaultMintUrl.startsWith('https://'), isTrue);
-      expect(mainnet.displayName, 'Bitcoin Mainnet');
+      expect(mainnet.isEnabled, isFalse);
+      expect(mainnet.displayName, contains('Locked'));
     });
 
-    test('NetworkEnvironmentNotifier state transitions correctly', () async {
+    test('NetworkEnvironmentNotifier state transitions correctly between test networks', () async {
       final container = ProviderContainer();
       addTearDown(container.dispose);
 
@@ -39,8 +38,9 @@ void main() {
       await notifier.setNetwork(HanbovaNetwork.cashuTest);
       expect(container.read(networkEnvironmentProvider), HanbovaNetwork.cashuTest);
 
+      // Attempting to switch to Mainnet is ignored by safety guard
       await notifier.setNetwork(HanbovaNetwork.mainnet);
-      expect(container.read(networkEnvironmentProvider), HanbovaNetwork.mainnet);
+      expect(container.read(networkEnvironmentProvider), HanbovaNetwork.cashuTest);
     });
 
     test('WalletBackupStatusProvider defaults to false until backup completed', () {

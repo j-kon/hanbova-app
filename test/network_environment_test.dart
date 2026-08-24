@@ -20,28 +20,25 @@ void main() {
       expect(config.storagePrefix, 'wallet_cashu_test');
     });
 
-    test('Mainnet configuration is enabled with production storage isolation and mint URL', () async {
+    test('Mainnet configuration is strictly disabled for safety in this build', () async {
       final config = NetworkConfig.mainnet;
       expect(config.network, HanbovaNetwork.mainnet);
-      expect(config.isEnabled, isTrue);
+      expect(config.isEnabled, isFalse);
       expect(config.isTestMode, isFalse);
       expect(config.storagePrefix, 'wallet_mainnet');
-      expect(config.defaultMintUrl, 'https://mint.minibits.cash/Bitcoin');
 
       final notifier = NetworkEnvironmentNotifier();
+      // Attempting to set Mainnet is blocked by safety guard
       await notifier.setNetwork(HanbovaNetwork.mainnet);
-      expect(notifier.state, HanbovaNetwork.mainnet);
+      expect(notifier.state, HanbovaNetwork.local);
     });
 
-    test('Switching between Local, CashuTest, and Mainnet succeeds', () async {
+    test('Switching between Local and CashuTest succeeds while Mainnet is locked', () async {
       final notifier = NetworkEnvironmentNotifier();
       expect(notifier.state, HanbovaNetwork.local);
 
       await notifier.setNetwork(HanbovaNetwork.cashuTest);
       expect(notifier.state, HanbovaNetwork.cashuTest);
-
-      await notifier.setNetwork(HanbovaNetwork.mainnet);
-      expect(notifier.state, HanbovaNetwork.mainnet);
 
       await notifier.setNetwork(HanbovaNetwork.local);
       expect(notifier.state, HanbovaNetwork.local);
