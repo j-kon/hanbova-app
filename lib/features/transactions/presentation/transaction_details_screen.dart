@@ -1,3 +1,5 @@
+import 'dart:math';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -22,12 +24,35 @@ class TransactionDetailsScreen extends ConsumerStatefulWidget {
 
 class _TransactionDetailsScreenState extends ConsumerState<TransactionDetailsScreen> {
   bool _showDevDetails = false;
+  bool _revealClaimCode = false;
 
   void _copy(String label, String value) {
     Clipboard.setData(ClipboardData(text: value));
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(content: Text('$label copied to clipboard')),
     );
+  }
+
+  String _formatPaymentType(TransactionType type) {
+    switch (type) {
+      case TransactionType.protectedSend:
+        return 'Protected Send';
+      case TransactionType.protectedClaim:
+        return 'Protected Claim';
+      case TransactionType.protectedRefund:
+        return 'Protected Refund';
+      case TransactionType.instantSend:
+        return 'Instant Send';
+      case TransactionType.instantReceive:
+        return 'Instant Receive';
+    }
+  }
+
+  String _maskClaimCode(String code) {
+    if (code.length <= 8) return '••••••••';
+    final prefix = code.startsWith('hnbv_claim_') ? 'hnbv_claim_' : code.substring(0, min(4, code.length));
+    final suffix = code.substring(max(0, code.length - 4));
+    return '$prefix••••••••$suffix';
   }
 
   @override
@@ -43,11 +68,11 @@ class _TransactionDetailsScreenState extends ConsumerState<TransactionDetailsScr
     switch (tx.status) {
       case TransactionStatus.completed:
         statusColor = colors.success;
-        statusText = 'Completed';
+        statusText = tx.type == TransactionType.protectedSend ? 'Claimed' : 'Completed';
         break;
       case TransactionStatus.claimable:
         statusColor = colors.protected;
-        statusText = 'Claimable';
+        statusText = tx.isOutgoing ? 'Awaiting claim' : 'Claim available';
         break;
       case TransactionStatus.pending:
         statusColor = colors.warning;
@@ -59,7 +84,7 @@ class _TransactionDetailsScreenState extends ConsumerState<TransactionDetailsScr
         break;
       case TransactionStatus.expired:
         statusColor = colors.textTertiary;
-        statusText = 'Expired';
+        statusText = tx.isOutgoing ? 'Refund available' : 'Expired';
         break;
       case TransactionStatus.failed:
         statusColor = colors.error;
@@ -89,6 +114,15 @@ class _TransactionDetailsScreenState extends ConsumerState<TransactionDetailsScr
                   color: colors.surfaceCard,
                   borderRadius: AppRadius.lgRadius,
                   border: Border.all(color: colors.border, width: 1),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Theme.of(context).brightness == Brightness.dark
+                          ? Colors.black.withValues(alpha: 0.22)
+                          : const Color(0xFF012D1B).withValues(alpha: 0.04),
+                      blurRadius: 10,
+                      offset: const Offset(0, 3),
+                    ),
+                  ],
                 ),
                 child: Column(
                   children: [
@@ -116,7 +150,10 @@ class _TransactionDetailsScreenState extends ConsumerState<TransactionDetailsScr
                       ),
                       child: Text(
                         statusText,
-                        style: AppTypography.labelMedium.copyWith(color: statusColor),
+                        style: AppTypography.labelMedium.copyWith(
+                          color: statusColor,
+                          fontWeight: FontWeight.w600,
+                        ),
                       ),
                     ),
                     const SizedBox(height: AppSpacing.xl),
@@ -133,7 +170,7 @@ class _TransactionDetailsScreenState extends ConsumerState<TransactionDetailsScr
 
                     _DetailRow(
                       label: 'Payment Type',
-                      value: tx.type == TransactionType.protectedSend ? 'Protected Send (Cashu P2PK)' : 'Instant Send (Lightning)',
+                      value: _formatPaymentType(tx.type),
                     ),
                     const SizedBox(height: AppSpacing.sm),
 
@@ -152,10 +189,13 @@ class _TransactionDetailsScreenState extends ConsumerState<TransactionDetailsScr
 
                     if (tx.claimReference != null) ...[
                       const SizedBox(height: AppSpacing.sm),
-                      _DetailRow(
-                        label: 'Claim Reference',
-                        value: tx.claimReference!,
-                        onCopy: () => _copy('Claim Reference', tx.claimReference!),
+                      _MaskedDetailRow(
+                        label: 'Claim Code',
+                        maskedValue: _maskClaimCode(tx.claimReference!),
+                        fullValue: tx.claimReference!,
+                        isRevealed: _revealClaimCode,
+                        onToggleReveal: () => setState(() => _revealClaimCode = !_revealClaimCode),
+                        onCopy: () => _copy('Claim Code', tx.claimReference!),
                       ),
                     ],
 
@@ -170,8 +210,8 @@ class _TransactionDetailsScreenState extends ConsumerState<TransactionDetailsScr
               ),
               const SizedBox(height: AppSpacing.md),
 
-              // Developer Technical Details (Collapsible)
-              if (isDev) ...[
+              // Developer Technical Details (Available only in debug / dev mode)
+              if (kDebugMode && isDev) ...[
                 Material(
                   color: colors.surfaceElevated,
                   borderRadius: AppRadius.mdRadius,
@@ -250,7 +290,7 @@ class _DetailRow extends StatelessWidget {
       children: [
         Text(
           label,
-          style: AppTypography.bodyMedium.copyWith(color: colors.textSecondary),
+          style: AppTypography.bodySmall.copyWith(color: colors.textSecondary),
         ),
         const SizedBox(width: AppSpacing.md),
         Flexible(
@@ -260,8 +300,12 @@ class _DetailRow extends StatelessWidget {
               Flexible(
                 child: Text(
                   value,
-                  style: AppTypography.titleSmall.copyWith(color: colors.textPrimary),
+                  style: AppTypography.bodySmall.copyWith(
+                    color: colors.textPrimary,
+                    fontWeight: FontWeight.w600,
+                  ),
                   textAlign: TextAlign.end,
+                  maxLines: 2,
                   overflow: TextOverflow.ellipsis,
                 ),
               ),
@@ -269,9 +313,78 @@ class _DetailRow extends StatelessWidget {
                 const SizedBox(width: 4),
                 GestureDetector(
                   onTap: onCopy,
-                  child: Icon(Icons.copy, size: 14, color: colors.primary),
+                  child: Icon(Icons.copy, size: 14, color: colors.textTertiary),
                 ),
               ],
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+class _MaskedDetailRow extends StatelessWidget {
+  final String label;
+  final String maskedValue;
+  final String fullValue;
+  final bool isRevealed;
+  final VoidCallback onToggleReveal;
+  final VoidCallback onCopy;
+
+  const _MaskedDetailRow({
+    required this.label,
+    required this.maskedValue,
+    required this.fullValue,
+    required this.isRevealed,
+    required this.onToggleReveal,
+    required this.onCopy,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = context.colors;
+
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      children: [
+        Text(
+          label,
+          style: AppTypography.bodySmall.copyWith(color: colors.textSecondary),
+        ),
+        const SizedBox(width: AppSpacing.md),
+        Flexible(
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Flexible(
+                child: Text(
+                  isRevealed ? fullValue : maskedValue,
+                  style: AppTypography.bodySmall.copyWith(
+                    color: colors.textPrimary,
+                    fontWeight: FontWeight.w600,
+                    fontFamily: isRevealed ? null : 'Courier',
+                  ),
+                  textAlign: TextAlign.end,
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ),
+              const SizedBox(width: 6),
+              GestureDetector(
+                onTap: onToggleReveal,
+                child: Icon(
+                  isRevealed ? Icons.visibility_off_outlined : Icons.visibility_outlined,
+                  size: 16,
+                  color: colors.primary,
+                ),
+              ),
+              const SizedBox(width: 6),
+              GestureDetector(
+                onTap: onCopy,
+                child: Icon(Icons.copy, size: 14, color: colors.textTertiary),
+              ),
             ],
           ),
         ),
@@ -291,17 +404,19 @@ class _DevRow extends StatelessWidget {
     final colors = context.colors;
 
     return Padding(
-      padding: const EdgeInsets.only(bottom: 6),
-      child: Column(
+      padding: const EdgeInsets.symmetric(vertical: 4),
+      child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          Text(
-            label,
-            style: AppTypography.labelSmall.copyWith(color: colors.textTertiary, fontSize: 10),
-          ),
-          Text(
-            value,
-            style: AppTypography.bodySmall.copyWith(color: colors.textSecondary, fontFamily: 'monospace', fontSize: 11),
+          Text(label, style: AppTypography.caption.copyWith(color: colors.textTertiary)),
+          const SizedBox(width: AppSpacing.md),
+          Flexible(
+            child: Text(
+              value,
+              style: AppTypography.caption.copyWith(color: colors.textPrimary, fontWeight: FontWeight.w600),
+              textAlign: TextAlign.end,
+            ),
           ),
         ],
       ),

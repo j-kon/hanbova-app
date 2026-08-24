@@ -35,8 +35,9 @@ class StatusBadge extends StatelessWidget {
   (String, Color, Color) _getStatusConfig(String status, HanbovaColors colors, bool isDark) {
     switch (status) {
       case 'claimable':
+      case 'awaiting_claim':
         return (
-          'Claimable',
+          'Awaiting claim',
           colors.success.withValues(alpha: isDark ? 0.18 : 0.12),
           colors.success,
         );

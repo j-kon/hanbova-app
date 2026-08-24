@@ -68,7 +68,7 @@ void main() {
     // Switch to Me Tab
     await tester.tap(find.text('Me'));
     await tester.pumpAndSettle();
-    expect(find.text('Account vs Wallet Security'), findsOneWidget);
+    expect(find.text('Wallet Security'), findsOneWidget);
     expect(find.text('Appearance'), findsOneWidget);
     expect(find.text('Display Currency'), findsOneWidget);
     expect(find.text('Sign out'), findsOneWidget);

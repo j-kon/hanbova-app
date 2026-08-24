@@ -274,13 +274,13 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          'Account vs Wallet Security',
+                          'Wallet Security',
                           style: AppTypography.titleSmall.copyWith(color: colors.textPrimary, fontSize: 13),
                         ),
                         const SizedBox(height: 2),
                         Text(
-                          'Your account password secures your Hanbova profile. Your Cashu/Bitcoin private keys are generated and stored exclusively on your device.',
-                          style: AppTypography.bodySmall.copyWith(color: colors.textSecondary, fontSize: 11),
+                          'Your wallet keys stay on your device.',
+                          style: AppTypography.bodySmall.copyWith(color: colors.textSecondary, fontSize: 12),
                         ),
                       ],
                     ),
