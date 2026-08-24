@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import '../network/network_environment.dart';
 import '../networking/api_client.dart';
+import 'secp256k1_service.dart';
 
 class WalletCryptoIdentity {
   final String userId;
@@ -66,9 +67,8 @@ class CryptoIdentityNotifier extends AsyncNotifier<WalletCryptoIdentity?> {
           value: base64Encode(seedBytes),
         );
 
-        // Generate secp256k1 protected payment key (32 random bytes)
-        final randomBytes = List<int>.generate(32, (i) => (DateTime.now().microsecondsSinceEpoch * (i + 1)) % 256);
-        protectedPaymentPrivHex = randomBytes.map((b) => b.toRadixString(16).padLeft(2, '0')).join();
+        // Generate genuine secp256k1 protected payment key (cryptographically secure scalar)
+        protectedPaymentPrivHex = Secp256k1Service.generatePrivateKeyHex();
         await _storage.write(
           key: '${keyPrefix}_protected_priv',
           value: protectedPaymentPrivHex,
@@ -80,8 +80,8 @@ class CryptoIdentityNotifier extends AsyncNotifier<WalletCryptoIdentity?> {
           .map((b) => b.toRadixString(16).padLeft(2, '0'))
           .join();
 
-      // Derived public key for Cashu P2PK (compressed 33-byte secp256k1 format mock/real)
-      final protectedPubHex = '02$protectedPaymentPrivHex';
+      // Genuine derived 33-byte compressed secp256k1 public key via PointyCastle
+      final protectedPubHex = Secp256k1Service.getCompressedPublicKeyHex(protectedPaymentPrivHex);
 
       final identity = WalletCryptoIdentity(
         userId: userId,

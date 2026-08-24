@@ -89,16 +89,14 @@ class PaymentIntentRepository {
 
   Future<ProtectedPaymentIntent> claimPaymentIntent(
     String id, {
-    String? claimProof,
     String? claimerIdentifier,
   }) async {
     final payload = {
-      'claim_proof': claimProof ?? 'mock_claim_proof_$id',
-      'claimer_identifier': claimerIdentifier ?? 'me',
+      'status': 'claimed',
     };
 
     try {
-      final response = await _apiClient.post('/payment-intents/$id/claim', payload);
+      final response = await _apiClient.post('/payment-intents/$id/status', payload);
       return ProtectedPaymentIntent.fromJson(response);
     } catch (_) {
       return ProtectedPaymentIntent(
@@ -118,15 +116,13 @@ class PaymentIntentRepository {
   Future<ProtectedPaymentIntent> refundPaymentIntent({
     required String id,
     required String senderId,
-    String? refundProof,
   }) async {
     final payload = {
-      'sender_id': senderId,
-      'refund_proof': refundProof,
+      'status': 'refunded',
     };
 
     try {
-      final response = await _apiClient.post('/payment-intents/$id/refund', payload);
+      final response = await _apiClient.post('/payment-intents/$id/status', payload);
       return ProtectedPaymentIntent.fromJson(response);
     } catch (_) {
       return ProtectedPaymentIntent(
