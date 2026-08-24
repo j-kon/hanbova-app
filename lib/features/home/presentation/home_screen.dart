@@ -231,7 +231,7 @@ class HomeScreen extends ConsumerWidget {
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
                                 Text(
-                                  'Protected Escrow',
+                                  'Protected balance',
                                   style: AppTypography.caption.copyWith(color: colors.textTertiary),
                                 ),
                                 const SizedBox(height: 2),

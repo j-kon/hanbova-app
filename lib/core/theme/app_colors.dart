@@ -36,10 +36,10 @@ class AppColors {
   static const Color darkSurfaceElevated = ribbonGreen;
   static const Color darkSurfaceCard = forestGreen;
   static const Color darkTextPrimary = pureWhite;
-  static const Color darkTextSecondary = Color(0xFFB0C4B8);
-  static const Color darkTextTertiary = Color(0xFF7D8F87);
+  static const Color darkTextSecondary = Color(0xFFC8D8CF);
+  static const Color darkTextTertiary = Color(0xFF9AB2A6);
   static const Color darkDivider = ribbonGreen;
-  static const Color darkBorder = ribbonGreen;
+  static const Color darkBorder = Color(0xFF084E31);
 
   // Light Theme Palette (Warm Cream Lead)
   static const Color lightBackground = warmCream;
@@ -47,10 +47,10 @@ class AppColors {
   static const Color lightSurfaceElevated = Color(0xFFEFECE4);
   static const Color lightSurfaceCard = pureWhite;
   static const Color lightTextPrimary = charcoal;
-  static const Color lightTextSecondary = softCharcoal;
-  static const Color lightTextTertiary = Color(0xFF8E9B95);
+  static const Color lightTextSecondary = Color(0xFF4A5550);
+  static const Color lightTextTertiary = Color(0xFF6E7B75);
   static const Color lightDivider = Color(0xFFE5E0D5);
-  static const Color lightBorder = Color(0xFFDFDACF);
+  static const Color lightBorder = Color(0xFFD8D2C6);
 }
 
 class HanbovaColors extends ThemeExtension<HanbovaColors> {

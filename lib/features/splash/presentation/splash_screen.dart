@@ -136,21 +136,34 @@ class _SplashScreenState extends ConsumerState<SplashScreen>
                   opacity: _logoFade,
                   child: ScaleTransition(
                     scale: _logoScale,
-                    child: Hero(
-                      tag: 'hanbova_logo_hero',
-                      child: Image.asset(
-                        'assets/branding/hanbova_logo_EXACT_MASTER.png',
-                        width: 210,
-                        fit: BoxFit.contain,
-                        errorBuilder: (_, __, ___) => Image.asset(
-                          isDark
-                              ? 'assets/branding/splash_dark.png'
-                              : 'assets/branding/splash_light.png',
-                          width: 210,
-                          fit: BoxFit.contain,
-                        ),
-                      ),
-                    ),
+                    child: isDark
+                        ? Row(
+                            mainAxisSize: MainAxisSize.min,
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Image.asset(
+                                'assets/branding/hanbova_icon_EXACT_MASTER.png',
+                                width: 42,
+                                height: 42,
+                                fit: BoxFit.contain,
+                              ),
+                              const SizedBox(width: 12),
+                              Text(
+                                'Hanbova',
+                                style: AppTypography.display.copyWith(
+                                  color: Colors.white,
+                                  fontWeight: FontWeight.w700,
+                                  letterSpacing: -0.5,
+                                  fontSize: 32,
+                                ),
+                              ),
+                            ],
+                          )
+                        : Image.asset(
+                            'assets/branding/hanbova_logo_EXACT_MASTER.png',
+                            width: 210,
+                            fit: BoxFit.contain,
+                          ),
                   ),
                 ),
                 const SizedBox(height: 14),

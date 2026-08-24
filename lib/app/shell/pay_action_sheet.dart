@@ -73,7 +73,7 @@ class PayActionSheet extends StatelessWidget {
               iconColor: colors.protected,
               title: 'Send Protected',
               subtitle: 'Send with timelock claim & self-service refund',
-              badge: 'Protected Escrow',
+              badge: 'Protected',
               badgeColor: colors.protected,
               onTap: () {
                 Navigator.pop(context);

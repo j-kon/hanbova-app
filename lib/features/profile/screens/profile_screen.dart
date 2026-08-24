@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -294,7 +295,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
             _SettingTile(
               icon: Icons.key_rounded,
               title: 'Recovery Phrase Backup',
-              subtitle: '12-word seed for restoring funds on any device',
+              subtitle: '12-word recovery phrase for test-build backup',
               trailing: ref.watch(walletBackupStatusProvider)
                   ? Container(
                       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
@@ -353,8 +354,8 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
             ),
             const SizedBox(height: AppSpacing.md),
 
-            // Developer Section
-            if (isDev) ...[
+            // Developer Section (Hidden in Production, visible only in debug/development mode)
+            if (kDebugMode && isDev) ...[
               _SectionTitle(title: 'Developer'),
               _SettingTile(
                 icon: Icons.developer_mode,

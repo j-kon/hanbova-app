@@ -38,7 +38,6 @@ class AppShell extends StatelessWidget {
     final colors = context.colors;
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final selectedIndex = _calculateSelectedIndex();
-    final bottomPadding = MediaQuery.of(context).padding.bottom;
 
     return Scaffold(
       backgroundColor: colors.background,
@@ -53,7 +52,7 @@ class AppShell extends StatelessWidget {
           Positioned(
             left: 16,
             right: 16,
-            bottom: bottomPadding > 0 ? bottomPadding + 6 : 16,
+            bottom: 16,
             child: Container(
               decoration: BoxDecoration(
                 borderRadius: BorderRadius.circular(28),
@@ -74,7 +73,8 @@ class AppShell extends StatelessWidget {
                   filter: ImageFilter.blur(sigmaX: 20, sigmaY: 20),
                   child: Container(
                     height: 68,
-                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
                     decoration: BoxDecoration(
                       color: isDark
                           ? AppColors.forestGreen.withValues(alpha: 0.82)
@@ -199,7 +199,7 @@ class _CenterPayButtonState extends State<_CenterPayButton> {
           ),
           child: Center(
             child: Icon(
-              Icons.swap_horiz_rounded,
+              Icons.arrow_upward_rounded,
               color: isDark ? AppColors.deepForest : Colors.white,
               size: 26,
             ),

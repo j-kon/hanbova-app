@@ -350,7 +350,7 @@ class _BackupSeedScreenState extends ConsumerState<BackupSeedScreen> {
         ),
         const SizedBox(height: AppSpacing.xs),
         Text(
-          'Your 12-word recovery phrase has been verified. You can use this phrase at any time to restore your Bitcoin funds and protected payments on any device.',
+          'Your 12-word recovery phrase has been verified for this test environment. In this beta build, your cryptographic keys remain securely stored on this device.',
           style: AppTypography.bodyMedium.copyWith(color: colors.textSecondary),
           textAlign: TextAlign.center,
         ),

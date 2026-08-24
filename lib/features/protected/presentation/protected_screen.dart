@@ -315,6 +315,15 @@ class _ActiveTab extends ConsumerWidget {
               color: isExpired ? colors.primary.withValues(alpha: 0.5) : colors.border,
               width: 1,
             ),
+            boxShadow: [
+              BoxShadow(
+                color: Theme.of(context).brightness == Brightness.dark
+                    ? Colors.black.withValues(alpha: 0.22)
+                    : const Color(0xFF012D1B).withValues(alpha: 0.04),
+                blurRadius: 8,
+                offset: const Offset(0, 2),
+              ),
+            ],
           ),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -548,6 +557,15 @@ class _IncomingTab extends ConsumerWidget {
             color: colors.surfaceCard,
             borderRadius: AppRadius.mdRadius,
             border: Border.all(color: colors.border, width: 1),
+            boxShadow: [
+              BoxShadow(
+                color: Theme.of(context).brightness == Brightness.dark
+                    ? Colors.black.withValues(alpha: 0.22)
+                    : const Color(0xFF012D1B).withValues(alpha: 0.04),
+                blurRadius: 8,
+                offset: const Offset(0, 2),
+              ),
+            ],
           ),
           child: Row(
             children: [
@@ -645,6 +663,15 @@ class _CompletedTab extends ConsumerWidget {
             color: colors.surfaceCard,
             borderRadius: AppRadius.mdRadius,
             border: Border.all(color: colors.border, width: 1),
+            boxShadow: [
+              BoxShadow(
+                color: Theme.of(context).brightness == Brightness.dark
+                    ? Colors.black.withValues(alpha: 0.22)
+                    : const Color(0xFF012D1B).withValues(alpha: 0.04),
+                blurRadius: 8,
+                offset: const Offset(0, 2),
+              ),
+            ],
           ),
           child: Row(
             children: [

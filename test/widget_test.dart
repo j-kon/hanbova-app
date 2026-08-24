@@ -88,8 +88,8 @@ void main() {
     );
     await tester.pumpAndSettle();
 
-    // Tap center swap icon
-    await tester.tap(find.byIcon(Icons.swap_horiz_rounded));
+    // Tap center Pay button
+    await tester.tap(find.byIcon(Icons.arrow_upward_rounded).last);
     await tester.pumpAndSettle();
 
     // Verify modal sheet contents
