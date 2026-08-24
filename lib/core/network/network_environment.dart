@@ -48,11 +48,11 @@ class NetworkConfig {
 
   static const mainnet = NetworkConfig(
     network: HanbovaNetwork.mainnet,
-    displayName: 'Mainnet',
-    description: 'Unavailable during testing',
-    defaultMintUrl: '',
+    displayName: 'Bitcoin Mainnet',
+    description: 'Real Bitcoin & Ecash (Public Beta)',
+    defaultMintUrl: 'https://mint.minibits.cash/Bitcoin',
     isTestMode: false,
-    isEnabled: false,
+    isEnabled: true,
     storagePrefix: 'wallet_mainnet',
   );
 
@@ -88,6 +88,9 @@ class NetworkEnvironmentNotifier extends StateNotifier<HanbovaNetwork> {
       final saved = await _storage.read(key: _storageKey);
       if (saved != null) {
         switch (saved) {
+          case 'mainnet':
+            state = HanbovaNetwork.mainnet;
+            break;
           case 'cashuTest':
             state = HanbovaNetwork.cashuTest;
             break;
@@ -101,9 +104,6 @@ class NetworkEnvironmentNotifier extends StateNotifier<HanbovaNetwork> {
   }
 
   Future<void> setNetwork(HanbovaNetwork net) async {
-    if (net == HanbovaNetwork.mainnet) {
-      throw UnsupportedError('Mainnet is disabled in this build of Hanbova');
-    }
     state = net;
     try {
       await _storage.write(key: _storageKey, value: net.name);

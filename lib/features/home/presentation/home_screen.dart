@@ -10,9 +10,12 @@ import '../../../core/theme/app_spacing.dart';
 import '../../../core/theme/app_typography.dart';
 import '../../../core/utils/formatters.dart';
 import '../../auth/providers/auth_provider.dart';
+import '../../security/presentation/mainnet_safety_dialog.dart';
 import '../../transactions/domain/transaction_model.dart';
 import '../../transactions/presentation/transactions_provider.dart';
+import '../../wallet/presentation/unified_deposit_sheet.dart';
 import '../../wallet/presentation/wallet_provider.dart';
+import '../../../core/network/network_environment.dart';
 
 class HomeScreen extends ConsumerWidget {
   const HomeScreen({super.key});
@@ -37,37 +40,40 @@ class HomeScreen extends ConsumerWidget {
     final greeting = _getGreeting();
     final firstName = user?.firstName.isNotEmpty == true ? user!.firstName : 'Jeremiah';
 
+    final currentNetwork = ref.watch(networkEnvironmentProvider);
+    final isMainnet = currentNetwork == HanbovaNetwork.mainnet;
+
     final protectedCount = transactions.where((t) => t.type == TransactionType.protectedSend && t.status == TransactionStatus.claimable).length;
-    final protectedSats = wallet.protectedOutgoingSats > 0 ? wallet.protectedOutgoingSats : 8500;
+    final protectedSats = transactions
+        .where((t) => t.type == TransactionType.protectedSend && t.status == TransactionStatus.claimable)
+        .fold<int>(0, (sum, t) => sum + t.amountSats);
 
     return Scaffold(
       backgroundColor: colors.background,
       body: SafeArea(
         child: RefreshIndicator(
           onRefresh: () async {
-            await Future.delayed(const Duration(milliseconds: 600));
+            ref.invalidate(walletStateProvider);
+            ref.invalidate(transactionsProvider);
           },
           child: SingleChildScrollView(
             physics: const AlwaysScrollableScrollPhysics(),
-            padding: const EdgeInsets.symmetric(horizontal: AppSpacing.md, vertical: AppSpacing.sm),
+            padding: const EdgeInsets.symmetric(horizontal: AppSpacing.lg, vertical: AppSpacing.md),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                // 1. Header
+                // 1. Header (User profile, Greeting, Actions)
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
                     Row(
                       children: [
-                        GestureDetector(
-                          onTap: () => context.go('/me'),
-                          child: CircleAvatar(
-                            radius: 20,
-                            backgroundColor: colors.primary.withValues(alpha: 0.15),
-                            child: Text(
-                              firstName.isNotEmpty ? firstName[0].toUpperCase() : 'J',
-                              style: AppTypography.titleSmall.copyWith(color: colors.primary),
-                            ),
+                        CircleAvatar(
+                          radius: 20,
+                          backgroundColor: colors.primary.withValues(alpha: 0.15),
+                          child: Text(
+                            firstName.isNotEmpty ? firstName[0].toUpperCase() : 'H',
+                            style: AppTypography.titleMedium.copyWith(color: colors.primary),
                           ),
                         ),
                         const SizedBox(width: AppSpacing.sm),
@@ -75,8 +81,8 @@ class HomeScreen extends ConsumerWidget {
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Text(
-                              '$greeting,',
-                              style: AppTypography.bodySmall.copyWith(color: colors.textSecondary),
+                              greeting,
+                              style: AppTypography.caption.copyWith(color: colors.textSecondary),
                             ),
                             Text(
                               firstName,
@@ -110,28 +116,42 @@ class HomeScreen extends ConsumerWidget {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Container(
-                        margin: const EdgeInsets.only(bottom: AppSpacing.sm),
-                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                        decoration: BoxDecoration(
-                          color: Colors.amber.withValues(alpha: 0.12),
-                          borderRadius: AppRadius.xsRadius,
-                          border: Border.all(color: Colors.amber.withValues(alpha: 0.3)),
-                        ),
-                        child: Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            const Icon(Icons.science_outlined, color: Colors.amber, size: 14),
-                            const SizedBox(width: 4),
-                            Text(
-                              'TEST MODE • No monetary value',
-                              style: AppTypography.labelSmall.copyWith(
-                                color: Colors.amber,
-                                fontSize: 10,
-                                fontWeight: FontWeight.w700,
-                              ),
+                      InkWell(
+                        onTap: () {
+                          if (!isMainnet) {
+                            MainnetSafetyDialog.show(context);
+                          }
+                        },
+                        borderRadius: AppRadius.xsRadius,
+                        child: Container(
+                          margin: const EdgeInsets.only(bottom: AppSpacing.sm),
+                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                          decoration: BoxDecoration(
+                            color: (isMainnet ? colors.success : Colors.amber).withValues(alpha: 0.12),
+                            borderRadius: AppRadius.xsRadius,
+                            border: Border.all(
+                              color: (isMainnet ? colors.success : Colors.amber).withValues(alpha: 0.3),
                             ),
-                          ],
+                          ),
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Icon(
+                                isMainnet ? Icons.verified_user : Icons.science_outlined,
+                                color: isMainnet ? colors.success : Colors.amber,
+                                size: 14,
+                              ),
+                              const SizedBox(width: 4),
+                              Text(
+                                isMainnet ? 'MAINNET BETA • Real Bitcoin' : 'TEST MODE • No monetary value',
+                                style: AppTypography.labelSmall.copyWith(
+                                  color: isMainnet ? colors.success : Colors.amber,
+                                  fontSize: 10,
+                                  fontWeight: FontWeight.w700,
+                                ),
+                              ),
+                            ],
+                          ),
                         ),
                       ),
                       Row(
@@ -167,7 +187,9 @@ class HomeScreen extends ConsumerWidget {
 
                       // Sats display
                       Text(
-                        isBalanceVisible ? '${Formatters.formatSatsNumber(totalBalanceSats)} test sats' : '•••• test sats',
+                        isBalanceVisible
+                            ? '${Formatters.formatSatsNumber(totalBalanceSats)} ${isMainnet ? "sats" : "test sats"}'
+                            : '•••• ${isMainnet ? "sats" : "test sats"}',
                         style: AppTypography.titleSmall.copyWith(
                           color: colors.primary,
                           fontWeight: FontWeight.w600,
@@ -182,21 +204,47 @@ class HomeScreen extends ConsumerWidget {
                       Row(
                         children: [
                           Expanded(
-                            child: _BalanceSubItem(
-                              label: 'Spendable',
-                              amount: isBalanceVisible ? '${Formatters.formatSatsNumber(wallet.spendableSats)} test sats' : '••••',
-                              color: colors.success,
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  'Spendable',
+                                  style: AppTypography.caption.copyWith(color: colors.textTertiary),
+                                ),
+                                const SizedBox(height: 2),
+                                Text(
+                                  isBalanceVisible
+                                      ? Formatters.formatSats(wallet.spendableSats)
+                                      : '••••',
+                                  style: AppTypography.titleSmall.copyWith(
+                                    color: colors.textPrimary,
+                                    fontWeight: FontWeight.w600,
+                                  ),
+                                ),
+                              ],
                             ),
                           ),
-                          Container(width: 1, height: 28, color: colors.divider),
+                          Container(height: 28, width: 1, color: colors.divider),
+                          const SizedBox(width: AppSpacing.md),
                           Expanded(
-                            child: Padding(
-                              padding: const EdgeInsets.only(left: AppSpacing.md),
-                              child: _BalanceSubItem(
-                                label: 'Protected',
-                                amount: isBalanceVisible ? '${Formatters.formatSatsNumber(wallet.protectedOutgoingSats)} test sats' : '••••',
-                                color: colors.protected,
-                              ),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  'Protected Escrow',
+                                  style: AppTypography.caption.copyWith(color: colors.textTertiary),
+                                ),
+                                const SizedBox(height: 2),
+                                Text(
+                                  isBalanceVisible
+                                      ? Formatters.formatSats(wallet.protectedOutgoingSats)
+                                      : '••••',
+                                  style: AppTypography.titleSmall.copyWith(
+                                    color: colors.protected,
+                                    fontWeight: FontWeight.w600,
+                                  ),
+                                ),
+                              ],
                             ),
                           ),
                         ],
@@ -224,7 +272,7 @@ class HomeScreen extends ConsumerWidget {
                     const SizedBox(width: AppSpacing.md),
                     Expanded(
                       child: OutlinedButton.icon(
-                        onPressed: () => context.push('/receive'),
+                        onPressed: () => UnifiedDepositSheet.show(context),
                         icon: const Icon(Icons.arrow_downward, size: 18),
                         label: const Text('Receive'),
                         style: OutlinedButton.styleFrom(
@@ -373,37 +421,6 @@ class HomeScreen extends ConsumerWidget {
           ),
         ),
       ),
-    );
-  }
-}
-
-class _BalanceSubItem extends StatelessWidget {
-  final String label;
-  final String amount;
-  final Color color;
-
-  const _BalanceSubItem({
-    required this.label,
-    required this.amount,
-    required this.color,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    final colors = context.colors;
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Row(
-          children: [
-            Container(width: 6, height: 6, decoration: BoxDecoration(color: color, shape: BoxShape.circle)),
-            const SizedBox(width: 6),
-            Text(label, style: AppTypography.bodySmall.copyWith(color: colors.textTertiary, fontSize: 11)),
-          ],
-        ),
-        const SizedBox(height: 2),
-        Text(amount, style: AppTypography.titleSmall.copyWith(color: colors.textPrimary, fontSize: 13)),
-      ],
     );
   }
 }

@@ -20,25 +20,28 @@ void main() {
       expect(config.storagePrefix, 'wallet_cashu_test');
     });
 
-    test('Mainnet configuration is disabled and throws on selection', () async {
+    test('Mainnet configuration is enabled with production storage isolation and mint URL', () async {
       final config = NetworkConfig.mainnet;
       expect(config.network, HanbovaNetwork.mainnet);
-      expect(config.isEnabled, isFalse);
+      expect(config.isEnabled, isTrue);
       expect(config.isTestMode, isFalse);
+      expect(config.storagePrefix, 'wallet_mainnet');
+      expect(config.defaultMintUrl, 'https://mint.minibits.cash/Bitcoin');
 
       final notifier = NetworkEnvironmentNotifier();
-      expect(
-        () async => await notifier.setNetwork(HanbovaNetwork.mainnet),
-        throwsA(isA<UnsupportedError>()),
-      );
+      await notifier.setNetwork(HanbovaNetwork.mainnet);
+      expect(notifier.state, HanbovaNetwork.mainnet);
     });
 
-    test('Switching between Local and CashuTest succeeds', () async {
+    test('Switching between Local, CashuTest, and Mainnet succeeds', () async {
       final notifier = NetworkEnvironmentNotifier();
       expect(notifier.state, HanbovaNetwork.local);
 
       await notifier.setNetwork(HanbovaNetwork.cashuTest);
       expect(notifier.state, HanbovaNetwork.cashuTest);
+
+      await notifier.setNetwork(HanbovaNetwork.mainnet);
+      expect(notifier.state, HanbovaNetwork.mainnet);
 
       await notifier.setNetwork(HanbovaNetwork.local);
       expect(notifier.state, HanbovaNetwork.local);

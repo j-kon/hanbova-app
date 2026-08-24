@@ -57,6 +57,13 @@ class AppTypography {
     height: 1.4,
   );
 
+  static const TextStyle caption = TextStyle(
+    fontSize: 12,
+    fontWeight: FontWeight.w400,
+    letterSpacing: 0.1,
+    height: 1.4,
+  );
+
   static const TextStyle labelLarge = TextStyle(
     fontSize: 14,
     fontWeight: FontWeight.w600,

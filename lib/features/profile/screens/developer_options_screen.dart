@@ -11,6 +11,7 @@ import '../../../core/theme/app_radius.dart';
 import '../../../core/theme/app_spacing.dart';
 import '../../../core/theme/app_typography.dart';
 import '../../auth/providers/auth_provider.dart';
+import '../../security/presentation/mainnet_safety_dialog.dart';
 import '../../transactions/presentation/transactions_provider.dart';
 
 class DeveloperOptionsScreen extends ConsumerStatefulWidget {
@@ -47,13 +48,10 @@ class _DeveloperOptionsScreenState extends ConsumerState<DeveloperOptionsScreen>
   }
 
   void _onSelectNetwork(HanbovaNetwork selectedNet, HanbovaNetwork currentNet) {
+    if (selectedNet == currentNet) return;
+
     if (selectedNet == HanbovaNetwork.mainnet) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Mainnet is disabled in this build of Hanbova'),
-          backgroundColor: Colors.redAccent,
-        ),
-      );
+      MainnetSafetyDialog.show(context);
       return;
     }
 

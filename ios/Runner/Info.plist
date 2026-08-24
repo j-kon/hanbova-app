@@ -66,5 +66,9 @@
 		<string>UIInterfaceOrientationLandscapeLeft</string>
 		<string>UIInterfaceOrientationLandscapeRight</string>
 	</array>
+	<key>NSFaceIDUsageDescription</key>
+	<string>Hanbova requires Face ID to securely authenticate wallet transactions and protect recovery keys.</string>
+	<key>NSCameraUsageDescription</key>
+	<string>Hanbova requires camera access to scan Lightning invoices and Bitcoin QR codes.</string>
 </dict>
 </plist>
