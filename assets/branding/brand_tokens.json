@@ -1,0 +1,76 @@
+{
+  "brand": {
+    "name": "Hanbova",
+    "tagline": "Send protected.",
+    "mission": "Safer everyday Bitcoin payments across Africa.",
+    "positioning": "Instant when you trust. Protected when it matters."
+  },
+  "source_of_truth": {
+    "icon": "00_MASTER_APPROVED/hanbova_icon_EXACT_MASTER.png",
+    "logo": "00_MASTER_APPROVED/hanbova_logo_EXACT_MASTER.png"
+  },
+  "colors": {
+    "deep_forest": "#012D1B",
+    "forest_green": "#013B23",
+    "ribbon_green": "#02482A",
+    "leaf_green": "#66B33D",
+    "light_leaf": "#7BCB45",
+    "lightning_gold": "#FDBF09",
+    "warm_cream": "#F7F4EC",
+    "charcoal": "#1B1F23",
+    "soft_charcoal": "#5C6762",
+    "pure_white": "#FFFFFF",
+    "danger": "#C44747",
+    "pending": "#D98B00",
+    "success": "#2E8B57"
+  },
+  "typography": {
+    "primary": "Poppins",
+    "fallback": [
+      "Inter",
+      "system-ui",
+      "sans-serif"
+    ],
+    "weights": [
+      400,
+      500,
+      600,
+      700
+    ]
+  },
+  "spacing": {
+    "xs": 4,
+    "sm": 8,
+    "md": 16,
+    "lg": 24,
+    "xl": 32,
+    "xxl": 48
+  },
+  "radius": {
+    "sm": 12,
+    "md": 16,
+    "lg": 24,
+    "xl": 32,
+    "pill": 999
+  },
+  "onboarding": [
+    {
+      "index": 1,
+      "title": "Send instantly.",
+      "body": "Fast Bitcoin payments for everyday life.",
+      "asset": "04_ONBOARDING/backgrounds/onboarding_01_instant_1080x1920.jpg"
+    },
+    {
+      "index": 2,
+      "title": "Send protected.",
+      "body": "Add a protection window and stay in control.",
+      "asset": "04_ONBOARDING/backgrounds/onboarding_02_protected_1080x1920.jpg"
+    },
+    {
+      "index": 3,
+      "title": "Built for Africa.",
+      "body": "Private, modern money for everyday people.",
+      "asset": "04_ONBOARDING/backgrounds/onboarding_03_africa_1080x1920.jpg"
+    }
+  ]
+}

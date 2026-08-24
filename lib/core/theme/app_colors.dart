@@ -1,45 +1,56 @@
 import 'package:flutter/material.dart';
 
 class AppColors {
-  // Brand Accents
-  static const Color primaryGreen = Color(0xFF00D18F);
-  static const Color primaryGreenDark = Color(0xFF00A873);
-  static const Color secondaryTeal = Color(0xFF00B4D8);
-  static const Color accentGold = Color(0xFFF5A623);
-  static const Color protectedBlue = Color(0xFF3A86FF);
+  // Master Brand Tokens from brand_tokens.json
+  static const Color deepForest = Color(0xFF012D1B);
+  static const Color forestGreen = Color(0xFF013B23);
+  static const Color ribbonGreen = Color(0xFF02482A);
+  static const Color leafGreen = Color(0xFF66B33D);
+  static const Color lightLeaf = Color(0xFF7BCB45);
+  static const Color lightningGold = Color(0xFFFDBF09);
+  static const Color warmCream = Color(0xFFF7F4EC);
+  static const Color charcoal = Color(0xFF1B1F23);
+  static const Color softCharcoal = Color(0xFF5C6762);
+  static const Color pureWhite = Color(0xFFFFFFFF);
+  static const Color danger = Color(0xFFC44747);
+  static const Color pending = Color(0xFFD98B00);
+  static const Color success = Color(0xFF2E8B57);
 
-  // Status Colors
-  static const Color success = Color(0xFF10B981);
-  static const Color warning = Color(0xFFF59E0B);
-  static const Color error = Color(0xFFEF4444);
-  static const Color info = Color(0xFF3B82F6);
+  // Aliases for semantic compatibility
+  static const Color primaryGreen = leafGreen;
+  static const Color primaryGreenDark = forestGreen;
+  static const Color accentGold = lightningGold;
+  static const Color error = danger;
+  static const Color warning = pending;
+  static const Color info = leafGreen;
+  static const Color protectedBlue = forestGreen;
 
   // Flow directions
-  static const Color incoming = Color(0xFF10B981);
-  static const Color outgoing = Color(0xFFF43F5E);
-  static const Color protected = Color(0xFF3A86FF);
+  static const Color incoming = success;
+  static const Color outgoing = danger;
+  static const Color protected = leafGreen;
 
-  // Dark Theme Palette (Default / Calm Fintech)
-  static const Color darkBackground = Color(0xFF0B0F17);
-  static const Color darkSurface = Color(0xFF151C28);
-  static const Color darkSurfaceElevated = Color(0xFF1E2838);
-  static const Color darkSurfaceCard = Color(0xFF161F2E);
-  static const Color darkTextPrimary = Color(0xFFF8FAFC);
-  static const Color darkTextSecondary = Color(0xFF94A3B8);
-  static const Color darkTextTertiary = Color(0xFF64748B);
-  static const Color darkDivider = Color(0xFF1E293B);
-  static const Color darkBorder = Color(0xFF263346);
+  // Dark Theme Palette (Deep Forest Lead)
+  static const Color darkBackground = deepForest;
+  static const Color darkSurface = forestGreen;
+  static const Color darkSurfaceElevated = ribbonGreen;
+  static const Color darkSurfaceCard = forestGreen;
+  static const Color darkTextPrimary = pureWhite;
+  static const Color darkTextSecondary = Color(0xFFB0C4B8);
+  static const Color darkTextTertiary = Color(0xFF7D8F87);
+  static const Color darkDivider = ribbonGreen;
+  static const Color darkBorder = ribbonGreen;
 
-  // Light Theme Palette (Calm, Premium, High Contrast)
-  static const Color lightBackground = Color(0xFFF8FAFC);
-  static const Color lightSurface = Color(0xFFFFFFFF);
-  static const Color lightSurfaceElevated = Color(0xFFF1F5F9);
-  static const Color lightSurfaceCard = Color(0xFFFFFFFF);
-  static const Color lightTextPrimary = Color(0xFF0F172A);
-  static const Color lightTextSecondary = Color(0xFF475569);
-  static const Color lightTextTertiary = Color(0xFF94A3B8);
-  static const Color lightDivider = Color(0xFFE2E8F0);
-  static const Color lightBorder = Color(0xFFCBD5E1);
+  // Light Theme Palette (Warm Cream Lead)
+  static const Color lightBackground = warmCream;
+  static const Color lightSurface = pureWhite;
+  static const Color lightSurfaceElevated = Color(0xFFEFECE4);
+  static const Color lightSurfaceCard = pureWhite;
+  static const Color lightTextPrimary = charcoal;
+  static const Color lightTextSecondary = softCharcoal;
+  static const Color lightTextTertiary = Color(0xFF8E9B95);
+  static const Color lightDivider = Color(0xFFE5E0D5);
+  static const Color lightBorder = Color(0xFFDFDACF);
 }
 
 class HanbovaColors extends ThemeExtension<HanbovaColors> {
@@ -48,6 +59,8 @@ class HanbovaColors extends ThemeExtension<HanbovaColors> {
   final Color surfaceElevated;
   final Color surfaceCard;
   final Color primary;
+  final Color primaryDark;
+  final Color gold;
   final Color textPrimary;
   final Color textSecondary;
   final Color textTertiary;
@@ -66,6 +79,8 @@ class HanbovaColors extends ThemeExtension<HanbovaColors> {
     required this.surfaceElevated,
     required this.surfaceCard,
     required this.primary,
+    required this.primaryDark,
+    required this.gold,
     required this.textPrimary,
     required this.textSecondary,
     required this.textTertiary,
@@ -84,7 +99,9 @@ class HanbovaColors extends ThemeExtension<HanbovaColors> {
     surface: AppColors.darkSurface,
     surfaceElevated: AppColors.darkSurfaceElevated,
     surfaceCard: AppColors.darkSurfaceCard,
-    primary: AppColors.primaryGreen,
+    primary: AppColors.leafGreen,
+    primaryDark: AppColors.forestGreen,
+    gold: AppColors.lightningGold,
     textPrimary: AppColors.darkTextPrimary,
     textSecondary: AppColors.darkTextSecondary,
     textTertiary: AppColors.darkTextTertiary,
@@ -93,7 +110,7 @@ class HanbovaColors extends ThemeExtension<HanbovaColors> {
     success: AppColors.success,
     warning: AppColors.warning,
     error: AppColors.error,
-    protected: AppColors.protected,
+    protected: AppColors.leafGreen,
     incoming: AppColors.incoming,
     outgoing: AppColors.outgoing,
   );
@@ -103,7 +120,9 @@ class HanbovaColors extends ThemeExtension<HanbovaColors> {
     surface: AppColors.lightSurface,
     surfaceElevated: AppColors.lightSurfaceElevated,
     surfaceCard: AppColors.lightSurfaceCard,
-    primary: AppColors.primaryGreenDark,
+    primary: AppColors.forestGreen,
+    primaryDark: AppColors.deepForest,
+    gold: AppColors.lightningGold,
     textPrimary: AppColors.lightTextPrimary,
     textSecondary: AppColors.lightTextSecondary,
     textTertiary: AppColors.lightTextTertiary,
@@ -118,12 +137,14 @@ class HanbovaColors extends ThemeExtension<HanbovaColors> {
   );
 
   @override
-  HanbovaColors copyWith({
+  ThemeExtension<HanbovaColors> copyWith({
     Color? background,
     Color? surface,
     Color? surfaceElevated,
     Color? surfaceCard,
     Color? primary,
+    Color? primaryDark,
+    Color? gold,
     Color? textPrimary,
     Color? textSecondary,
     Color? textTertiary,
@@ -142,6 +163,8 @@ class HanbovaColors extends ThemeExtension<HanbovaColors> {
       surfaceElevated: surfaceElevated ?? this.surfaceElevated,
       surfaceCard: surfaceCard ?? this.surfaceCard,
       primary: primary ?? this.primary,
+      primaryDark: primaryDark ?? this.primaryDark,
+      gold: gold ?? this.gold,
       textPrimary: textPrimary ?? this.textPrimary,
       textSecondary: textSecondary ?? this.textSecondary,
       textTertiary: textTertiary ?? this.textTertiary,
@@ -157,7 +180,7 @@ class HanbovaColors extends ThemeExtension<HanbovaColors> {
   }
 
   @override
-  HanbovaColors lerp(ThemeExtension<HanbovaColors>? other, double t) {
+  ThemeExtension<HanbovaColors> lerp(covariant ThemeExtension<HanbovaColors>? other, double t) {
     if (other is! HanbovaColors) return this;
     return HanbovaColors(
       background: Color.lerp(background, other.background, t)!,
@@ -165,6 +188,8 @@ class HanbovaColors extends ThemeExtension<HanbovaColors> {
       surfaceElevated: Color.lerp(surfaceElevated, other.surfaceElevated, t)!,
       surfaceCard: Color.lerp(surfaceCard, other.surfaceCard, t)!,
       primary: Color.lerp(primary, other.primary, t)!,
+      primaryDark: Color.lerp(primaryDark, other.primaryDark, t)!,
+      gold: Color.lerp(gold, other.gold, t)!,
       textPrimary: Color.lerp(textPrimary, other.textPrimary, t)!,
       textSecondary: Color.lerp(textSecondary, other.textSecondary, t)!,
       textTertiary: Color.lerp(textTertiary, other.textTertiary, t)!,
@@ -180,6 +205,6 @@ class HanbovaColors extends ThemeExtension<HanbovaColors> {
   }
 }
 
-extension ThemeExtensionContext on BuildContext {
+extension HanbovaColorsContext on BuildContext {
   HanbovaColors get colors => Theme.of(this).extension<HanbovaColors>() ?? HanbovaColors.dark;
 }

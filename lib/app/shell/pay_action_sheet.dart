@@ -55,11 +55,11 @@ class PayActionSheet extends StatelessWidget {
             // 1. Send Instant
             _ActionTile(
               icon: Icons.bolt,
-              iconColor: Colors.amber,
+              iconColor: colors.gold,
               title: 'Send Instant',
               subtitle: 'Pay immediately via Lightning invoice or handle',
               badge: 'Final Immediately',
-              badgeColor: Colors.amber,
+              badgeColor: colors.gold,
               onTap: () {
                 Navigator.pop(context);
                 context.push('/send');

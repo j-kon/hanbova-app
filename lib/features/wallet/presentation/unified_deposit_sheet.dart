@@ -291,64 +291,48 @@ class _UnifiedDepositSheetState extends ConsumerState<UnifiedDepositSheet>
   }
 
   Widget _buildOnChainTab(HanbovaColors colors) {
-    const mockOnChainAddress = 'bc1qhanbova489274928492842094209420849208';
-
-    return SingleChildScrollView(
-      padding: const EdgeInsets.all(AppSpacing.md),
+    return Padding(
+      padding: const EdgeInsets.all(AppSpacing.xl),
       child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
+        mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Text(
-            'On-Chain Bitcoin Deposit Address',
-            style: AppTypography.titleSmall.copyWith(color: colors.textPrimary),
-          ),
-          const SizedBox(height: 2),
-          Text(
-            'Send Bitcoin from any exchange or on-chain wallet. Settles into ecash after confirmation.',
-            style: AppTypography.bodySmall.copyWith(color: colors.textSecondary),
-          ),
-          const SizedBox(height: AppSpacing.md),
-
-          Center(
-            child: Container(
-              padding: const EdgeInsets.all(AppSpacing.md),
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: AppRadius.lgRadius,
-              ),
-              child: QrImageView(
-                data: 'bitcoin:$mockOnChainAddress',
-                version: QrVersions.auto,
-                size: 180.0,
-              ),
-            ),
-          ),
-          const SizedBox(height: AppSpacing.md),
-
           Container(
-            padding: const EdgeInsets.all(AppSpacing.sm),
+            width: 64,
+            height: 64,
+            decoration: BoxDecoration(
+              color: colors.gold.withValues(alpha: 0.12),
+              shape: BoxShape.circle,
+            ),
+            child: Icon(Icons.currency_bitcoin_rounded, color: colors.gold, size: 36),
+          ),
+          const SizedBox(height: AppSpacing.md),
+          Text(
+            'On-Chain Bitcoin Swaps',
+            style: AppTypography.titleMedium.copyWith(color: colors.textPrimary),
+            textAlign: TextAlign.center,
+          ),
+          const SizedBox(height: AppSpacing.xs),
+          Text(
+            'On-chain Bitcoin deposits via trust-minimized swaps are under active development and disabled in this test build.',
+            style: AppTypography.bodySmall.copyWith(color: colors.textSecondary),
+            textAlign: TextAlign.center,
+          ),
+          const SizedBox(height: AppSpacing.lg),
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
             decoration: BoxDecoration(
               color: colors.surfaceElevated,
-              borderRadius: AppRadius.mdRadius,
+              borderRadius: AppRadius.smRadius,
               border: Border.all(color: colors.border),
             ),
             child: Row(
+              mainAxisSize: MainAxisSize.min,
               children: [
-                Expanded(
-                  child: Text(
-                    mockOnChainAddress,
-                    style: AppTypography.bodySmall.copyWith(fontFamily: 'monospace'),
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                ),
-                IconButton(
-                  icon: const Icon(Icons.copy, size: 18),
-                  onPressed: () {
-                    Clipboard.setData(const ClipboardData(text: mockOnChainAddress));
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(content: Text('On-chain address copied')),
-                    );
-                  },
+                Icon(Icons.info_outline, size: 16, color: colors.textTertiary),
+                const SizedBox(width: 6),
+                Text(
+                  'Please use Lightning (NUT-04) or Ecash Tokens',
+                  style: AppTypography.labelSmall.copyWith(color: colors.textSecondary),
                 ),
               ],
             ),

@@ -90,6 +90,18 @@ class _SignUpScreenState extends ConsumerState<SignUpScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
+                Align(
+                  alignment: Alignment.centerLeft,
+                  child: Padding(
+                    padding: const EdgeInsets.only(bottom: AppSpacing.md),
+                    child: Image.asset(
+                      'assets/branding/hanbova_icon_EXACT_MASTER.png',
+                      width: 44,
+                      height: 44,
+                      errorBuilder: (_, __, ___) => const SizedBox.shrink(),
+                    ),
+                  ),
+                ),
                 Text(
                   'Create an account',
                   style: AppTypography.headline.copyWith(color: colors.textPrimary),

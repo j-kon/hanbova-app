@@ -11,28 +11,28 @@ class AppTheme {
       brightness: Brightness.dark,
       scaffoldBackgroundColor: AppColors.darkBackground,
       colorScheme: const ColorScheme.dark(
-        primary: AppColors.primaryGreen,
-        onPrimary: Color(0xFF003822),
-        secondary: AppColors.secondaryTeal,
+        primary: AppColors.leafGreen,
+        onPrimary: AppColors.deepForest,
+        secondary: AppColors.lightningGold,
         surface: AppColors.darkSurface,
         onSurface: AppColors.darkTextPrimary,
-        error: AppColors.error,
+        error: AppColors.danger,
         onError: Colors.white,
       ),
+      fontFamily: 'Poppins',
       extensions: const [HanbovaColors.dark],
-      fontFamily: 'Inter',
-      appBarTheme: const AppBarTheme(
+      appBarTheme: AppBarTheme(
         backgroundColor: Colors.transparent,
         elevation: 0,
         scrolledUnderElevation: 0,
         centerTitle: false,
-        systemOverlayStyle: SystemUiOverlayStyle(
+        systemOverlayStyle: const SystemUiOverlayStyle(
           statusBarColor: Colors.transparent,
           statusBarIconBrightness: Brightness.light,
           statusBarBrightness: Brightness.dark,
         ),
-        iconTheme: IconThemeData(color: AppColors.darkTextPrimary),
-        titleTextStyle: AppTypography.titleLarge,
+        iconTheme: const IconThemeData(color: AppColors.darkTextPrimary),
+        titleTextStyle: AppTypography.titleLarge.copyWith(color: AppColors.darkTextPrimary),
       ),
       cardTheme: CardThemeData(
         color: AppColors.darkSurfaceCard,
@@ -44,8 +44,8 @@ class AppTheme {
         margin: EdgeInsets.zero,
       ),
       bottomNavigationBarTheme: const BottomNavigationBarThemeData(
-        backgroundColor: AppColors.darkSurface,
-        selectedItemColor: AppColors.primaryGreen,
+        backgroundColor: AppColors.darkBackground,
+        selectedItemColor: AppColors.leafGreen,
         unselectedItemColor: AppColors.darkTextTertiary,
         type: BottomNavigationBarType.fixed,
         elevation: 8,
@@ -57,19 +57,19 @@ class AppTheme {
       ),
       elevatedButtonTheme: ElevatedButtonThemeData(
         style: ElevatedButton.styleFrom(
-          backgroundColor: AppColors.primaryGreen,
-          foregroundColor: const Color(0xFF003822),
+          backgroundColor: AppColors.leafGreen,
+          foregroundColor: AppColors.deepForest,
           elevation: 0,
           minimumSize: const Size(double.infinity, 52),
           shape: const RoundedRectangleBorder(borderRadius: AppRadius.mdRadius),
-          textStyle: AppTypography.titleSmall,
+          textStyle: AppTypography.titleSmall.copyWith(fontWeight: FontWeight.w700),
         ),
       ),
       outlinedButtonTheme: OutlinedButtonThemeData(
         style: OutlinedButton.styleFrom(
           foregroundColor: AppColors.darkTextPrimary,
           elevation: 0,
-          side: const BorderSide(color: AppColors.darkBorder, width: 1),
+          side: const BorderSide(color: AppColors.darkBorder, width: 1.2),
           minimumSize: const Size(double.infinity, 52),
           shape: const RoundedRectangleBorder(borderRadius: AppRadius.mdRadius),
           textStyle: AppTypography.titleSmall,
@@ -77,7 +77,7 @@ class AppTheme {
       ),
       textButtonTheme: TextButtonThemeData(
         style: TextButton.styleFrom(
-          foregroundColor: AppColors.primaryGreen,
+          foregroundColor: AppColors.leafGreen,
           textStyle: AppTypography.titleSmall,
         ),
       ),
@@ -95,11 +95,11 @@ class AppTheme {
         ),
         focusedBorder: const OutlineInputBorder(
           borderRadius: AppRadius.mdRadius,
-          borderSide: BorderSide(color: AppColors.primaryGreen, width: 1.5),
+          borderSide: BorderSide(color: AppColors.leafGreen, width: 1.5),
         ),
         errorBorder: const OutlineInputBorder(
           borderRadius: AppRadius.mdRadius,
-          borderSide: BorderSide(color: AppColors.error, width: 1),
+          borderSide: BorderSide(color: AppColors.danger, width: 1),
         ),
         hintStyle: AppTypography.bodyMedium.copyWith(color: AppColors.darkTextTertiary),
         labelStyle: AppTypography.bodyMedium.copyWith(color: AppColors.darkTextSecondary),
@@ -113,28 +113,28 @@ class AppTheme {
       brightness: Brightness.light,
       scaffoldBackgroundColor: AppColors.lightBackground,
       colorScheme: const ColorScheme.light(
-        primary: AppColors.primaryGreenDark,
+        primary: AppColors.forestGreen,
         onPrimary: Colors.white,
-        secondary: AppColors.secondaryTeal,
+        secondary: AppColors.lightningGold,
         surface: AppColors.lightSurface,
         onSurface: AppColors.lightTextPrimary,
-        error: AppColors.error,
+        error: AppColors.danger,
         onError: Colors.white,
       ),
+      fontFamily: 'Poppins',
       extensions: const [HanbovaColors.light],
-      fontFamily: 'Inter',
-      appBarTheme: const AppBarTheme(
+      appBarTheme: AppBarTheme(
         backgroundColor: Colors.transparent,
         elevation: 0,
         scrolledUnderElevation: 0,
         centerTitle: false,
-        systemOverlayStyle: SystemUiOverlayStyle(
+        systemOverlayStyle: const SystemUiOverlayStyle(
           statusBarColor: Colors.transparent,
           statusBarIconBrightness: Brightness.dark,
           statusBarBrightness: Brightness.light,
         ),
-        iconTheme: IconThemeData(color: AppColors.lightTextPrimary),
-        titleTextStyle: AppTypography.titleLarge,
+        iconTheme: const IconThemeData(color: AppColors.lightTextPrimary),
+        titleTextStyle: AppTypography.titleLarge.copyWith(color: AppColors.lightTextPrimary),
       ),
       cardTheme: CardThemeData(
         color: AppColors.lightSurfaceCard,
@@ -146,8 +146,8 @@ class AppTheme {
         margin: EdgeInsets.zero,
       ),
       bottomNavigationBarTheme: const BottomNavigationBarThemeData(
-        backgroundColor: AppColors.lightSurface,
-        selectedItemColor: AppColors.primaryGreenDark,
+        backgroundColor: AppColors.lightBackground,
+        selectedItemColor: AppColors.forestGreen,
         unselectedItemColor: AppColors.lightTextTertiary,
         type: BottomNavigationBarType.fixed,
         elevation: 8,
@@ -159,19 +159,19 @@ class AppTheme {
       ),
       elevatedButtonTheme: ElevatedButtonThemeData(
         style: ElevatedButton.styleFrom(
-          backgroundColor: AppColors.primaryGreenDark,
+          backgroundColor: AppColors.forestGreen,
           foregroundColor: Colors.white,
           elevation: 0,
           minimumSize: const Size(double.infinity, 52),
           shape: const RoundedRectangleBorder(borderRadius: AppRadius.mdRadius),
-          textStyle: AppTypography.titleSmall,
+          textStyle: AppTypography.titleSmall.copyWith(fontWeight: FontWeight.w700),
         ),
       ),
       outlinedButtonTheme: OutlinedButtonThemeData(
         style: OutlinedButton.styleFrom(
           foregroundColor: AppColors.lightTextPrimary,
           elevation: 0,
-          side: const BorderSide(color: AppColors.lightBorder, width: 1),
+          side: const BorderSide(color: AppColors.lightBorder, width: 1.2),
           minimumSize: const Size(double.infinity, 52),
           shape: const RoundedRectangleBorder(borderRadius: AppRadius.mdRadius),
           textStyle: AppTypography.titleSmall,
@@ -179,7 +179,7 @@ class AppTheme {
       ),
       textButtonTheme: TextButtonThemeData(
         style: TextButton.styleFrom(
-          foregroundColor: AppColors.primaryGreenDark,
+          foregroundColor: AppColors.forestGreen,
           textStyle: AppTypography.titleSmall,
         ),
       ),
@@ -197,11 +197,11 @@ class AppTheme {
         ),
         focusedBorder: const OutlineInputBorder(
           borderRadius: AppRadius.mdRadius,
-          borderSide: BorderSide(color: AppColors.primaryGreenDark, width: 1.5),
+          borderSide: BorderSide(color: AppColors.forestGreen, width: 1.5),
         ),
         errorBorder: const OutlineInputBorder(
           borderRadius: AppRadius.mdRadius,
-          borderSide: BorderSide(color: AppColors.error, width: 1),
+          borderSide: BorderSide(color: AppColors.danger, width: 1),
         ),
         hintStyle: AppTypography.bodyMedium.copyWith(color: AppColors.lightTextTertiary),
         labelStyle: AppTypography.bodyMedium.copyWith(color: AppColors.lightTextSecondary),

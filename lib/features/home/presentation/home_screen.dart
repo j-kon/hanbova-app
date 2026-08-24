@@ -127,10 +127,10 @@ class HomeScreen extends ConsumerWidget {
                           margin: const EdgeInsets.only(bottom: AppSpacing.sm),
                           padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                           decoration: BoxDecoration(
-                            color: (isMainnet ? colors.success : Colors.amber).withValues(alpha: 0.12),
+                            color: (isMainnet ? colors.success : colors.gold).withValues(alpha: 0.12),
                             borderRadius: AppRadius.xsRadius,
                             border: Border.all(
-                              color: (isMainnet ? colors.success : Colors.amber).withValues(alpha: 0.3),
+                              color: (isMainnet ? colors.success : colors.gold).withValues(alpha: 0.3),
                             ),
                           ),
                           child: Row(
@@ -138,14 +138,14 @@ class HomeScreen extends ConsumerWidget {
                             children: [
                               Icon(
                                 isMainnet ? Icons.verified_user : Icons.science_outlined,
-                                color: isMainnet ? colors.success : Colors.amber,
+                                color: isMainnet ? colors.success : colors.gold,
                                 size: 14,
                               ),
                               const SizedBox(width: 4),
                               Text(
                                 isMainnet ? 'MAINNET BETA • Real Bitcoin' : 'TEST MODE • No monetary value',
                                 style: AppTypography.labelSmall.copyWith(
-                                  color: isMainnet ? colors.success : Colors.amber,
+                                  color: isMainnet ? colors.success : colors.gold,
                                   fontSize: 10,
                                   fontWeight: FontWeight.w700,
                                 ),

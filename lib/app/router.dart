@@ -7,6 +7,7 @@ import '../features/auth/screens/reset_password_screen.dart';
 import '../features/auth/screens/sign_in_screen.dart';
 import '../features/auth/screens/sign_up_screen.dart';
 import '../features/auth/screens/wallet_setup_screen.dart';
+import '../features/splash/presentation/splash_screen.dart';
 import '../features/auth/screens/welcome_screen.dart';
 import '../features/home/presentation/home_screen.dart';
 import '../features/mints/presentation/mints_screen.dart';
@@ -52,7 +53,8 @@ final appRouterProvider = Provider<GoRouter>((ref) {
       final isAuth = authState.isAuthenticated;
       final location = state.uri.path;
 
-      final isAuthRoute = location == '/welcome' ||
+      final isAuthRoute = location == '/splash' ||
+          location == '/welcome' ||
           location == '/login' ||
           location == '/signup' ||
           location == '/forgot-password' ||
@@ -72,10 +74,17 @@ final appRouterProvider = Provider<GoRouter>((ref) {
       return null;
     },
     routes: [
-      // Auth routes
+      // Splash & Auth routes
+      GoRoute(
+        path: '/splash',
+        builder: (context, state) => const SplashScreen(),
+      ),
       GoRoute(
         path: '/welcome',
-        builder: (context, state) => const WelcomeScreen(),
+        builder: (context, state) {
+          final slide = int.tryParse(state.uri.queryParameters['slide'] ?? '0') ?? 0;
+          return WelcomeScreen(key: ValueKey('welcome_$slide'), initialSlide: slide);
+        },
       ),
       GoRoute(
         path: '/signup',

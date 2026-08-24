@@ -376,6 +376,37 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
               ),
             ),
             const SizedBox(height: AppSpacing.xl),
+
+            // Brand Footer
+            Center(
+              child: Column(
+                children: [
+                  Image.asset(
+                    'assets/branding/hanbova_icon_EXACT_MASTER.png',
+                    width: 32,
+                    height: 32,
+                    errorBuilder: (_, __, ___) => const SizedBox.shrink(),
+                  ),
+                  const SizedBox(height: 6),
+                  Text(
+                    'Hanbova',
+                    style: AppTypography.titleSmall.copyWith(
+                      color: colors.textSecondary,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                  const SizedBox(height: 2),
+                  Text(
+                    'Send protected. • v0.5.0-beta',
+                    style: AppTypography.caption.copyWith(
+                      color: colors.textTertiary,
+                      fontSize: 11,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: AppSpacing.lg),
           ],
         ),
       ),
