@@ -32,13 +32,27 @@ final GlobalKey<NavigatorState> _shellNavigatorActivityKey = GlobalKey<Navigator
 final GlobalKey<NavigatorState> _shellNavigatorProtectedKey = GlobalKey<NavigatorState>();
 final GlobalKey<NavigatorState> _shellNavigatorMeKey = GlobalKey<NavigatorState>();
 
+class _RouterNotifier extends ChangeNotifier {
+  final Ref _ref;
+
+  _RouterNotifier(this._ref) {
+    _ref.listen<AuthState>(authProvider, (_, __) => notifyListeners());
+  }
+}
+
+final _routerNotifierProvider = Provider<_RouterNotifier>((ref) {
+  return _RouterNotifier(ref);
+});
+
 final appRouterProvider = Provider<GoRouter>((ref) {
-  final authState = ref.watch(authProvider);
+  final notifier = ref.watch(_routerNotifierProvider);
 
   return GoRouter(
     navigatorKey: _rootNavigatorKey,
+    refreshListenable: notifier,
     initialLocation: '/home',
     redirect: (context, state) {
+      final authState = ref.read(authProvider);
       final isAuth = authState.isAuthenticated;
       final location = state.uri.path;
 
