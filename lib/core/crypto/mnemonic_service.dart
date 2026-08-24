@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'dart:math';
 import 'dart:typed_data';
 import 'package:cryptography/cryptography.dart';
@@ -105,5 +106,19 @@ class MnemonicService {
   /// Check if a single word is in the BIP-39 dictionary.
   static bool isValidWord(String word) {
     return _wordSet.contains(word.trim().toLowerCase());
+  }
+
+  /// Derives a standard 512-bit (64-byte / 128 hex characters) seed from a BIP-39 mnemonic.
+  static Future<String> mnemonicToSeedHex(String mnemonic, {String passphrase = ''}) async {
+    final pbkdf2 = Pbkdf2(
+      macAlgorithm: Hmac(Sha512()),
+      iterations: 2048,
+      bits: 512,
+    );
+    final salt = utf8.encode('mnemonic$passphrase');
+    final secretKey = SecretKey(utf8.encode(mnemonic.trim()));
+    final derivedKey = await pbkdf2.deriveKey(secretKey: secretKey, nonce: salt);
+    final bytes = await derivedKey.extractBytes();
+    return bytes.map((b) => b.toRadixString(16).padLeft(2, '0')).join();
   }
 }

@@ -20,13 +20,18 @@ final cashuWalletServiceProvider = Provider<CashuWalletService?>((ref) {
     return null;
   }
 
-  return ClientCashuWalletServiceImpl(
+  final service = CdkCashuWalletServiceImpl(
     userId: authState.user!.id,
     network: network,
+    walletSeedHex: cryptoIdentity.walletSeedHex,
     p2pkPrivateKeyHex: cryptoIdentity.protectedPaymentPrivkeyHex,
     p2pkPublicKeyHex: cryptoIdentity.protectedPaymentPubkey,
     storage: storage,
   );
+
+  ref.onDispose(() => service.dispose());
+
+  return service;
 });
 
 final cashuBalanceProvider = FutureProvider<CashuWalletBalance>((ref) async {

@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import '../network/network_environment.dart';
 import '../networking/api_client.dart';
+import 'mnemonic_service.dart';
 import 'secp256k1_service.dart';
 
 class WalletCryptoIdentity {
@@ -13,6 +14,8 @@ class WalletCryptoIdentity {
   final String transportEncryptionPubkey;
   final SimpleKeyPair transportKeyPair;
   final String protectedPaymentPrivkeyHex;
+  final String mnemonic;
+  final String walletSeedHex;
 
   const WalletCryptoIdentity({
     required this.userId,
@@ -21,6 +24,8 @@ class WalletCryptoIdentity {
     required this.transportEncryptionPubkey,
     required this.transportKeyPair,
     required this.protectedPaymentPrivkeyHex,
+    required this.mnemonic,
+    required this.walletSeedHex,
   });
 }
 
@@ -49,6 +54,7 @@ class CryptoIdentityNotifier extends AsyncNotifier<WalletCryptoIdentity?> {
 
       final savedTransportPriv = await _storage.read(key: '${keyPrefix}_transport_priv');
       final savedProtectedPriv = await _storage.read(key: '${keyPrefix}_protected_priv');
+      String? savedMnemonic = await _storage.read(key: '${keyPrefix}_mnemonic');
 
       SimpleKeyPair transportKeyPair;
       String protectedPaymentPrivHex;
@@ -75,6 +81,16 @@ class CryptoIdentityNotifier extends AsyncNotifier<WalletCryptoIdentity?> {
         );
       }
 
+      if (savedMnemonic == null || savedMnemonic.trim().isEmpty) {
+        savedMnemonic = await MnemonicService.generateMnemonic();
+        await _storage.write(
+          key: '${keyPrefix}_mnemonic',
+          value: savedMnemonic,
+        );
+      }
+
+      final walletSeedHex = await MnemonicService.mnemonicToSeedHex(savedMnemonic);
+
       final transportPublicKey = await transportKeyPair.extractPublicKey();
       final transportPubHex = transportPublicKey.bytes
           .map((b) => b.toRadixString(16).padLeft(2, '0'))
@@ -90,6 +106,8 @@ class CryptoIdentityNotifier extends AsyncNotifier<WalletCryptoIdentity?> {
         transportEncryptionPubkey: transportPubHex,
         transportKeyPair: transportKeyPair,
         protectedPaymentPrivkeyHex: protectedPaymentPrivHex,
+        mnemonic: savedMnemonic,
+        walletSeedHex: walletSeedHex,
       );
 
       state = AsyncValue.data(identity);
@@ -123,6 +141,7 @@ class CryptoIdentityNotifier extends AsyncNotifier<WalletCryptoIdentity?> {
     final keyPrefix = 'hanbova_${config.storagePrefix}_$userId';
     await _storage.delete(key: '${keyPrefix}_transport_priv');
     await _storage.delete(key: '${keyPrefix}_protected_priv');
+    await _storage.delete(key: '${keyPrefix}_mnemonic');
     state = const AsyncValue.data(null);
   }
 }

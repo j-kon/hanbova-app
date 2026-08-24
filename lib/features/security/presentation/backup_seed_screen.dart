@@ -2,12 +2,15 @@ import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import '../../../core/crypto/crypto_identity_service.dart';
 import '../../../core/crypto/mnemonic_service.dart';
 import '../../../core/security/biometric_service.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_radius.dart';
 import '../../../core/theme/app_spacing.dart';
 import '../../../core/theme/app_typography.dart';
+import '../../auth/providers/auth_provider.dart';
+import '../../../core/network/network_environment.dart';
 
 final walletBackupStatusProvider = StateProvider<bool>((ref) => false);
 
@@ -38,11 +41,23 @@ class _BackupSeedScreenState extends ConsumerState<BackupSeedScreen> {
   @override
   void initState() {
     super.initState();
-    _loadOrGenerateMnemonic();
+    WidgetsBinding.instance.addPostFrameCallback((_) => _loadWalletMnemonic());
   }
 
-  Future<void> _loadOrGenerateMnemonic() async {
-    final phrase = await MnemonicService.generateMnemonic();
+  Future<void> _loadWalletMnemonic() async {
+    final authState = ref.read(authProvider);
+    final network = ref.read(networkEnvironmentProvider);
+    String phrase;
+
+    if (authState.user != null) {
+      final identity = await ref
+          .read(cryptoIdentityProvider.notifier)
+          .getOrCreateIdentity(userId: authState.user!.id, network: network);
+      phrase = identity.mnemonic;
+    } else {
+      phrase = await MnemonicService.generateMnemonic();
+    }
+
     if (!mounted) return;
 
     final words = phrase.split(' ');
