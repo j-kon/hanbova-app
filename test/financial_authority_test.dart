@@ -1331,5 +1331,37 @@ void main() {
       // Escrow in CDK is intact
       expect(mockWallet.recordedEscrows.length, equals(1));
     });
+
+    test(
+        'clearCoordinationSyncPending explicitly clears syncPendingStatus to null',
+        () {
+      final container = ProviderContainer();
+      addTearDown(container.dispose);
+
+      final tx = TransactionModel(
+        id: 'tx_sync_test',
+        type: TransactionType.protectedSend,
+        status: TransactionStatus.claimable,
+        amountSats: 5000,
+        recipientOrSender: '@bob',
+        createdAt: DateTime.fromMillisecondsSinceEpoch(1700000000000),
+        coordinationSyncPending: true,
+        syncPendingStatus: 'claimable',
+      );
+
+      container.read(transactionsProvider.notifier).addTransaction(tx);
+      final initialTx = container.read(transactionsProvider).first;
+      expect(initialTx.coordinationSyncPending, isTrue);
+      expect(initialTx.syncPendingStatus, equals('claimable'));
+
+      // Clear coordination sync pending tracking
+      container
+          .read(transactionsProvider.notifier)
+          .clearCoordinationSyncPending(tx.id);
+
+      final clearedTx = container.read(transactionsProvider).first;
+      expect(clearedTx.coordinationSyncPending, isFalse);
+      expect(clearedTx.syncPendingStatus, isNull);
+    });
   });
 }

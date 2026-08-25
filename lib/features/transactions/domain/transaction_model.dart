@@ -46,6 +46,8 @@ class TransactionModel {
       type == TransactionType.instantSend ||
       type == TransactionType.protectedSend;
 
+  static const Object _sentinel = Object();
+
   TransactionModel copyWith({
     String? id,
     TransactionType? type,
@@ -57,8 +59,15 @@ class TransactionModel {
     DateTime? expiresAt,
     String? claimReference,
     bool? coordinationSyncPending,
-    String? syncPendingStatus,
+    Object? syncPendingStatus = _sentinel,
+    bool clearSyncPendingStatus = false,
   }) {
+    final effectiveSyncPendingStatus = clearSyncPendingStatus
+        ? null
+        : (identical(syncPendingStatus, _sentinel)
+            ? this.syncPendingStatus
+            : syncPendingStatus as String?);
+
     return TransactionModel(
       id: id ?? this.id,
       type: type ?? this.type,
@@ -71,7 +80,7 @@ class TransactionModel {
       claimReference: claimReference ?? this.claimReference,
       coordinationSyncPending:
           coordinationSyncPending ?? this.coordinationSyncPending,
-      syncPendingStatus: syncPendingStatus ?? this.syncPendingStatus,
+      syncPendingStatus: effectiveSyncPendingStatus,
     );
   }
 }

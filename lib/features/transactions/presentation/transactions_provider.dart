@@ -98,7 +98,7 @@ class TransactionsNotifier extends StateNotifier<List<TransactionModel>> {
       if (tx.id == id) {
         return tx.copyWith(
           coordinationSyncPending: false,
-          syncPendingStatus: null,
+          clearSyncPendingStatus: true,
         );
       }
       return tx;
