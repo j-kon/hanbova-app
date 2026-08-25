@@ -10,10 +10,13 @@ final cashuWalletStorageProvider = Provider<CashuWalletStorage>((ref) {
   return CashuWalletStorage();
 });
 
+final selectedMintUrlProvider = StateProvider<String?>((ref) => null);
+
 final cashuWalletServiceProvider = Provider<CashuWalletService?>((ref) {
   final authState = ref.watch(authProvider);
   final cryptoIdentity = ref.watch(cryptoIdentityProvider).value;
   final network = ref.watch(networkEnvironmentProvider);
+  final selectedMint = ref.watch(selectedMintUrlProvider);
   final storage = ref.watch(cashuWalletStorageProvider);
 
   if (authState.user == null || cryptoIdentity == null) {
@@ -26,6 +29,7 @@ final cashuWalletServiceProvider = Provider<CashuWalletService?>((ref) {
     walletSeedHex: cryptoIdentity.walletSeedHex,
     p2pkPrivateKeyHex: cryptoIdentity.protectedPaymentPrivkeyHex,
     p2pkPublicKeyHex: cryptoIdentity.protectedPaymentPubkey,
+    mintUrl: selectedMint,
     storage: storage,
   );
 

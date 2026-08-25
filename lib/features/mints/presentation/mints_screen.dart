@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import '../../../core/cashu/cashu_wallet_provider.dart';
 import '../../../core/cashu/mint_validator.dart';
 import '../../../core/network/network_environment.dart';
 import '../../../core/theme/app_colors.dart';
@@ -224,52 +225,72 @@ class _MintsScreenState extends ConsumerState<MintsScreen> {
             const SizedBox(height: AppSpacing.md),
 
             ...mints.map((mint) {
-              return Container(
-                margin: const EdgeInsets.only(bottom: AppSpacing.sm),
-                padding: const EdgeInsets.all(AppSpacing.md),
-                decoration: BoxDecoration(
-                  color: colors.surfaceCard,
-                  borderRadius: AppRadius.mdRadius,
-                  border: Border.all(color: mint.isDefault ? colors.primary : colors.border),
-                ),
-                child: Row(
-                  children: [
-                    Container(
-                      padding: const EdgeInsets.all(10),
-                      decoration: BoxDecoration(
-                        color: colors.primary.withValues(alpha: 0.1),
-                        shape: BoxShape.circle,
-                      ),
-                      child: Icon(Icons.account_balance_rounded, color: colors.primary, size: 20),
+              final activeMintUrl = ref.watch(selectedMintUrlProvider) ??
+                  NetworkConfig.fromNetwork(ref.watch(networkEnvironmentProvider)).defaultMintUrl;
+              final isActive = mint.url == activeMintUrl;
+
+              return InkWell(
+                onTap: () {
+                  ref.read(selectedMintUrlProvider.notifier).state = mint.url;
+                  ref.invalidate(cashuBalanceProvider);
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: Text('Switched active mint to ${mint.name}'),
+                      duration: const Duration(seconds: 2),
                     ),
-                    const SizedBox(width: AppSpacing.md),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Row(
-                            children: [
-                              Text(mint.name, style: AppTypography.titleSmall.copyWith(color: colors.textPrimary)),
-                              if (mint.isDefault) ...[
-                                const SizedBox(width: AppSpacing.xs),
-                                Container(
-                                  padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                                  decoration: BoxDecoration(
-                                    color: colors.primary.withValues(alpha: 0.15),
-                                    borderRadius: BorderRadius.circular(4),
+                  );
+                },
+                borderRadius: AppRadius.mdRadius,
+                child: Container(
+                  margin: const EdgeInsets.only(bottom: AppSpacing.sm),
+                  padding: const EdgeInsets.all(AppSpacing.md),
+                  decoration: BoxDecoration(
+                    color: colors.surfaceCard,
+                    borderRadius: AppRadius.mdRadius,
+                    border: Border.all(color: isActive ? colors.primary : colors.border),
+                  ),
+                  child: Row(
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.all(10),
+                        decoration: BoxDecoration(
+                          color: (isActive ? colors.primary : colors.textTertiary).withValues(alpha: 0.1),
+                          shape: BoxShape.circle,
+                        ),
+                        child: Icon(Icons.account_balance_rounded, color: isActive ? colors.primary : colors.textTertiary, size: 20),
+                      ),
+                      const SizedBox(width: AppSpacing.md),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Row(
+                              children: [
+                                Text(mint.name, style: AppTypography.titleSmall.copyWith(color: colors.textPrimary)),
+                                if (isActive) ...[
+                                  const SizedBox(width: AppSpacing.xs),
+                                  Container(
+                                    padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                                    decoration: BoxDecoration(
+                                      color: colors.primary.withValues(alpha: 0.15),
+                                      borderRadius: BorderRadius.circular(4),
+                                    ),
+                                    child: Text('Active', style: AppTypography.labelSmall.copyWith(color: colors.primary, fontSize: 10)),
                                   ),
-                                  child: Text('Active', style: AppTypography.labelSmall.copyWith(color: colors.primary, fontSize: 10)),
-                                ),
+                                ],
                               ],
-                            ],
-                          ),
-                          const SizedBox(height: 2),
-                          Text(mint.url, style: AppTypography.bodySmall.copyWith(color: colors.textTertiary, fontSize: 12)),
-                        ],
+                            ),
+                            const SizedBox(height: 2),
+                            Text(mint.url, style: AppTypography.bodySmall.copyWith(color: colors.textTertiary, fontSize: 12)),
+                          ],
+                        ),
                       ),
-                    ),
-                    Icon(Icons.check_circle_rounded, color: colors.success, size: 18),
-                  ],
+                      if (isActive)
+                        Icon(Icons.check_circle_rounded, color: colors.success, size: 18)
+                      else
+                        Icon(Icons.radio_button_unchecked, color: colors.textTertiary, size: 18),
+                    ],
+                  ),
                 ),
               );
             }),
