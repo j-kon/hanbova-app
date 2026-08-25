@@ -1,13 +1,19 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:hanbova_app/core/theme/app_theme.dart';
 import 'package:hanbova_app/features/auth/screens/forgot_password_screen.dart';
 import 'package:hanbova_app/features/auth/screens/sign_in_screen.dart';
 import 'package:hanbova_app/features/auth/screens/sign_up_screen.dart';
+import 'package:hanbova_app/features/auth/screens/wallet_setup_screen.dart';
 import 'package:hanbova_app/features/auth/screens/welcome_screen.dart';
 import 'package:flutter/material.dart';
 
 void main() {
+  setUp(() {
+    FlutterSecureStorage.setMockInitialValues({});
+  });
+
   group('Auth Screens Widget Tests', () {
     testWidgets('WelcomeScreen renders brand tagline and actions',
         (tester) async {
@@ -82,6 +88,32 @@ void main() {
       expect(find.text('Forgot password?'), findsOneWidget);
       expect(find.text('Email address'), findsOneWidget);
       expect(find.text('Continue'), findsOneWidget);
+    });
+
+    testWidgets('WalletSetupScreen renders step 1 backup phrase after init',
+        (tester) async {
+      tester.view.physicalSize = const Size(800, 1600);
+      tester.view.devicePixelRatio = 1.0;
+      addTearDown(tester.view.resetPhysicalSize);
+
+      await tester.pumpWidget(
+        MaterialApp(
+          theme: AppTheme.darkTheme,
+          home: const ProviderScope(
+            child: WalletSetupScreen(),
+          ),
+        ),
+      );
+
+      // Initial loading state
+      expect(find.byType(CircularProgressIndicator), findsOneWidget);
+
+      await tester.pump(const Duration(seconds: 1));
+      await tester.pump(const Duration(seconds: 1));
+
+      expect(find.text('Write Down Your Recovery Phrase'), findsOneWidget);
+      expect(find.text('Copy Phrase'), findsOneWidget);
+      expect(find.text('I Have Written It Down'), findsOneWidget);
     });
   });
 }

@@ -64,5 +64,18 @@ void main() {
       container.read(walletBackupStatusProvider.notifier).state = true;
       expect(container.read(walletBackupStatusProvider), isTrue);
     });
+
+    test(
+        'Controlled Mainnet Pilot config enforces strict caps and allowlisted mint',
+        () {
+      final pilot =
+          NetworkConfig.fromNetwork(HanbovaNetwork.mainnet, pilotActive: true);
+      expect(pilot.isPilot, isTrue);
+      expect(pilot.isEnabled, isTrue);
+      expect(pilot.maxDepositSats, 10000);
+      expect(pilot.maxSendSats, 5000);
+      expect(pilot.defaultMintUrl, 'https://mint.minibits.cash/Bitcoin');
+      expect(pilot.displayName, contains('Pilot'));
+    });
   });
 }
