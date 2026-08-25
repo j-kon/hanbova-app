@@ -70,6 +70,17 @@ class CashuWalletStorage {
     await _storage.write(key: _escrowsKey(userId, network), value: jsonStr);
   }
 
+  /// Finds a specific protected escrow record by canonical payment ID.
+  Future<ProtectedEscrowRecord?> getEscrowRecord(
+      String userId, HanbovaNetwork network, String paymentId) async {
+    final records = await loadEscrowRecords(userId, network);
+    try {
+      return records.firstWhere((r) => r.paymentId == paymentId);
+    } catch (_) {
+      return null;
+    }
+  }
+
   /// Clears wallet proofs and escrows for a given user & network (e.g. on wallet reset).
   Future<void> clearWalletData(String userId, HanbovaNetwork network) async {
     await _storage.delete(key: _proofsKey(userId, network));

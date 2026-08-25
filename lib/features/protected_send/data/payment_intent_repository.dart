@@ -76,6 +76,19 @@ class PaymentIntentRepository {
     return ProtectedPaymentIntent.fromJson(response);
   }
 
+  Future<ProtectedPaymentIntent> updatePaymentStatus(
+    String id,
+    String status,
+  ) async {
+    final payload = {
+      'status': status,
+    };
+
+    final response =
+        await _apiClient.post('/payment-intents/$id/status', payload);
+    return ProtectedPaymentIntent.fromJson(response);
+  }
+
   Future<List<ProtectedPaymentIntent>> getPaymentIntents() async {
     final response = await _apiClient.get('/payment-intents');
     if (response['data'] is List) {

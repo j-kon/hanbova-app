@@ -10,6 +10,9 @@ import '../../../core/theme/app_radius.dart';
 import '../../../core/theme/app_spacing.dart';
 import '../../../core/theme/app_typography.dart';
 import '../../../core/utils/formatters.dart';
+import '../../auth/providers/auth_provider.dart';
+import '../../protected_send/data/payment_intent_repository.dart';
+import '../../protected_send/presentation/protected_send_provider.dart';
 import '../../transactions/domain/transaction_model.dart';
 import '../../transactions/presentation/transactions_provider.dart';
 
@@ -56,7 +59,8 @@ class _ProtectedScreenState extends ConsumerState<ProtectedScreen> {
     final activeOutgoing = allTransactions
         .where((t) =>
             t.type == TransactionType.protectedSend &&
-            t.status == TransactionStatus.claimable)
+            (t.status == TransactionStatus.claimable ||
+                t.status == TransactionStatus.pending))
         .toList();
 
     final incoming = allTransactions
@@ -420,7 +424,7 @@ class _ActiveTab extends ConsumerWidget {
                   child: Row(
                     children: [
                       Text(
-                        'Claim code: ',
+                        'Payment ref: ',
                         style: AppTypography.bodySmall
                             .copyWith(color: colors.textTertiary, fontSize: 11),
                       ),
@@ -442,13 +446,74 @@ class _ActiveTab extends ConsumerWidget {
                               ClipboardData(text: tx.claimReference!));
                           ScaffoldMessenger.of(context).showSnackBar(
                               const SnackBar(
-                                  content: Text('Claim code copied!')));
+                                  content: Text('Payment reference copied!')));
                         },
                         child:
                             Icon(Icons.copy, size: 15, color: colors.primary),
                       ),
                     ],
                   ),
+                ),
+                const SizedBox(height: AppSpacing.sm),
+              ],
+
+              // Delivery Pending / Retry Action
+              if (tx.status == TransactionStatus.pending) ...[
+                Container(
+                  padding: const EdgeInsets.all(AppSpacing.xs + 2),
+                  decoration: BoxDecoration(
+                    color: colors.warning.withValues(alpha: 0.1),
+                    borderRadius: AppRadius.xsRadius,
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        children: [
+                          Icon(Icons.cloud_off_outlined,
+                              color: colors.warning, size: 14),
+                          const SizedBox(width: 4),
+                          Text(
+                            'Delivery Pending • Relay Unreachable',
+                            style: AppTypography.labelSmall
+                                .copyWith(color: colors.warning),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 2),
+                      Text(
+                        'Funds are locked safely in client escrow. You can retry relay delivery or wait for locktime to refund.',
+                        style: AppTypography.bodySmall.copyWith(
+                            color: colors.textSecondary, fontSize: 11),
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: AppSpacing.sm),
+                OutlinedButton.icon(
+                  onPressed: () async {
+                    final messenger = ScaffoldMessenger.of(context);
+                    final success = await ref
+                        .read(protectedSendProvider.notifier)
+                        .retryDelivery(tx.id);
+                    if (success) {
+                      messenger.showSnackBar(
+                        const SnackBar(
+                            content: Text(
+                                'Encrypted message relayed successfully!')),
+                      );
+                    } else {
+                      final err = ref.read(protectedSendProvider).errorMessage;
+                      messenger.showSnackBar(
+                        SnackBar(
+                          content: Text('Retry failed: $err'),
+                          backgroundColor: Colors.redAccent,
+                        ),
+                      );
+                    }
+                  },
+                  icon: const Icon(Icons.refresh, size: 16),
+                  label: const Text('Retry Delivery'),
                 ),
                 const SizedBox(height: AppSpacing.sm),
               ],
@@ -502,6 +567,23 @@ class _ActiveTab extends ConsumerWidget {
                           .read(transactionsProvider.notifier)
                           .updateTransactionStatus(
                               tx.id, TransactionStatus.refunded);
+
+                      // Coordinate backend status
+                      try {
+                        await ref
+                            .read(paymentIntentRepositoryProvider)
+                            .updatePaymentStatus(tx.id, 'refund_available');
+                      } catch (_) {}
+                      try {
+                        final auth = ref.read(authProvider);
+                        await ref
+                            .read(paymentIntentRepositoryProvider)
+                            .refundPaymentIntent(
+                              id: tx.id,
+                              senderId: auth.user?.id ?? 'sender',
+                            );
+                      } catch (_) {}
+
                       messenger.showSnackBar(
                         SnackBar(
                             content: Text(
@@ -689,6 +771,14 @@ class _IncomingTab extends ConsumerWidget {
                         .read(transactionsProvider.notifier)
                         .updateTransactionStatus(
                             tx.id, TransactionStatus.completed);
+
+                    // Coordinate status with backend
+                    try {
+                      await ref
+                          .read(paymentIntentRepositoryProvider)
+                          .claimPaymentIntent(tx.id);
+                    } catch (_) {}
+
                     messenger.showSnackBar(
                       SnackBar(
                           content: Text(

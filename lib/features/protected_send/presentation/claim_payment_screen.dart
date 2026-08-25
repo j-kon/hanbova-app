@@ -1,15 +1,20 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import '../../../core/cashu/cashu_wallet_provider.dart';
+import '../../../core/crypto/crypto_identity_service.dart';
+import '../../../core/crypto/encrypted_envelope_service.dart';
 import '../../../core/currency/currency_provider.dart';
+import '../../../core/network/network_environment.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_radius.dart';
 import '../../../core/theme/app_spacing.dart';
 import '../../../core/theme/app_typography.dart';
 import '../../../core/utils/formatters.dart';
+import '../../auth/providers/auth_provider.dart';
+import '../../protected/data/protected_message_service.dart';
 import '../../transactions/domain/transaction_model.dart';
 import '../../transactions/presentation/transactions_provider.dart';
-import '../../wallet/presentation/wallet_provider.dart';
 import '../data/payment_intent_repository.dart';
 import '../domain/protected_payment_intent.dart';
 
@@ -77,19 +82,77 @@ class _ClaimPaymentScreenState extends ConsumerState<ClaimPaymentScreen> {
     });
 
     try {
-      final repo = ref.read(paymentIntentRepositoryProvider);
-      final claimed = await repo.claimPaymentIntent(_loadedIntent!.id);
+      final authState = ref.read(authProvider);
+      if (authState.user == null) {
+        throw StateError(
+            'You must be authenticated to claim protected payments.');
+      }
 
-      ref.read(walletStateProvider.notifier).creditBalance(claimed.amountSats);
+      final currentUsername = authState.user!.username.toLowerCase();
+      final targetRecipient =
+          _loadedIntent!.recipientIdentifier.replaceAll('@', '').toLowerCase();
+      if (currentUsername != targetRecipient &&
+          _loadedIntent!.recipientIdentifier != authState.user!.id) {
+        throw StateError(
+            'This payment is intended for @${_loadedIntent!.recipientIdentifier}, but you are logged in as @${authState.user!.username}.');
+      }
+
+      final messageService = ref.read(protectedMessageServiceProvider);
+      final inbox = await messageService.getInbox();
+      final matchingMsg = inbox.firstWhere(
+        (m) => m.paymentIntentId == _loadedIntent!.id,
+        orElse: () => throw StateError(
+            'No encrypted protected envelope found for this payment intent in your inbox.'),
+      );
+
+      final network = ref.read(networkEnvironmentProvider);
+      final cryptoService = ref.read(cryptoIdentityProvider.notifier);
+      final identity = await cryptoService.getOrCreateIdentity(
+        userId: authState.user!.id,
+        network: network,
+      );
+
+      final envelopeService = EncryptedEnvelopeService();
+      final envelope = await envelopeService.decryptEnvelope(
+        ciphertextString: matchingMsg.encryptedPayload,
+        recipientKeyPair: identity.transportKeyPair,
+      );
+
+      final cashuWallet = ref.read(cashuWalletServiceProvider);
+      if (cashuWallet == null) {
+        throw StateError(
+            'Cashu wallet is not initialized. Please configure your wallet seed.');
+      }
+
+      // Execute genuine CDK NUT-11 claim
+      await cashuWallet.claimProtectedPayment(
+        token: envelope.cashuToken,
+        paymentId: _loadedIntent!.id,
+      );
+
+      // Invalidate balance so CDK/redb is polled as sole financial truth
+      ref.invalidate(cashuBalanceProvider);
+
+      // Coordinate status with backend
+      final repo = ref.read(paymentIntentRepositoryProvider);
+      try {
+        await repo.claimPaymentIntent(_loadedIntent!.id);
+      } catch (_) {
+        // Backend coordination failure after mint settlement must NOT undo financial success
+      }
+
       ref.read(transactionsProvider.notifier).addTransaction(
             TransactionModel(
-              id: claimed.id,
+              id: _loadedIntent!.id,
               type: TransactionType.protectedClaim,
               status: TransactionStatus.completed,
-              amountSats: claimed.amountSats,
-              recipientOrSender: 'Sender (${claimed.recipientIdentifier})',
-              description: 'Claimed Protected Payment',
+              amountSats: _loadedIntent!.amountSats,
+              recipientOrSender: _loadedIntent!.senderId ?? 'Sender',
+              description:
+                  _loadedIntent!.description ?? 'Claimed Protected Payment',
               createdAt: DateTime.now(),
+              claimReference:
+                  _loadedIntent!.claimReference ?? _loadedIntent!.id,
             ),
           );
 

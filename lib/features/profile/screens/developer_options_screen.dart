@@ -310,7 +310,7 @@ class _DeveloperOptionsScreenState
                   ),
                   const SizedBox(height: AppSpacing.xs),
                   Text(
-                    'Populate realistic African commerce transactions (Instant Lightning, Protected Escrow, Claims, and Auto-Refunds) for live pitch demos.',
+                    'Populate realistic African commerce transactions (Instant Lightning, Protected Escrow, Claims, and Refunds) for live pitch demos.',
                     style: AppTypography.bodySmall
                         .copyWith(color: colors.textSecondary, fontSize: 12),
                   ),

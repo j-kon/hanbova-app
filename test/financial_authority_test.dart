@@ -4,15 +4,18 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:hanbova_app/core/cashu/cashu_wallet_models.dart';
 import 'package:hanbova_app/core/cashu/cashu_wallet_provider.dart';
 import 'package:hanbova_app/core/cashu/cashu_wallet_service.dart';
+import 'package:hanbova_app/core/cashu/cashu_wallet_storage.dart';
+import 'package:hanbova_app/features/auth/models/user_profile.dart';
+import 'package:hanbova_app/features/auth/providers/auth_provider.dart';
 import 'package:http/http.dart' as http;
 import 'package:hanbova_app/core/networking/api_client.dart';
 import 'package:hanbova_app/features/protected/data/protected_message_service.dart';
 import 'package:hanbova_app/features/protected_send/data/payment_intent_repository.dart';
 import 'package:hanbova_app/features/protected_send/domain/protected_payment_intent.dart';
 import 'package:hanbova_app/features/protected_send/presentation/protected_send_provider.dart';
+import 'package:hanbova_app/core/network/network_environment.dart';
 import 'package:hanbova_app/features/transactions/domain/transaction_model.dart';
 import 'package:hanbova_app/features/transactions/presentation/transactions_provider.dart';
-import 'package:hanbova_app/features/wallet/presentation/wallet_provider.dart';
 
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:hanbova_app/core/security/secure_storage_service.dart';
@@ -53,8 +56,29 @@ class InMemorySecureStorageService extends SecureStorageService {
   }
 }
 
+final testUser = UserProfile(
+  id: 'usr_alice_123',
+  username: 'alice',
+  handle: '@alice',
+  email: 'alice@hanbova.africa',
+  firstName: 'Alice',
+  lastName: 'Doe',
+  displayName: 'Alice Doe',
+  emailVerified: true,
+  createdAt: DateTime.fromMillisecondsSinceEpoch(1700000000000),
+);
+
+class MockAuthNotifier extends StateNotifier<AuthState>
+    implements AuthNotifier {
+  MockAuthNotifier(super.state);
+
+  @override
+  dynamic noSuchMethod(Invocation invocation) => super.noSuchMethod(invocation);
+}
+
 class MockPaymentIntentRepository extends PaymentIntentRepository {
   final Map<String, ProtectedPaymentIntent> intents = {};
+  final List<String> statusTransitions = [];
 
   MockPaymentIntentRepository()
       : super(
@@ -79,9 +103,9 @@ class MockPaymentIntentRepository extends PaymentIntentRepository {
     final intent = ProtectedPaymentIntent(
       id: id,
       paymentType: paymentType,
-      status: paymentType == 'protected' ? 'claimable' : 'pending',
+      status: 'created',
       amountSats: amountSats,
-      senderId: senderId ?? 'sender_alice',
+      senderId: senderId ?? 'usr_alice_123',
       recipientIdentifier: recipientIdentifier,
       description: description,
       expiresAt: expiry,
@@ -89,6 +113,7 @@ class MockPaymentIntentRepository extends PaymentIntentRepository {
       createdAt: now,
     );
     intents[id] = intent;
+    statusTransitions.add('${intent.id}:created');
     return intent;
   }
 
@@ -100,35 +125,25 @@ class MockPaymentIntentRepository extends PaymentIntentRepository {
   }
 
   @override
-  Future<ProtectedPaymentIntent> claimPaymentIntent(String id,
-      {String? claimerIdentifier}) async {
-    final intent = intents[id];
-    if (intent == null) throw StateError('Payment intent $id not found');
-    final updated = ProtectedPaymentIntent(
-      id: intent.id,
-      paymentType: intent.paymentType,
-      status: 'claimed',
-      amountSats: intent.amountSats,
-      senderId: intent.senderId,
-      recipientIdentifier: claimerIdentifier ?? intent.recipientIdentifier,
-      description: intent.description,
-      expiresAt: intent.expiresAt,
-      claimReference: intent.claimReference,
-      createdAt: intent.createdAt,
-    );
-    intents[id] = updated;
-    return updated;
+  Future<ProtectedPaymentIntent> getPaymentIntentByReference(
+      String reference) async {
+    for (final intent in intents.values) {
+      if (intent.claimReference == reference || intent.id == reference) {
+        return intent;
+      }
+    }
+    return getPaymentIntent(reference);
   }
 
   @override
-  Future<ProtectedPaymentIntent> refundPaymentIntent(
-      {required String id, required String senderId}) async {
+  Future<ProtectedPaymentIntent> updatePaymentStatus(
+      String id, String status) async {
     final intent = intents[id];
     if (intent == null) throw StateError('Payment intent $id not found');
     final updated = ProtectedPaymentIntent(
       id: intent.id,
       paymentType: intent.paymentType,
-      status: 'refunded',
+      status: status,
       amountSats: intent.amountSats,
       senderId: intent.senderId,
       recipientIdentifier: intent.recipientIdentifier,
@@ -138,7 +153,20 @@ class MockPaymentIntentRepository extends PaymentIntentRepository {
       createdAt: intent.createdAt,
     );
     intents[id] = updated;
+    statusTransitions.add('$id:$status');
     return updated;
+  }
+
+  @override
+  Future<ProtectedPaymentIntent> claimPaymentIntent(String id,
+      {String? claimerIdentifier}) async {
+    return updatePaymentStatus(id, 'claimed');
+  }
+
+  @override
+  Future<ProtectedPaymentIntent> refundPaymentIntent(
+      {required String id, required String senderId}) async {
+    return updatePaymentStatus(id, 'refunded');
   }
 }
 
@@ -166,6 +194,9 @@ class MockFailingMessageService extends ProtectedMessageService {
 class MockSuccessMessageService extends ProtectedMessageService {
   bool deliveryFailed = false;
   String? lastPaymentIntentId;
+  String? lastRecipientUsername;
+  String? lastEncryptedPayload;
+  final List<RemoteProtectedMessage> inboxMessages = [];
 
   MockSuccessMessageService({this.deliveryFailed = false})
       : super(
@@ -173,9 +204,20 @@ class MockSuccessMessageService extends ProtectedMessageService {
 
   @override
   Future<UserPaymentProfile> resolveUserPaymentProfile(String username) async {
+    final clean = username.trim().replaceAll('@', '').toLowerCase();
+    if (clean == 'carol') {
+      return const UserPaymentProfile(
+        username: 'carol',
+        handle: '@carol',
+        protectedPaymentPubkey:
+            '03c1633cafcc01ebfb6d78e39f687a1f0995c62fc95f51ead10a02ee0be551b5cc',
+        transportEncryptionPubkey:
+            '7e9b4b9b9c9f0b83e3c09f8e434f0e9d7e9b4b9b9c9f0b83e3c09f8e434f0e9e',
+      );
+    }
     return UserPaymentProfile(
-      username: username,
-      handle: '@$username',
+      username: clean,
+      handle: '@$clean',
       protectedPaymentPubkey:
           '02a1633cafcc01ebfb6d78e39f687a1f0995c62fc95f51ead10a02ee0be551b5af',
       transportEncryptionPubkey:
@@ -191,11 +233,14 @@ class MockSuccessMessageService extends ProtectedMessageService {
     String? paymentIntentId,
   }) async {
     lastPaymentIntentId = paymentIntentId;
+    lastRecipientUsername = recipientUsername;
+    lastEncryptedPayload = encryptedPayload;
     if (deliveryFailed) {
       throw StateError('Failed to relay encrypted message');
     }
-    return RemoteProtectedMessage(
-      id: 'msg_123',
+    final msg = RemoteProtectedMessage(
+      id: 'msg_${inboxMessages.length + 1}',
+      paymentIntentId: paymentIntentId,
       senderUsername: 'alice',
       recipientUsername: recipientUsername,
       encryptedPayload: encryptedPayload,
@@ -203,6 +248,13 @@ class MockSuccessMessageService extends ProtectedMessageService {
       status: 'pending',
       createdAt: DateTime.now(),
     );
+    inboxMessages.add(msg);
+    return msg;
+  }
+
+  @override
+  Future<List<RemoteProtectedMessage>> getInbox() async {
+    return inboxMessages;
   }
 }
 
@@ -255,7 +307,7 @@ class MockSuccessfulCashuWalletService implements CashuWalletService {
     required String paymentId,
   }) async {
     final token = 'cashuA_nut11_real_token_for_$paymentId';
-    recordedEscrows[paymentId] = ProtectedEscrowRecord(
+    final escrow = ProtectedEscrowRecord(
       paymentId: paymentId,
       token: token,
       amountSats: amountSats,
@@ -268,6 +320,10 @@ class MockSuccessfulCashuWalletService implements CashuWalletService {
       status: 'locked',
       createdAt: DateTime.now(),
     );
+    recordedEscrows[paymentId] = escrow;
+    await CashuWalletStorage()
+        .saveEscrowRecord(testUser.id, HanbovaNetwork.local, escrow);
+
     currentBalance = CashuWalletBalance(
       spendableSats: currentBalance.spendableSats - amountSats,
       lockedEscrowSats: currentBalance.lockedEscrowSats + amountSats,
@@ -418,15 +474,40 @@ void main() {
   });
 
   group('Financial Authority & Fail-Closed Integrity Tests', () {
-    test('WalletStateNotifier has zero hardcoded initial spendable balance',
-        () {
+    test('production transaction list starts empty', () {
       final container = ProviderContainer();
       addTearDown(container.dispose);
 
-      final wallet = container.read(walletStateProvider);
-      expect(wallet.spendableSats, equals(0));
-      expect(wallet.protectedOutgoingSats, equals(0));
-      expect(wallet.totalSats, equals(0));
+      final transactions = container.read(transactionsProvider);
+      expect(transactions, isEmpty);
+    });
+
+    test('unauthenticated Protected Send fails', () async {
+      final container = ProviderContainer(
+        overrides: [
+          authProvider.overrideWith(
+              (ref) => MockAuthNotifier(AuthState.unauthenticated())),
+          paymentIntentRepositoryProvider
+              .overrideWithValue(MockPaymentIntentRepository()),
+          protectedMessageServiceProvider
+              .overrideWithValue(MockSuccessMessageService()),
+          cashuWalletServiceProvider
+              .overrideWithValue(MockSuccessfulCashuWalletService()),
+        ],
+      );
+      addTearDown(container.dispose);
+
+      final notifier = container.read(protectedSendProvider.notifier);
+      final success = await notifier.createProtectedPayment(
+        amountSats: 5000,
+        recipientIdentifier: '@bob',
+        description: 'Unauthenticated test',
+        expirationSeconds: 3600,
+      );
+
+      expect(success, isFalse);
+      final state = container.read(protectedSendProvider);
+      expect(state.errorMessage, contains('User must be authenticated'));
     });
 
     test(
@@ -434,6 +515,8 @@ void main() {
         () async {
       final container = ProviderContainer(
         overrides: [
+          authProvider.overrideWith((ref) =>
+              MockAuthNotifier(AuthState.authenticated(testUser, 'jwt'))),
           secureStorageServiceProvider
               .overrideWithValue(InMemorySecureStorageService()),
           paymentIntentRepositoryProvider
@@ -469,6 +552,8 @@ void main() {
         () async {
       final container = ProviderContainer(
         overrides: [
+          authProvider.overrideWith((ref) =>
+              MockAuthNotifier(AuthState.authenticated(testUser, 'jwt'))),
           secureStorageServiceProvider
               .overrideWithValue(InMemorySecureStorageService()),
           paymentIntentRepositoryProvider
@@ -503,6 +588,8 @@ void main() {
         () async {
       final container = ProviderContainer(
         overrides: [
+          authProvider.overrideWith((ref) =>
+              MockAuthNotifier(AuthState.authenticated(testUser, 'jwt'))),
           secureStorageServiceProvider
               .overrideWithValue(InMemorySecureStorageService()),
           paymentIntentRepositoryProvider
@@ -535,18 +622,20 @@ void main() {
     });
 
     test(
-        'Backend delivery failure preserves locked CDK escrow for refund while failing send flow',
+        'delivery failure after CDK lock remains visible and refundable, and retry delivery does not create second token',
         () async {
       final mockWallet = MockSuccessfulCashuWalletService();
       final mockMessageService =
           MockSuccessMessageService(deliveryFailed: true);
+      final mockRepo = MockPaymentIntentRepository();
 
       final container = ProviderContainer(
         overrides: [
+          authProvider.overrideWith((ref) =>
+              MockAuthNotifier(AuthState.authenticated(testUser, 'jwt'))),
           secureStorageServiceProvider
               .overrideWithValue(InMemorySecureStorageService()),
-          paymentIntentRepositoryProvider
-              .overrideWithValue(MockPaymentIntentRepository()),
+          paymentIntentRepositoryProvider.overrideWithValue(mockRepo),
           protectedMessageServiceProvider.overrideWithValue(mockMessageService),
           cashuWalletServiceProvider.overrideWithValue(mockWallet),
         ],
@@ -562,22 +651,168 @@ void main() {
         expirationSeconds: 3600,
       );
 
-      // Flow must report failure to UI
+      // Flow reports failure to UI
       expect(success, isFalse);
       final state = container.read(protectedSendProvider);
       expect(state.createdIntent, isNull);
       expect(state.errorMessage, contains('Failed to relay encrypted message'));
 
-      // BUT CDK escrow must be preserved so Alice can refund after locktime
+      // BUT CDK escrow is preserved
       expect(mockWallet.recordedEscrows.length, equals(1));
       final lockedPaymentId = mockWallet.recordedEscrows.keys.first;
 
-      // Local transaction is recorded as failed delivery
+      // Local transaction is recorded with status pending delivery
       final transactions = container.read(transactionsProvider);
       expect(transactions.length, equals(initialTxCount + 1));
-      final failedTx = transactions.first;
-      expect(failedTx.id, equals(lockedPaymentId));
-      expect(failedTx.status, equals(TransactionStatus.failed));
+      final pendingTx = transactions.first;
+      expect(pendingTx.id, equals(lockedPaymentId));
+      expect(pendingTx.status, equals(TransactionStatus.pending));
+
+      // Retry Delivery without creating a second CDK locked token
+      mockMessageService.deliveryFailed = false;
+      final retrySuccess = await notifier.retryDelivery(lockedPaymentId);
+      expect(retrySuccess, isTrue);
+
+      // Verify no second token was created
+      expect(mockWallet.recordedEscrows.length, equals(1));
+      expect(mockMessageService.lastPaymentIntentId, equals(lockedPaymentId));
+
+      // Local transaction transitions to claimable
+      final updatedTx = container.read(transactionsProvider).first;
+      expect(updatedTx.status, equals(TransactionStatus.claimable));
+    });
+
+    test(
+        'raw Cashu token is not stored in TransactionModel presentation metadata',
+        () async {
+      final mockWallet = MockSuccessfulCashuWalletService();
+      final mockMessageService = MockSuccessMessageService();
+      final mockRepo = MockPaymentIntentRepository();
+
+      final container = ProviderContainer(
+        overrides: [
+          authProvider.overrideWith((ref) =>
+              MockAuthNotifier(AuthState.authenticated(testUser, 'jwt'))),
+          secureStorageServiceProvider
+              .overrideWithValue(InMemorySecureStorageService()),
+          paymentIntentRepositoryProvider.overrideWithValue(mockRepo),
+          protectedMessageServiceProvider.overrideWithValue(mockMessageService),
+          cashuWalletServiceProvider.overrideWithValue(mockWallet),
+        ],
+      );
+      addTearDown(container.dispose);
+
+      final notifier = container.read(protectedSendProvider.notifier);
+      final success = await notifier.createProtectedPayment(
+        amountSats: 8000,
+        recipientIdentifier: '@valid_bob',
+        description: 'Payment ref test',
+        expirationSeconds: 3600,
+      );
+
+      expect(success, isTrue);
+      final tx = container.read(transactionsProvider).first;
+      expect(tx.claimReference, isNotNull);
+      expect(tx.claimReference!.startsWith('cashuA'), isFalse);
+      expect(tx.claimReference!.startsWith('hnbv_claim_'), isTrue);
+    });
+
+    test('Bob -> failure -> edit Carol uses Carol keys (recipient binding)',
+        () async {
+      final mockWallet = MockSuccessfulCashuWalletService();
+      final mockMessageService = MockSuccessMessageService();
+      final mockRepo = MockPaymentIntentRepository();
+
+      final container = ProviderContainer(
+        overrides: [
+          authProvider.overrideWith((ref) =>
+              MockAuthNotifier(AuthState.authenticated(testUser, 'jwt'))),
+          secureStorageServiceProvider
+              .overrideWithValue(InMemorySecureStorageService()),
+          paymentIntentRepositoryProvider.overrideWithValue(mockRepo),
+          protectedMessageServiceProvider.overrideWithValue(mockMessageService),
+          cashuWalletServiceProvider.overrideWithValue(mockWallet),
+        ],
+      );
+      addTearDown(container.dispose);
+
+      final notifier = container.read(protectedSendProvider.notifier);
+
+      // 1. Resolve Bob first
+      await notifier.resolveRecipient('bob');
+      expect(container.read(protectedSendProvider).resolvedRecipient?.username,
+          equals('bob'));
+
+      // 2. User edits field to Carol and sends
+      final success = await notifier.createProtectedPayment(
+        amountSats: 15000,
+        recipientIdentifier: '@carol',
+        description: 'Carol milestone',
+        expirationSeconds: 3600,
+      );
+
+      expect(success, isTrue);
+
+      // 3. Verify Carol's P2PK public key was used for CDK escrow, NOT Bob's
+      final escrow = mockWallet.recordedEscrows.values.first;
+      expect(
+        escrow.recipientPubkey,
+        equals(
+            '03c1633cafcc01ebfb6d78e39f687a1f0995c62fc95f51ead10a02ee0be551b5cc'),
+      );
+    });
+
+    test(
+        'backend status follows Created -> Protected -> Claimable, Bob claims, Alice refunds',
+        () async {
+      final mockWallet = MockSuccessfulCashuWalletService();
+      final mockMessageService = MockSuccessMessageService();
+      final mockRepo = MockPaymentIntentRepository();
+
+      final container = ProviderContainer(
+        overrides: [
+          authProvider.overrideWith((ref) =>
+              MockAuthNotifier(AuthState.authenticated(testUser, 'jwt'))),
+          secureStorageServiceProvider
+              .overrideWithValue(InMemorySecureStorageService()),
+          paymentIntentRepositoryProvider.overrideWithValue(mockRepo),
+          protectedMessageServiceProvider.overrideWithValue(mockMessageService),
+          cashuWalletServiceProvider.overrideWithValue(mockWallet),
+        ],
+      );
+      addTearDown(container.dispose);
+
+      final notifier = container.read(protectedSendProvider.notifier);
+      final success = await notifier.createProtectedPayment(
+        amountSats: 20000,
+        recipientIdentifier: '@valid_bob',
+        description: 'Lifecycle test',
+        expirationSeconds: 3600,
+      );
+
+      expect(success, isTrue);
+      final canonicalId =
+          container.read(protectedSendProvider).createdIntent!.id;
+
+      // Backend status progression
+      expect(mockRepo.statusTransitions, contains('$canonicalId:created'));
+      expect(mockRepo.statusTransitions, contains('$canonicalId:protected'));
+      expect(mockRepo.statusTransitions, contains('$canonicalId:claimable'));
+
+      // Bob claims -> coordinates Claimed
+      await mockWallet.claimProtectedPayment(
+          token: 'cashuA_nut11', paymentId: canonicalId);
+      await mockRepo.claimPaymentIntent(canonicalId);
+      expect(mockRepo.statusTransitions, contains('$canonicalId:claimed'));
+
+      // Alice refunds -> coordinates RefundAvailable -> Refunded
+      await mockWallet.refundProtectedPayment(paymentId: canonicalId);
+      await mockRepo.updatePaymentStatus(canonicalId, 'refund_available');
+      await mockRepo.refundPaymentIntent(
+          id: canonicalId, senderId: testUser.id);
+      expect(mockRepo.statusTransitions,
+          contains('$canonicalId:refund_available'));
+      expect(mockRepo.statusTransitions, contains('$canonicalId:refunded'));
     });
 
     test('Canonical Payment ID Regression Test: ID consistency across layers',
@@ -588,6 +823,8 @@ void main() {
 
       final container = ProviderContainer(
         overrides: [
+          authProvider.overrideWith((ref) =>
+              MockAuthNotifier(AuthState.authenticated(testUser, 'jwt'))),
           secureStorageServiceProvider
               .overrideWithValue(InMemorySecureStorageService()),
           paymentIntentRepositoryProvider.overrideWithValue(mockRepo),

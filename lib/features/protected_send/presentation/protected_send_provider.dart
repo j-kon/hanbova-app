@@ -1,5 +1,6 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/cashu/cashu_wallet_provider.dart';
+import '../../../core/cashu/cashu_wallet_storage.dart';
 import '../../../core/crypto/crypto_identity_service.dart';
 import '../../../core/crypto/encrypted_envelope_service.dart';
 import '../../../core/network/network_environment.dart';
@@ -28,12 +29,15 @@ class ProtectedSendState {
     String? errorMessage,
     ProtectedPaymentIntent? createdIntent,
     UserPaymentProfile? resolvedRecipient,
+    bool clearResolvedRecipient = false,
   }) {
     return ProtectedSendState(
       isLoading: isLoading ?? this.isLoading,
       errorMessage: errorMessage,
       createdIntent: createdIntent ?? this.createdIntent,
-      resolvedRecipient: resolvedRecipient ?? this.resolvedRecipient,
+      resolvedRecipient: clearResolvedRecipient
+          ? null
+          : (resolvedRecipient ?? this.resolvedRecipient),
     );
   }
 }
@@ -56,16 +60,20 @@ class ProtectedSendNotifier extends StateNotifier<ProtectedSendState> {
 
   /// Resolves the recipient payment profile before confirmation.
   Future<UserPaymentProfile?> resolveRecipient(String username) async {
-    state = state.copyWith(isLoading: true, errorMessage: null);
+    final clean = username.trim().replaceAll('@', '').toLowerCase();
+    state = state.copyWith(
+      isLoading: true,
+      errorMessage: null,
+      clearResolvedRecipient: true,
+    );
     try {
-      final clean = username.trim().replaceAll('@', '');
       final profile = await _messageService.resolveUserPaymentProfile(clean);
       state = state.copyWith(isLoading: false, resolvedRecipient: profile);
       return profile;
     } catch (e) {
       state = state.copyWith(
         isLoading: false,
-        resolvedRecipient: null,
+        clearResolvedRecipient: true,
         errorMessage:
             'Recipient @$username could not be found or has not registered payment keys.',
       );
@@ -83,15 +91,28 @@ class ProtectedSendNotifier extends StateNotifier<ProtectedSendState> {
 
     try {
       final authState = _ref.read(authProvider);
+      if (authState.user == null) {
+        throw StateError(
+            'User must be authenticated to send protected payments.');
+      }
+
       final network = _ref.read(networkEnvironmentProvider);
       final config = NetworkConfig.fromNetwork(network);
 
-      final senderUsername = authState.user?.username ?? 'alice';
-      final cleanRecipient = recipientIdentifier.trim().replaceAll('@', '');
+      final senderUsername = authState.user!.username;
+      final senderId = authState.user!.id;
+      final cleanRecipient =
+          recipientIdentifier.trim().replaceAll('@', '').toLowerCase();
 
-      // 1. Resolve recipient keys if not already resolved
-      final recipientProfile =
-          state.resolvedRecipient ?? await resolveRecipient(cleanRecipient);
+      // 1. Resolve recipient keys strictly matching current entered recipient
+      UserPaymentProfile? recipientProfile;
+      if (state.resolvedRecipient != null &&
+          state.resolvedRecipient!.username.toLowerCase() == cleanRecipient) {
+        recipientProfile = state.resolvedRecipient;
+      } else {
+        recipientProfile = await resolveRecipient(cleanRecipient);
+      }
+
       if (recipientProfile == null) {
         throw StateError(
             'Recipient @$cleanRecipient could not be found or has not registered payment keys.');
@@ -100,7 +121,7 @@ class ProtectedSendNotifier extends StateNotifier<ProtectedSendState> {
       // 2. Generate or load Sender Cryptographic Identity
       final cryptoService = _ref.read(cryptoIdentityProvider.notifier);
       await cryptoService.getOrCreateIdentity(
-        userId: authState.user?.id ?? 'sender_local',
+        userId: senderId,
         network: network,
       );
 
@@ -108,11 +129,12 @@ class ProtectedSendNotifier extends StateNotifier<ProtectedSendState> {
       final expiry = now.add(Duration(seconds: expirationSeconds));
       final locktimeUnix = expiry.millisecondsSinceEpoch ~/ 1000;
 
-      // 3. Create backend PaymentIntent FIRST to establish the canonical ID
+      // 3. Create backend PaymentIntent FIRST (Lifecycle status: Created)
       final intent = await _repository.createPaymentIntent(
         paymentType: 'protected',
         amountSats: amountSats,
         recipientIdentifier: recipientProfile.handle,
+        senderId: senderId,
         description: description.isEmpty ? null : description,
         expiresInSeconds: expirationSeconds,
       );
@@ -134,6 +156,12 @@ class ProtectedSendNotifier extends StateNotifier<ProtectedSendState> {
           paymentId: canonicalPaymentId,
         );
         _ref.invalidate(cashuBalanceProvider);
+
+        // Lifecycle: funds successfully locked in CDK -> update backend to Protected
+        try {
+          await _repository.updatePaymentStatus(
+              canonicalPaymentId, 'protected');
+        } catch (_) {}
       } catch (cdkError) {
         throw StateError('Failed to lock ecash in CDK: $cdkError');
       }
@@ -163,26 +191,33 @@ class ProtectedSendNotifier extends StateNotifier<ProtectedSendState> {
           payloadVersion: 1,
           paymentIntentId: canonicalPaymentId,
         );
+
+        // Lifecycle: encrypted message accepted by relay -> update backend to Claimable
+        try {
+          await _repository.updatePaymentStatus(
+              canonicalPaymentId, 'claimable');
+        } catch (_) {}
       } catch (deliveryError) {
         // Backend delivery failed, but CDK value is locked in redb!
-        // Preserve local TransactionModel with failed delivery status so the user can refund when expired.
+        // Do NOT mark financial state as Failed. Keep as active with pending delivery.
+        // The user can retry delivery or refund after locktime expiry.
         _ref.read(transactionsProvider.notifier).addTransaction(
               TransactionModel(
                 id: canonicalPaymentId,
                 type: TransactionType.protectedSend,
-                status: TransactionStatus.failed,
+                status: TransactionStatus.pending,
                 amountSats: amountSats,
                 recipientOrSender: recipientProfile.handle,
-                description: 'Delivery failed: $deliveryError',
+                description: 'Delivery pending: $deliveryError',
                 createdAt: intent.createdAt,
                 expiresAt: intent.expiresAt,
-                claimReference: cashuToken,
+                claimReference: intent.claimReference ?? intent.id,
               ),
             );
         throw StateError('Payment delivery to relay failed: $deliveryError');
       }
 
-      // 7. Record local Presentation Transaction with intent.id
+      // 7. Record local Presentation Transaction with intent.id (non-secret claimReference)
       _ref.read(transactionsProvider.notifier).addTransaction(
             TransactionModel(
               id: canonicalPaymentId,
@@ -193,11 +228,94 @@ class ProtectedSendNotifier extends StateNotifier<ProtectedSendState> {
               description: description,
               createdAt: intent.createdAt,
               expiresAt: intent.expiresAt,
-              claimReference: cashuToken,
+              claimReference: intent.claimReference ?? intent.id,
             ),
           );
 
       state = state.copyWith(isLoading: false, createdIntent: intent);
+      return true;
+    } catch (e) {
+      state = state.copyWith(isLoading: false, errorMessage: e.toString());
+      return false;
+    }
+  }
+
+  /// Retries delivery of an existing locked escrow without creating another CDK token.
+  Future<bool> retryDelivery(String canonicalPaymentId) async {
+    state = state.copyWith(isLoading: true, errorMessage: null);
+    try {
+      final authState = _ref.read(authProvider);
+      if (authState.user == null) {
+        throw StateError('User must be authenticated to retry delivery.');
+      }
+
+      final cashuWallet = _ref.read(cashuWalletServiceProvider);
+      if (cashuWallet == null) {
+        throw StateError('Cashu wallet is not initialized.');
+      }
+
+      final transactions = _ref.read(transactionsProvider);
+      final tx = transactions.firstWhere(
+        (t) => t.id == canonicalPaymentId,
+        orElse: () =>
+            throw StateError('Transaction $canonicalPaymentId not found'),
+      );
+
+      final cleanRecipient =
+          tx.recipientOrSender.trim().replaceAll('@', '').toLowerCase();
+      final recipientProfile = await resolveRecipient(cleanRecipient);
+      if (recipientProfile == null) {
+        throw StateError('Recipient @$cleanRecipient could not be found');
+      }
+
+      final network = _ref.read(networkEnvironmentProvider);
+      final config = NetworkConfig.fromNetwork(network);
+
+      // Load the existing escrow record from client storage (no new token minted or locked)
+      final storage = CashuWalletStorage();
+      final escrow = await storage.getEscrowRecord(
+        authState.user!.id,
+        network,
+        canonicalPaymentId,
+      );
+      if (escrow == null) {
+        throw StateError(
+            'Escrow record for payment $canonicalPaymentId not found in local storage');
+      }
+
+      final envelope = ProtectedPaymentEnvelope(
+        version: 1,
+        paymentId: canonicalPaymentId,
+        cashuToken: escrow.token,
+        mintUrl: config.defaultMintUrl,
+        amountSats: escrow.amountSats,
+        senderUsername: authState.user!.username,
+        recipientUsername: cleanRecipient,
+        locktime: escrow.locktime.millisecondsSinceEpoch ~/ 1000,
+      );
+
+      final ciphertext = await _envelopeService.encryptEnvelope(
+        envelope: envelope,
+        recipientTransportPubkeyHex: recipientProfile.transportEncryptionPubkey,
+      );
+
+      await _messageService.sendProtectedMessage(
+        recipientUsername: cleanRecipient,
+        encryptedPayload: ciphertext,
+        payloadVersion: 1,
+        paymentIntentId: canonicalPaymentId,
+      );
+
+      try {
+        await _repository.updatePaymentStatus(canonicalPaymentId, 'claimable');
+      } catch (_) {}
+
+      _ref.read(transactionsProvider.notifier).updateTransactionStatus(
+            canonicalPaymentId,
+            TransactionStatus.claimable,
+          );
+
+      state = state.copyWith(isLoading: false);
       return true;
     } catch (e) {
       state = state.copyWith(isLoading: false, errorMessage: e.toString());

@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../domain/transaction_model.dart';
 
@@ -7,36 +8,14 @@ final transactionsProvider =
 });
 
 class TransactionsNotifier extends StateNotifier<List<TransactionModel>> {
-  TransactionsNotifier() : super(_initialTransactions);
-
-  static final List<TransactionModel> _initialTransactions = [
-    TransactionModel(
-      id: 'tx_demo_1',
-      type: TransactionType.protectedSend,
-      status: TransactionStatus.claimable,
-      amountSats: 25000,
-      recipientOrSender: 'amina@hanbova.africa',
-      description: 'Design mockups milestone',
-      createdAt: DateTime.now().subtract(const Duration(hours: 2)),
-      expiresAt: DateTime.now().add(const Duration(hours: 22)),
-      claimReference: 'hnbv_claim_9281a',
-    ),
-    TransactionModel(
-      id: 'tx_demo_2',
-      type: TransactionType.instantReceive,
-      status: TransactionStatus.completed,
-      amountSats: 50000,
-      recipientOrSender: 'kofi@hanbova.me',
-      description: 'Settlement for equipment',
-      createdAt: DateTime.now().subtract(const Duration(days: 1)),
-    ),
-  ];
+  TransactionsNotifier() : super(const []);
 
   void addTransaction(TransactionModel tx) {
     state = [tx, ...state];
   }
 
   void seedDemoTransactions() {
+    if (!kDebugMode) return;
     final now = DateTime.now();
     state = [
       TransactionModel(
@@ -83,7 +62,7 @@ class TransactionsNotifier extends StateNotifier<List<TransactionModel>> {
         status: TransactionStatus.refunded,
         amountSats: 30000,
         recipientOrSender: 'seller_dispute@market.ng',
-        description: 'Auto-refund after unfulfilled delivery window',
+        description: 'Refund after unfulfilled delivery window',
         createdAt: now.subtract(const Duration(days: 5)),
       ),
     ];
