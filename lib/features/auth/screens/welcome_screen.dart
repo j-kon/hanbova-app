@@ -322,7 +322,17 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
                           ),
                         ],
                       ),
-                      const SizedBox(height: AppSpacing.sm),
+                      TextButton(
+                        onPressed: () => context.push('/restore-seed'),
+                        child: Text(
+                          'I already have a wallet • Restore with phrase',
+                          style: AppTypography.bodySmall.copyWith(
+                            color: colors.primary,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                      ),
+                      const SizedBox(height: AppSpacing.xs),
 
                       // Legal Disclaimer
                       Text(

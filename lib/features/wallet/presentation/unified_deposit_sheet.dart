@@ -1,8 +1,10 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:qr_flutter/qr_flutter.dart';
 import '../../../core/cashu/cashu_wallet_provider.dart';
+import '../../../core/network/network_environment.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_radius.dart';
 import '../../../core/theme/app_spacing.dart';
@@ -38,6 +40,7 @@ class _UnifiedDepositSheetState extends ConsumerState<UnifiedDepositSheet>
   String? _generatedInvoice;
   String? _quoteId;
   String? _errorMessage;
+  Timer? _pollTimer;
 
   // Cashu token state
   final TextEditingController _tokenController = TextEditingController();
@@ -52,10 +55,43 @@ class _UnifiedDepositSheetState extends ConsumerState<UnifiedDepositSheet>
 
   @override
   void dispose() {
+    _pollTimer?.cancel();
     _tabController.dispose();
     _amountController.dispose();
     _tokenController.dispose();
     super.dispose();
+  }
+
+  void _startPollingQuote(String quoteId) {
+    _pollTimer?.cancel();
+    _pollTimer =
+        Timer.periodic(const Duration(milliseconds: 2500), (timer) async {
+      if (_quoteId != quoteId || !mounted) {
+        timer.cancel();
+        return;
+      }
+      try {
+        final wallet = ref.read(cashuWalletServiceProvider);
+        if (wallet == null) return;
+        final minted = await wallet.mintQuote(quoteId);
+        if (minted > 0) {
+          timer.cancel();
+          ref.invalidate(cashuBalanceProvider);
+          if (mounted) {
+            setState(() {
+              _isMinting = false;
+              _generatedInvoice = null;
+              _quoteId = null;
+              _errorMessage = null;
+              _claimSuccessMessage =
+                  'Payment confirmed! Successfully minted $minted sats into your wallet.';
+            });
+          }
+        }
+      } catch (_) {
+        // Still pending payment on mint - continue polling
+      }
+    });
   }
 
   Future<void> _generateLightningInvoice() async {
@@ -65,9 +101,19 @@ class _UnifiedDepositSheetState extends ConsumerState<UnifiedDepositSheet>
       return;
     }
 
+    final network = ref.read(networkEnvironmentProvider);
+    final isPilot = ref.read(mainnetPilotOverrideProvider);
+    final config = NetworkConfig.fromNetwork(network, pilotActive: isPilot);
+    if (amount > config.maxDepositSats) {
+      setState(() => _errorMessage =
+          'Amount exceeds maximum deposit limit of ${config.maxDepositSats} sats for ${config.displayName}');
+      return;
+    }
+
     setState(() {
       _isGeneratingInvoice = true;
       _errorMessage = null;
+      _claimSuccessMessage = null;
       _quoteId = null;
     });
 
@@ -83,6 +129,8 @@ class _UnifiedDepositSheetState extends ConsumerState<UnifiedDepositSheet>
         _generatedInvoice = quote.bolt11Invoice;
         _isGeneratingInvoice = false;
       });
+
+      _startPollingQuote(quote.quoteId);
     } catch (e) {
       setState(() {
         _errorMessage = e.toString();
@@ -105,13 +153,15 @@ class _UnifiedDepositSheetState extends ConsumerState<UnifiedDepositSheet>
       }
 
       final minted = await wallet.mintQuote(_quoteId!);
+      _pollTimer?.cancel();
       ref.invalidate(cashuBalanceProvider);
 
       setState(() {
         _isMinting = false;
         _generatedInvoice = null;
         _quoteId = null;
-        _claimSuccessMessage = 'Successfully minted $minted sats into wallet!';
+        _claimSuccessMessage =
+            'Payment confirmed! Successfully minted $minted sats into your wallet.';
       });
     } catch (e) {
       setState(() {

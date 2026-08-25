@@ -11,7 +11,6 @@ import '../../../core/theme/app_radius.dart';
 import '../../../core/theme/app_spacing.dart';
 import '../../../core/theme/app_typography.dart';
 import '../../auth/providers/auth_provider.dart';
-import '../../security/presentation/mainnet_safety_dialog.dart';
 import '../../transactions/presentation/transactions_provider.dart';
 
 class DeveloperOptionsScreen extends ConsumerStatefulWidget {
@@ -55,11 +54,61 @@ class _DeveloperOptionsScreenState
     if (selectedNet == currentNet) return;
 
     if (selectedNet == HanbovaNetwork.mainnet) {
-      MainnetSafetyDialog.show(context);
+      showDialog(
+        context: context,
+        builder: (ctx) => AlertDialog(
+          title: Row(
+            children: const [
+              Icon(Icons.warning_amber_rounded, color: Colors.amber, size: 24),
+              SizedBox(width: 8),
+              Text('Controlled Mainnet Pilot'),
+            ],
+          ),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: const [
+              Text(
+                'This activates the experimental Mainnet Demo Pilot for small-value testing.',
+                style: TextStyle(fontWeight: FontWeight.bold),
+              ),
+              SizedBox(height: 8),
+              Text('• Max deposit: 10,000 sats (~~\$6)'),
+              Text('• Max send: 5,000 sats (~~\$3)'),
+              Text(
+                  '• Allowlisted mint only: https://mint.minibits.cash/Bitcoin'),
+              Text('• Not public mainnet beta. Do not store large funds.'),
+            ],
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(ctx),
+              child: const Text('Cancel'),
+            ),
+            ElevatedButton(
+              onPressed: () {
+                Navigator.pop(ctx);
+                ref.read(mainnetPilotOverrideProvider.notifier).state = true;
+                ref
+                    .read(networkEnvironmentProvider.notifier)
+                    .setNetwork(HanbovaNetwork.mainnet, pilotOverride: true);
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(
+                    content:
+                        Text('Switched to Bitcoin Mainnet (Controlled Pilot)'),
+                    backgroundColor: Colors.amber,
+                  ),
+                );
+              },
+              style:
+                  ElevatedButton.styleFrom(backgroundColor: Colors.amber[800]),
+              child: const Text('Enable Pilot'),
+            ),
+          ],
+        ),
+      );
       return;
     }
-
-    if (selectedNet == currentNet) return;
 
     showDialog(
       context: context,

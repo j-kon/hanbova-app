@@ -53,6 +53,9 @@ class HomeScreen extends ConsumerWidget {
         user?.firstName.isNotEmpty == true ? user!.firstName : 'Jeremiah';
 
     final currentNetwork = ref.watch(networkEnvironmentProvider);
+    final isPilotActive = ref.watch(mainnetPilotOverrideProvider);
+    final netConfig =
+        NetworkConfig.fromNetwork(currentNetwork, pilotActive: isPilotActive);
     final isMainnet = currentNetwork == HanbovaNetwork.mainnet;
 
     return Scaffold(
@@ -143,11 +146,19 @@ class HomeScreen extends ConsumerWidget {
                           padding: const EdgeInsets.symmetric(
                               horizontal: 8, vertical: 4),
                           decoration: BoxDecoration(
-                            color: (isMainnet ? colors.success : colors.gold)
+                            color: (isMainnet
+                                    ? (netConfig.isPilot
+                                        ? Colors.amber
+                                        : colors.success)
+                                    : colors.gold)
                                 .withValues(alpha: 0.12),
                             borderRadius: AppRadius.xsRadius,
                             border: Border.all(
-                              color: (isMainnet ? colors.success : colors.gold)
+                              color: (isMainnet
+                                      ? (netConfig.isPilot
+                                          ? Colors.amber
+                                          : colors.success)
+                                      : colors.gold)
                                   .withValues(alpha: 0.3),
                             ),
                           ),
@@ -156,19 +167,30 @@ class HomeScreen extends ConsumerWidget {
                             children: [
                               Icon(
                                 isMainnet
-                                    ? Icons.verified_user
+                                    ? (netConfig.isPilot
+                                        ? Icons.warning_amber_rounded
+                                        : Icons.verified_user)
                                     : Icons.science_outlined,
-                                color: isMainnet ? colors.success : colors.gold,
+                                color: isMainnet
+                                    ? (netConfig.isPilot
+                                        ? Colors.amber
+                                        : colors.success)
+                                    : colors.gold,
                                 size: 14,
                               ),
                               const SizedBox(width: 4),
                               Text(
                                 isMainnet
-                                    ? 'MAINNET BETA • Real Bitcoin'
+                                    ? (netConfig.isPilot
+                                        ? 'PILOT DEMO • Max 10k sats • Real Bitcoin'
+                                        : 'MAINNET (LOCKED)')
                                     : 'TEST MODE • No monetary value',
                                 style: AppTypography.labelSmall.copyWith(
-                                  color:
-                                      isMainnet ? colors.success : colors.gold,
+                                  color: isMainnet
+                                      ? (netConfig.isPilot
+                                          ? Colors.amber
+                                          : colors.success)
+                                      : colors.gold,
                                   fontSize: 10,
                                   fontWeight: FontWeight.w700,
                                 ),

@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../../core/currency/currency_provider.dart';
+import '../../../core/network/network_environment.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_radius.dart';
 import '../../../core/theme/app_spacing.dart';
@@ -50,6 +51,20 @@ class _ProtectedSendScreenState extends ConsumerState<ProtectedSendScreen> {
     final amountSats = int.parse(_amountController.text.trim());
     final recipient = _recipientController.text.trim();
     final description = _descriptionController.text.trim();
+
+    final network = ref.read(networkEnvironmentProvider);
+    final isPilot = ref.read(mainnetPilotOverrideProvider);
+    final config = NetworkConfig.fromNetwork(network, pilotActive: isPilot);
+    if (amountSats > config.maxSendSats) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+              'Amount exceeds maximum send limit of ${config.maxSendSats} sats for ${config.displayName}'),
+          backgroundColor: Colors.redAccent,
+        ),
+      );
+      return;
+    }
 
     await ref.read(protectedSendProvider.notifier).createProtectedPayment(
           amountSats: amountSats,
