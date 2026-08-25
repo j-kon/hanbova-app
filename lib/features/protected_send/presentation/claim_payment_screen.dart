@@ -135,10 +135,12 @@ class _ClaimPaymentScreenState extends ConsumerState<ClaimPaymentScreen> {
 
       // Coordinate status with backend
       final repo = ref.read(paymentIntentRepositoryProvider);
+      bool syncPending = false;
       try {
         await repo.claimPaymentIntent(_loadedIntent!.id);
       } catch (_) {
         // Backend coordination failure after mint settlement must NOT undo financial success
+        syncPending = true;
       }
 
       ref.read(transactionsProvider.notifier).addTransaction(
@@ -153,6 +155,8 @@ class _ClaimPaymentScreenState extends ConsumerState<ClaimPaymentScreen> {
               createdAt: DateTime.now(),
               claimReference:
                   _loadedIntent!.claimReference ?? _loadedIntent!.id,
+              coordinationSyncPending: syncPending,
+              syncPendingStatus: syncPending ? 'claimed' : null,
             ),
           );
 

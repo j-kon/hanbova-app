@@ -156,32 +156,61 @@ class ProtectedSendNotifier extends StateNotifier<ProtectedSendState> {
           paymentId: canonicalPaymentId,
         );
         _ref.invalidate(cashuBalanceProvider);
-
-        // Lifecycle: funds successfully locked in CDK -> update backend to Protected
-        try {
-          await _repository.updatePaymentStatus(
-              canonicalPaymentId, 'protected');
-        } catch (_) {}
       } catch (cdkError) {
         throw StateError('Failed to lock ecash in CDK: $cdkError');
       }
 
-      // 5. Encrypt Protected Payment Envelope for Recipient's Transport Key
-      final envelope = ProtectedPaymentEnvelope(
-        version: 1,
-        paymentId: canonicalPaymentId,
-        cashuToken: cashuToken,
-        mintUrl: config.defaultMintUrl,
+      // CRITICAL: Once createProtectedSend succeeds, immediately persist a local
+      // Active/Pending transaction using canonical PaymentIntent ID BEFORE envelope encryption.
+      final activeTx = TransactionModel(
+        id: canonicalPaymentId,
+        type: TransactionType.protectedSend,
+        status: TransactionStatus.pending,
         amountSats: amountSats,
-        senderUsername: senderUsername,
-        recipientUsername: cleanRecipient,
-        locktime: locktimeUnix,
+        recipientOrSender: recipientProfile.handle,
+        description: description,
+        createdAt: intent.createdAt,
+        expiresAt: intent.expiresAt,
+        claimReference: intent.claimReference ?? intent.id,
       );
+      _ref.read(transactionsProvider.notifier).addTransaction(activeTx);
 
-      final ciphertext = await _envelopeService.encryptEnvelope(
-        envelope: envelope,
-        recipientTransportPubkeyHex: recipientProfile.transportEncryptionPubkey,
-      );
+      // Lifecycle: funds successfully locked in CDK -> update backend to Protected
+      try {
+        await _repository.updatePaymentStatus(canonicalPaymentId, 'protected');
+      } catch (_) {
+        _ref
+            .read(transactionsProvider.notifier)
+            .markCoordinationSyncPending(canonicalPaymentId, 'protected');
+      }
+
+      // 5. Encrypt Protected Payment Envelope for Recipient's Transport Key
+      String ciphertext;
+      try {
+        final envelope = ProtectedPaymentEnvelope(
+          version: 1,
+          paymentId: canonicalPaymentId,
+          cashuToken: cashuToken,
+          mintUrl: config.defaultMintUrl,
+          amountSats: amountSats,
+          senderUsername: senderUsername,
+          recipientUsername: cleanRecipient,
+          locktime: locktimeUnix,
+        );
+
+        ciphertext = await _envelopeService.encryptEnvelope(
+          envelope: envelope,
+          recipientTransportPubkeyHex:
+              recipientProfile.transportEncryptionPubkey,
+        );
+      } catch (encError) {
+        _ref.read(transactionsProvider.notifier).updateTransaction(
+              activeTx.copyWith(
+                description: 'Encryption pending: $encError',
+              ),
+            );
+        throw StateError('Failed to encrypt transport envelope: $encError');
+      }
 
       // 6. Send Encrypted Envelope to Hanbova Backend Relay referencing intent.id
       try {
@@ -192,45 +221,36 @@ class ProtectedSendNotifier extends StateNotifier<ProtectedSendState> {
           paymentIntentId: canonicalPaymentId,
         );
 
-        // Lifecycle: encrypted message accepted by relay -> update backend to Claimable
+        // Lifecycle: encrypted message accepted by relay -> update local to Claimable
+        _ref.read(transactionsProvider.notifier).updateTransaction(
+              activeTx.copyWith(
+                status: TransactionStatus.claimable,
+                description: description,
+              ),
+            );
+
         try {
           await _repository.updatePaymentStatus(
               canonicalPaymentId, 'claimable');
-        } catch (_) {}
+          _ref
+              .read(transactionsProvider.notifier)
+              .clearCoordinationSyncPending(canonicalPaymentId);
+        } catch (_) {
+          _ref
+              .read(transactionsProvider.notifier)
+              .markCoordinationSyncPending(canonicalPaymentId, 'claimable');
+        }
       } catch (deliveryError) {
         // Backend delivery failed, but CDK value is locked in redb!
-        // Do NOT mark financial state as Failed. Keep as active with pending delivery.
-        // The user can retry delivery or refund after locktime expiry.
-        _ref.read(transactionsProvider.notifier).addTransaction(
-              TransactionModel(
-                id: canonicalPaymentId,
-                type: TransactionType.protectedSend,
+        // Local transaction is preserved with pending status.
+        _ref.read(transactionsProvider.notifier).updateTransaction(
+              activeTx.copyWith(
                 status: TransactionStatus.pending,
-                amountSats: amountSats,
-                recipientOrSender: recipientProfile.handle,
                 description: 'Delivery pending: $deliveryError',
-                createdAt: intent.createdAt,
-                expiresAt: intent.expiresAt,
-                claimReference: intent.claimReference ?? intent.id,
               ),
             );
         throw StateError('Payment delivery to relay failed: $deliveryError');
       }
-
-      // 7. Record local Presentation Transaction with intent.id (non-secret claimReference)
-      _ref.read(transactionsProvider.notifier).addTransaction(
-            TransactionModel(
-              id: canonicalPaymentId,
-              type: TransactionType.protectedSend,
-              status: TransactionStatus.claimable,
-              amountSats: amountSats,
-              recipientOrSender: recipientProfile.handle,
-              description: description,
-              createdAt: intent.createdAt,
-              expiresAt: intent.expiresAt,
-              claimReference: intent.claimReference ?? intent.id,
-            ),
-          );
 
       state = state.copyWith(isLoading: false, createdIntent: intent);
       return true;
@@ -306,14 +326,21 @@ class ProtectedSendNotifier extends StateNotifier<ProtectedSendState> {
         paymentIntentId: canonicalPaymentId,
       );
 
-      try {
-        await _repository.updatePaymentStatus(canonicalPaymentId, 'claimable');
-      } catch (_) {}
-
       _ref.read(transactionsProvider.notifier).updateTransactionStatus(
             canonicalPaymentId,
             TransactionStatus.claimable,
           );
+
+      try {
+        await _repository.updatePaymentStatus(canonicalPaymentId, 'claimable');
+        _ref
+            .read(transactionsProvider.notifier)
+            .clearCoordinationSyncPending(canonicalPaymentId);
+      } catch (_) {
+        _ref
+            .read(transactionsProvider.notifier)
+            .markCoordinationSyncPending(canonicalPaymentId, 'claimable');
+      }
 
       state = state.copyWith(isLoading: false);
       return true;

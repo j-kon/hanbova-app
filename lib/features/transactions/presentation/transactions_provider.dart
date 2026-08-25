@@ -71,16 +71,34 @@ class TransactionsNotifier extends StateNotifier<List<TransactionModel>> {
   void updateTransactionStatus(String id, TransactionStatus newStatus) {
     state = state.map((tx) {
       if (tx.id == id) {
-        return TransactionModel(
-          id: tx.id,
-          type: tx.type,
-          status: newStatus,
-          amountSats: tx.amountSats,
-          recipientOrSender: tx.recipientOrSender,
-          description: tx.description,
-          createdAt: tx.createdAt,
-          expiresAt: tx.expiresAt,
-          claimReference: tx.claimReference,
+        return tx.copyWith(status: newStatus);
+      }
+      return tx;
+    }).toList();
+  }
+
+  void updateTransaction(TransactionModel updatedTx) {
+    state = state.map((tx) => tx.id == updatedTx.id ? updatedTx : tx).toList();
+  }
+
+  void markCoordinationSyncPending(String id, String pendingStatus) {
+    state = state.map((tx) {
+      if (tx.id == id) {
+        return tx.copyWith(
+          coordinationSyncPending: true,
+          syncPendingStatus: pendingStatus,
+        );
+      }
+      return tx;
+    }).toList();
+  }
+
+  void clearCoordinationSyncPending(String id) {
+    state = state.map((tx) {
+      if (tx.id == id) {
+        return tx.copyWith(
+          coordinationSyncPending: false,
+          syncPendingStatus: null,
         );
       }
       return tx;

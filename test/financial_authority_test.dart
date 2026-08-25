@@ -17,6 +17,8 @@ import 'package:hanbova_app/core/network/network_environment.dart';
 import 'package:hanbova_app/features/transactions/domain/transaction_model.dart';
 import 'package:hanbova_app/features/transactions/presentation/transactions_provider.dart';
 
+import 'package:hanbova_app/core/crypto/crypto_identity_service.dart';
+import 'package:hanbova_app/core/crypto/encrypted_envelope_service.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:hanbova_app/core/security/secure_storage_service.dart';
 
@@ -93,8 +95,9 @@ class MockPaymentIntentRepository extends PaymentIntentRepository {
     String? description,
     int? expiresInSeconds,
   }) async {
+    final count = intents.length + 1;
     final id =
-        'intent_canonical_${intents.length + 1}_${DateTime.now().millisecondsSinceEpoch}';
+        'intent_canonical_${count}_${DateTime.now().microsecondsSinceEpoch}';
     final now = DateTime.now();
     final expiry = expiresInSeconds != null
         ? now.add(Duration(seconds: expiresInSeconds))
@@ -109,7 +112,8 @@ class MockPaymentIntentRepository extends PaymentIntentRepository {
       recipientIdentifier: recipientIdentifier,
       description: description,
       expiresAt: expiry,
-      claimReference: 'hnbv_claim_${id.substring(0, 8)}',
+      claimReference:
+          'hnbv_claim_${count}_${DateTime.now().microsecondsSinceEpoch}',
       createdAt: now,
     );
     intents[id] = intent;
@@ -132,7 +136,7 @@ class MockPaymentIntentRepository extends PaymentIntentRepository {
         return intent;
       }
     }
-    return getPaymentIntent(reference);
+    throw StateError('Payment intent with reference $reference not found');
   }
 
   @override
@@ -167,6 +171,27 @@ class MockPaymentIntentRepository extends PaymentIntentRepository {
   Future<ProtectedPaymentIntent> refundPaymentIntent(
       {required String id, required String senderId}) async {
     return updatePaymentStatus(id, 'refunded');
+  }
+}
+
+class MockThrowingSyncPaymentIntentRepository
+    extends MockPaymentIntentRepository {
+  @override
+  Future<ProtectedPaymentIntent> updatePaymentStatus(
+      String id, String status) async {
+    throw StateError('Backend network unreachable during status sync');
+  }
+
+  @override
+  Future<ProtectedPaymentIntent> claimPaymentIntent(String id,
+      {String? claimerIdentifier}) async {
+    throw StateError('Backend network unreachable during claim sync');
+  }
+
+  @override
+  Future<ProtectedPaymentIntent> refundPaymentIntent(
+      {required String id, required String senderId}) async {
+    throw StateError('Backend network unreachable during refund sync');
   }
 }
 
@@ -213,6 +238,14 @@ class MockSuccessMessageService extends ProtectedMessageService {
             '03c1633cafcc01ebfb6d78e39f687a1f0995c62fc95f51ead10a02ee0be551b5cc',
         transportEncryptionPubkey:
             '7e9b4b9b9c9f0b83e3c09f8e434f0e9d7e9b4b9b9c9f0b83e3c09f8e434f0e9e',
+      );
+    } else if (clean == 'malformed_key_user') {
+      return const UserPaymentProfile(
+        username: 'malformed_key_user',
+        handle: '@malformed_key_user',
+        protectedPaymentPubkey:
+            '02a1633cafcc01ebfb6d78e39f687a1f0995c62fc95f51ead10a02ee0be551b5af',
+        transportEncryptionPubkey: 'invalid_transport_pubkey_hex',
       );
     }
     return UserPaymentProfile(
@@ -336,11 +369,13 @@ class MockSuccessfulCashuWalletService implements CashuWalletService {
     required String token,
     required String paymentId,
   }) async {
+    final escrow = recordedEscrows[paymentId];
+    final amount = escrow?.amountSats ?? 14000;
     currentBalance = CashuWalletBalance(
-      spendableSats: currentBalance.spendableSats + 5000,
+      spendableSats: currentBalance.spendableSats + amount,
       lockedEscrowSats: currentBalance.lockedEscrowSats,
     );
-    return 5000;
+    return amount;
   }
 
   @override
@@ -1036,6 +1071,265 @@ void main() {
 
       final currentTx = container.read(transactionsProvider).first;
       expect(currentTx.status, equals(TransactionStatus.claimable));
+    });
+
+    test(
+        'encryption failure after successful CDK lock still leaves payment Active and refundable',
+        () async {
+      final mockWallet = MockSuccessfulCashuWalletService();
+      final mockMessageService = MockSuccessMessageService();
+      final mockRepo = MockPaymentIntentRepository();
+
+      final container = ProviderContainer(
+        overrides: [
+          authProvider.overrideWith((ref) =>
+              MockAuthNotifier(AuthState.authenticated(testUser, 'jwt'))),
+          secureStorageServiceProvider
+              .overrideWithValue(InMemorySecureStorageService()),
+          paymentIntentRepositoryProvider.overrideWithValue(mockRepo),
+          protectedMessageServiceProvider.overrideWithValue(mockMessageService),
+          cashuWalletServiceProvider.overrideWithValue(mockWallet),
+        ],
+      );
+      addTearDown(container.dispose);
+
+      final notifier = container.read(protectedSendProvider.notifier);
+      final success = await notifier.createProtectedPayment(
+        amountSats: 7500,
+        recipientIdentifier: '@malformed_key_user',
+        description: 'Encryption failure recovery test',
+        expirationSeconds: 3600,
+      );
+
+      // Presentation reports failure to encrypt
+      expect(success, isFalse);
+      final state = container.read(protectedSendProvider);
+      expect(
+          state.errorMessage, contains('Failed to encrypt transport envelope'));
+
+      // CDK escrow was locked and exists in storage
+      expect(mockWallet.recordedEscrows.length, equals(1));
+      final lockedPaymentId = mockWallet.recordedEscrows.keys.first;
+
+      // Local transaction is preserved in transactionsProvider with status pending
+      final txList = container.read(transactionsProvider);
+      expect(txList.length, equals(1));
+      final tx = txList.first;
+      expect(tx.id, equals(lockedPaymentId));
+      expect(tx.status, equals(TransactionStatus.pending));
+      expect(tx.description, contains('Encryption pending'));
+
+      // Sender can refund escrow after locktime
+      await mockWallet.refundProtectedPayment(paymentId: lockedPaymentId);
+      final balance = await mockWallet.getBalance();
+      expect(balance.spendableSats, equals(50000));
+    });
+
+    test('Incoming TransactionModel contains no bearer token', () async {
+      final tx = TransactionModel(
+        id: 'incoming_canonical_intent_42',
+        type: TransactionType.protectedSend,
+        status: TransactionStatus.claimable,
+        amountSats: 25000,
+        recipientOrSender: '@alice',
+        description: 'Incoming payment test',
+        createdAt: DateTime.now(),
+        claimReference: 'hnbv_claim_9281a',
+      );
+
+      expect(tx.claimReference, isNotNull);
+      expect(tx.claimReference!.startsWith('cashuA'), isFalse);
+      expect(tx.claimReference!.startsWith('cashuB'), isFalse);
+      expect(tx.claimReference, equals('hnbv_claim_9281a'));
+    });
+
+    test('Incoming Claim decrypts envelope before CDK receive', () async {
+      final mockWallet = MockSuccessfulCashuWalletService();
+      final mockMessageService = MockSuccessMessageService();
+      final mockRepo = MockPaymentIntentRepository();
+
+      final container = ProviderContainer(
+        overrides: [
+          authProvider.overrideWith((ref) =>
+              MockAuthNotifier(AuthState.authenticated(testUser, 'jwt'))),
+          secureStorageServiceProvider
+              .overrideWithValue(InMemorySecureStorageService()),
+          paymentIntentRepositoryProvider.overrideWithValue(mockRepo),
+          protectedMessageServiceProvider.overrideWithValue(mockMessageService),
+          cashuWalletServiceProvider.overrideWithValue(mockWallet),
+        ],
+      );
+      addTearDown(container.dispose);
+
+      // Create a genuine encrypted envelope for testUser
+      final cryptoService = container.read(cryptoIdentityProvider.notifier);
+      final recipientIdentity = await cryptoService.getOrCreateIdentity(
+        userId: testUser.id,
+        network: HanbovaNetwork.local,
+      );
+
+      final envelopeService = EncryptedEnvelopeService();
+      const canonicalPaymentId = 'intent_incoming_999';
+      const testCashuToken = 'cashuA_nut11_valid_test_token_secret';
+
+      final envelope = ProtectedPaymentEnvelope(
+        version: 1,
+        paymentId: canonicalPaymentId,
+        cashuToken: testCashuToken,
+        mintUrl: 'http://localhost:3338',
+        amountSats: 14000,
+        senderUsername: 'alice',
+        recipientUsername: testUser.username,
+        locktime: DateTime.now().millisecondsSinceEpoch ~/ 1000 + 3600,
+      );
+
+      final ciphertext = await envelopeService.encryptEnvelope(
+        envelope: envelope,
+        recipientTransportPubkeyHex:
+            recipientIdentity.transportEncryptionPubkey,
+      );
+
+      // Add encrypted message to relay inbox
+      mockMessageService.inboxMessages.add(
+        RemoteProtectedMessage(
+          id: 'msg_999',
+          paymentIntentId: canonicalPaymentId,
+          senderUsername: 'alice',
+          recipientUsername: testUser.username,
+          encryptedPayload: ciphertext,
+          payloadVersion: 1,
+          status: 'pending',
+          createdAt: DateTime.now(),
+        ),
+      );
+
+      // Add presentation transaction (containing NO bearer token)
+      final incomingTx = TransactionModel(
+        id: canonicalPaymentId,
+        type: TransactionType.protectedSend,
+        status: TransactionStatus.claimable,
+        amountSats: 14000,
+        recipientOrSender: '@alice',
+        description: 'Payment from Alice',
+        createdAt: DateTime.now(),
+        claimReference: 'hnbv_claim_ref_999',
+      );
+      container.read(transactionsProvider.notifier).addTransaction(incomingTx);
+
+      // Execute incoming claim flow: fetch envelope -> decrypt -> CDK receive
+      final inbox = await mockMessageService.getInbox();
+      final matchingMsg =
+          inbox.firstWhere((m) => m.paymentIntentId == incomingTx.id);
+      final decrypted = await envelopeService.decryptEnvelope(
+        ciphertextString: matchingMsg.encryptedPayload,
+        recipientKeyPair: recipientIdentity.transportKeyPair,
+      );
+      expect(decrypted.cashuToken, equals(testCashuToken));
+
+      await mockWallet.claimProtectedPayment(
+        token: decrypted.cashuToken,
+        paymentId: incomingTx.id,
+      );
+      container
+          .read(transactionsProvider.notifier)
+          .updateTransactionStatus(incomingTx.id, TransactionStatus.completed);
+
+      // Verify CDK received and balance was credited
+      final balance = await mockWallet.getBalance();
+      expect(balance.spendableSats, equals(64000)); // 50000 + 14000
+
+      // Presentation transaction status updated to completed without storing token
+      final updatedTx = container.read(transactionsProvider).first;
+      expect(updatedTx.status, equals(TransactionStatus.completed));
+      expect(updatedTx.claimReference, equals('hnbv_claim_ref_999'));
+    });
+
+    test('claim-reference lookup cannot select the wrong PaymentIntent',
+        () async {
+      final mockRepo = MockPaymentIntentRepository();
+
+      // Create Intent 1
+      final intent1 = await mockRepo.createPaymentIntent(
+        amountSats: 21000,
+        paymentType: 'protected',
+        recipientIdentifier: '@bob',
+        description: 'First intent',
+      );
+
+      // Create Intent 2
+      final intent2 = await mockRepo.createPaymentIntent(
+        amountSats: 42000,
+        paymentType: 'protected',
+        recipientIdentifier: '@carol',
+        description: 'Second intent',
+      );
+
+      expect(intent1.claimReference, isNot(equals(intent2.claimReference)));
+
+      // Exact reference lookup for Intent 1 returns ONLY Intent 1
+      final fetched1 =
+          await mockRepo.getPaymentIntentByReference(intent1.claimReference!);
+      expect(fetched1.id, equals(intent1.id));
+      expect(fetched1.amountSats, equals(21000));
+      expect(fetched1.description, equals('First intent'));
+
+      // Exact reference lookup for Intent 2 returns ONLY Intent 2
+      final fetched2 =
+          await mockRepo.getPaymentIntentByReference(intent2.claimReference!);
+      expect(fetched2.id, equals(intent2.id));
+      expect(fetched2.amountSats, equals(42000));
+      expect(fetched2.description, equals('Second intent'));
+
+      // Nonexistent reference throws and NEVER returns the first unrelated intent
+      expect(
+        () async =>
+            await mockRepo.getPaymentIntentByReference('nonexistent_ref_xyz'),
+        throwsA(isA<StateError>().having(
+            (e) => e.message,
+            'message',
+            contains(
+                'Payment intent with reference nonexistent_ref_xyz not found'))),
+      );
+    });
+
+    test(
+        'backend synchronization failure creates sync-pending state instead of changing financial result',
+        () async {
+      final mockWallet = MockSuccessfulCashuWalletService();
+      final mockMessageService = MockSuccessMessageService();
+      final mockThrowingRepo = MockThrowingSyncPaymentIntentRepository();
+
+      final container = ProviderContainer(
+        overrides: [
+          authProvider.overrideWith((ref) =>
+              MockAuthNotifier(AuthState.authenticated(testUser, 'jwt'))),
+          secureStorageServiceProvider
+              .overrideWithValue(InMemorySecureStorageService()),
+          paymentIntentRepositoryProvider.overrideWithValue(mockThrowingRepo),
+          protectedMessageServiceProvider.overrideWithValue(mockMessageService),
+          cashuWalletServiceProvider.overrideWithValue(mockWallet),
+        ],
+      );
+      addTearDown(container.dispose);
+
+      final notifier = container.read(protectedSendProvider.notifier);
+      final success = await notifier.createProtectedPayment(
+        amountSats: 10000,
+        recipientIdentifier: '@valid_bob',
+        description: 'Backend sync failure test',
+        expirationSeconds: 3600,
+      );
+
+      // Financial operation succeeded
+      expect(success, isTrue);
+      final tx = container.read(transactionsProvider).first;
+      expect(tx.status, equals(TransactionStatus.claimable));
+      // Marked coordinationSyncPending: true locally
+      expect(tx.coordinationSyncPending, isTrue);
+      expect(tx.syncPendingStatus, equals('claimable'));
+
+      // Escrow in CDK is intact
+      expect(mockWallet.recordedEscrows.length, equals(1));
     });
   });
 }

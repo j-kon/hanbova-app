@@ -41,13 +41,10 @@ class PaymentIntentRepository {
 
   Future<ProtectedPaymentIntent> getPaymentIntentByReference(
       String reference) async {
+    final cleanRef = Uri.encodeComponent(reference.trim());
     final response =
-        await _apiClient.get('/payment-intents?claim_reference=$reference');
-    if (response['data'] is List && (response['data'] as List).isNotEmpty) {
-      return ProtectedPaymentIntent.fromJson(
-          (response['data'] as List).first as Map<String, dynamic>);
-    }
-    return getPaymentIntent(reference);
+        await _apiClient.get('/payment-intents/by-reference/$cleanRef');
+    return ProtectedPaymentIntent.fromJson(response);
   }
 
   Future<ProtectedPaymentIntent> claimPaymentIntent(

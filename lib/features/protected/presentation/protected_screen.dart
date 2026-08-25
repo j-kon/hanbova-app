@@ -10,6 +10,10 @@ import '../../../core/theme/app_radius.dart';
 import '../../../core/theme/app_spacing.dart';
 import '../../../core/theme/app_typography.dart';
 import '../../../core/utils/formatters.dart';
+import '../../../core/crypto/crypto_identity_service.dart';
+import '../../../core/crypto/encrypted_envelope_service.dart';
+import '../../../core/network/network_environment.dart';
+import '../data/protected_message_service.dart';
 import '../../auth/providers/auth_provider.dart';
 import '../../protected_send/data/payment_intent_repository.dart';
 import '../../protected_send/presentation/protected_send_provider.dart';
@@ -573,16 +577,23 @@ class _ActiveTab extends ConsumerWidget {
                         await ref
                             .read(paymentIntentRepositoryProvider)
                             .updatePaymentStatus(tx.id, 'refund_available');
-                      } catch (_) {}
-                      try {
                         final auth = ref.read(authProvider);
-                        await ref
-                            .read(paymentIntentRepositoryProvider)
-                            .refundPaymentIntent(
-                              id: tx.id,
-                              senderId: auth.user?.id ?? 'sender',
-                            );
-                      } catch (_) {}
+                        if (auth.user != null) {
+                          await ref
+                              .read(paymentIntentRepositoryProvider)
+                              .refundPaymentIntent(
+                                id: tx.id,
+                                senderId: auth.user!.id,
+                              );
+                        }
+                        ref
+                            .read(transactionsProvider.notifier)
+                            .clearCoordinationSyncPending(tx.id);
+                      } catch (_) {
+                        ref
+                            .read(transactionsProvider.notifier)
+                            .markCoordinationSyncPending(tx.id, 'refunded');
+                      }
 
                       messenger.showSnackBar(
                         SnackBar(
@@ -757,13 +768,39 @@ class _IncomingTab extends ConsumerWidget {
                     if (cashuWallet == null) {
                       throw StateError('Cashu wallet not initialized');
                     }
-                    if (tx.claimReference == null ||
-                        tx.claimReference!.isEmpty) {
+                    final authState = ref.read(authProvider);
+                    if (authState.user == null) {
                       throw StateError(
-                          'Missing claim token reference for protected payment');
+                          'User must be authenticated to claim incoming payments');
                     }
+
+                    // 1. Fetch matching encrypted envelope from inbox
+                    final messageService =
+                        ref.read(protectedMessageServiceProvider);
+                    final inbox = await messageService.getInbox();
+                    final matchingMsg = inbox.firstWhere(
+                      (msg) => msg.paymentIntentId == tx.id,
+                      orElse: () => throw StateError(
+                          'No encrypted envelope found in inbox for payment ${tx.id}'),
+                    );
+
+                    // 2. Decrypt envelope using recipient transport keypair
+                    final network = ref.read(networkEnvironmentProvider);
+                    final cryptoService =
+                        ref.read(cryptoIdentityProvider.notifier);
+                    final identity = await cryptoService.getOrCreateIdentity(
+                      userId: authState.user!.id,
+                      network: network,
+                    );
+                    final envelope =
+                        await EncryptedEnvelopeService().decryptEnvelope(
+                      ciphertextString: matchingMsg.encryptedPayload,
+                      recipientKeyPair: identity.transportKeyPair,
+                    );
+
+                    // 3. Claim protected payment with CDK & Mint witness
                     await cashuWallet.claimProtectedPayment(
-                      token: tx.claimReference!,
+                      token: envelope.cashuToken,
                       paymentId: tx.id,
                     );
                     ref.invalidate(cashuBalanceProvider);
@@ -772,12 +809,19 @@ class _IncomingTab extends ConsumerWidget {
                         .updateTransactionStatus(
                             tx.id, TransactionStatus.completed);
 
-                    // Coordinate status with backend
+                    // 4. Coordinate status with backend
                     try {
                       await ref
                           .read(paymentIntentRepositoryProvider)
                           .claimPaymentIntent(tx.id);
-                    } catch (_) {}
+                      ref
+                          .read(transactionsProvider.notifier)
+                          .clearCoordinationSyncPending(tx.id);
+                    } catch (_) {
+                      ref
+                          .read(transactionsProvider.notifier)
+                          .markCoordinationSyncPending(tx.id, 'claimed');
+                    }
 
                     messenger.showSnackBar(
                       SnackBar(
