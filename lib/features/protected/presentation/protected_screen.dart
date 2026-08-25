@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import '../../../core/cashu/cashu_wallet_provider.dart';
 import '../../../core/currency/currency_provider.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_radius.dart';
@@ -451,10 +452,18 @@ class _ActiveTab extends ConsumerWidget {
                 ),
                 const SizedBox(height: AppSpacing.sm),
                 ElevatedButton(
-                  onPressed: () {
+                  onPressed: () async {
+                    final messenger = ScaffoldMessenger.of(context);
+                    final cashuWallet = ref.read(cashuWalletServiceProvider);
+                    if (cashuWallet != null) {
+                      try {
+                        await cashuWallet.refundProtectedPayment(paymentId: tx.id);
+                        ref.invalidate(cashuBalanceProvider);
+                      } catch (_) {}
+                    }
                     ref.read(walletStateProvider.notifier).unlockRefundToSpendable(tx.amountSats);
                     ref.read(transactionsProvider.notifier).updateTransactionStatus(tx.id, TransactionStatus.refunded);
-                    ScaffoldMessenger.of(context).showSnackBar(
+                    messenger.showSnackBar(
                       SnackBar(content: Text('Refunded ${Formatters.formatSats(tx.amountSats)} to spendable balance')),
                     );
                   },
@@ -599,10 +608,21 @@ class _IncomingTab extends ConsumerWidget {
               ),
               const SizedBox(width: AppSpacing.xs),
               ElevatedButton(
-                onPressed: () {
+                onPressed: () async {
+                  final messenger = ScaffoldMessenger.of(context);
+                  final cashuWallet = ref.read(cashuWalletServiceProvider);
+                  if (cashuWallet != null && tx.claimReference != null) {
+                    try {
+                      await cashuWallet.claimProtectedPayment(
+                        token: tx.claimReference!,
+                        paymentId: tx.id,
+                      );
+                      ref.invalidate(cashuBalanceProvider);
+                    } catch (_) {}
+                  }
                   ref.read(walletStateProvider.notifier).creditBalance(tx.amountSats);
                   ref.read(transactionsProvider.notifier).updateTransactionStatus(tx.id, TransactionStatus.completed);
-                  ScaffoldMessenger.of(context).showSnackBar(
+                  messenger.showSnackBar(
                     SnackBar(content: Text('Claimed ${Formatters.formatSats(tx.amountSats)} successfully!')),
                   );
                 },
