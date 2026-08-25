@@ -455,17 +455,25 @@ class _ActiveTab extends ConsumerWidget {
                   onPressed: () async {
                     final messenger = ScaffoldMessenger.of(context);
                     final cashuWallet = ref.read(cashuWalletServiceProvider);
-                    if (cashuWallet != null) {
-                      try {
+
+                    try {
+                      if (cashuWallet != null) {
                         await cashuWallet.refundProtectedPayment(paymentId: tx.id);
                         ref.invalidate(cashuBalanceProvider);
-                      } catch (_) {}
+                      }
+                      ref.read(walletStateProvider.notifier).unlockRefundToSpendable(tx.amountSats);
+                      ref.read(transactionsProvider.notifier).updateTransactionStatus(tx.id, TransactionStatus.refunded);
+                      messenger.showSnackBar(
+                        SnackBar(content: Text('Refunded ${Formatters.formatSats(tx.amountSats)} to spendable balance')),
+                      );
+                    } catch (e) {
+                      messenger.showSnackBar(
+                        SnackBar(
+                          content: Text('Refund failed: $e'),
+                          backgroundColor: Colors.redAccent,
+                        ),
+                      );
                     }
-                    ref.read(walletStateProvider.notifier).unlockRefundToSpendable(tx.amountSats);
-                    ref.read(transactionsProvider.notifier).updateTransactionStatus(tx.id, TransactionStatus.refunded);
-                    messenger.showSnackBar(
-                      SnackBar(content: Text('Refunded ${Formatters.formatSats(tx.amountSats)} to spendable balance')),
-                    );
                   },
                   child: const Text('Refund available'),
                 ),
@@ -611,20 +619,31 @@ class _IncomingTab extends ConsumerWidget {
                 onPressed: () async {
                   final messenger = ScaffoldMessenger.of(context);
                   final cashuWallet = ref.read(cashuWalletServiceProvider);
-                  if (cashuWallet != null && tx.claimReference != null) {
-                    try {
+
+                  try {
+                    if (cashuWallet != null) {
+                      if (tx.claimReference == null || tx.claimReference!.isEmpty) {
+                        throw StateError('Missing claim token reference for protected payment');
+                      }
                       await cashuWallet.claimProtectedPayment(
                         token: tx.claimReference!,
                         paymentId: tx.id,
                       );
                       ref.invalidate(cashuBalanceProvider);
-                    } catch (_) {}
+                    }
+                    ref.read(walletStateProvider.notifier).creditBalance(tx.amountSats);
+                    ref.read(transactionsProvider.notifier).updateTransactionStatus(tx.id, TransactionStatus.completed);
+                    messenger.showSnackBar(
+                      SnackBar(content: Text('Claimed ${Formatters.formatSats(tx.amountSats)} successfully!')),
+                    );
+                  } catch (e) {
+                    messenger.showSnackBar(
+                      SnackBar(
+                        content: Text('Claim failed: $e'),
+                        backgroundColor: Colors.redAccent,
+                      ),
+                    );
                   }
-                  ref.read(walletStateProvider.notifier).creditBalance(tx.amountSats);
-                  ref.read(transactionsProvider.notifier).updateTransactionStatus(tx.id, TransactionStatus.completed);
-                  messenger.showSnackBar(
-                    SnackBar(content: Text('Claimed ${Formatters.formatSats(tx.amountSats)} successfully!')),
-                  );
                 },
                 child: const Text('Claim'),
               ),

@@ -290,5 +290,69 @@ void main() {
       expect(Secp256k1Service.isValidCompressedPublicKeyHex(p2pkPub1), isTrue);
       expect(transportPub1.length, 64);
     });
+
+    test('Failed CDK claim operation throws and never mutates wallet balance or transaction state', () async {
+      final bobWallet = CdkCashuWalletServiceImpl(
+        userId: 'bob_fail_claim_test',
+        network: HanbovaNetwork.cashuTest,
+        walletSeedHex: aliceSeedHex,
+        p2pkPrivateKeyHex: bobPriv,
+        p2pkPublicKeyHex: bobPub,
+        dbPath: '/tmp/bob_fail_wallet',
+        storage: storage,
+        ffi: mockFfi,
+      );
+
+      final initialBalance = await bobWallet.getBalance();
+      expect(initialBalance.spendableSats, 0);
+
+      // Attempt claim with invalid token
+      expect(
+        () => bobWallet.claimProtectedPayment(
+          token: 'invalid_token_format',
+          paymentId: 'pay_fail_claim',
+        ),
+        throwsA(isA<StateError>()),
+      );
+
+      // Assert balance is unchanged (0 sats credited)
+      final balanceAfterFailedClaim = await bobWallet.getBalance();
+      expect(balanceAfterFailedClaim.spendableSats, 0);
+      expect(balanceAfterFailedClaim.lockedEscrowSats, 0);
+
+      bobWallet.dispose();
+    });
+
+    test('Failed CDK refund operation throws and never mutates wallet balance or transaction state', () async {
+      final aliceWallet = CdkCashuWalletServiceImpl(
+        userId: 'alice_fail_refund_test',
+        network: HanbovaNetwork.cashuTest,
+        walletSeedHex: aliceSeedHex,
+        p2pkPrivateKeyHex: alicePriv,
+        p2pkPublicKeyHex: alicePub,
+        dbPath: '/tmp/alice_fail_refund_wallet',
+        storage: storage,
+        ffi: mockFfi,
+      );
+
+      final initialBalance = await aliceWallet.getBalance();
+      expect(initialBalance.spendableSats, 0);
+      expect(initialBalance.lockedEscrowSats, 0);
+
+      // Attempt refund on non-existent payment ID
+      expect(
+        () => aliceWallet.refundProtectedPayment(
+          paymentId: 'non_existent_payment_id',
+        ),
+        throwsA(isA<StateError>()),
+      );
+
+      // Assert balance is unchanged
+      final balanceAfterFailedRefund = await aliceWallet.getBalance();
+      expect(balanceAfterFailedRefund.spendableSats, 0);
+      expect(balanceAfterFailedRefund.lockedEscrowSats, 0);
+
+      aliceWallet.dispose();
+    });
   });
 }

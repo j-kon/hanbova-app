@@ -121,7 +121,7 @@ class _RestoreSeedScreenState extends ConsumerState<RestoreSeedScreen> {
         builder: (ctx) => AlertDialog(
           title: const Text('Wallet Restored!'),
           content: const Text(
-            'Your recovery phrase was successfully verified and your wallet keys and balance have been restored.',
+            'Your wallet identity has been restored. Ecash balance recovery after complete device loss is still experimental in this test build.',
           ),
           actions: [
             ElevatedButton(
