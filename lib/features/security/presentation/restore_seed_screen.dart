@@ -1,11 +1,15 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import '../../../core/cashu/cashu_wallet_provider.dart';
+import '../../../core/crypto/crypto_identity_service.dart';
 import '../../../core/crypto/mnemonic_service.dart';
+import '../../../core/network/network_environment.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_radius.dart';
 import '../../../core/theme/app_spacing.dart';
 import '../../../core/theme/app_typography.dart';
+import '../../auth/providers/auth_provider.dart';
 import 'backup_seed_screen.dart';
 
 class RestoreSeedScreen extends ConsumerStatefulWidget {
@@ -81,19 +85,44 @@ class _RestoreSeedScreenState extends ConsumerState<RestoreSeedScreen> {
     final phrase = words.join(' ');
     setState(() => _isRestoring = true);
 
-    final isValid = await MnemonicService.validateMnemonic(phrase);
+    try {
+      final isValid = await MnemonicService.validateMnemonic(phrase);
+      if (!isValid) {
+        if (!mounted) return;
+        setState(() => _isRestoring = false);
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Invalid recovery phrase or checksum mismatch. Please check spelling.'),
+            backgroundColor: Colors.redAccent,
+          ),
+        );
+        return;
+      }
 
-    if (!mounted) return;
-    setState(() => _isRestoring = false);
+      final user = ref.read(currentUserProvider);
+      final userId = user?.id ?? 'default_user';
+      final network = ref.read(networkEnvironmentProvider);
 
-    if (isValid) {
+      await ref.read(cryptoIdentityProvider.notifier).restoreFromMnemonic(
+            mnemonic: phrase,
+            userId: userId,
+            network: network,
+          );
+
       ref.read(walletBackupStatusProvider.notifier).state = true;
+      ref.invalidate(cashuBalanceProvider);
+
+      if (!mounted) return;
+      setState(() => _isRestoring = false);
+
       showDialog(
         context: context,
         barrierDismissible: false,
         builder: (ctx) => AlertDialog(
           title: const Text('Wallet Restored!'),
-          content: const Text('Your recovery phrase was successfully verified and your wallet keys have been restored.'),
+          content: const Text(
+            'Your recovery phrase was successfully verified and your wallet keys and balance have been restored.',
+          ),
           actions: [
             ElevatedButton(
               onPressed: () {
@@ -105,10 +134,12 @@ class _RestoreSeedScreenState extends ConsumerState<RestoreSeedScreen> {
           ],
         ),
       );
-    } else {
+    } catch (e) {
+      if (!mounted) return;
+      setState(() => _isRestoring = false);
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Invalid recovery phrase or checksum mismatch. Please check spelling.'),
+        SnackBar(
+          content: Text('Failed to restore wallet: $e'),
           backgroundColor: Colors.redAccent,
         ),
       );
