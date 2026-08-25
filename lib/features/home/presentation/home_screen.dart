@@ -44,15 +44,9 @@ class HomeScreen extends ConsumerWidget {
             t.type == TransactionType.protectedSend &&
             t.status == TransactionStatus.claimable)
         .length;
-    final protectedSats = cashuBalance.lockedEscrowSats > 0
-        ? cashuBalance.lockedEscrowSats
-        : transactions
-            .where((t) =>
-                t.type == TransactionType.protectedSend &&
-                t.status == TransactionStatus.claimable)
-            .fold<int>(0, (sum, t) => sum + t.amountSats);
+    final protectedSats = cashuBalance.lockedEscrowSats;
     final spendableSats = cashuBalance.spendableSats;
-    final totalBalanceSats = spendableSats + protectedSats;
+    final totalBalanceSats = cashuBalance.totalSats;
 
     final greeting = _getGreeting();
     final firstName =

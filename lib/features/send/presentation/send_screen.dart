@@ -4,14 +4,12 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../../core/cashu/cashu_wallet_provider.dart';
 import '../../../core/currency/currency_provider.dart';
-import '../../../core/lightning/lightning_service.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_radius.dart';
 import '../../../core/theme/app_spacing.dart';
 import '../../../core/theme/app_typography.dart';
 import '../../transactions/domain/transaction_model.dart';
 import '../../transactions/presentation/transactions_provider.dart';
-import '../../wallet/presentation/wallet_provider.dart';
 
 class SendScreen extends ConsumerStatefulWidget {
   final String? initialInvoice;
@@ -50,37 +48,30 @@ class _SendScreenState extends ConsumerState<SendScreen> {
 
     setState(() => _isLoading = true);
 
-    final amountSats = int.tryParse(_amountController.text.trim()) ?? 1000;
     final invoice = _invoiceController.text.trim();
 
     try {
       final cashuWallet = ref.read(cashuWalletServiceProvider);
-      int paidAmountSats = amountSats;
-      int feeSats = 0;
-      String? preimage;
-
-      if (cashuWallet != null && invoice.toLowerCase().startsWith('lnbc')) {
-        // Execute genuine NUT-05 ecash melt
-        final quote = await cashuWallet.createMeltQuote(invoice);
-        final meltResult = await cashuWallet.payMeltQuote(quote.quoteId);
-        if (!meltResult.isPaid) {
-          throw StateError('Melt payment could not be completed by the mint');
-        }
-        paidAmountSats = quote.amountSats;
-        feeSats = quote.feeReserveSats;
-        preimage = meltResult.preimage;
-        ref.invalidate(cashuBalanceProvider);
-      } else {
-        final lightningService = ref.read(lightningServiceProvider);
-        final result = await lightningService.payInvoice(bolt11: invoice);
-        paidAmountSats = result.amountSats > 0 ? result.amountSats : amountSats;
-        feeSats = result.feeSats;
-        preimage = result.preimage;
+      if (cashuWallet == null) {
+        throw StateError(
+            'Cashu wallet is not initialized. Please ensure your wallet seed is configured.');
+      }
+      if (!invoice.toLowerCase().startsWith('lnbc')) {
+        throw ArgumentError(
+            'Please enter a valid BOLT11 Lightning invoice (starting with lnbc).');
       }
 
-      ref
-          .read(walletStateProvider.notifier)
-          .deductBalance(paidAmountSats + feeSats);
+      // Execute genuine NUT-05 ecash melt through CDK
+      final quote = await cashuWallet.createMeltQuote(invoice);
+      final meltResult = await cashuWallet.payMeltQuote(quote.quoteId);
+      if (!meltResult.isPaid) {
+        throw StateError('Melt payment could not be completed by the mint');
+      }
+      final paidAmountSats = quote.amountSats;
+      final feeSats = quote.feeReserveSats;
+      final preimage = meltResult.preimage;
+      ref.invalidate(cashuBalanceProvider);
+
       ref.read(transactionsProvider.notifier).addTransaction(
             TransactionModel(
               id: 'ln_pay_${DateTime.now().millisecondsSinceEpoch}',

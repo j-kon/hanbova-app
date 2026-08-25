@@ -12,7 +12,6 @@ import '../../../core/theme/app_typography.dart';
 import '../../../core/utils/formatters.dart';
 import '../../transactions/domain/transaction_model.dart';
 import '../../transactions/presentation/transactions_provider.dart';
-import '../../wallet/presentation/wallet_provider.dart';
 
 enum ProtectedFilter {
   active,
@@ -500,9 +499,6 @@ class _ActiveTab extends ConsumerWidget {
                           paymentId: tx.id);
                       ref.invalidate(cashuBalanceProvider);
                       ref
-                          .read(walletStateProvider.notifier)
-                          .unlockRefundToSpendable(tx.amountSats);
-                      ref
                           .read(transactionsProvider.notifier)
                           .updateTransactionStatus(
                               tx.id, TransactionStatus.refunded);
@@ -689,9 +685,6 @@ class _IncomingTab extends ConsumerWidget {
                       paymentId: tx.id,
                     );
                     ref.invalidate(cashuBalanceProvider);
-                    ref
-                        .read(walletStateProvider.notifier)
-                        .creditBalance(tx.amountSats);
                     ref
                         .read(transactionsProvider.notifier)
                         .updateTransactionStatus(

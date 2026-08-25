@@ -1,5 +1,4 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:uuid/uuid.dart';
 import '../../../core/cashu/cashu_wallet_provider.dart';
 import '../../../core/crypto/crypto_identity_service.dart';
 import '../../../core/crypto/encrypted_envelope_service.dart';
@@ -8,7 +7,6 @@ import '../../auth/providers/auth_provider.dart';
 import '../../protected/data/protected_message_service.dart';
 import '../../transactions/domain/transaction_model.dart';
 import '../../transactions/presentation/transactions_provider.dart';
-import '../../wallet/presentation/wallet_provider.dart';
 import '../data/payment_intent_repository.dart';
 import '../domain/protected_payment_intent.dart';
 
@@ -106,30 +104,44 @@ class ProtectedSendNotifier extends StateNotifier<ProtectedSendState> {
         network: network,
       );
 
-      final paymentId = const Uuid().v4();
       final now = DateTime.now();
       final expiry = now.add(Duration(seconds: expirationSeconds));
       final locktimeUnix = expiry.millisecondsSinceEpoch ~/ 1000;
 
-      // 3. Create Cashu P2PK Token via official CDK
+      // 3. Create backend PaymentIntent FIRST to establish the canonical ID
+      final intent = await _repository.createPaymentIntent(
+        paymentType: 'protected',
+        amountSats: amountSats,
+        recipientIdentifier: recipientProfile.handle,
+        description: description.isEmpty ? null : description,
+        expiresInSeconds: expirationSeconds,
+      );
+      final canonicalPaymentId = intent.id;
+
+      // 4. Create Cashu P2PK Token via official CDK using canonical intent.id
       final cashuWallet = _ref.read(cashuWalletServiceProvider);
       if (cashuWallet == null) {
         throw StateError(
             'Cashu wallet is not initialized. Please ensure your wallet seed is configured.');
       }
 
-      final cashuToken = await cashuWallet.createProtectedSend(
-        amountSats: amountSats,
-        recipientPubkey: recipientProfile.protectedPaymentPubkey,
-        locktime: expiry,
-        paymentId: paymentId,
-      );
-      _ref.invalidate(cashuBalanceProvider);
+      String cashuToken;
+      try {
+        cashuToken = await cashuWallet.createProtectedSend(
+          amountSats: amountSats,
+          recipientPubkey: recipientProfile.protectedPaymentPubkey,
+          locktime: expiry,
+          paymentId: canonicalPaymentId,
+        );
+        _ref.invalidate(cashuBalanceProvider);
+      } catch (cdkError) {
+        throw StateError('Failed to lock ecash in CDK: $cdkError');
+      }
 
-      // 4. Encrypt Protected Payment Envelope for Recipient's Transport Key
+      // 5. Encrypt Protected Payment Envelope for Recipient's Transport Key
       final envelope = ProtectedPaymentEnvelope(
         version: 1,
-        paymentId: paymentId,
+        paymentId: canonicalPaymentId,
         cashuToken: cashuToken,
         mintUrl: config.defaultMintUrl,
         amountSats: amountSats,
@@ -143,29 +155,37 @@ class ProtectedSendNotifier extends StateNotifier<ProtectedSendState> {
         recipientTransportPubkeyHex: recipientProfile.transportEncryptionPubkey,
       );
 
-      // 5. Send Encrypted Envelope to Hanbova Backend Relay
-      await _messageService.sendProtectedMessage(
-        recipientUsername: cleanRecipient,
-        encryptedPayload: ciphertext,
-        payloadVersion: 1,
-        paymentIntentId: paymentId,
-      );
+      // 6. Send Encrypted Envelope to Hanbova Backend Relay referencing intent.id
+      try {
+        await _messageService.sendProtectedMessage(
+          recipientUsername: cleanRecipient,
+          encryptedPayload: ciphertext,
+          payloadVersion: 1,
+          paymentIntentId: canonicalPaymentId,
+        );
+      } catch (deliveryError) {
+        // Backend delivery failed, but CDK value is locked in redb!
+        // Preserve local TransactionModel with failed delivery status so the user can refund when expired.
+        _ref.read(transactionsProvider.notifier).addTransaction(
+              TransactionModel(
+                id: canonicalPaymentId,
+                type: TransactionType.protectedSend,
+                status: TransactionStatus.failed,
+                amountSats: amountSats,
+                recipientOrSender: recipientProfile.handle,
+                description: 'Delivery failed: $deliveryError',
+                createdAt: intent.createdAt,
+                expiresAt: intent.expiresAt,
+                claimReference: cashuToken,
+              ),
+            );
+        throw StateError('Payment delivery to relay failed: $deliveryError');
+      }
 
-      // 6. Record Payment Intent locally
-      final intent = await _repository.createPaymentIntent(
-        paymentType: 'protected',
-        amountSats: amountSats,
-        recipientIdentifier: recipientProfile.handle,
-        description: description.isEmpty ? null : description,
-        expiresInSeconds: expirationSeconds,
-      );
-
-      // 7. Lock balance in protected outgoing pool
-      _ref.read(walletStateProvider.notifier).lockProtectedOutgoing(amountSats);
-
+      // 7. Record local Presentation Transaction with intent.id
       _ref.read(transactionsProvider.notifier).addTransaction(
             TransactionModel(
-              id: intent.id,
+              id: canonicalPaymentId,
               type: TransactionType.protectedSend,
               status: TransactionStatus.claimable,
               amountSats: amountSats,
