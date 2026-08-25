@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import '../../../core/cashu/cashu_wallet_provider.dart';
 import '../../../core/currency/currency_provider.dart';
 import '../../../core/lightning/lightning_service.dart';
 import '../../../core/theme/app_colors.dart';
@@ -53,18 +54,39 @@ class _SendScreenState extends ConsumerState<SendScreen> {
     final invoice = _invoiceController.text.trim();
 
     try {
-      final lightningService = ref.read(lightningServiceProvider);
-      final result = await lightningService.payInvoice(bolt11: invoice);
+      final cashuWallet = ref.read(cashuWalletServiceProvider);
+      int paidAmountSats = amountSats;
+      int feeSats = 0;
+      String? preimage;
 
-      ref.read(walletStateProvider.notifier).deductBalance(amountSats);
+      if (cashuWallet != null && invoice.toLowerCase().startsWith('lnbc')) {
+        // Execute genuine NUT-05 ecash melt
+        final quote = await cashuWallet.createMeltQuote(invoice);
+        final meltResult = await cashuWallet.payMeltQuote(quote.quoteId);
+        if (!meltResult.isPaid) {
+          throw StateError('Melt payment could not be completed by the mint');
+        }
+        paidAmountSats = quote.amountSats;
+        feeSats = quote.feeReserveSats;
+        preimage = meltResult.preimage;
+        ref.invalidate(cashuBalanceProvider);
+      } else {
+        final lightningService = ref.read(lightningServiceProvider);
+        final result = await lightningService.payInvoice(bolt11: invoice);
+        paidAmountSats = result.amountSats > 0 ? result.amountSats : amountSats;
+        feeSats = result.feeSats;
+        preimage = result.preimage;
+      }
+
+      ref.read(walletStateProvider.notifier).deductBalance(paidAmountSats + feeSats);
       ref.read(transactionsProvider.notifier).addTransaction(
             TransactionModel(
               id: 'ln_pay_${DateTime.now().millisecondsSinceEpoch}',
               type: TransactionType.instantSend,
               status: TransactionStatus.completed,
-              amountSats: result.amountSats > 0 ? result.amountSats : amountSats,
+              amountSats: paidAmountSats,
               recipientOrSender: invoice.length > 20 ? '${invoice.substring(0, 16)}...' : invoice,
-              description: 'Instant Lightning Payment (fee: ${result.feeSats} sats)',
+              description: 'Lightning Payment (fee: $feeSats sats${preimage != null && preimage.isNotEmpty ? ", preimage: ${preimage.substring(0, (preimage.length >= 8 ? 8 : preimage.length))}..." : ""})',
               createdAt: DateTime.now(),
             ),
           );
