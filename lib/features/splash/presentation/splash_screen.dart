@@ -97,7 +97,8 @@ class _SplashScreenState extends ConsumerState<SplashScreen>
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final backgroundColor = isDark ? AppColors.deepForest : AppColors.warmCream;
     final primaryAccent = isDark ? AppColors.leafGreen : AppColors.forestGreen;
-    final textSecondary = isDark ? const Color(0xFFB0C4B8) : AppColors.softCharcoal;
+    final textSecondary =
+        isDark ? const Color(0xFFB0C4B8) : AppColors.softCharcoal;
 
     return Scaffold(
       backgroundColor: backgroundColor,
@@ -167,7 +168,6 @@ class _SplashScreenState extends ConsumerState<SplashScreen>
                   ),
                 ),
                 const SizedBox(height: 14),
-
                 SlideTransition(
                   position: _taglineSlide,
                   child: FadeTransition(

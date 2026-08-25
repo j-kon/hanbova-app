@@ -62,7 +62,8 @@ class CryptoIdentityNotifier extends AsyncNotifier<WalletCryptoIdentity?> {
   }
 
   /// Derives the X25519 transport keypair deterministically from seed.
-  static Future<SimpleKeyPair> deriveTransportKeyPair(String seedHex, X25519 x25519) async {
+  static Future<SimpleKeyPair> deriveTransportKeyPair(
+      String seedHex, X25519 x25519) async {
     final seedBytes = Secp256k1Service.hexToBytes(seedHex);
     final hmac = Hmac(Sha512());
     final mac = await hmac.calculateMac(
@@ -83,8 +84,10 @@ class CryptoIdentityNotifier extends AsyncNotifier<WalletCryptoIdentity?> {
       final keyPrefix = 'hanbova_${config.storagePrefix}_$userId';
 
       String? savedMnemonic = await _storage.read(key: '${keyPrefix}_mnemonic');
-      final savedTransportPriv = await _storage.read(key: '${keyPrefix}_transport_priv');
-      final savedProtectedPriv = await _storage.read(key: '${keyPrefix}_protected_priv');
+      final savedTransportPriv =
+          await _storage.read(key: '${keyPrefix}_transport_priv');
+      final savedProtectedPriv =
+          await _storage.read(key: '${keyPrefix}_protected_priv');
 
       if (savedMnemonic == null || savedMnemonic.trim().isEmpty) {
         savedMnemonic = await MnemonicService.generateMnemonic();
@@ -94,7 +97,8 @@ class CryptoIdentityNotifier extends AsyncNotifier<WalletCryptoIdentity?> {
         );
       }
 
-      final walletSeedHex = await MnemonicService.mnemonicToSeedHex(savedMnemonic);
+      final walletSeedHex =
+          await MnemonicService.mnemonicToSeedHex(savedMnemonic);
 
       SimpleKeyPair transportKeyPair;
       String protectedPaymentPrivHex;
@@ -107,7 +111,8 @@ class CryptoIdentityNotifier extends AsyncNotifier<WalletCryptoIdentity?> {
       } else {
         // Derive deterministically from the user's BIP-39 mnemonic seed
         transportKeyPair = await deriveTransportKeyPair(walletSeedHex, _x25519);
-        protectedPaymentPrivHex = await deriveProtectedPaymentPrivHex(walletSeedHex);
+        protectedPaymentPrivHex =
+            await deriveProtectedPaymentPrivHex(walletSeedHex);
 
         final seedBytes = await transportKeyPair.extractPrivateKeyBytes();
         await _storage.write(
@@ -126,7 +131,8 @@ class CryptoIdentityNotifier extends AsyncNotifier<WalletCryptoIdentity?> {
           .join();
 
       // Derived 33-byte compressed secp256k1 public key via PointyCastle
-      final protectedPubHex = Secp256k1Service.getCompressedPublicKeyHex(protectedPaymentPrivHex);
+      final protectedPubHex =
+          Secp256k1Service.getCompressedPublicKeyHex(protectedPaymentPrivHex);
 
       final identity = WalletCryptoIdentity(
         userId: userId,
@@ -164,9 +170,12 @@ class CryptoIdentityNotifier extends AsyncNotifier<WalletCryptoIdentity?> {
       final keyPrefix = 'hanbova_${config.storagePrefix}_$userId';
       final cleanMnemonic = mnemonic.trim().toLowerCase();
 
-      final walletSeedHex = await MnemonicService.mnemonicToSeedHex(cleanMnemonic);
-      final transportKeyPair = await deriveTransportKeyPair(walletSeedHex, _x25519);
-      final protectedPaymentPrivHex = await deriveProtectedPaymentPrivHex(walletSeedHex);
+      final walletSeedHex =
+          await MnemonicService.mnemonicToSeedHex(cleanMnemonic);
+      final transportKeyPair =
+          await deriveTransportKeyPair(walletSeedHex, _x25519);
+      final protectedPaymentPrivHex =
+          await deriveProtectedPaymentPrivHex(walletSeedHex);
 
       final seedBytes = await transportKeyPair.extractPrivateKeyBytes();
       await _storage.write(
@@ -186,7 +195,8 @@ class CryptoIdentityNotifier extends AsyncNotifier<WalletCryptoIdentity?> {
       final transportPubHex = transportPublicKey.bytes
           .map((b) => b.toRadixString(16).padLeft(2, '0'))
           .join();
-      final protectedPubHex = Secp256k1Service.getCompressedPublicKeyHex(protectedPaymentPrivHex);
+      final protectedPubHex =
+          Secp256k1Service.getCompressedPublicKeyHex(protectedPaymentPrivHex);
 
       final identity = WalletCryptoIdentity(
         userId: userId,

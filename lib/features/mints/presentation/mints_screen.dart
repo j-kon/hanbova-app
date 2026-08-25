@@ -82,7 +82,8 @@ class _MintsScreenState extends ConsumerState<MintsScreen> {
             ),
             decoration: BoxDecoration(
               color: colors.surfaceCard,
-              borderRadius: const BorderRadius.vertical(top: Radius.circular(AppRadius.lg)),
+              borderRadius: const BorderRadius.vertical(
+                  top: Radius.circular(AppRadius.lg)),
             ),
             child: Column(
               mainAxisSize: MainAxisSize.min,
@@ -92,18 +93,22 @@ class _MintsScreenState extends ConsumerState<MintsScreen> {
                   child: Container(
                     width: 40,
                     height: 4,
-                    decoration: BoxDecoration(color: colors.border, borderRadius: BorderRadius.circular(2)),
+                    decoration: BoxDecoration(
+                        color: colors.border,
+                        borderRadius: BorderRadius.circular(2)),
                   ),
                 ),
                 const SizedBox(height: AppSpacing.md),
-                Text('Add Custom Cashu Mint', style: AppTypography.titleMedium.copyWith(color: colors.textPrimary)),
+                Text('Add Custom Cashu Mint',
+                    style: AppTypography.titleMedium
+                        .copyWith(color: colors.textPrimary)),
                 const SizedBox(height: AppSpacing.xs),
                 Text(
                   'Hanbova will probe the mint endpoint to verify NUT-06 info and NUT-11 Protected Payment support.',
-                  style: AppTypography.bodySmall.copyWith(color: colors.textSecondary),
+                  style: AppTypography.bodySmall
+                      .copyWith(color: colors.textSecondary),
                 ),
                 const SizedBox(height: AppSpacing.md),
-
                 TextField(
                   controller: _mintUrlController,
                   keyboardType: TextInputType.url,
@@ -116,17 +121,19 @@ class _MintsScreenState extends ConsumerState<MintsScreen> {
                 ),
                 if (_probeError != null) ...[
                   const SizedBox(height: AppSpacing.sm),
-                  Text(_probeError!, style: AppTypography.bodySmall.copyWith(color: Colors.redAccent)),
+                  Text(_probeError!,
+                      style: AppTypography.bodySmall
+                          .copyWith(color: Colors.redAccent)),
                 ],
                 const SizedBox(height: AppSpacing.lg),
-
                 ElevatedButton.icon(
                   onPressed: _isProbing
                       ? null
                       : () async {
                           final url = _mintUrlController.text.trim();
                           if (url.isEmpty || !url.startsWith('http')) {
-                            setModalState(() => _probeError = 'Please enter a valid HTTP/HTTPS mint URL');
+                            setModalState(() => _probeError =
+                                'Please enter a valid HTTP/HTTPS mint URL');
                             return;
                           }
 
@@ -146,26 +153,34 @@ class _MintsScreenState extends ConsumerState<MintsScreen> {
 
                           if (result.isValid && result.nut11Supported) {
                             final name = result.mintName ?? 'Custom Mint';
-                            ref.read(configuredMintsProvider.notifier).update((list) => [
-                                  ...list,
-                                  CustomMintEntry(
-                                    url: url,
-                                    name: name,
-                                    isNut11Supported: true,
-                                  ),
-                                ]);
+                            ref
+                                .read(configuredMintsProvider.notifier)
+                                .update((list) => [
+                                      ...list,
+                                      CustomMintEntry(
+                                        url: url,
+                                        name: name,
+                                        isNut11Supported: true,
+                                      ),
+                                    ]);
                             navigator.pop();
                             messenger.showSnackBar(
-                              SnackBar(content: Text('Added $name successfully!')),
+                              SnackBar(
+                                  content: Text('Added $name successfully!')),
                             );
                           } else if (result.isValid && !result.nut11Supported) {
-                            setModalState(() => _probeError = 'Mint is online, but NUT-11 (P2PK) is not enabled.');
+                            setModalState(() => _probeError =
+                                'Mint is online, but NUT-11 (P2PK) is not enabled.');
                           } else {
-                            setModalState(() => _probeError = 'Failed to connect to mint: ${result.errorMessage}');
+                            setModalState(() => _probeError =
+                                'Failed to connect to mint: ${result.errorMessage}');
                           }
                         },
                   icon: _isProbing
-                      ? const SizedBox(width: 18, height: 18, child: CircularProgressIndicator(strokeWidth: 2))
+                      ? const SizedBox(
+                          width: 18,
+                          height: 18,
+                          child: CircularProgressIndicator(strokeWidth: 2))
                       : const Icon(Icons.check, size: 18),
                   label: const Text('Probe & Add Mint'),
                 ),
@@ -207,7 +222,8 @@ class _MintsScreenState extends ConsumerState<MintsScreen> {
               decoration: BoxDecoration(
                 color: colors.primary.withValues(alpha: 0.1),
                 borderRadius: AppRadius.mdRadius,
-                border: Border.all(color: colors.primary.withValues(alpha: 0.3)),
+                border:
+                    Border.all(color: colors.primary.withValues(alpha: 0.3)),
               ),
               child: Row(
                 children: [
@@ -216,17 +232,19 @@ class _MintsScreenState extends ConsumerState<MintsScreen> {
                   Expanded(
                     child: Text(
                       'Hanbova supports multi-mint routing. Never combine proofs across different mints.',
-                      style: AppTypography.bodySmall.copyWith(color: colors.textPrimary),
+                      style: AppTypography.bodySmall
+                          .copyWith(color: colors.textPrimary),
                     ),
                   ),
                 ],
               ),
             ),
             const SizedBox(height: AppSpacing.md),
-
             ...mints.map((mint) {
               final activeMintUrl = ref.watch(selectedMintUrlProvider) ??
-                  NetworkConfig.fromNetwork(ref.watch(networkEnvironmentProvider)).defaultMintUrl;
+                  NetworkConfig.fromNetwork(
+                          ref.watch(networkEnvironmentProvider))
+                      .defaultMintUrl;
               final isActive = mint.url == activeMintUrl;
 
               return InkWell(
@@ -247,17 +265,23 @@ class _MintsScreenState extends ConsumerState<MintsScreen> {
                   decoration: BoxDecoration(
                     color: colors.surfaceCard,
                     borderRadius: AppRadius.mdRadius,
-                    border: Border.all(color: isActive ? colors.primary : colors.border),
+                    border: Border.all(
+                        color: isActive ? colors.primary : colors.border),
                   ),
                   child: Row(
                     children: [
                       Container(
                         padding: const EdgeInsets.all(10),
                         decoration: BoxDecoration(
-                          color: (isActive ? colors.primary : colors.textTertiary).withValues(alpha: 0.1),
+                          color:
+                              (isActive ? colors.primary : colors.textTertiary)
+                                  .withValues(alpha: 0.1),
                           shape: BoxShape.circle,
                         ),
-                        child: Icon(Icons.account_balance_rounded, color: isActive ? colors.primary : colors.textTertiary, size: 20),
+                        child: Icon(Icons.account_balance_rounded,
+                            color:
+                                isActive ? colors.primary : colors.textTertiary,
+                            size: 20),
                       ),
                       const SizedBox(width: AppSpacing.md),
                       Expanded(
@@ -266,36 +290,47 @@ class _MintsScreenState extends ConsumerState<MintsScreen> {
                           children: [
                             Row(
                               children: [
-                                Text(mint.name, style: AppTypography.titleSmall.copyWith(color: colors.textPrimary)),
+                                Text(mint.name,
+                                    style: AppTypography.titleSmall
+                                        .copyWith(color: colors.textPrimary)),
                                 if (isActive) ...[
                                   const SizedBox(width: AppSpacing.xs),
                                   Container(
-                                    padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                                    padding: const EdgeInsets.symmetric(
+                                        horizontal: 6, vertical: 2),
                                     decoration: BoxDecoration(
-                                      color: colors.primary.withValues(alpha: 0.15),
+                                      color: colors.primary
+                                          .withValues(alpha: 0.15),
                                       borderRadius: BorderRadius.circular(4),
                                     ),
-                                    child: Text('Active', style: AppTypography.labelSmall.copyWith(color: colors.primary, fontSize: 10)),
+                                    child: Text('Active',
+                                        style: AppTypography.labelSmall
+                                            .copyWith(
+                                                color: colors.primary,
+                                                fontSize: 10)),
                                   ),
                                 ],
                               ],
                             ),
                             const SizedBox(height: 2),
-                            Text(mint.url, style: AppTypography.bodySmall.copyWith(color: colors.textTertiary, fontSize: 12)),
+                            Text(mint.url,
+                                style: AppTypography.bodySmall.copyWith(
+                                    color: colors.textTertiary, fontSize: 12)),
                           ],
                         ),
                       ),
                       if (isActive)
-                        Icon(Icons.check_circle_rounded, color: colors.success, size: 18)
+                        Icon(Icons.check_circle_rounded,
+                            color: colors.success, size: 18)
                       else
-                        Icon(Icons.radio_button_unchecked, color: colors.textTertiary, size: 18),
+                        Icon(Icons.radio_button_unchecked,
+                            color: colors.textTertiary, size: 18),
                     ],
                   ),
                 ),
               );
             }),
             const SizedBox(height: AppSpacing.md),
-
             OutlinedButton.icon(
               onPressed: _showAddMintSheet,
               icon: const Icon(Icons.add),

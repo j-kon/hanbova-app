@@ -3,7 +3,8 @@ import 'package:uuid/uuid.dart';
 import '../../../core/networking/api_client.dart';
 import '../domain/protected_payment_intent.dart';
 
-final paymentIntentRepositoryProvider = Provider<PaymentIntentRepository>((ref) {
+final paymentIntentRepositoryProvider =
+    Provider<PaymentIntentRepository>((ref) {
   final apiClient = ref.watch(apiClientProvider);
   return PaymentIntentRepository(apiClient);
 });
@@ -75,11 +76,14 @@ class PaymentIntentRepository {
     }
   }
 
-  Future<ProtectedPaymentIntent> getPaymentIntentByReference(String reference) async {
+  Future<ProtectedPaymentIntent> getPaymentIntentByReference(
+      String reference) async {
     try {
-      final response = await _apiClient.get('/payment-intents?claim_reference=$reference');
+      final response =
+          await _apiClient.get('/payment-intents?claim_reference=$reference');
       if (response['data'] is List && (response['data'] as List).isNotEmpty) {
-        return ProtectedPaymentIntent.fromJson((response['data'] as List).first as Map<String, dynamic>);
+        return ProtectedPaymentIntent.fromJson(
+            (response['data'] as List).first as Map<String, dynamic>);
       }
       return getPaymentIntent(reference);
     } catch (_) {
@@ -96,7 +100,8 @@ class PaymentIntentRepository {
     };
 
     try {
-      final response = await _apiClient.post('/payment-intents/$id/status', payload);
+      final response =
+          await _apiClient.post('/payment-intents/$id/status', payload);
       return ProtectedPaymentIntent.fromJson(response);
     } catch (_) {
       return ProtectedPaymentIntent(
@@ -122,7 +127,8 @@ class PaymentIntentRepository {
     };
 
     try {
-      final response = await _apiClient.post('/payment-intents/$id/status', payload);
+      final response =
+          await _apiClient.post('/payment-intents/$id/status', payload);
       return ProtectedPaymentIntent.fromJson(response);
     } catch (_) {
       return ProtectedPaymentIntent(
@@ -145,7 +151,8 @@ class PaymentIntentRepository {
       if (response['data'] is List) {
         final list = response['data'] as List;
         return list
-            .map((item) => ProtectedPaymentIntent.fromJson(item as Map<String, dynamic>))
+            .map((item) =>
+                ProtectedPaymentIntent.fromJson(item as Map<String, dynamic>))
             .toList();
       }
       return [];

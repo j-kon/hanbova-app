@@ -12,7 +12,8 @@ class ResetPasswordScreen extends ConsumerStatefulWidget {
   const ResetPasswordScreen({super.key, this.initialToken});
 
   @override
-  ConsumerState<ResetPasswordScreen> createState() => _ResetPasswordScreenState();
+  ConsumerState<ResetPasswordScreen> createState() =>
+      _ResetPasswordScreenState();
 }
 
 class _ResetPasswordScreenState extends ConsumerState<ResetPasswordScreen> {
@@ -56,7 +57,8 @@ class _ResetPasswordScreenState extends ConsumerState<ResetPasswordScreen> {
 
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Password reset successfully. Please sign in.')),
+        const SnackBar(
+            content: Text('Password reset successfully. Please sign in.')),
       );
       context.go('/login');
     } catch (e) {
@@ -82,7 +84,8 @@ class _ResetPasswordScreenState extends ConsumerState<ResetPasswordScreen> {
       ),
       body: SafeArea(
         child: SingleChildScrollView(
-          padding: const EdgeInsets.symmetric(horizontal: AppSpacing.xl, vertical: AppSpacing.lg),
+          padding: const EdgeInsets.symmetric(
+              horizontal: AppSpacing.xl, vertical: AppSpacing.lg),
           child: Form(
             key: _formKey,
             child: Column(
@@ -90,12 +93,14 @@ class _ResetPasswordScreenState extends ConsumerState<ResetPasswordScreen> {
               children: [
                 Text(
                   'Reset password',
-                  style: AppTypography.headline.copyWith(color: colors.textPrimary),
+                  style: AppTypography.headline
+                      .copyWith(color: colors.textPrimary),
                 ),
                 const SizedBox(height: AppSpacing.xs),
                 Text(
                   'Choose a new password for your Hanbova account.',
-                  style: AppTypography.bodyMedium.copyWith(color: colors.textSecondary),
+                  style: AppTypography.bodyMedium
+                      .copyWith(color: colors.textSecondary),
                 ),
                 const SizedBox(height: AppSpacing.xl),
 
@@ -105,16 +110,19 @@ class _ResetPasswordScreenState extends ConsumerState<ResetPasswordScreen> {
                     decoration: BoxDecoration(
                       color: colors.error.withValues(alpha: 0.1),
                       borderRadius: BorderRadius.circular(8),
-                      border: Border.all(color: colors.error.withValues(alpha: 0.3)),
+                      border: Border.all(
+                          color: colors.error.withValues(alpha: 0.3)),
                     ),
                     child: Row(
                       children: [
-                        Icon(Icons.error_outline, color: colors.error, size: 20),
+                        Icon(Icons.error_outline,
+                            color: colors.error, size: 20),
                         const SizedBox(width: AppSpacing.xs),
                         Expanded(
                           child: Text(
                             _errorMessage!,
-                            style: AppTypography.bodySmall.copyWith(color: colors.error),
+                            style: AppTypography.bodySmall
+                                .copyWith(color: colors.error),
                           ),
                         ),
                       ],
@@ -130,7 +138,9 @@ class _ResetPasswordScreenState extends ConsumerState<ResetPasswordScreen> {
                     labelText: 'Reset token',
                     hintText: 'Enter 32-character token',
                   ),
-                  validator: (v) => (v == null || v.trim().isEmpty) ? 'Reset token is required' : null,
+                  validator: (v) => (v == null || v.trim().isEmpty)
+                      ? 'Reset token is required'
+                      : null,
                 ),
                 const SizedBox(height: AppSpacing.md),
 
@@ -142,15 +152,22 @@ class _ResetPasswordScreenState extends ConsumerState<ResetPasswordScreen> {
                     labelText: 'New password',
                     suffixIcon: IconButton(
                       icon: Icon(
-                        _obscurePassword ? Icons.visibility_off : Icons.visibility,
+                        _obscurePassword
+                            ? Icons.visibility_off
+                            : Icons.visibility,
                         color: colors.textTertiary,
                       ),
-                      onPressed: () => setState(() => _obscurePassword = !_obscurePassword),
+                      onPressed: () =>
+                          setState(() => _obscurePassword = !_obscurePassword),
                     ),
                   ),
                   validator: (v) {
-                    if (v == null || v.isEmpty) return 'Password is required';
-                    if (v.length < 8) return 'Password must be at least 8 characters';
+                    if (v == null || v.isEmpty) {
+                      return 'Password is required';
+                    }
+                    if (v.length < 8) {
+                      return 'Password must be at least 8 characters';
+                    }
                     return null;
                   },
                 ),
@@ -164,15 +181,19 @@ class _ResetPasswordScreenState extends ConsumerState<ResetPasswordScreen> {
                     labelText: 'Confirm new password',
                     suffixIcon: IconButton(
                       icon: Icon(
-                        _obscureConfirmPassword ? Icons.visibility_off : Icons.visibility,
+                        _obscureConfirmPassword
+                            ? Icons.visibility_off
+                            : Icons.visibility,
                         color: colors.textTertiary,
                       ),
-                      onPressed: () =>
-                          setState(() => _obscureConfirmPassword = !_obscureConfirmPassword),
+                      onPressed: () => setState(() =>
+                          _obscureConfirmPassword = !_obscureConfirmPassword),
                     ),
                   ),
                   validator: (v) {
-                    if (v != _passwordController.text) return 'Passwords do not match';
+                    if (v != _passwordController.text) {
+                      return 'Passwords do not match';
+                    }
                     return null;
                   },
                 ),

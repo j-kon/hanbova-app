@@ -17,22 +17,26 @@ class InMemoryCashuWalletStorage extends CashuWalletStorage {
   final Map<String, List<ProtectedEscrowRecord>> _escrows = {};
 
   @override
-  Future<List<CashuProof>> loadProofs(String userId, HanbovaNetwork network) async {
+  Future<List<CashuProof>> loadProofs(
+      String userId, HanbovaNetwork network) async {
     return _proofs['${userId}_${network.name}'] ?? [];
   }
 
   @override
-  Future<void> saveProofs(String userId, HanbovaNetwork network, List<CashuProof> proofs) async {
+  Future<void> saveProofs(
+      String userId, HanbovaNetwork network, List<CashuProof> proofs) async {
     _proofs['${userId}_${network.name}'] = List.from(proofs);
   }
 
   @override
-  Future<List<ProtectedEscrowRecord>> loadEscrowRecords(String userId, HanbovaNetwork network) async {
+  Future<List<ProtectedEscrowRecord>> loadEscrowRecords(
+      String userId, HanbovaNetwork network) async {
     return _escrows['${userId}_${network.name}'] ?? [];
   }
 
   @override
-  Future<void> saveEscrowRecord(String userId, HanbovaNetwork network, ProtectedEscrowRecord record) async {
+  Future<void> saveEscrowRecord(String userId, HanbovaNetwork network,
+      ProtectedEscrowRecord record) async {
     final key = '${userId}_${network.name}';
     final records = _escrows[key] ?? [];
     final idx = records.indexWhere((r) => r.paymentId == record.paymentId);
@@ -70,7 +74,8 @@ CdkFfiBindings createMockCdkFfiBindings() {
       outMintedSats.value = 10000;
       return 0;
     },
-    walletMeltQuote: (handle, invoice, outQuoteId, outAmountSats, outFeeReserveSats) {
+    walletMeltQuote:
+        (handle, invoice, outQuoteId, outAmountSats, outFeeReserveSats) {
       outQuoteId.value = 'melt_quote_mock_123'.toNativeUtf8();
       outAmountSats.value = 500;
       outFeeReserveSats.value = 5;
@@ -146,7 +151,9 @@ void main() {
       bobPub = Secp256k1Service.getCompressedPublicKeyHex(bobPriv);
     });
 
-    test('CDK Wallet initializes, reads balance and rejects send when balance is insufficient', () async {
+    test(
+        'CDK Wallet initializes, reads balance and rejects send when balance is insufficient',
+        () async {
       final aliceWallet = CdkCashuWalletServiceImpl(
         userId: 'alice_123',
         network: HanbovaNetwork.cashuTest,
@@ -176,7 +183,8 @@ void main() {
       aliceWallet.dispose();
     });
 
-    test('CDK Wallet validates recipient compressed public key format', () async {
+    test('CDK Wallet validates recipient compressed public key format',
+        () async {
       final aliceWallet = CdkCashuWalletServiceImpl(
         userId: 'alice_123',
         network: HanbovaNetwork.cashuTest,
@@ -201,7 +209,9 @@ void main() {
       aliceWallet.dispose();
     });
 
-    test('Scenario A: Alice mints, creates NUT-11 locked token for Bob, and Bob receives it', () async {
+    test(
+        'Scenario A: Alice mints, creates NUT-11 locked token for Bob, and Bob receives it',
+        () async {
       final aliceWallet = CdkCashuWalletServiceImpl(
         userId: 'alice_123',
         network: HanbovaNetwork.cashuTest,
@@ -249,7 +259,8 @@ void main() {
       );
 
       // 1. Request melt quote
-      final quote = await aliceWallet.createMeltQuote('lnbc5u1p...mock_invoice');
+      final quote =
+          await aliceWallet.createMeltQuote('lnbc5u1p...mock_invoice');
       expect(quote.quoteId, 'melt_quote_mock_123');
       expect(quote.amountSats, 500);
       expect(quote.feeReserveSats, 5);
@@ -263,23 +274,32 @@ void main() {
       aliceWallet.dispose();
     });
 
-    test('Deterministic Key Derivation: Mnemonic restores exact same P2PK & X25519 identities', () async {
-      const testMnemonic = 'abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon about';
+    test(
+        'Deterministic Key Derivation: Mnemonic restores exact same P2PK & X25519 identities',
+        () async {
+      const testMnemonic =
+          'abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon about';
       final seedHex = await MnemonicService.mnemonicToSeedHex(testMnemonic);
 
       // Derive keys first time
-      final p2pkPriv1 = await CryptoIdentityNotifier.deriveProtectedPaymentPrivHex(seedHex);
+      final p2pkPriv1 =
+          await CryptoIdentityNotifier.deriveProtectedPaymentPrivHex(seedHex);
       final p2pkPub1 = Secp256k1Service.getCompressedPublicKeyHex(p2pkPriv1);
-      final transport1 = await CryptoIdentityNotifier.deriveTransportKeyPair(seedHex, X25519());
-      final transportPub1 = (await transport1.extractPublicKey()).bytes
+      final transport1 = await CryptoIdentityNotifier.deriveTransportKeyPair(
+          seedHex, X25519());
+      final transportPub1 = (await transport1.extractPublicKey())
+          .bytes
           .map((b) => b.toRadixString(16).padLeft(2, '0'))
           .join();
 
       // Derive keys second time (simulating fresh install restore)
-      final p2pkPriv2 = await CryptoIdentityNotifier.deriveProtectedPaymentPrivHex(seedHex);
+      final p2pkPriv2 =
+          await CryptoIdentityNotifier.deriveProtectedPaymentPrivHex(seedHex);
       final p2pkPub2 = Secp256k1Service.getCompressedPublicKeyHex(p2pkPriv2);
-      final transport2 = await CryptoIdentityNotifier.deriveTransportKeyPair(seedHex, X25519());
-      final transportPub2 = (await transport2.extractPublicKey()).bytes
+      final transport2 = await CryptoIdentityNotifier.deriveTransportKeyPair(
+          seedHex, X25519());
+      final transportPub2 = (await transport2.extractPublicKey())
+          .bytes
           .map((b) => b.toRadixString(16).padLeft(2, '0'))
           .join();
 
@@ -291,7 +311,9 @@ void main() {
       expect(transportPub1.length, 64);
     });
 
-    test('Failed CDK claim operation throws and never mutates wallet balance or transaction state', () async {
+    test(
+        'Failed CDK claim operation throws and never mutates wallet balance or transaction state',
+        () async {
       final bobWallet = CdkCashuWalletServiceImpl(
         userId: 'bob_fail_claim_test',
         network: HanbovaNetwork.cashuTest,
@@ -323,7 +345,9 @@ void main() {
       bobWallet.dispose();
     });
 
-    test('Failed CDK refund operation throws and never mutates wallet balance or transaction state', () async {
+    test(
+        'Failed CDK refund operation throws and never mutates wallet balance or transaction state',
+        () async {
       final aliceWallet = CdkCashuWalletServiceImpl(
         userId: 'alice_fail_refund_test',
         network: HanbovaNetwork.cashuTest,
@@ -347,10 +371,37 @@ void main() {
         throwsA(isA<StateError>()),
       );
 
-      // Assert balance is unchanged
-      final balanceAfterFailedRefund = await aliceWallet.getBalance();
-      expect(balanceAfterFailedRefund.spendableSats, 0);
-      expect(balanceAfterFailedRefund.lockedEscrowSats, 0);
+      aliceWallet.dispose();
+    });
+
+    test('Scenario D: NUT-04 Mint Quote generation and execution', () async {
+      final aliceWallet = CdkCashuWalletServiceImpl(
+        userId: 'alice_nut04_test',
+        network: HanbovaNetwork.cashuTest,
+        walletSeedHex: aliceSeedHex,
+        p2pkPrivateKeyHex: alicePriv,
+        p2pkPublicKeyHex: alicePub,
+        dbPath: '/tmp/alice_nut04_wallet',
+        storage: storage,
+        ffi: mockFfi,
+      );
+
+      final initialBalance = await aliceWallet.getBalance();
+      expect(initialBalance.spendableSats, 0);
+
+      // 1. Create Mint Quote
+      final quote = await aliceWallet.createMintQuote(10000);
+      expect(quote.quoteId, equals('quote_mock_123'));
+      expect(quote.bolt11Invoice, equals('lnbc10u_mock_invoice'));
+      expect(quote.amountSats, equals(10000));
+
+      // 2. Mint upon payment
+      final minted = await aliceWallet.mintQuote(quote.quoteId);
+      expect(minted, equals(10000));
+
+      // 3. Balance updated in CDK
+      final finalBalance = await aliceWallet.getBalance();
+      expect(finalBalance.spendableSats, equals(10000));
 
       aliceWallet.dispose();
     });

@@ -15,7 +15,8 @@ class ProtectedSendScreen extends ConsumerStatefulWidget {
   const ProtectedSendScreen({super.key});
 
   @override
-  ConsumerState<ProtectedSendScreen> createState() => _ProtectedSendScreenState();
+  ConsumerState<ProtectedSendScreen> createState() =>
+      _ProtectedSendScreenState();
 }
 
 class _ProtectedSendScreenState extends ConsumerState<ProtectedSendScreen> {
@@ -89,7 +90,8 @@ class _ProtectedSendScreenState extends ConsumerState<ProtectedSendScreen> {
     final currentSats = int.tryParse(_amountController.text.trim()) ?? 0;
 
     return SingleChildScrollView(
-      padding: const EdgeInsets.symmetric(horizontal: AppSpacing.xl, vertical: AppSpacing.md),
+      padding: const EdgeInsets.symmetric(
+          horizontal: AppSpacing.xl, vertical: AppSpacing.md),
       child: Form(
         key: _formKey,
         child: Column(
@@ -100,16 +102,19 @@ class _ProtectedSendScreenState extends ConsumerState<ProtectedSendScreen> {
               decoration: BoxDecoration(
                 color: colors.protected.withValues(alpha: 0.1),
                 borderRadius: AppRadius.mdRadius,
-                border: Border.all(color: colors.protected.withValues(alpha: 0.3)),
+                border:
+                    Border.all(color: colors.protected.withValues(alpha: 0.3)),
               ),
               child: Row(
                 children: [
-                  Icon(Icons.shield_outlined, color: colors.protected, size: 24),
+                  Icon(Icons.shield_outlined,
+                      color: colors.protected, size: 24),
                   const SizedBox(width: AppSpacing.sm),
                   Expanded(
                     child: Text(
                       'Funds are locked in Cashu P2PK escrow. The recipient can claim until locktime. If unclaimed, you can refund after expiry.',
-                      style: AppTypography.bodySmall.copyWith(color: colors.textPrimary),
+                      style: AppTypography.bodySmall
+                          .copyWith(color: colors.textPrimary),
                     ),
                   ),
                 ],
@@ -129,7 +134,9 @@ class _ProtectedSendScreenState extends ConsumerState<ProtectedSendScreen> {
                 ),
               ),
               validator: (val) {
-                if (val == null || val.trim().isEmpty) return 'Please specify recipient';
+                if (val == null || val.trim().isEmpty) {
+                  return 'Please specify recipient';
+                }
                 return null;
               },
             ),
@@ -148,9 +155,13 @@ class _ProtectedSendScreenState extends ConsumerState<ProtectedSendScreen> {
               ),
               onChanged: (_) => setState(() {}),
               validator: (val) {
-                if (val == null || val.trim().isEmpty) return 'Please enter amount';
+                if (val == null || val.trim().isEmpty) {
+                  return 'Please enter amount';
+                }
                 final num = int.tryParse(val.trim());
-                if (num == null || num <= 0) return 'Must be greater than 0';
+                if (num == null || num <= 0) {
+                  return 'Must be greater than 0';
+                }
                 return null;
               },
             ),
@@ -169,14 +180,16 @@ class _ProtectedSendScreenState extends ConsumerState<ProtectedSendScreen> {
             // Protection Period
             Text(
               'Protection Window (Locktime)',
-              style: AppTypography.titleSmall.copyWith(color: colors.textPrimary),
+              style:
+                  AppTypography.titleSmall.copyWith(color: colors.textPrimary),
             ),
             const SizedBox(height: AppSpacing.xs),
             SingleChildScrollView(
               scrollDirection: Axis.horizontal,
               child: Row(
                 children: _expirationOptions.map((opt) {
-                  final isSelected = _selectedExpirationSeconds == opt['seconds'];
+                  final isSelected =
+                      _selectedExpirationSeconds == opt['seconds'];
                   return Padding(
                     padding: const EdgeInsets.only(right: AppSpacing.xs),
                     child: ChoiceChip(
@@ -190,9 +203,11 @@ class _ProtectedSendScreenState extends ConsumerState<ProtectedSendScreen> {
                                 ? AppColors.deepForest
                                 : Colors.white)
                             : colors.textSecondary,
-                        fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
+                        fontWeight:
+                            isSelected ? FontWeight.w700 : FontWeight.w500,
                       ),
-                      onSelected: (_) => setState(() => _selectedExpirationSeconds = opt['seconds'] as int),
+                      onSelected: (_) => setState(() =>
+                          _selectedExpirationSeconds = opt['seconds'] as int),
                     ),
                   );
                 }).toList(),
@@ -219,7 +234,10 @@ class _ProtectedSendScreenState extends ConsumerState<ProtectedSendScreen> {
               onPressed: state.isLoading ? null : _submit,
               icon: const Icon(Icons.shield_outlined, size: 18),
               label: state.isLoading
-                  ? const SizedBox(height: 20, width: 20, child: CircularProgressIndicator(strokeWidth: 2))
+                  ? const SizedBox(
+                      height: 20,
+                      width: 20,
+                      child: CircularProgressIndicator(strokeWidth: 2))
                   : const Text('Lock & Send Protected'),
             ),
           ],
@@ -233,7 +251,8 @@ class _ProtectedSendScreenState extends ConsumerState<ProtectedSendScreen> {
     final currency = ref.watch(currencyProvider);
 
     return SingleChildScrollView(
-      padding: const EdgeInsets.symmetric(horizontal: AppSpacing.xl, vertical: AppSpacing.lg),
+      padding: const EdgeInsets.symmetric(
+          horizontal: AppSpacing.xl, vertical: AppSpacing.lg),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
@@ -245,7 +264,8 @@ class _ProtectedSendScreenState extends ConsumerState<ProtectedSendScreen> {
                 color: colors.protected.withValues(alpha: 0.15),
                 shape: BoxShape.circle,
               ),
-              child: Icon(Icons.shield_outlined, color: colors.protected, size: 40),
+              child: Icon(Icons.shield_outlined,
+                  color: colors.protected, size: 40),
             ),
           ),
           const SizedBox(height: AppSpacing.lg),
@@ -257,11 +277,11 @@ class _ProtectedSendScreenState extends ConsumerState<ProtectedSendScreen> {
           const SizedBox(height: 4),
           Text(
             'Funds are locked in Cashu P2PK escrow.',
-            style: AppTypography.bodyMedium.copyWith(color: colors.textSecondary),
+            style:
+                AppTypography.bodyMedium.copyWith(color: colors.textSecondary),
             textAlign: TextAlign.center,
           ),
           const SizedBox(height: AppSpacing.xl),
-
           Container(
             padding: const EdgeInsets.all(AppSpacing.lg),
             decoration: BoxDecoration(
@@ -275,10 +295,14 @@ class _ProtectedSendScreenState extends ConsumerState<ProtectedSendScreen> {
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    Text('Amount', style: AppTypography.bodySmall.copyWith(color: colors.textSecondary)),
+                    Text('Amount',
+                        style: AppTypography.bodySmall
+                            .copyWith(color: colors.textSecondary)),
                     Text(
                       Formatters.formatSats(intent.amountSats),
-                      style: AppTypography.titleSmall.copyWith(color: colors.textPrimary, fontWeight: FontWeight.w700),
+                      style: AppTypography.titleSmall.copyWith(
+                          color: colors.textPrimary,
+                          fontWeight: FontWeight.w700),
                     ),
                   ],
                 ),
@@ -287,7 +311,8 @@ class _ProtectedSendScreenState extends ConsumerState<ProtectedSendScreen> {
                   alignment: Alignment.centerRight,
                   child: Text(
                     currency.format(intent.amountSats),
-                    style: AppTypography.bodySmall.copyWith(color: colors.textTertiary),
+                    style: AppTypography.bodySmall
+                        .copyWith(color: colors.textTertiary),
                   ),
                 ),
                 const SizedBox(height: AppSpacing.sm),
@@ -296,18 +321,25 @@ class _ProtectedSendScreenState extends ConsumerState<ProtectedSendScreen> {
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    Text('Recipient', style: AppTypography.bodySmall.copyWith(color: colors.textSecondary)),
-                    Text(intent.recipientIdentifier, style: AppTypography.titleSmall.copyWith(color: colors.textPrimary)),
+                    Text('Recipient',
+                        style: AppTypography.bodySmall
+                            .copyWith(color: colors.textSecondary)),
+                    Text(intent.recipientIdentifier,
+                        style: AppTypography.titleSmall
+                            .copyWith(color: colors.textPrimary)),
                   ],
                 ),
                 const SizedBox(height: AppSpacing.sm),
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    Text('Claim Code', style: AppTypography.bodySmall.copyWith(color: colors.textSecondary)),
+                    Text('Claim Code',
+                        style: AppTypography.bodySmall
+                            .copyWith(color: colors.textSecondary)),
                     SelectableText(
                       intent.claimReference ?? 'N/A',
-                      style: AppTypography.titleSmall.copyWith(color: colors.primary, fontFamily: 'monospace'),
+                      style: AppTypography.titleSmall.copyWith(
+                          color: colors.primary, fontFamily: 'monospace'),
                     ),
                   ],
                 ),
@@ -316,10 +348,13 @@ class _ProtectedSendScreenState extends ConsumerState<ProtectedSendScreen> {
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      Text('Expires At', style: AppTypography.bodySmall.copyWith(color: colors.textSecondary)),
+                      Text('Expires At',
+                          style: AppTypography.bodySmall
+                              .copyWith(color: colors.textSecondary)),
                       Text(
                         Formatters.formatDate(intent.expiresAt!),
-                        style: AppTypography.bodySmall.copyWith(color: colors.textSecondary),
+                        style: AppTypography.bodySmall
+                            .copyWith(color: colors.textSecondary),
                       ),
                     ],
                   ),
@@ -328,7 +363,6 @@ class _ProtectedSendScreenState extends ConsumerState<ProtectedSendScreen> {
             ),
           ),
           const SizedBox(height: AppSpacing.xl),
-
           ElevatedButton(
             onPressed: () {
               ref.read(protectedSendProvider.notifier).reset();

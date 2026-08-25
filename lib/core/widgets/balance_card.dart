@@ -56,7 +56,8 @@ class BalanceCard extends StatelessWidget {
               child: Row(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  const Icon(Icons.science_outlined, color: Colors.amber, size: 14),
+                  const Icon(Icons.science_outlined,
+                      color: Colors.amber, size: 14),
                   const SizedBox(width: 4),
                   Text(
                     'TEST MODE • No monetary value',
@@ -75,12 +76,15 @@ class BalanceCard extends StatelessWidget {
             children: [
               Text(
                 'Total Balance',
-                style: AppTypography.bodySmall.copyWith(color: colors.textSecondary),
+                style: AppTypography.bodySmall
+                    .copyWith(color: colors.textSecondary),
               ),
               if (onToggleVisibility != null)
                 IconButton(
                   icon: Icon(
-                    isBalanceVisible ? Icons.visibility_outlined : Icons.visibility_off_outlined,
+                    isBalanceVisible
+                        ? Icons.visibility_outlined
+                        : Icons.visibility_off_outlined,
                     color: colors.textTertiary,
                     size: 20,
                   ),
@@ -100,7 +104,9 @@ class BalanceCard extends StatelessWidget {
           ),
           const SizedBox(height: 2),
           Text(
-            isBalanceVisible ? '${Formatters.formatSatsNumber(totalSats)} $satsSuffix' : '•••• $satsSuffix',
+            isBalanceVisible
+                ? '${Formatters.formatSatsNumber(totalSats)} $satsSuffix'
+                : '•••• $satsSuffix',
             style: AppTypography.titleSmall.copyWith(
               color: colors.primary,
               fontWeight: FontWeight.w600,
@@ -117,15 +123,24 @@ class BalanceCard extends StatelessWidget {
                   children: [
                     Row(
                       children: [
-                        Container(width: 6, height: 6, decoration: BoxDecoration(color: colors.success, shape: BoxShape.circle)),
+                        Container(
+                            width: 6,
+                            height: 6,
+                            decoration: BoxDecoration(
+                                color: colors.success, shape: BoxShape.circle)),
                         const SizedBox(width: 6),
-                        Text('Spendable', style: AppTypography.bodySmall.copyWith(color: colors.textTertiary, fontSize: 11)),
+                        Text('Spendable',
+                            style: AppTypography.bodySmall.copyWith(
+                                color: colors.textTertiary, fontSize: 11)),
                       ],
                     ),
                     const SizedBox(height: 2),
                     Text(
-                      isBalanceVisible ? '${Formatters.formatSatsNumber(spendableSats)} $satsSuffix' : '••••',
-                      style: AppTypography.titleSmall.copyWith(color: colors.textPrimary, fontSize: 13),
+                      isBalanceVisible
+                          ? '${Formatters.formatSatsNumber(spendableSats)} $satsSuffix'
+                          : '••••',
+                      style: AppTypography.titleSmall
+                          .copyWith(color: colors.textPrimary, fontSize: 13),
                     ),
                   ],
                 ),
@@ -139,15 +154,25 @@ class BalanceCard extends StatelessWidget {
                     children: [
                       Row(
                         children: [
-                          Container(width: 6, height: 6, decoration: BoxDecoration(color: colors.protected, shape: BoxShape.circle)),
+                          Container(
+                              width: 6,
+                              height: 6,
+                              decoration: BoxDecoration(
+                                  color: colors.protected,
+                                  shape: BoxShape.circle)),
                           const SizedBox(width: 6),
-                          Text('Protected', style: AppTypography.bodySmall.copyWith(color: colors.textTertiary, fontSize: 11)),
+                          Text('Protected',
+                              style: AppTypography.bodySmall.copyWith(
+                                  color: colors.textTertiary, fontSize: 11)),
                         ],
                       ),
                       const SizedBox(height: 2),
                       Text(
-                        isBalanceVisible ? '${Formatters.formatSatsNumber(protectedOutgoingSats)} $satsSuffix' : '••••',
-                        style: AppTypography.titleSmall.copyWith(color: colors.textPrimary, fontSize: 13),
+                        isBalanceVisible
+                            ? '${Formatters.formatSatsNumber(protectedOutgoingSats)} $satsSuffix'
+                            : '••••',
+                        style: AppTypography.titleSmall
+                            .copyWith(color: colors.textPrimary, fontSize: 13),
                       ),
                     ],
                   ),

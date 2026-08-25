@@ -31,7 +31,9 @@ class _ScanScreenState extends ConsumerState<ScanScreen> {
     if (code.startsWith('hnbv_claim_') || code.contains('/claim/')) {
       // Hanbova Claim code
       context.push('/claim?code=$code');
-    } else if (code.startsWith('lnbc') || code.startsWith('LNBC') || code.startsWith('lightning:')) {
+    } else if (code.startsWith('lnbc') ||
+        code.startsWith('LNBC') ||
+        code.startsWith('lightning:')) {
       // Lightning invoice
       context.push('/send?invoice=$code');
     } else if (code.startsWith('@')) {
@@ -51,15 +53,19 @@ class _ScanScreenState extends ConsumerState<ScanScreen> {
       backgroundColor: Colors.black,
       appBar: AppBar(
         backgroundColor: Colors.transparent,
-        title: const Text('Scan QR Code', style: TextStyle(color: Colors.white)),
+        title:
+            const Text('Scan QR Code', style: TextStyle(color: Colors.white)),
         leading: IconButton(
           icon: const Icon(Icons.arrow_back, color: Colors.white),
           onPressed: () => context.pop(),
         ),
         actions: [
           IconButton(
-            icon: Icon(_showManualInput ? Icons.qr_code_scanner : Icons.keyboard, color: Colors.white),
-            onPressed: () => setState(() => _showManualInput = !_showManualInput),
+            icon: Icon(
+                _showManualInput ? Icons.qr_code_scanner : Icons.keyboard,
+                color: Colors.white),
+            onPressed: () =>
+                setState(() => _showManualInput = !_showManualInput),
           ),
         ],
       ),
@@ -76,25 +82,29 @@ class _ScanScreenState extends ConsumerState<ScanScreen> {
                         children: [
                           Text(
                             'Enter code or invoice',
-                            style: AppTypography.titleMedium.copyWith(color: colors.textPrimary),
+                            style: AppTypography.titleMedium
+                                .copyWith(color: colors.textPrimary),
                           ),
                           const SizedBox(height: AppSpacing.sm),
                           TextField(
                             controller: _manualInputController,
                             maxLines: 4,
                             decoration: const InputDecoration(
-                              hintText: 'Paste Lightning invoice, Cashu token, or Hanbova claim code...',
+                              hintText:
+                                  'Paste Lightning invoice, Cashu token, or Hanbova claim code...',
                             ),
                           ),
                           const SizedBox(height: AppSpacing.md),
                           ElevatedButton(
-                            onPressed: () => _processScannedCode(_manualInputController.text),
+                            onPressed: () => _processScannedCode(
+                                _manualInputController.text),
                             child: const Text('Continue'),
                           ),
                           const SizedBox(height: AppSpacing.sm),
                           OutlinedButton.icon(
                             onPressed: () async {
-                              final data = await Clipboard.getData('text/plain');
+                              final data =
+                                  await Clipboard.getData('text/plain');
                               if (data?.text != null) {
                                 _manualInputController.text = data!.text!;
                               }
@@ -121,22 +131,62 @@ class _ScanScreenState extends ConsumerState<ScanScreen> {
                               Positioned(
                                 top: 8,
                                 left: 8,
-                                child: Container(width: 24, height: 24, decoration: BoxDecoration(border: Border(top: BorderSide(color: colors.primary, width: 4), left: BorderSide(color: colors.primary, width: 4)))),
+                                child: Container(
+                                    width: 24,
+                                    height: 24,
+                                    decoration: BoxDecoration(
+                                        border: Border(
+                                            top: BorderSide(
+                                                color: colors.primary,
+                                                width: 4),
+                                            left: BorderSide(
+                                                color: colors.primary,
+                                                width: 4)))),
                               ),
                               Positioned(
                                 top: 8,
                                 right: 8,
-                                child: Container(width: 24, height: 24, decoration: BoxDecoration(border: Border(top: BorderSide(color: colors.primary, width: 4), right: BorderSide(color: colors.primary, width: 4)))),
+                                child: Container(
+                                    width: 24,
+                                    height: 24,
+                                    decoration: BoxDecoration(
+                                        border: Border(
+                                            top: BorderSide(
+                                                color: colors.primary,
+                                                width: 4),
+                                            right: BorderSide(
+                                                color: colors.primary,
+                                                width: 4)))),
                               ),
                               Positioned(
                                 bottom: 8,
                                 left: 8,
-                                child: Container(width: 24, height: 24, decoration: BoxDecoration(border: Border(bottom: BorderSide(color: colors.primary, width: 4), left: BorderSide(color: colors.primary, width: 4)))),
+                                child: Container(
+                                    width: 24,
+                                    height: 24,
+                                    decoration: BoxDecoration(
+                                        border: Border(
+                                            bottom: BorderSide(
+                                                color: colors.primary,
+                                                width: 4),
+                                            left: BorderSide(
+                                                color: colors.primary,
+                                                width: 4)))),
                               ),
                               Positioned(
                                 bottom: 8,
                                 right: 8,
-                                child: Container(width: 24, height: 24, decoration: BoxDecoration(border: Border(bottom: BorderSide(color: colors.primary, width: 4), right: BorderSide(color: colors.primary, width: 4)))),
+                                child: Container(
+                                    width: 24,
+                                    height: 24,
+                                    decoration: BoxDecoration(
+                                        border: Border(
+                                            bottom: BorderSide(
+                                                color: colors.primary,
+                                                width: 4),
+                                            right: BorderSide(
+                                                color: colors.primary,
+                                                width: 4)))),
                               ),
                             ],
                           ),

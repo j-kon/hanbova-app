@@ -18,10 +18,12 @@ class DeveloperOptionsScreen extends ConsumerStatefulWidget {
   const DeveloperOptionsScreen({super.key});
 
   @override
-  ConsumerState<DeveloperOptionsScreen> createState() => _DeveloperOptionsScreenState();
+  ConsumerState<DeveloperOptionsScreen> createState() =>
+      _DeveloperOptionsScreenState();
 }
 
-class _DeveloperOptionsScreenState extends ConsumerState<DeveloperOptionsScreen> {
+class _DeveloperOptionsScreenState
+    extends ConsumerState<DeveloperOptionsScreen> {
   String? _mintTestResult;
   bool _isTestingMint = false;
 
@@ -38,9 +40,11 @@ class _DeveloperOptionsScreenState extends ConsumerState<DeveloperOptionsScreen>
     setState(() {
       _isTestingMint = false;
       if (result.isValid && result.nut11Supported) {
-        _mintTestResult = '✅ ${result.mintName}: NUT-11 Protected Payments supported';
+        _mintTestResult =
+            '✅ ${result.mintName}: NUT-11 Protected Payments supported';
       } else if (result.isValid && !result.nut11Supported) {
-        _mintTestResult = '⚠️ ${result.mintName}: Mint reachable but NUT-11 (P2PK) not enabled';
+        _mintTestResult =
+            '⚠️ ${result.mintName}: Mint reachable but NUT-11 (P2PK) not enabled';
       } else {
         _mintTestResult = '❌ Mint connection failed: ${result.errorMessage}';
       }
@@ -72,10 +76,13 @@ class _DeveloperOptionsScreenState extends ConsumerState<DeveloperOptionsScreen>
           ElevatedButton(
             onPressed: () {
               Navigator.pop(ctx);
-              ref.read(networkEnvironmentProvider.notifier).setNetwork(selectedNet);
+              ref
+                  .read(networkEnvironmentProvider.notifier)
+                  .setNetwork(selectedNet);
               ScaffoldMessenger.of(context).showSnackBar(
                 SnackBar(
-                  content: Text('Switched to ${NetworkConfig.fromNetwork(selectedNet).displayName}'),
+                  content: Text(
+                      'Switched to ${NetworkConfig.fromNetwork(selectedNet).displayName}'),
                 ),
               );
             },
@@ -119,11 +126,14 @@ class _DeveloperOptionsScreenState extends ConsumerState<DeveloperOptionsScreen>
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text('Wallet Network Environment', style: AppTypography.titleMedium.copyWith(color: colors.textPrimary)),
+                  Text('Wallet Network Environment',
+                      style: AppTypography.titleMedium
+                          .copyWith(color: colors.textPrimary)),
                   const SizedBox(height: AppSpacing.xs),
                   Text(
                     'Storage and Cashu proofs are strictly isolated per network.',
-                    style: AppTypography.bodySmall.copyWith(color: colors.textSecondary),
+                    style: AppTypography.bodySmall
+                        .copyWith(color: colors.textSecondary),
                   ),
                   const SizedBox(height: AppSpacing.md),
                   ...HanbovaNetwork.values.map((net) {
@@ -133,13 +143,18 @@ class _DeveloperOptionsScreenState extends ConsumerState<DeveloperOptionsScreen>
                       onTap: () => _onSelectNetwork(net, currentNetwork),
                       borderRadius: AppRadius.smRadius,
                       child: Padding(
-                        padding: const EdgeInsets.symmetric(vertical: AppSpacing.sm, horizontal: AppSpacing.xs),
+                        padding: const EdgeInsets.symmetric(
+                            vertical: AppSpacing.sm, horizontal: AppSpacing.xs),
                         child: Row(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Icon(
-                              isSelected ? Icons.radio_button_checked : Icons.radio_button_unchecked,
-                              color: isSelected ? colors.primary : colors.textTertiary,
+                              isSelected
+                                  ? Icons.radio_button_checked
+                                  : Icons.radio_button_unchecked,
+                              color: isSelected
+                                  ? colors.primary
+                                  : colors.textTertiary,
                               size: 20,
                             ),
                             const SizedBox(width: AppSpacing.sm),
@@ -151,21 +166,30 @@ class _DeveloperOptionsScreenState extends ConsumerState<DeveloperOptionsScreen>
                                     children: [
                                       Text(
                                         cfg.displayName,
-                                        style: AppTypography.titleSmall.copyWith(
-                                          color: cfg.isEnabled ? colors.textPrimary : colors.textTertiary,
+                                        style:
+                                            AppTypography.titleSmall.copyWith(
+                                          color: cfg.isEnabled
+                                              ? colors.textPrimary
+                                              : colors.textTertiary,
                                         ),
                                       ),
                                       if (!cfg.isEnabled) ...[
                                         const SizedBox(width: AppSpacing.xs),
                                         Container(
-                                          padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                                          padding: const EdgeInsets.symmetric(
+                                              horizontal: 6, vertical: 2),
                                           decoration: BoxDecoration(
-                                            color: Colors.red.withValues(alpha: 0.15),
-                                            borderRadius: BorderRadius.circular(4),
+                                            color: Colors.red
+                                                .withValues(alpha: 0.15),
+                                            borderRadius:
+                                                BorderRadius.circular(4),
                                           ),
                                           child: Text(
                                             'Disabled',
-                                            style: AppTypography.labelSmall.copyWith(color: Colors.red, fontSize: 10),
+                                            style: AppTypography.labelSmall
+                                                .copyWith(
+                                                    color: Colors.red,
+                                                    fontSize: 10),
                                           ),
                                         ),
                                       ],
@@ -174,7 +198,8 @@ class _DeveloperOptionsScreenState extends ConsumerState<DeveloperOptionsScreen>
                                   const SizedBox(height: 2),
                                   Text(
                                     cfg.description,
-                                    style: AppTypography.bodySmall.copyWith(color: colors.textTertiary),
+                                    style: AppTypography.bodySmall
+                                        .copyWith(color: colors.textTertiary),
                                   ),
                                 ],
                               ),
@@ -200,20 +225,25 @@ class _DeveloperOptionsScreenState extends ConsumerState<DeveloperOptionsScreen>
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text('Cryptographic Client Keys', style: AppTypography.titleMedium.copyWith(color: colors.textPrimary)),
+                  Text('Cryptographic Client Keys',
+                      style: AppTypography.titleMedium
+                          .copyWith(color: colors.textPrimary)),
                   const SizedBox(height: AppSpacing.xs),
                   Text(
                     'Private keys are stored in secure on-device keychain. Only public keys are registered.',
-                    style: AppTypography.bodySmall.copyWith(color: colors.textSecondary),
+                    style: AppTypography.bodySmall
+                        .copyWith(color: colors.textSecondary),
                   ),
                   const SizedBox(height: AppSpacing.sm),
                   _InfoTile(
                     label: 'Protected Payment Pubkey (secp256k1)',
-                    value: cryptoIdentity?.protectedPaymentPubkey ?? 'Generated on first protected transaction',
+                    value: cryptoIdentity?.protectedPaymentPubkey ??
+                        'Generated on first protected transaction',
                   ),
                   _InfoTile(
                     label: 'Transport Encryption Pubkey (X25519)',
-                    value: cryptoIdentity?.transportEncryptionPubkey ?? 'Generated on first protected transaction',
+                    value: cryptoIdentity?.transportEncryptionPubkey ??
+                        'Generated on first protected transaction',
                   ),
                 ],
               ),
@@ -222,30 +252,40 @@ class _DeveloperOptionsScreenState extends ConsumerState<DeveloperOptionsScreen>
 
             _SectionHeader(title: 'Service Endpoints'),
             _InfoTile(label: 'API Base URL', value: config.apiBaseUrl),
-            _InfoTile(label: 'Active Mint URL', value: netConfig.defaultMintUrl),
+            _InfoTile(
+                label: 'Active Mint URL', value: netConfig.defaultMintUrl),
             _InfoTile(label: 'Storage Prefix', value: netConfig.storagePrefix),
             const SizedBox(height: AppSpacing.sm),
 
             OutlinedButton.icon(
               icon: _isTestingMint
-                  ? const SizedBox(width: 16, height: 16, child: CircularProgressIndicator(strokeWidth: 2))
+                  ? const SizedBox(
+                      width: 16,
+                      height: 16,
+                      child: CircularProgressIndicator(strokeWidth: 2))
                   : const Icon(Icons.network_check),
               label: const Text('Verify Mint NUT-11 Support'),
-              onPressed: _isTestingMint ? null : () => _testMintSupport(netConfig.defaultMintUrl),
+              onPressed: _isTestingMint
+                  ? null
+                  : () => _testMintSupport(netConfig.defaultMintUrl),
             ),
             if (_mintTestResult != null) ...[
               const SizedBox(height: AppSpacing.xs),
               Text(
                 _mintTestResult!,
                 style: AppTypography.bodySmall.copyWith(
-                  color: _mintTestResult!.startsWith('✅') ? colors.primary : Colors.orangeAccent,
+                  color: _mintTestResult!.startsWith('✅')
+                      ? colors.primary
+                      : Colors.orangeAccent,
                 ),
               ),
             ],
             const SizedBox(height: AppSpacing.md),
 
             _SectionHeader(title: 'Cashu Protocol Support'),
-            const _InfoTile(label: 'NUT-00 to NUT-06', value: 'Supported (Mint, Keysets, Tokens, Split, Melt)'),
+            const _InfoTile(
+                label: 'NUT-00 to NUT-06',
+                value: 'Supported (Mint, Keysets, Tokens, Split, Melt)'),
             _SectionHeader(title: 'Presentation & Demo Controls'),
             Container(
               margin: const EdgeInsets.only(bottom: AppSpacing.md),
@@ -253,7 +293,8 @@ class _DeveloperOptionsScreenState extends ConsumerState<DeveloperOptionsScreen>
               decoration: BoxDecoration(
                 color: colors.surfaceCard,
                 borderRadius: AppRadius.mdRadius,
-                border: Border.all(color: colors.primary.withValues(alpha: 0.3)),
+                border:
+                    Border.all(color: colors.primary.withValues(alpha: 0.3)),
               ),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -262,20 +303,27 @@ class _DeveloperOptionsScreenState extends ConsumerState<DeveloperOptionsScreen>
                     children: [
                       Icon(Icons.slideshow_rounded, color: colors.primary),
                       const SizedBox(width: AppSpacing.sm),
-                      Text('Fellowship Demo Seeder', style: AppTypography.titleSmall.copyWith(color: colors.textPrimary)),
+                      Text('Fellowship Demo Seeder',
+                          style: AppTypography.titleSmall
+                              .copyWith(color: colors.textPrimary)),
                     ],
                   ),
                   const SizedBox(height: AppSpacing.xs),
                   Text(
                     'Populate realistic African commerce transactions (Instant Lightning, Protected Escrow, Claims, and Auto-Refunds) for live pitch demos.',
-                    style: AppTypography.bodySmall.copyWith(color: colors.textSecondary, fontSize: 12),
+                    style: AppTypography.bodySmall
+                        .copyWith(color: colors.textSecondary, fontSize: 12),
                   ),
                   const SizedBox(height: AppSpacing.md),
                   ElevatedButton.icon(
                     onPressed: () {
-                      ref.read(transactionsProvider.notifier).seedDemoTransactions();
+                      ref
+                          .read(transactionsProvider.notifier)
+                          .seedDemoTransactions();
                       ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(content: Text('Populated demo transactions across all 4 categories!')),
+                        const SnackBar(
+                            content: Text(
+                                'Populated demo transactions across all 4 categories!')),
                       );
                     },
                     icon: const Icon(Icons.auto_fix_high_rounded, size: 18),
@@ -288,10 +336,12 @@ class _DeveloperOptionsScreenState extends ConsumerState<DeveloperOptionsScreen>
             OutlinedButton(
               onPressed: () {
                 Clipboard.setData(ClipboardData(
-                  text: 'HANBOVA_DEBUG_DUMP\nAPI: ${config.apiBaseUrl}\nMint: ${netConfig.defaultMintUrl}\nNet: ${currentNetwork.name}\nUser: ${authState.user?.username ?? "anonymous"}',
+                  text:
+                      'HANBOVA_DEBUG_DUMP\nAPI: ${config.apiBaseUrl}\nMint: ${netConfig.defaultMintUrl}\nNet: ${currentNetwork.name}\nUser: ${authState.user?.username ?? "anonymous"}',
                 ));
                 ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(content: Text('Debug state copied to clipboard')),
+                  const SnackBar(
+                      content: Text('Debug state copied to clipboard')),
                 );
               },
               child: const Text('Copy Diagnostics'),
@@ -315,7 +365,8 @@ class _SectionHeader extends StatelessWidget {
       padding: const EdgeInsets.symmetric(vertical: AppSpacing.xs),
       child: Text(
         title.toUpperCase(),
-        style: AppTypography.labelSmall.copyWith(color: colors.primary, letterSpacing: 1.1),
+        style: AppTypography.labelSmall
+            .copyWith(color: colors.primary, letterSpacing: 1.1),
       ),
     );
   }
@@ -342,11 +393,14 @@ class _InfoTile extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(label, style: AppTypography.bodySmall.copyWith(color: colors.textSecondary)),
+          Text(label,
+              style: AppTypography.bodySmall
+                  .copyWith(color: colors.textSecondary)),
           const SizedBox(height: 2),
           SelectableText(
             value,
-            style: AppTypography.titleSmall.copyWith(color: colors.textPrimary, fontSize: 13),
+            style: AppTypography.titleSmall
+                .copyWith(color: colors.textPrimary, fontSize: 13),
           ),
         ],
       ),

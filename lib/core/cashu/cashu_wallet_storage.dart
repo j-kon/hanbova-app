@@ -20,37 +20,45 @@ class CashuWalletStorage {
   }
 
   /// Loads spendable Cashu proofs from secure persistent client storage.
-  Future<List<CashuProof>> loadProofs(String userId, HanbovaNetwork network) async {
+  Future<List<CashuProof>> loadProofs(
+      String userId, HanbovaNetwork network) async {
     try {
       final jsonStr = await _storage.read(key: _proofsKey(userId, network));
       if (jsonStr == null || jsonStr.isEmpty) return [];
       final list = jsonDecode(jsonStr) as List<dynamic>;
-      return list.map((e) => CashuProof.fromJson(e as Map<String, dynamic>)).toList();
+      return list
+          .map((e) => CashuProof.fromJson(e as Map<String, dynamic>))
+          .toList();
     } catch (_) {
       return [];
     }
   }
 
   /// Saves spendable Cashu proofs to secure persistent client storage.
-  Future<void> saveProofs(String userId, HanbovaNetwork network, List<CashuProof> proofs) async {
+  Future<void> saveProofs(
+      String userId, HanbovaNetwork network, List<CashuProof> proofs) async {
     final jsonStr = jsonEncode(proofs.map((p) => p.toJson()).toList());
     await _storage.write(key: _proofsKey(userId, network), value: jsonStr);
   }
 
   /// Loads protected escrow records (including client-side refund keys).
-  Future<List<ProtectedEscrowRecord>> loadEscrowRecords(String userId, HanbovaNetwork network) async {
+  Future<List<ProtectedEscrowRecord>> loadEscrowRecords(
+      String userId, HanbovaNetwork network) async {
     try {
       final jsonStr = await _storage.read(key: _escrowsKey(userId, network));
       if (jsonStr == null || jsonStr.isEmpty) return [];
       final list = jsonDecode(jsonStr) as List<dynamic>;
-      return list.map((e) => ProtectedEscrowRecord.fromJson(e as Map<String, dynamic>)).toList();
+      return list
+          .map((e) => ProtectedEscrowRecord.fromJson(e as Map<String, dynamic>))
+          .toList();
     } catch (_) {
       return [];
     }
   }
 
   /// Saves or updates a protected escrow record.
-  Future<void> saveEscrowRecord(String userId, HanbovaNetwork network, ProtectedEscrowRecord record) async {
+  Future<void> saveEscrowRecord(String userId, HanbovaNetwork network,
+      ProtectedEscrowRecord record) async {
     final records = await loadEscrowRecords(userId, network);
     final idx = records.indexWhere((r) => r.paymentId == record.paymentId);
     if (idx >= 0) {

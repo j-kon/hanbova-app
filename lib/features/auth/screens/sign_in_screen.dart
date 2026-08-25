@@ -69,7 +69,8 @@ class _SignInScreenState extends ConsumerState<SignInScreen> {
       ),
       body: SafeArea(
         child: SingleChildScrollView(
-          padding: const EdgeInsets.symmetric(horizontal: AppSpacing.xl, vertical: AppSpacing.lg),
+          padding: const EdgeInsets.symmetric(
+              horizontal: AppSpacing.xl, vertical: AppSpacing.lg),
           child: Form(
             key: _formKey,
             child: Column(
@@ -89,12 +90,14 @@ class _SignInScreenState extends ConsumerState<SignInScreen> {
                 ),
                 Text(
                   'Welcome back',
-                  style: AppTypography.headline.copyWith(color: colors.textPrimary),
+                  style: AppTypography.headline
+                      .copyWith(color: colors.textPrimary),
                 ),
                 const SizedBox(height: AppSpacing.xs),
                 Text(
                   'Sign in to access your wallet and protected payments.',
-                  style: AppTypography.bodyMedium.copyWith(color: colors.textSecondary),
+                  style: AppTypography.bodyMedium
+                      .copyWith(color: colors.textSecondary),
                 ),
                 const SizedBox(height: AppSpacing.xl),
 
@@ -104,16 +107,19 @@ class _SignInScreenState extends ConsumerState<SignInScreen> {
                     decoration: BoxDecoration(
                       color: colors.error.withValues(alpha: 0.1),
                       borderRadius: BorderRadius.circular(8),
-                      border: Border.all(color: colors.error.withValues(alpha: 0.3)),
+                      border: Border.all(
+                          color: colors.error.withValues(alpha: 0.3)),
                     ),
                     child: Row(
                       children: [
-                        Icon(Icons.error_outline, color: colors.error, size: 20),
+                        Icon(Icons.error_outline,
+                            color: colors.error, size: 20),
                         const SizedBox(width: AppSpacing.xs),
                         Expanded(
                           child: Text(
                             _errorMessage!,
-                            style: AppTypography.bodySmall.copyWith(color: colors.error),
+                            style: AppTypography.bodySmall
+                                .copyWith(color: colors.error),
                           ),
                         ),
                       ],
@@ -130,7 +136,9 @@ class _SignInScreenState extends ConsumerState<SignInScreen> {
                     labelText: 'Email or username',
                     hintText: 'you@example.com or @username',
                   ),
-                  validator: (v) => (v == null || v.trim().isEmpty) ? 'Please enter your email or username' : null,
+                  validator: (v) => (v == null || v.trim().isEmpty)
+                      ? 'Please enter your email or username'
+                      : null,
                 ),
                 const SizedBox(height: AppSpacing.md),
 
@@ -142,13 +150,18 @@ class _SignInScreenState extends ConsumerState<SignInScreen> {
                     labelText: 'Password',
                     suffixIcon: IconButton(
                       icon: Icon(
-                        _obscurePassword ? Icons.visibility_off : Icons.visibility,
+                        _obscurePassword
+                            ? Icons.visibility_off
+                            : Icons.visibility,
                         color: colors.textTertiary,
                       ),
-                      onPressed: () => setState(() => _obscurePassword = !_obscurePassword),
+                      onPressed: () =>
+                          setState(() => _obscurePassword = !_obscurePassword),
                     ),
                   ),
-                  validator: (v) => (v == null || v.isEmpty) ? 'Please enter your password' : null,
+                  validator: (v) => (v == null || v.isEmpty)
+                      ? 'Please enter your password'
+                      : null,
                 ),
                 const SizedBox(height: AppSpacing.xs),
 
@@ -159,7 +172,8 @@ class _SignInScreenState extends ConsumerState<SignInScreen> {
                     onPressed: () => context.push('/forgot-password'),
                     child: Text(
                       'Forgot password?',
-                      style: AppTypography.bodySmall.copyWith(color: colors.primary),
+                      style: AppTypography.bodySmall
+                          .copyWith(color: colors.primary),
                     ),
                   ),
                 ),
@@ -184,13 +198,15 @@ class _SignInScreenState extends ConsumerState<SignInScreen> {
                   children: [
                     Text(
                       "Don't have an account? ",
-                      style: AppTypography.bodyMedium.copyWith(color: colors.textSecondary),
+                      style: AppTypography.bodyMedium
+                          .copyWith(color: colors.textSecondary),
                     ),
                     GestureDetector(
                       onTap: () => context.pushReplacement('/signup'),
                       child: Text(
                         'Create account',
-                        style: AppTypography.titleSmall.copyWith(color: colors.primary),
+                        style: AppTypography.titleSmall
+                            .copyWith(color: colors.primary),
                       ),
                     ),
                   ],

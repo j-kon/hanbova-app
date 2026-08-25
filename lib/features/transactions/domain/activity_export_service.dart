@@ -5,7 +5,8 @@ class ActivityExportService {
   static String exportToCsv(List<TransactionModel> transactions) {
     final buffer = StringBuffer();
     // CSV Header
-    buffer.writeln('Transaction ID,Date (UTC),Type,Counterparty,Amount (sats),Status,Description,Reference');
+    buffer.writeln(
+        'Transaction ID,Date (UTC),Type,Counterparty,Amount (sats),Status,Description,Reference');
 
     for (final tx in transactions) {
       final id = _escapeCsv(tx.id);
@@ -17,7 +18,8 @@ class ActivityExportService {
       final desc = _escapeCsv(tx.description ?? '');
       final ref = _escapeCsv(tx.claimReference ?? '');
 
-      buffer.writeln('$id,$date,$type,$counterparty,$amount,$status,$desc,$ref');
+      buffer
+          .writeln('$id,$date,$type,$counterparty,$amount,$status,$desc,$ref');
     }
 
     return buffer.toString();

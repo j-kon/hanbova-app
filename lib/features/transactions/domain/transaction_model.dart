@@ -39,5 +39,6 @@ class TransactionModel {
   });
 
   bool get isOutgoing =>
-      type == TransactionType.instantSend || type == TransactionType.protectedSend;
+      type == TransactionType.instantSend ||
+      type == TransactionType.protectedSend;
 }

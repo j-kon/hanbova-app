@@ -4,7 +4,8 @@ import 'package:hanbova_app/features/transactions/domain/transaction_model.dart'
 
 void main() {
   group('ActivityExportService Tests', () {
-    test('exportToCsv generates valid RFC-4180 CSV with header and records', () {
+    test('exportToCsv generates valid RFC-4180 CSV with header and records',
+        () {
       final txList = [
         TransactionModel(
           id: 'tx_001',
@@ -31,7 +32,8 @@ void main() {
       final lines = csv.trim().split('\n');
 
       expect(lines.length, 3);
-      expect(lines[0], 'Transaction ID,Date (UTC),Type,Counterparty,Amount (sats),Status,Description,Reference');
+      expect(lines[0],
+          'Transaction ID,Date (UTC),Type,Counterparty,Amount (sats),Status,Description,Reference');
       expect(lines[1], contains('tx_001'));
       expect(lines[1], contains('Instant Send (Lightning)'));
       expect(lines[1], contains('25000'));

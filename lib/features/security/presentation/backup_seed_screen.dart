@@ -88,7 +88,8 @@ class _BackupSeedScreenState extends ConsumerState<BackupSeedScreen> {
 
   Future<void> _revealWords() async {
     final bio = ref.read(biometricServiceProvider);
-    final authorized = await bio.authenticate(reason: 'Authenticate to view recovery phrase');
+    final authorized =
+        await bio.authenticate(reason: 'Authenticate to view recovery phrase');
     if (authorized && mounted) {
       setState(() => _isRevealed = true);
     }
@@ -105,7 +106,8 @@ class _BackupSeedScreenState extends ConsumerState<BackupSeedScreen> {
     } else {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          content: Text('Incorrect words selected. Please double-check your recovery phrase.'),
+          content: Text(
+              'Incorrect words selected. Please double-check your recovery phrase.'),
           backgroundColor: Colors.redAccent,
         ),
       );
@@ -161,12 +163,14 @@ class _BackupSeedScreenState extends ConsumerState<BackupSeedScreen> {
                   children: [
                     Text(
                       'Secret Recovery Phrase',
-                      style: AppTypography.titleSmall.copyWith(color: Colors.redAccent),
+                      style: AppTypography.titleSmall
+                          .copyWith(color: Colors.redAccent),
                     ),
                     const SizedBox(height: 2),
                     Text(
                       'Write these 12 words down in order on paper. Never share them or take a digital screenshot.',
-                      style: AppTypography.bodySmall.copyWith(color: colors.textPrimary),
+                      style: AppTypography.bodySmall
+                          .copyWith(color: colors.textPrimary),
                     ),
                   ],
                 ),
@@ -191,7 +195,8 @@ class _BackupSeedScreenState extends ConsumerState<BackupSeedScreen> {
               itemCount: _words.length,
               itemBuilder: (context, i) {
                 return Container(
-                  padding: const EdgeInsets.symmetric(horizontal: AppSpacing.md),
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: AppSpacing.md),
                   decoration: BoxDecoration(
                     color: colors.surfaceCard,
                     borderRadius: AppRadius.smRadius,
@@ -201,7 +206,9 @@ class _BackupSeedScreenState extends ConsumerState<BackupSeedScreen> {
                     children: [
                       Text(
                         '${i + 1}.',
-                        style: AppTypography.bodySmall.copyWith(color: colors.textTertiary, fontWeight: FontWeight.bold),
+                        style: AppTypography.bodySmall.copyWith(
+                            color: colors.textTertiary,
+                            fontWeight: FontWeight.bold),
                       ),
                       const SizedBox(width: AppSpacing.sm),
                       Text(
@@ -237,7 +244,8 @@ class _BackupSeedScreenState extends ConsumerState<BackupSeedScreen> {
         const SizedBox(height: AppSpacing.xl),
 
         ElevatedButton(
-          onPressed: _isRevealed ? () => setState(() => _currentStep = 1) : null,
+          onPressed:
+              _isRevealed ? () => setState(() => _currentStep = 1) : null,
           child: const Text('I Have Written It Down -> Continue'),
         ),
       ],
@@ -258,24 +266,25 @@ class _BackupSeedScreenState extends ConsumerState<BackupSeedScreen> {
           style: AppTypography.bodySmall.copyWith(color: colors.textSecondary),
         ),
         const SizedBox(height: AppSpacing.lg),
-
-        _buildQuizQuestion('Word #${_quizWordIndex1 + 1}', _options1, _selectedWord1, (w) {
+        _buildQuizQuestion(
+            'Word #${_quizWordIndex1 + 1}', _options1, _selectedWord1, (w) {
           setState(() => _selectedWord1 = w);
         }, colors),
         const SizedBox(height: AppSpacing.md),
-
-        _buildQuizQuestion('Word #${_quizWordIndex2 + 1}', _options2, _selectedWord2, (w) {
+        _buildQuizQuestion(
+            'Word #${_quizWordIndex2 + 1}', _options2, _selectedWord2, (w) {
           setState(() => _selectedWord2 = w);
         }, colors),
         const SizedBox(height: AppSpacing.md),
-
-        _buildQuizQuestion('Word #${_quizWordIndex3 + 1}', _options3, _selectedWord3, (w) {
+        _buildQuizQuestion(
+            'Word #${_quizWordIndex3 + 1}', _options3, _selectedWord3, (w) {
           setState(() => _selectedWord3 = w);
         }, colors),
         const SizedBox(height: AppSpacing.xl),
-
         ElevatedButton(
-          onPressed: (_selectedWord1 != null && _selectedWord2 != null && _selectedWord3 != null)
+          onPressed: (_selectedWord1 != null &&
+                  _selectedWord2 != null &&
+                  _selectedWord3 != null)
               ? _verifyQuiz
               : null,
           child: const Text('Verify & Complete Backup'),
@@ -301,7 +310,8 @@ class _BackupSeedScreenState extends ConsumerState<BackupSeedScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(label, style: AppTypography.titleSmall.copyWith(color: colors.primary)),
+          Text(label,
+              style: AppTypography.titleSmall.copyWith(color: colors.primary)),
           const SizedBox(height: AppSpacing.sm),
           Wrap(
             spacing: AppSpacing.xs,
@@ -339,7 +349,8 @@ class _BackupSeedScreenState extends ConsumerState<BackupSeedScreen> {
               color: colors.success.withValues(alpha: 0.15),
               shape: BoxShape.circle,
             ),
-            child: Icon(Icons.verified_user_rounded, color: colors.success, size: 40),
+            child: Icon(Icons.verified_user_rounded,
+                color: colors.success, size: 40),
           ),
         ),
         const SizedBox(height: AppSpacing.lg),

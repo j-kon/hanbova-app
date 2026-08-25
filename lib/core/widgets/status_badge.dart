@@ -11,7 +11,8 @@ class StatusBadge extends StatelessWidget {
   Widget build(BuildContext context) {
     final colors = context.colors;
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final (label, bgColor, fgColor) = _getStatusConfig(status.toLowerCase(), colors, isDark);
+    final (label, bgColor, fgColor) =
+        _getStatusConfig(status.toLowerCase(), colors, isDark);
 
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
@@ -32,7 +33,8 @@ class StatusBadge extends StatelessWidget {
     );
   }
 
-  (String, Color, Color) _getStatusConfig(String status, HanbovaColors colors, bool isDark) {
+  (String, Color, Color) _getStatusConfig(
+      String status, HanbovaColors colors, bool isDark) {
     switch (status) {
       case 'claimable':
       case 'awaiting_claim':

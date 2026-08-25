@@ -36,7 +36,8 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
       builder: (context) {
         return SafeArea(
           child: Padding(
-            padding: const EdgeInsets.fromLTRB(AppSpacing.lg, AppSpacing.sm, AppSpacing.lg, AppSpacing.lg),
+            padding: const EdgeInsets.fromLTRB(
+                AppSpacing.lg, AppSpacing.sm, AppSpacing.lg, AppSpacing.lg),
             child: Column(
               mainAxisSize: MainAxisSize.min,
               crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -52,32 +53,46 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                   ),
                 ),
                 const SizedBox(height: AppSpacing.md),
-                Text('Appearance', style: AppTypography.titleMedium.copyWith(color: colors.textPrimary)),
+                Text('Appearance',
+                    style: AppTypography.titleMedium
+                        .copyWith(color: colors.textPrimary)),
                 const SizedBox(height: AppSpacing.sm),
                 ListTile(
                   title: const Text('System default'),
                   leading: const Icon(Icons.settings_suggest_outlined),
-                  trailing: currentTheme == ThemeMode.system ? Icon(Icons.check, color: colors.primary) : null,
+                  trailing: currentTheme == ThemeMode.system
+                      ? Icon(Icons.check, color: colors.primary)
+                      : null,
                   onTap: () {
-                    ref.read(themeControllerProvider.notifier).setThemeMode(ThemeMode.system);
+                    ref
+                        .read(themeControllerProvider.notifier)
+                        .setThemeMode(ThemeMode.system);
                     Navigator.pop(context);
                   },
                 ),
                 ListTile(
                   title: const Text('Dark mode'),
                   leading: const Icon(Icons.dark_mode_outlined),
-                  trailing: currentTheme == ThemeMode.dark ? Icon(Icons.check, color: colors.primary) : null,
+                  trailing: currentTheme == ThemeMode.dark
+                      ? Icon(Icons.check, color: colors.primary)
+                      : null,
                   onTap: () {
-                    ref.read(themeControllerProvider.notifier).setThemeMode(ThemeMode.dark);
+                    ref
+                        .read(themeControllerProvider.notifier)
+                        .setThemeMode(ThemeMode.dark);
                     Navigator.pop(context);
                   },
                 ),
                 ListTile(
                   title: const Text('Light mode'),
                   leading: const Icon(Icons.light_mode_outlined),
-                  trailing: currentTheme == ThemeMode.light ? Icon(Icons.check, color: colors.primary) : null,
+                  trailing: currentTheme == ThemeMode.light
+                      ? Icon(Icons.check, color: colors.primary)
+                      : null,
                   onTap: () {
-                    ref.read(themeControllerProvider.notifier).setThemeMode(ThemeMode.light);
+                    ref
+                        .read(themeControllerProvider.notifier)
+                        .setThemeMode(ThemeMode.light);
                     Navigator.pop(context);
                   },
                 ),
@@ -107,7 +122,8 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
               maxHeight: MediaQuery.of(context).size.height * 0.7,
             ),
             child: Padding(
-              padding: const EdgeInsets.fromLTRB(AppSpacing.lg, AppSpacing.sm, AppSpacing.lg, AppSpacing.lg),
+              padding: const EdgeInsets.fromLTRB(
+                  AppSpacing.lg, AppSpacing.sm, AppSpacing.lg, AppSpacing.lg),
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -123,7 +139,9 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                     ),
                   ),
                   const SizedBox(height: AppSpacing.md),
-                  Text('Display Currency', style: AppTypography.titleMedium.copyWith(color: colors.textPrimary)),
+                  Text('Display Currency',
+                      style: AppTypography.titleMedium
+                          .copyWith(color: colors.textPrimary)),
                   const SizedBox(height: AppSpacing.xs),
                   Flexible(
                     child: ListView(
@@ -132,7 +150,9 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                         final isSelected = c == currentCurrency;
                         return ListTile(
                           title: Text('${c.code} (${c.symbol})'),
-                          trailing: isSelected ? Icon(Icons.check, color: colors.primary) : null,
+                          trailing: isSelected
+                              ? Icon(Icons.check, color: colors.primary)
+                              : null,
                           onTap: () {
                             ref.read(currencyProvider.notifier).setCurrency(c);
                             Navigator.pop(context);
@@ -186,9 +206,11 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
     final currentTheme = ref.watch(themeControllerProvider);
     final currentCurrency = ref.watch(currencyProvider);
 
-    final displayName = user?.displayName.isNotEmpty == true ? user!.displayName : 'Jeremiah';
+    final displayName =
+        user?.displayName.isNotEmpty == true ? user!.displayName : 'Jeremiah';
     final handle = user?.handle.isNotEmpty == true ? user!.handle : '@jeremiah';
-    final email = user?.email.isNotEmpty == true ? user!.email : 'jeremiah@example.com';
+    final email =
+        user?.email.isNotEmpty == true ? user!.email : 'jeremiah@example.com';
 
     String themeLabel;
     switch (currentTheme) {
@@ -211,7 +233,8 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
       ),
       body: SafeArea(
         child: ListView(
-          padding: const EdgeInsets.symmetric(horizontal: AppSpacing.md, vertical: AppSpacing.sm),
+          padding: const EdgeInsets.symmetric(
+              horizontal: AppSpacing.md, vertical: AppSpacing.sm),
           children: [
             // User Profile Header
             Container(
@@ -227,8 +250,11 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                     radius: 28,
                     backgroundColor: colors.primary.withValues(alpha: 0.15),
                     child: Text(
-                      displayName.isNotEmpty ? displayName[0].toUpperCase() : 'J',
-                      style: AppTypography.headline.copyWith(color: colors.primary),
+                      displayName.isNotEmpty
+                          ? displayName[0].toUpperCase()
+                          : 'J',
+                      style: AppTypography.headline
+                          .copyWith(color: colors.primary),
                     ),
                   ),
                   const SizedBox(width: AppSpacing.md),
@@ -240,14 +266,20 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                           children: [
                             Text(
                               displayName,
-                              style: AppTypography.titleMedium.copyWith(color: colors.textPrimary),
+                              style: AppTypography.titleMedium
+                                  .copyWith(color: colors.textPrimary),
                             ),
                             const SizedBox(width: 4),
-                            Icon(Icons.verified, color: colors.primary, size: 16),
+                            Icon(Icons.verified,
+                                color: colors.primary, size: 16),
                           ],
                         ),
-                        Text(handle, style: AppTypography.bodySmall.copyWith(color: colors.primary)),
-                        Text(email, style: AppTypography.bodySmall.copyWith(color: colors.textTertiary, fontSize: 11)),
+                        Text(handle,
+                            style: AppTypography.bodySmall
+                                .copyWith(color: colors.primary)),
+                        Text(email,
+                            style: AppTypography.bodySmall.copyWith(
+                                color: colors.textTertiary, fontSize: 11)),
                       ],
                     ),
                   ),
@@ -275,12 +307,14 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                       children: [
                         Text(
                           'Wallet Security',
-                          style: AppTypography.titleSmall.copyWith(color: colors.textPrimary, fontSize: 13),
+                          style: AppTypography.titleSmall.copyWith(
+                              color: colors.textPrimary, fontSize: 13),
                         ),
                         const SizedBox(height: 2),
                         Text(
                           'Your wallet keys stay on your device.',
-                          style: AppTypography.bodySmall.copyWith(color: colors.textSecondary, fontSize: 12),
+                          style: AppTypography.bodySmall.copyWith(
+                              color: colors.textSecondary, fontSize: 12),
                         ),
                       ],
                     ),
@@ -298,20 +332,26 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
               subtitle: '12-word recovery phrase for test-build backup',
               trailing: ref.watch(walletBackupStatusProvider)
                   ? Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 8, vertical: 3),
                       decoration: BoxDecoration(
                         color: colors.success.withValues(alpha: 0.15),
                         borderRadius: BorderRadius.circular(4),
                       ),
-                      child: Text('Backed up', style: AppTypography.labelSmall.copyWith(color: colors.success)),
+                      child: Text('Backed up',
+                          style: AppTypography.labelSmall
+                              .copyWith(color: colors.success)),
                     )
                   : Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 8, vertical: 3),
                       decoration: BoxDecoration(
                         color: Colors.amber.withValues(alpha: 0.15),
                         borderRadius: BorderRadius.circular(4),
                       ),
-                      child: Text('Needs Backup', style: AppTypography.labelSmall.copyWith(color: Colors.amber)),
+                      child: Text('Needs Backup',
+                          style: AppTypography.labelSmall
+                              .copyWith(color: Colors.amber)),
                     ),
               onTap: () => context.push('/backup-seed'),
             ),
@@ -338,19 +378,25 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
             _SettingTile(
               icon: Icons.palette_outlined,
               title: 'Appearance',
-              trailing: Text(themeLabel, style: AppTypography.bodySmall.copyWith(color: colors.primary)),
+              trailing: Text(themeLabel,
+                  style:
+                      AppTypography.bodySmall.copyWith(color: colors.primary)),
               onTap: () => _showAppearanceSheet(context),
             ),
             _SettingTile(
               icon: Icons.currency_exchange,
               title: 'Display Currency',
-              trailing: Text(currentCurrency.code, style: AppTypography.bodySmall.copyWith(color: colors.primary)),
+              trailing: Text(currentCurrency.code,
+                  style:
+                      AppTypography.bodySmall.copyWith(color: colors.primary)),
               onTap: () => _showCurrencySheet(context),
             ),
             _SettingTile(
               icon: Icons.notifications_outlined,
               title: 'Notifications',
-              trailing: Text('Enabled', style: AppTypography.bodySmall.copyWith(color: colors.textSecondary)),
+              trailing: Text('Enabled',
+                  style: AppTypography.bodySmall
+                      .copyWith(color: colors.textSecondary)),
             ),
             const SizedBox(height: AppSpacing.md),
 
@@ -427,7 +473,8 @@ class _SectionTitle extends StatelessWidget {
       padding: const EdgeInsets.only(bottom: AppSpacing.xs, left: 4),
       child: Text(
         title.toUpperCase(),
-        style: AppTypography.labelSmall.copyWith(color: colors.textTertiary, letterSpacing: 0.8),
+        style: AppTypography.labelSmall
+            .copyWith(color: colors.textTertiary, letterSpacing: 0.8),
       ),
     );
   }
@@ -464,13 +511,18 @@ class _SettingTile extends StatelessWidget {
         borderRadius: AppRadius.smRadius,
         child: ListTile(
           leading: Icon(icon, color: colors.textSecondary, size: 22),
-          title: Text(title, style: AppTypography.titleSmall.copyWith(color: colors.textPrimary, fontSize: 14)),
+          title: Text(title,
+              style: AppTypography.titleSmall
+                  .copyWith(color: colors.textPrimary, fontSize: 14)),
           subtitle: subtitle != null
-              ? Text(subtitle!, style: AppTypography.bodySmall.copyWith(color: colors.textTertiary, fontSize: 11))
+              ? Text(subtitle!,
+                  style: AppTypography.bodySmall
+                      .copyWith(color: colors.textTertiary, fontSize: 11))
               : null,
           trailing: trailing,
           onTap: onTap,
-          contentPadding: const EdgeInsets.symmetric(horizontal: AppSpacing.md, vertical: 2),
+          contentPadding: const EdgeInsets.symmetric(
+              horizontal: AppSpacing.md, vertical: 2),
         ),
       ),
     );

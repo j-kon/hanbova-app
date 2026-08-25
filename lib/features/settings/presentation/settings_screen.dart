@@ -26,7 +26,8 @@ class SettingsScreen extends ConsumerWidget {
       ),
       body: SafeArea(
         child: ListView(
-          padding: const EdgeInsets.symmetric(horizontal: AppSpacing.md, vertical: AppSpacing.sm),
+          padding: const EdgeInsets.symmetric(
+              horizontal: AppSpacing.md, vertical: AppSpacing.sm),
           children: [
             _SectionHeader(title: 'Network & Backend'),
             _SettingsTile(
@@ -136,7 +137,8 @@ class _SettingsTile extends StatelessWidget {
           ),
           subtitle: Text(
             subtitle,
-            style: AppTypography.bodySmall.copyWith(color: colors.textSecondary),
+            style:
+                AppTypography.bodySmall.copyWith(color: colors.textSecondary),
           ),
         ),
       ),

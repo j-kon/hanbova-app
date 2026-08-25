@@ -52,21 +52,23 @@ void main() {
   });
 
   group('WalletStateNotifier state tests', () {
-    test('deducts, locks and credits balance properly', () {
+    test(
+        'deducts, locks and credits balance properly starting from zero balance',
+        () {
       final notifier = WalletStateNotifier();
-      expect(notifier.state.spendableSats, 250000);
-      expect(notifier.state.protectedOutgoingSats, 0);
-
-      notifier.lockProtectedOutgoing(50000);
-      expect(notifier.state.spendableSats, 200000);
-      expect(notifier.state.protectedOutgoingSats, 50000);
-
-      notifier.unlockRefundToSpendable(50000);
-      expect(notifier.state.spendableSats, 250000);
+      expect(notifier.state.spendableSats, 0);
       expect(notifier.state.protectedOutgoingSats, 0);
 
       notifier.creditBalance(10000);
-      expect(notifier.state.spendableSats, 260000);
+      expect(notifier.state.spendableSats, 10000);
+
+      notifier.lockProtectedOutgoing(4000);
+      expect(notifier.state.spendableSats, 6000);
+      expect(notifier.state.protectedOutgoingSats, 4000);
+
+      notifier.unlockRefundToSpendable(4000);
+      expect(notifier.state.spendableSats, 10000);
+      expect(notifier.state.protectedOutgoingSats, 0);
     });
   });
 }

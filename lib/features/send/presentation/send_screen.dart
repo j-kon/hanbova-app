@@ -78,15 +78,20 @@ class _SendScreenState extends ConsumerState<SendScreen> {
         preimage = result.preimage;
       }
 
-      ref.read(walletStateProvider.notifier).deductBalance(paidAmountSats + feeSats);
+      ref
+          .read(walletStateProvider.notifier)
+          .deductBalance(paidAmountSats + feeSats);
       ref.read(transactionsProvider.notifier).addTransaction(
             TransactionModel(
               id: 'ln_pay_${DateTime.now().millisecondsSinceEpoch}',
               type: TransactionType.instantSend,
               status: TransactionStatus.completed,
               amountSats: paidAmountSats,
-              recipientOrSender: invoice.length > 20 ? '${invoice.substring(0, 16)}...' : invoice,
-              description: 'Lightning Payment (fee: $feeSats sats${preimage != null && preimage.isNotEmpty ? ", preimage: ${preimage.substring(0, (preimage.length >= 8 ? 8 : preimage.length))}..." : ""})',
+              recipientOrSender: invoice.length > 20
+                  ? '${invoice.substring(0, 16)}...'
+                  : invoice,
+              description:
+                  'Lightning Payment (fee: $feeSats sats${preimage != null && preimage.isNotEmpty ? ", preimage: ${preimage.substring(0, (preimage.length >= 8 ? 8 : preimage.length))}..." : ""})',
               createdAt: DateTime.now(),
             ),
           );
@@ -126,7 +131,8 @@ class _SendScreenState extends ConsumerState<SendScreen> {
       body: SafeArea(
         child: _isSuccess
             ? Padding(
-                padding: const EdgeInsets.symmetric(horizontal: AppSpacing.xl, vertical: AppSpacing.xxl),
+                padding: const EdgeInsets.symmetric(
+                    horizontal: AppSpacing.xl, vertical: AppSpacing.xxl),
                 child: Column(
                   mainAxisAlignment: MainAxisAlignment.center,
                   crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -139,20 +145,23 @@ class _SendScreenState extends ConsumerState<SendScreen> {
                           color: Colors.amber.withValues(alpha: 0.15),
                           shape: BoxShape.circle,
                         ),
-                        child: const Icon(Icons.check, color: Colors.amber, size: 40),
+                        child: const Icon(Icons.check,
+                            color: Colors.amber, size: 40),
                       ),
                     ),
                     const SizedBox(height: AppSpacing.lg),
                     Text(
                       'Payment Sent!',
-                      style: AppTypography.headline.copyWith(color: colors.textPrimary),
+                      style: AppTypography.headline
+                          .copyWith(color: colors.textPrimary),
                       textAlign: TextAlign.center,
                     ),
                     const SizedBox(height: AppSpacing.xs),
                     Text(
                       'Lightning payment settled instantly and confirmed.',
                       textAlign: TextAlign.center,
-                      style: AppTypography.bodyMedium.copyWith(color: colors.textSecondary),
+                      style: AppTypography.bodyMedium
+                          .copyWith(color: colors.textSecondary),
                     ),
                     const SizedBox(height: AppSpacing.xl),
                     ElevatedButton(
@@ -163,7 +172,8 @@ class _SendScreenState extends ConsumerState<SendScreen> {
                 ),
               )
             : SingleChildScrollView(
-                padding: const EdgeInsets.symmetric(horizontal: AppSpacing.xl, vertical: AppSpacing.md),
+                padding: const EdgeInsets.symmetric(
+                    horizontal: AppSpacing.xl, vertical: AppSpacing.md),
                 child: Form(
                   key: _formKey,
                   child: Column(
@@ -174,23 +184,25 @@ class _SendScreenState extends ConsumerState<SendScreen> {
                         decoration: BoxDecoration(
                           color: Colors.amber.withValues(alpha: 0.1),
                           borderRadius: AppRadius.mdRadius,
-                          border: Border.all(color: Colors.amber.withValues(alpha: 0.3)),
+                          border: Border.all(
+                              color: Colors.amber.withValues(alpha: 0.3)),
                         ),
                         child: Row(
                           children: [
-                            const Icon(Icons.bolt, color: Colors.amber, size: 24),
+                            const Icon(Icons.bolt,
+                                color: Colors.amber, size: 24),
                             const SizedBox(width: AppSpacing.sm),
                             Expanded(
                               child: Text(
                                 'Instant payments settle immediately on the Lightning Network and are final.',
-                                style: AppTypography.bodySmall.copyWith(color: colors.textPrimary),
+                                style: AppTypography.bodySmall
+                                    .copyWith(color: colors.textPrimary),
                               ),
                             ),
                           ],
                         ),
                       ),
                       const SizedBox(height: AppSpacing.lg),
-
                       TextFormField(
                         controller: _invoiceController,
                         maxLines: 2,
@@ -210,15 +222,17 @@ class _SendScreenState extends ConsumerState<SendScreen> {
                         },
                       ),
                       const SizedBox(height: AppSpacing.md),
-
                       TextFormField(
                         controller: _amountController,
                         keyboardType: TextInputType.number,
-                        inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+                        inputFormatters: [
+                          FilteringTextInputFormatter.digitsOnly
+                        ],
                         decoration: InputDecoration(
                           labelText: 'Amount (sats)',
                           suffixText: currency.format(currentSats),
-                          prefixIcon: const Icon(Icons.currency_bitcoin_rounded),
+                          prefixIcon:
+                              const Icon(Icons.currency_bitcoin_rounded),
                         ),
                         onChanged: (_) => setState(() {}),
                         validator: (val) {
@@ -233,12 +247,15 @@ class _SendScreenState extends ConsumerState<SendScreen> {
                         },
                       ),
                       const SizedBox(height: AppSpacing.xl),
-
                       ElevatedButton.icon(
                         onPressed: _isLoading ? null : _payInstant,
                         icon: const Icon(Icons.bolt, size: 18),
                         label: _isLoading
-                            ? const SizedBox(height: 20, width: 20, child: CircularProgressIndicator(strokeWidth: 2))
+                            ? const SizedBox(
+                                height: 20,
+                                width: 20,
+                                child:
+                                    CircularProgressIndicator(strokeWidth: 2))
                             : const Text('Pay Instantly'),
                       ),
                     ],

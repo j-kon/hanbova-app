@@ -9,7 +9,8 @@ import 'package:flutter/material.dart';
 
 void main() {
   group('Auth Screens Widget Tests', () {
-    testWidgets('WelcomeScreen renders brand tagline and actions', (tester) async {
+    testWidgets('WelcomeScreen renders brand tagline and actions',
+        (tester) async {
       await tester.pumpWidget(
         MaterialApp(
           theme: AppTheme.darkTheme,
@@ -23,7 +24,9 @@ void main() {
       expect(find.text('Sign in'), findsOneWidget);
     });
 
-    testWidgets('SignInScreen renders email/username, password and forgot password', (tester) async {
+    testWidgets(
+        'SignInScreen renders email/username, password and forgot password',
+        (tester) async {
       await tester.pumpWidget(
         MaterialApp(
           theme: AppTheme.darkTheme,
@@ -38,7 +41,8 @@ void main() {
       expect(find.text('Sign in'), findsOneWidget);
     });
 
-    testWidgets('SignUpScreen renders fields and validates input', (tester) async {
+    testWidgets('SignUpScreen renders fields and validates input',
+        (tester) async {
       tester.view.physicalSize = const Size(800, 1600);
       tester.view.devicePixelRatio = 1.0;
       addTearDown(tester.view.resetPhysicalSize);
@@ -66,7 +70,8 @@ void main() {
       expect(find.text('Email is required'), findsOneWidget);
     });
 
-    testWidgets('ForgotPasswordScreen renders email field and continue action', (tester) async {
+    testWidgets('ForgotPasswordScreen renders email field and continue action',
+        (tester) async {
       await tester.pumpWidget(
         MaterialApp(
           theme: AppTheme.darkTheme,

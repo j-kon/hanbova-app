@@ -33,7 +33,8 @@ class MintValidator {
 
     try {
       final infoUri = Uri.parse('$cleanUrl/v1/info');
-      final response = await _client.get(infoUri).timeout(const Duration(seconds: 5));
+      final response =
+          await _client.get(infoUri).timeout(const Duration(seconds: 5));
 
       if (response.statusCode != 200) {
         return MintValidationResult(
@@ -49,14 +50,16 @@ class MintValidator {
 
       // Check NUT-11 support
       final nut11 = nuts['11'] as Map<String, dynamic>?;
-      final nut11Supported = nut11 != null && (nut11['supported'] == true || nut11['disabled'] != true);
+      final nut11Supported = nut11 != null &&
+          (nut11['supported'] == true || nut11['disabled'] != true);
 
       if (!nut11Supported) {
         return MintValidationResult(
           isValid: true,
           nut11Supported: false,
           mintName: name,
-          errorMessage: 'This Cashu mint does not support Hanbova Protected Payments (NUT-11).',
+          errorMessage:
+              'This Cashu mint does not support Hanbova Protected Payments (NUT-11).',
         );
       }
 

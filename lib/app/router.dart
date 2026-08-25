@@ -67,7 +67,10 @@ final appRouterProvider = Provider<GoRouter>((ref) {
       }
 
       // If authenticated and on welcome or login, redirect to home
-      if (isAuth && (location == '/welcome' || location == '/login' || location == '/signup')) {
+      if (isAuth &&
+          (location == '/welcome' ||
+              location == '/login' ||
+              location == '/signup')) {
         return '/home';
       }
 
@@ -82,8 +85,10 @@ final appRouterProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: '/welcome',
         builder: (context, state) {
-          final slide = int.tryParse(state.uri.queryParameters['slide'] ?? '0') ?? 0;
-          return WelcomeScreen(key: ValueKey('welcome_$slide'), initialSlide: slide);
+          final slide =
+              int.tryParse(state.uri.queryParameters['slide'] ?? '0') ?? 0;
+          return WelcomeScreen(
+              key: ValueKey('welcome_$slide'), initialSlide: slide);
         },
       ),
       GoRoute(
@@ -170,7 +175,8 @@ final appRouterProvider = Provider<GoRouter>((ref) {
         builder: (context, state) {
           final invoice = state.uri.queryParameters['invoice'];
           final recipient = state.uri.queryParameters['recipient'];
-          return SendScreen(initialInvoice: invoice, initialRecipient: recipient);
+          return SendScreen(
+              initialInvoice: invoice, initialRecipient: recipient);
         },
       ),
       GoRoute(

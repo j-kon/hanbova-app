@@ -10,7 +10,8 @@ class ForgotPasswordScreen extends ConsumerStatefulWidget {
   const ForgotPasswordScreen({super.key});
 
   @override
-  ConsumerState<ForgotPasswordScreen> createState() => _ForgotPasswordScreenState();
+  ConsumerState<ForgotPasswordScreen> createState() =>
+      _ForgotPasswordScreenState();
 }
 
 class _ForgotPasswordScreenState extends ConsumerState<ForgotPasswordScreen> {
@@ -35,7 +36,9 @@ class _ForgotPasswordScreenState extends ConsumerState<ForgotPasswordScreen> {
     });
 
     try {
-      final res = await ref.read(authProvider.notifier).forgotPassword(_emailController.text.trim());
+      final res = await ref
+          .read(authProvider.notifier)
+          .forgotPassword(_emailController.text.trim());
       if (!mounted) return;
       setState(() {
         _isLoading = false;
@@ -65,51 +68,56 @@ class _ForgotPasswordScreenState extends ConsumerState<ForgotPasswordScreen> {
       ),
       body: SafeArea(
         child: SingleChildScrollView(
-          padding: const EdgeInsets.symmetric(horizontal: AppSpacing.xl, vertical: AppSpacing.lg),
+          padding: const EdgeInsets.symmetric(
+              horizontal: AppSpacing.xl, vertical: AppSpacing.lg),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
               Text(
                 'Forgot password?',
-                style: AppTypography.headline.copyWith(color: colors.textPrimary),
+                style:
+                    AppTypography.headline.copyWith(color: colors.textPrimary),
               ),
               const SizedBox(height: AppSpacing.xs),
               Text(
                 'Enter the email associated with your Hanbova account to reset your password.',
-                style: AppTypography.bodyMedium.copyWith(color: colors.textSecondary),
+                style: AppTypography.bodyMedium
+                    .copyWith(color: colors.textSecondary),
               ),
               const SizedBox(height: AppSpacing.xl),
-
               if (_submitted) ...[
                 Container(
                   padding: const EdgeInsets.all(AppSpacing.md),
                   decoration: BoxDecoration(
                     color: colors.success.withValues(alpha: 0.1),
                     borderRadius: BorderRadius.circular(12),
-                    border: Border.all(color: colors.success.withValues(alpha: 0.3)),
+                    border: Border.all(
+                        color: colors.success.withValues(alpha: 0.3)),
                   ),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Row(
                         children: [
-                          Icon(Icons.check_circle_outline, color: colors.success),
+                          Icon(Icons.check_circle_outline,
+                              color: colors.success),
                           const SizedBox(width: AppSpacing.xs),
                           Text(
                             'Check your email',
-                            style: AppTypography.titleSmall.copyWith(color: colors.success),
+                            style: AppTypography.titleSmall
+                                .copyWith(color: colors.success),
                           ),
                         ],
                       ),
                       const SizedBox(height: AppSpacing.xs),
                       Text(
                         'If an account matches ${_emailController.text}, a password reset link has been dispatched.',
-                        style: AppTypography.bodySmall.copyWith(color: colors.textSecondary),
+                        style: AppTypography.bodySmall
+                            .copyWith(color: colors.textSecondary),
                       ),
                     ],
                   ),
                 ),
-
                 if (_devToken != null) ...[
                   const SizedBox(height: AppSpacing.md),
                   Container(
@@ -117,30 +125,33 @@ class _ForgotPasswordScreenState extends ConsumerState<ForgotPasswordScreen> {
                     decoration: BoxDecoration(
                       color: colors.primary.withValues(alpha: 0.08),
                       borderRadius: BorderRadius.circular(12),
-                      border: Border.all(color: colors.primary.withValues(alpha: 0.3)),
+                      border: Border.all(
+                          color: colors.primary.withValues(alpha: 0.3)),
                     ),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.stretch,
                       children: [
                         Text(
                           'Developer Reset Token (Development Mode)',
-                          style: AppTypography.labelMedium.copyWith(color: colors.primary),
+                          style: AppTypography.labelMedium
+                              .copyWith(color: colors.primary),
                         ),
                         const SizedBox(height: AppSpacing.xs),
                         SelectableText(
                           _devToken!,
-                          style: AppTypography.bodySmall.copyWith(fontFamily: 'monospace'),
+                          style: AppTypography.bodySmall
+                              .copyWith(fontFamily: 'monospace'),
                         ),
                         const SizedBox(height: AppSpacing.sm),
                         ElevatedButton(
-                          onPressed: () => context.push('/reset-password?token=$_devToken'),
+                          onPressed: () =>
+                              context.push('/reset-password?token=$_devToken'),
                           child: const Text('Proceed to Reset Password'),
                         ),
                       ],
                     ),
                   ),
                 ],
-
                 const SizedBox(height: AppSpacing.xl),
                 OutlinedButton(
                   onPressed: () => context.go('/login'),
@@ -161,8 +172,12 @@ class _ForgotPasswordScreenState extends ConsumerState<ForgotPasswordScreen> {
                           hintText: 'you@example.com',
                         ),
                         validator: (v) {
-                          if (v == null || v.trim().isEmpty) return 'Email is required';
-                          if (!v.contains('@')) return 'Enter a valid email';
+                          if (v == null || v.trim().isEmpty) {
+                            return 'Email is required';
+                          }
+                          if (!v.contains('@')) {
+                            return 'Enter a valid email';
+                          }
                           return null;
                         },
                       ),
@@ -173,7 +188,8 @@ class _ForgotPasswordScreenState extends ConsumerState<ForgotPasswordScreen> {
                             ? const SizedBox(
                                 height: 20,
                                 width: 20,
-                                child: CircularProgressIndicator(strokeWidth: 2),
+                                child:
+                                    CircularProgressIndicator(strokeWidth: 2),
                               )
                             : const Text('Continue'),
                       ),

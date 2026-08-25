@@ -147,7 +147,8 @@ class EncryptedEnvelopeService {
       secretKey: derivedSecretKey,
     );
 
-    final jsonMap = jsonDecode(utf8.decode(decryptedBytes)) as Map<String, dynamic>;
+    final jsonMap =
+        jsonDecode(utf8.decode(decryptedBytes)) as Map<String, dynamic>;
     return ProtectedPaymentEnvelope.fromJson(jsonMap);
   }
 

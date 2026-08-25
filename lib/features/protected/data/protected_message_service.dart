@@ -64,7 +64,8 @@ class RemoteProtectedMessage {
   }
 }
 
-final protectedMessageServiceProvider = Provider<ProtectedMessageService>((ref) {
+final protectedMessageServiceProvider =
+    Provider<ProtectedMessageService>((ref) {
   final apiClient = ref.watch(apiClientProvider);
   return ProtectedMessageService(apiClient);
 });
@@ -104,9 +105,12 @@ class ProtectedMessageService {
   Future<List<RemoteProtectedMessage>> getInbox() async {
     try {
       final response = await _apiClient.get('/protected-messages/inbox');
-      final list = response['data'] is List ? response['data'] as List : (response is List ? response as List : []);
+      final list = response['data'] is List
+          ? response['data'] as List
+          : (response is List ? response as List : []);
       return list
-          .map((item) => RemoteProtectedMessage.fromJson(item as Map<String, dynamic>))
+          .map((item) =>
+              RemoteProtectedMessage.fromJson(item as Map<String, dynamic>))
           .toList();
     } catch (_) {
       return [];
@@ -117,9 +121,12 @@ class ProtectedMessageService {
   Future<List<RemoteProtectedMessage>> getOutbox() async {
     try {
       final response = await _apiClient.get('/protected-messages/outbox');
-      final list = response['data'] is List ? response['data'] as List : (response is List ? response as List : []);
+      final list = response['data'] is List
+          ? response['data'] as List
+          : (response is List ? response as List : []);
       return list
-          .map((item) => RemoteProtectedMessage.fromJson(item as Map<String, dynamic>))
+          .map((item) =>
+              RemoteProtectedMessage.fromJson(item as Map<String, dynamic>))
           .toList();
     } catch (_) {
       return [];

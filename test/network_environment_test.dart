@@ -20,7 +20,8 @@ void main() {
       expect(config.storagePrefix, 'wallet_cashu_test');
     });
 
-    test('Mainnet configuration is strictly disabled for safety in this build', () async {
+    test('Mainnet configuration is strictly disabled for safety in this build',
+        () async {
       final config = NetworkConfig.mainnet;
       expect(config.network, HanbovaNetwork.mainnet);
       expect(config.isEnabled, isFalse);
@@ -33,7 +34,9 @@ void main() {
       expect(notifier.state, HanbovaNetwork.local);
     });
 
-    test('Switching between Local and CashuTest succeeds while Mainnet is locked', () async {
+    test(
+        'Switching between Local and CashuTest succeeds while Mainnet is locked',
+        () async {
       final notifier = NetworkEnvironmentNotifier();
       expect(notifier.state, HanbovaNetwork.local);
 

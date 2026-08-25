@@ -64,17 +64,14 @@ class ProtectedSendNotifier extends StateNotifier<ProtectedSendState> {
       final profile = await _messageService.resolveUserPaymentProfile(clean);
       state = state.copyWith(isLoading: false, resolvedRecipient: profile);
       return profile;
-    } catch (_) {
-      // Fallback mock profile for local offline demo
-      final clean = username.trim().replaceAll('@', '');
-      final mockProfile = UserPaymentProfile(
-        username: clean,
-        handle: '@$clean',
-        protectedPaymentPubkey: '02a1633cafcc01ebfb6d78e39f687a1f0995c62fc95f51ead10a02ee0be551b5af',
-        transportEncryptionPubkey: '6d9b4b9b9c9f0b83e3c09f8e434f0e9d6d9b4b9b9c9f0b83e3c09f8e434f0e9d',
+    } catch (e) {
+      state = state.copyWith(
+        isLoading: false,
+        resolvedRecipient: null,
+        errorMessage:
+            'Recipient @$username could not be found or has not registered payment keys.',
       );
-      state = state.copyWith(isLoading: false, resolvedRecipient: mockProfile);
-      return mockProfile;
+      return null;
     }
   }
 
@@ -95,18 +92,16 @@ class ProtectedSendNotifier extends StateNotifier<ProtectedSendState> {
       final cleanRecipient = recipientIdentifier.trim().replaceAll('@', '');
 
       // 1. Resolve recipient keys if not already resolved
-      final recipientProfile = state.resolvedRecipient ??
-          await resolveRecipient(cleanRecipient) ??
-          UserPaymentProfile(
-            username: cleanRecipient,
-            handle: '@$cleanRecipient',
-            protectedPaymentPubkey: '02a1633cafcc01ebfb6d78e39f687a1f0995c62fc95f51ead10a02ee0be551b5af',
-            transportEncryptionPubkey: '6d9b4b9b9c9f0b83e3c09f8e434f0e9d6d9b4b9b9c9f0b83e3c09f8e434f0e9d',
-          );
+      final recipientProfile =
+          state.resolvedRecipient ?? await resolveRecipient(cleanRecipient);
+      if (recipientProfile == null) {
+        throw StateError(
+            'Recipient @$cleanRecipient could not be found or has not registered payment keys.');
+      }
 
       // 2. Generate or load Sender Cryptographic Identity
       final cryptoService = _ref.read(cryptoIdentityProvider.notifier);
-      final senderIdentity = await cryptoService.getOrCreateIdentity(
+      await cryptoService.getOrCreateIdentity(
         userId: authState.user?.id ?? 'sender_local',
         network: network,
       );
@@ -116,26 +111,20 @@ class ProtectedSendNotifier extends StateNotifier<ProtectedSendState> {
       final expiry = now.add(Duration(seconds: expirationSeconds));
       final locktimeUnix = expiry.millisecondsSinceEpoch ~/ 1000;
 
-      // 3. Create Cashu P2PK Token (NUT-11 locked to recipient with refund key + locktime)
-      final refundKey = senderIdentity.protectedPaymentPubkey;
-      String cashuToken;
+      // 3. Create Cashu P2PK Token via official CDK
       final cashuWallet = _ref.read(cashuWalletServiceProvider);
-
-      if (cashuWallet != null) {
-        try {
-          cashuToken = await cashuWallet.createProtectedSend(
-            amountSats: amountSats,
-            recipientPubkey: recipientProfile.protectedPaymentPubkey,
-            locktime: expiry,
-            paymentId: paymentId,
-          );
-          _ref.invalidate(cashuBalanceProvider);
-        } catch (_) {
-          cashuToken = 'cashuA_nut11_p2pk_mint_${config.defaultMintUrl}_recipient_${recipientProfile.protectedPaymentPubkey}_refund_${refundKey}_locktime_${locktimeUnix}_amount_$amountSats';
-        }
-      } else {
-        cashuToken = 'cashuA_nut11_p2pk_mint_${config.defaultMintUrl}_recipient_${recipientProfile.protectedPaymentPubkey}_refund_${refundKey}_locktime_${locktimeUnix}_amount_$amountSats';
+      if (cashuWallet == null) {
+        throw StateError(
+            'Cashu wallet is not initialized. Please ensure your wallet seed is configured.');
       }
+
+      final cashuToken = await cashuWallet.createProtectedSend(
+        amountSats: amountSats,
+        recipientPubkey: recipientProfile.protectedPaymentPubkey,
+        locktime: expiry,
+        paymentId: paymentId,
+      );
+      _ref.invalidate(cashuBalanceProvider);
 
       // 4. Encrypt Protected Payment Envelope for Recipient's Transport Key
       final envelope = ProtectedPaymentEnvelope(
@@ -155,16 +144,12 @@ class ProtectedSendNotifier extends StateNotifier<ProtectedSendState> {
       );
 
       // 5. Send Encrypted Envelope to Hanbova Backend Relay
-      try {
-        await _messageService.sendProtectedMessage(
-          recipientUsername: cleanRecipient,
-          encryptedPayload: ciphertext,
-          payloadVersion: 1,
-          paymentIntentId: paymentId,
-        );
-      } catch (_) {
-        // Backend offline fallback for local tests
-      }
+      await _messageService.sendProtectedMessage(
+        recipientUsername: cleanRecipient,
+        encryptedPayload: ciphertext,
+        payloadVersion: 1,
+        paymentIntentId: paymentId,
+      );
 
       // 6. Record Payment Intent locally
       final intent = await _repository.createPaymentIntent(
@@ -188,7 +173,7 @@ class ProtectedSendNotifier extends StateNotifier<ProtectedSendState> {
               description: description,
               createdAt: intent.createdAt,
               expiresAt: intent.expiresAt,
-              claimReference: intent.claimReference,
+              claimReference: cashuToken,
             ),
           );
 

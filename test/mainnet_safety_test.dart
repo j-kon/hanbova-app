@@ -6,8 +6,11 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
 
-  group('Milestone 5: Public Mainnet Beta Safety & Network Architecture Tests', () {
-    test('NetworkConfig provides distinct storage prefixes and valid URLs for all networks', () {
+  group('Milestone 5: Public Mainnet Beta Safety & Network Architecture Tests',
+      () {
+    test(
+        'NetworkConfig provides distinct storage prefixes and valid URLs for all networks',
+        () {
       final local = NetworkConfig.fromNetwork(HanbovaNetwork.local);
       final testnet = NetworkConfig.fromNetwork(HanbovaNetwork.cashuTest);
       final mainnet = NetworkConfig.fromNetwork(HanbovaNetwork.mainnet);
@@ -18,7 +21,11 @@ void main() {
       expect(mainnet.storagePrefix, 'wallet_mainnet');
 
       // Verify all prefixes are distinct
-      final prefixes = {local.storagePrefix, testnet.storagePrefix, mainnet.storagePrefix};
+      final prefixes = {
+        local.storagePrefix,
+        testnet.storagePrefix,
+        mainnet.storagePrefix
+      };
       expect(prefixes.length, 3);
 
       // Verify Mainnet settings are locked for safety
@@ -27,7 +34,9 @@ void main() {
       expect(mainnet.displayName, contains('Locked'));
     });
 
-    test('NetworkEnvironmentNotifier state transitions correctly between test networks', () async {
+    test(
+        'NetworkEnvironmentNotifier state transitions correctly between test networks',
+        () async {
       final container = ProviderContainer();
       addTearDown(container.dispose);
 
@@ -36,14 +45,17 @@ void main() {
       expect(container.read(networkEnvironmentProvider), HanbovaNetwork.local);
 
       await notifier.setNetwork(HanbovaNetwork.cashuTest);
-      expect(container.read(networkEnvironmentProvider), HanbovaNetwork.cashuTest);
+      expect(
+          container.read(networkEnvironmentProvider), HanbovaNetwork.cashuTest);
 
       // Attempting to switch to Mainnet is ignored by safety guard
       await notifier.setNetwork(HanbovaNetwork.mainnet);
-      expect(container.read(networkEnvironmentProvider), HanbovaNetwork.cashuTest);
+      expect(
+          container.read(networkEnvironmentProvider), HanbovaNetwork.cashuTest);
     });
 
-    test('WalletBackupStatusProvider defaults to false until backup completed', () {
+    test('WalletBackupStatusProvider defaults to false until backup completed',
+        () {
       final container = ProviderContainer();
       addTearDown(container.dispose);
 

@@ -168,40 +168,50 @@ class CdkFfiBindings {
   CdkFfiBindings._(DynamicLibrary dylib)
       : _dylib = dylib,
         walletCreate = dylib
-            .lookup<NativeFunction<HanbovaCdkWalletCreateC>>('hanbova_cdk_wallet_create')
+            .lookup<NativeFunction<HanbovaCdkWalletCreateC>>(
+                'hanbova_cdk_wallet_create')
             .asFunction(),
         walletGetBalance = dylib
-            .lookup<NativeFunction<HanbovaCdkWalletGetBalanceC>>('hanbova_cdk_wallet_get_balance')
+            .lookup<NativeFunction<HanbovaCdkWalletGetBalanceC>>(
+                'hanbova_cdk_wallet_get_balance')
             .asFunction(),
         walletMintQuote = dylib
-            .lookup<NativeFunction<HanbovaCdkWalletMintQuoteC>>('hanbova_cdk_mint_quote')
+            .lookup<NativeFunction<HanbovaCdkWalletMintQuoteC>>(
+                'hanbova_cdk_mint_quote')
             .asFunction(),
         walletMint = dylib
             .lookup<NativeFunction<HanbovaCdkWalletMintC>>('hanbova_cdk_mint')
             .asFunction(),
         walletMeltQuote = dylib
-            .lookup<NativeFunction<HanbovaCdkWalletMeltQuoteC>>('hanbova_cdk_melt_quote')
+            .lookup<NativeFunction<HanbovaCdkWalletMeltQuoteC>>(
+                'hanbova_cdk_melt_quote')
             .asFunction(),
         walletMelt = dylib
             .lookup<NativeFunction<HanbovaCdkWalletMeltC>>('hanbova_cdk_melt')
             .asFunction(),
         walletSendLocked = dylib
-            .lookup<NativeFunction<HanbovaCdkWalletSendLockedC>>('hanbova_cdk_prepare_p2pk_send')
+            .lookup<NativeFunction<HanbovaCdkWalletSendLockedC>>(
+                'hanbova_cdk_prepare_p2pk_send')
             .asFunction(),
         walletReceive = dylib
-            .lookup<NativeFunction<HanbovaCdkWalletReceiveC>>('hanbova_cdk_receive_p2pk')
+            .lookup<NativeFunction<HanbovaCdkWalletReceiveC>>(
+                'hanbova_cdk_receive_p2pk')
             .asFunction(),
         checkTokenState = dylib
-            .lookup<NativeFunction<HanbovaCdkCheckTokenStateC>>('hanbova_cdk_check_token_state')
+            .lookup<NativeFunction<HanbovaCdkCheckTokenStateC>>(
+                'hanbova_cdk_check_token_state')
             .asFunction(),
         walletFree = dylib
-            .lookup<NativeFunction<HanbovaCdkWalletFreeC>>('hanbova_cdk_wallet_free')
+            .lookup<NativeFunction<HanbovaCdkWalletFreeC>>(
+                'hanbova_cdk_wallet_free')
             .asFunction(),
         getLastError = dylib
-            .lookup<NativeFunction<HanbovaCdkGetLastErrorC>>('hanbova_cdk_get_last_error')
+            .lookup<NativeFunction<HanbovaCdkGetLastErrorC>>(
+                'hanbova_cdk_get_last_error')
             .asFunction(),
         freeString = dylib
-            .lookup<NativeFunction<HanbovaCdkFreeStringC>>('hanbova_cdk_free_string')
+            .lookup<NativeFunction<HanbovaCdkFreeStringC>>(
+                'hanbova_cdk_free_string')
             .asFunction();
 
   static CdkFfiBindings get instance {

@@ -9,7 +9,8 @@ final biometricServiceProvider = Provider<BiometricService>((ref) {
 class BiometricService {
   final LocalAuthentication _auth;
 
-  BiometricService({LocalAuthentication? auth}) : _auth = auth ?? LocalAuthentication();
+  BiometricService({LocalAuthentication? auth})
+      : _auth = auth ?? LocalAuthentication();
 
   /// Check if device supports biometrics or device passcode.
   Future<bool> isBiometricsAvailable() async {

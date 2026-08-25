@@ -10,37 +10,43 @@ void main() {
       expect(bip39EnglishWords.last, 'zoo');
     });
 
-    test('generateMnemonic produces a valid 12-word phrase with valid checksum', () async {
+    test('generateMnemonic produces a valid 12-word phrase with valid checksum',
+        () async {
       for (int i = 0; i < 5; i++) {
         final phrase = await MnemonicService.generateMnemonic();
         final words = phrase.split(' ');
 
         expect(words.length, 12);
         for (final word in words) {
-          expect(MnemonicService.isValidWord(word), isTrue, reason: 'Word "$word" must be in BIP-39 wordlist');
+          expect(MnemonicService.isValidWord(word), isTrue,
+              reason: 'Word "$word" must be in BIP-39 wordlist');
         }
 
         final isValid = await MnemonicService.validateMnemonic(phrase);
-        expect(isValid, isTrue, reason: 'Generated phrase "$phrase" must be valid');
+        expect(isValid, isTrue,
+            reason: 'Generated phrase "$phrase" must be valid');
       }
     });
 
     test('validateMnemonic rejects invalid phrases', () async {
       // 1. Wrong length (11 words)
       expect(
-        await MnemonicService.validateMnemonic('abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon'),
+        await MnemonicService.validateMnemonic(
+            'abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon'),
         isFalse,
       );
 
       // 2. Non-dictionary word
       expect(
-        await MnemonicService.validateMnemonic('abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon fakebipword'),
+        await MnemonicService.validateMnemonic(
+            'abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon fakebipword'),
         isFalse,
       );
 
       // 3. Checksum failure (12 valid words, but wrong checksum bits)
       expect(
-        await MnemonicService.validateMnemonic('abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon'),
+        await MnemonicService.validateMnemonic(
+            'abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon'),
         isFalse,
       );
     });

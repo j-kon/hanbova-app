@@ -20,17 +20,17 @@ class DevelopmentExchangeRateProvider implements ExchangeRateProvider {
       case FiatCurrency.ngn:
         return 95000000.0; // 1 BTC = 95M NGN
       case FiatCurrency.kes:
-        return 7800000.0;  // 1 BTC = 7.8M KES
+        return 7800000.0; // 1 BTC = 7.8M KES
       case FiatCurrency.ghs:
-        return 900000.0;   // 1 BTC = 900k GHS
+        return 900000.0; // 1 BTC = 900k GHS
       case FiatCurrency.zar:
-        return 1100000.0;  // 1 BTC = 1.1M ZAR
+        return 1100000.0; // 1 BTC = 1.1M ZAR
       case FiatCurrency.ugx:
-        return 220000000.0;// 1 BTC = 220M UGX
+        return 220000000.0; // 1 BTC = 220M UGX
       case FiatCurrency.rwf:
         return 80000000.0; // 1 BTC = 80M RWF
       case FiatCurrency.usd:
-        return 60000.0;    // 1 BTC = $60k USD
+        return 60000.0; // 1 BTC = $60k USD
     }
   }
 }
@@ -53,18 +53,24 @@ enum FiatCurrency {
 
   const FiatCurrency(this.code, this.symbol);
 
-  double satsToFiat(int sats, [ExchangeRateProvider rateProvider = const DevelopmentExchangeRateProvider()]) {
+  double satsToFiat(int sats,
+      [ExchangeRateProvider rateProvider =
+          const DevelopmentExchangeRateProvider()]) {
     final rate = rateProvider.getRate(this);
     return (sats / 100000000.0) * rate;
   }
 
-  int fiatToSats(double fiatAmount, [ExchangeRateProvider rateProvider = const DevelopmentExchangeRateProvider()]) {
+  int fiatToSats(double fiatAmount,
+      [ExchangeRateProvider rateProvider =
+          const DevelopmentExchangeRateProvider()]) {
     if (fiatAmount <= 0) return 0;
     final rate = rateProvider.getRate(this);
     return ((fiatAmount / rate) * 100000000.0).round();
   }
 
-  String format(int sats, [ExchangeRateProvider rateProvider = const DevelopmentExchangeRateProvider()]) {
+  String format(int sats,
+      [ExchangeRateProvider rateProvider =
+          const DevelopmentExchangeRateProvider()]) {
     final amount = satsToFiat(sats, rateProvider);
     final formatter = NumberFormat.currency(
       symbol: symbol,
@@ -74,7 +80,8 @@ enum FiatCurrency {
   }
 }
 
-final currencyProvider = StateNotifierProvider<CurrencyNotifier, FiatCurrency>((ref) {
+final currencyProvider =
+    StateNotifierProvider<CurrencyNotifier, FiatCurrency>((ref) {
   return CurrencyNotifier();
 });
 

@@ -53,7 +53,9 @@ class _SignUpScreenState extends ConsumerState<SignUpScreen> {
           email: _emailController.text.trim(),
           firstName: _firstNameController.text.trim(),
           lastName: _lastNameController.text.trim(),
-          phone: _phoneController.text.trim().isNotEmpty ? _phoneController.text.trim() : null,
+          phone: _phoneController.text.trim().isNotEmpty
+              ? _phoneController.text.trim()
+              : null,
           password: _passwordController.text,
         );
 
@@ -65,7 +67,8 @@ class _SignUpScreenState extends ConsumerState<SignUpScreen> {
     } else {
       final authState = ref.read(authProvider);
       setState(() {
-        _errorMessage = authState.errorMessage ?? 'Failed to create account. Please try again.';
+        _errorMessage = authState.errorMessage ??
+            'Failed to create account. Please try again.';
       });
     }
   }
@@ -84,7 +87,8 @@ class _SignUpScreenState extends ConsumerState<SignUpScreen> {
       ),
       body: SafeArea(
         child: SingleChildScrollView(
-          padding: const EdgeInsets.symmetric(horizontal: AppSpacing.xl, vertical: AppSpacing.md),
+          padding: const EdgeInsets.symmetric(
+              horizontal: AppSpacing.xl, vertical: AppSpacing.md),
           child: Form(
             key: _formKey,
             child: Column(
@@ -104,12 +108,14 @@ class _SignUpScreenState extends ConsumerState<SignUpScreen> {
                 ),
                 Text(
                   'Create an account',
-                  style: AppTypography.headline.copyWith(color: colors.textPrimary),
+                  style: AppTypography.headline
+                      .copyWith(color: colors.textPrimary),
                 ),
                 const SizedBox(height: AppSpacing.xs),
                 Text(
                   'Choose your Hanbova username and secure your wallet.',
-                  style: AppTypography.bodyMedium.copyWith(color: colors.textSecondary),
+                  style: AppTypography.bodyMedium
+                      .copyWith(color: colors.textSecondary),
                 ),
                 const SizedBox(height: AppSpacing.lg),
 
@@ -119,16 +125,19 @@ class _SignUpScreenState extends ConsumerState<SignUpScreen> {
                     decoration: BoxDecoration(
                       color: colors.error.withValues(alpha: 0.1),
                       borderRadius: BorderRadius.circular(8),
-                      border: Border.all(color: colors.error.withValues(alpha: 0.3)),
+                      border: Border.all(
+                          color: colors.error.withValues(alpha: 0.3)),
                     ),
                     child: Row(
                       children: [
-                        Icon(Icons.error_outline, color: colors.error, size: 20),
+                        Icon(Icons.error_outline,
+                            color: colors.error, size: 20),
                         const SizedBox(width: AppSpacing.xs),
                         Expanded(
                           child: Text(
                             _errorMessage!,
-                            style: AppTypography.bodySmall.copyWith(color: colors.error),
+                            style: AppTypography.bodySmall
+                                .copyWith(color: colors.error),
                           ),
                         ),
                       ],
@@ -144,8 +153,10 @@ class _SignUpScreenState extends ConsumerState<SignUpScreen> {
                       child: TextFormField(
                         controller: _firstNameController,
                         textCapitalization: TextCapitalization.words,
-                        decoration: const InputDecoration(labelText: 'First name'),
-                        validator: (v) => (v == null || v.trim().isEmpty) ? 'Required' : null,
+                        decoration:
+                            const InputDecoration(labelText: 'First name'),
+                        validator: (v) =>
+                            (v == null || v.trim().isEmpty) ? 'Required' : null,
                       ),
                     ),
                     const SizedBox(width: AppSpacing.sm),
@@ -153,8 +164,10 @@ class _SignUpScreenState extends ConsumerState<SignUpScreen> {
                       child: TextFormField(
                         controller: _lastNameController,
                         textCapitalization: TextCapitalization.words,
-                        decoration: const InputDecoration(labelText: 'Last name'),
-                        validator: (v) => (v == null || v.trim().isEmpty) ? 'Required' : null,
+                        decoration:
+                            const InputDecoration(labelText: 'Last name'),
+                        validator: (v) =>
+                            (v == null || v.trim().isEmpty) ? 'Required' : null,
                       ),
                     ),
                   ],
@@ -171,9 +184,14 @@ class _SignUpScreenState extends ConsumerState<SignUpScreen> {
                     hintText: 'username',
                   ),
                   validator: (v) {
-                    if (v == null || v.trim().isEmpty) return 'Username is required';
-                    if (v.trim().length < 3) return 'Must be at least 3 characters';
-                    if (v.contains(' ') || !RegExp(r'^[a-zA-Z0-9_]+$').hasMatch(v.trim())) {
+                    if (v == null || v.trim().isEmpty) {
+                      return 'Username is required';
+                    }
+                    if (v.trim().length < 3) {
+                      return 'Must be at least 3 characters';
+                    }
+                    if (v.contains(' ') ||
+                        !RegExp(r'^[a-zA-Z0-9_]+$').hasMatch(v.trim())) {
                       return 'Alphanumeric and underscores only';
                     }
                     return null;
@@ -191,8 +209,12 @@ class _SignUpScreenState extends ConsumerState<SignUpScreen> {
                     hintText: 'you@example.com',
                   ),
                   validator: (v) {
-                    if (v == null || v.trim().isEmpty) return 'Email is required';
-                    if (!v.contains('@') || !v.contains('.')) return 'Enter a valid email';
+                    if (v == null || v.trim().isEmpty) {
+                      return 'Email is required';
+                    }
+                    if (!v.contains('@') || !v.contains('.')) {
+                      return 'Enter a valid email';
+                    }
                     return null;
                   },
                 ),
@@ -217,15 +239,22 @@ class _SignUpScreenState extends ConsumerState<SignUpScreen> {
                     labelText: 'Password',
                     suffixIcon: IconButton(
                       icon: Icon(
-                        _obscurePassword ? Icons.visibility_off : Icons.visibility,
+                        _obscurePassword
+                            ? Icons.visibility_off
+                            : Icons.visibility,
                         color: colors.textTertiary,
                       ),
-                      onPressed: () => setState(() => _obscurePassword = !_obscurePassword),
+                      onPressed: () =>
+                          setState(() => _obscurePassword = !_obscurePassword),
                     ),
                   ),
                   validator: (v) {
-                    if (v == null || v.isEmpty) return 'Password is required';
-                    if (v.length < 8) return 'Password must be at least 8 characters';
+                    if (v == null || v.isEmpty) {
+                      return 'Password is required';
+                    }
+                    if (v.length < 8) {
+                      return 'Password must be at least 8 characters';
+                    }
                     return null;
                   },
                 ),
@@ -239,15 +268,19 @@ class _SignUpScreenState extends ConsumerState<SignUpScreen> {
                     labelText: 'Confirm password',
                     suffixIcon: IconButton(
                       icon: Icon(
-                        _obscureConfirmPassword ? Icons.visibility_off : Icons.visibility,
+                        _obscureConfirmPassword
+                            ? Icons.visibility_off
+                            : Icons.visibility,
                         color: colors.textTertiary,
                       ),
-                      onPressed: () =>
-                          setState(() => _obscureConfirmPassword = !_obscureConfirmPassword),
+                      onPressed: () => setState(() =>
+                          _obscureConfirmPassword = !_obscureConfirmPassword),
                     ),
                   ),
                   validator: (v) {
-                    if (v != _passwordController.text) return 'Passwords do not match';
+                    if (v != _passwordController.text) {
+                      return 'Passwords do not match';
+                    }
                     return null;
                   },
                 ),
@@ -270,13 +303,15 @@ class _SignUpScreenState extends ConsumerState<SignUpScreen> {
                   children: [
                     Text(
                       'Already have an account? ',
-                      style: AppTypography.bodyMedium.copyWith(color: colors.textSecondary),
+                      style: AppTypography.bodyMedium
+                          .copyWith(color: colors.textSecondary),
                     ),
                     GestureDetector(
                       onTap: () => context.pushReplacement('/login'),
                       child: Text(
                         'Sign in',
-                        style: AppTypography.titleSmall.copyWith(color: colors.primary),
+                        style: AppTypography.titleSmall
+                            .copyWith(color: colors.primary),
                       ),
                     ),
                   ],

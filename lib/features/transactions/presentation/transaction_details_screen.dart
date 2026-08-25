@@ -19,10 +19,12 @@ class TransactionDetailsScreen extends ConsumerStatefulWidget {
   const TransactionDetailsScreen({super.key, required this.tx});
 
   @override
-  ConsumerState<TransactionDetailsScreen> createState() => _TransactionDetailsScreenState();
+  ConsumerState<TransactionDetailsScreen> createState() =>
+      _TransactionDetailsScreenState();
 }
 
-class _TransactionDetailsScreenState extends ConsumerState<TransactionDetailsScreen> {
+class _TransactionDetailsScreenState
+    extends ConsumerState<TransactionDetailsScreen> {
   bool _showDevDetails = false;
   bool _revealClaimCode = false;
 
@@ -50,7 +52,9 @@ class _TransactionDetailsScreenState extends ConsumerState<TransactionDetailsScr
 
   String _maskClaimCode(String code) {
     if (code.length <= 8) return '••••••••';
-    final prefix = code.startsWith('hnbv_claim_') ? 'hnbv_claim_' : code.substring(0, min(4, code.length));
+    final prefix = code.startsWith('hnbv_claim_')
+        ? 'hnbv_claim_'
+        : code.substring(0, min(4, code.length));
     final suffix = code.substring(max(0, code.length - 4));
     return '$prefix••••••••$suffix';
   }
@@ -68,7 +72,8 @@ class _TransactionDetailsScreenState extends ConsumerState<TransactionDetailsScr
     switch (tx.status) {
       case TransactionStatus.completed:
         statusColor = colors.success;
-        statusText = tx.type == TransactionType.protectedSend ? 'Claimed' : 'Completed';
+        statusText =
+            tx.type == TransactionType.protectedSend ? 'Claimed' : 'Completed';
         break;
       case TransactionStatus.claimable:
         statusColor = colors.protected;
@@ -137,13 +142,15 @@ class _TransactionDetailsScreenState extends ConsumerState<TransactionDetailsScr
                     const SizedBox(height: 2),
                     Text(
                       currency.format(tx.amountSats),
-                      style: AppTypography.titleSmall.copyWith(color: colors.textSecondary),
+                      style: AppTypography.titleSmall
+                          .copyWith(color: colors.textSecondary),
                     ),
                     const SizedBox(height: AppSpacing.md),
 
                     // Status Badge
                     Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 12, vertical: 6),
                       decoration: BoxDecoration(
                         color: statusColor.withValues(alpha: 0.15),
                         borderRadius: AppRadius.fullRadius,
@@ -194,7 +201,8 @@ class _TransactionDetailsScreenState extends ConsumerState<TransactionDetailsScr
                         maskedValue: _maskClaimCode(tx.claimReference!),
                         fullValue: tx.claimReference!,
                         isRevealed: _revealClaimCode,
-                        onToggleReveal: () => setState(() => _revealClaimCode = !_revealClaimCode),
+                        onToggleReveal: () => setState(
+                            () => _revealClaimCode = !_revealClaimCode),
                         onCopy: () => _copy('Claim Code', tx.claimReference!),
                       ),
                     ],
@@ -216,7 +224,8 @@ class _TransactionDetailsScreenState extends ConsumerState<TransactionDetailsScr
                   color: colors.surfaceElevated,
                   borderRadius: AppRadius.mdRadius,
                   child: InkWell(
-                    onTap: () => setState(() => _showDevDetails = !_showDevDetails),
+                    onTap: () =>
+                        setState(() => _showDevDetails = !_showDevDetails),
                     borderRadius: AppRadius.mdRadius,
                     child: Padding(
                       padding: const EdgeInsets.all(AppSpacing.md),
@@ -227,11 +236,14 @@ class _TransactionDetailsScreenState extends ConsumerState<TransactionDetailsScr
                           Expanded(
                             child: Text(
                               'Developer Technical Details',
-                              style: AppTypography.titleSmall.copyWith(color: colors.textPrimary),
+                              style: AppTypography.titleSmall
+                                  .copyWith(color: colors.textPrimary),
                             ),
                           ),
                           Icon(
-                            _showDevDetails ? Icons.keyboard_arrow_up : Icons.keyboard_arrow_down,
+                            _showDevDetails
+                                ? Icons.keyboard_arrow_up
+                                : Icons.keyboard_arrow_down,
                             color: colors.textSecondary,
                           ),
                         ],
@@ -251,11 +263,22 @@ class _TransactionDetailsScreenState extends ConsumerState<TransactionDetailsScr
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        _DevRow(label: 'Protocol Specs', value: 'Cashu NUT-10 (Conditions) / NUT-11 (P2PK)'),
-                        _DevRow(label: 'Token State Check', value: 'NUT-07 Mint Verify'),
-                        _DevRow(label: 'Mint Endpoint', value: 'http://127.0.0.1:3338'),
-                        _DevRow(label: 'Spending Path', value: 'Recipient PubKey | Locktime -> Sender Refund'),
-                        _DevRow(label: 'Double Spend Rule', value: 'First valid spend confirmed at mint wins'),
+                        _DevRow(
+                            label: 'Protocol Specs',
+                            value: 'Cashu NUT-10 (Conditions) / NUT-11 (P2PK)'),
+                        _DevRow(
+                            label: 'Token State Check',
+                            value: 'NUT-07 Mint Verify'),
+                        _DevRow(
+                            label: 'Mint Endpoint',
+                            value: 'http://127.0.0.1:3338'),
+                        _DevRow(
+                            label: 'Spending Path',
+                            value:
+                                'Recipient PubKey | Locktime -> Sender Refund'),
+                        _DevRow(
+                            label: 'Double Spend Rule',
+                            value: 'First valid spend confirmed at mint wins'),
                       ],
                     ),
                   ),
@@ -375,7 +398,9 @@ class _MaskedDetailRow extends StatelessWidget {
               GestureDetector(
                 onTap: onToggleReveal,
                 child: Icon(
-                  isRevealed ? Icons.visibility_off_outlined : Icons.visibility_outlined,
+                  isRevealed
+                      ? Icons.visibility_off_outlined
+                      : Icons.visibility_outlined,
                   size: 16,
                   color: colors.primary,
                 ),
@@ -409,12 +434,15 @@ class _DevRow extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          Text(label, style: AppTypography.caption.copyWith(color: colors.textTertiary)),
+          Text(label,
+              style:
+                  AppTypography.caption.copyWith(color: colors.textTertiary)),
           const SizedBox(width: AppSpacing.md),
           Flexible(
             child: Text(
               value,
-              style: AppTypography.caption.copyWith(color: colors.textPrimary, fontWeight: FontWeight.w600),
+              style: AppTypography.caption.copyWith(
+                  color: colors.textPrimary, fontWeight: FontWeight.w600),
               textAlign: TextAlign.end,
             ),
           ),

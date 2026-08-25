@@ -16,7 +16,8 @@ class OnboardingScreen extends StatelessWidget {
       backgroundColor: colors.background,
       body: SafeArea(
         child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: AppSpacing.xl, vertical: AppSpacing.lg),
+          padding: const EdgeInsets.symmetric(
+              horizontal: AppSpacing.xl, vertical: AppSpacing.lg),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
@@ -43,19 +44,22 @@ class OnboardingScreen extends StatelessWidget {
               const SizedBox(height: AppSpacing.xl),
               Text(
                 'Hanbova',
-                style: AppTypography.display.copyWith(color: colors.textPrimary),
+                style:
+                    AppTypography.display.copyWith(color: colors.textPrimary),
                 textAlign: TextAlign.center,
               ),
               const SizedBox(height: AppSpacing.xs),
               Text(
                 'Send protected.',
-                style: AppTypography.titleMedium.copyWith(color: colors.primary),
+                style:
+                    AppTypography.titleMedium.copyWith(color: colors.primary),
                 textAlign: TextAlign.center,
               ),
               const SizedBox(height: AppSpacing.md),
               Text(
                 'Africa-first Bitcoin payment application. Choose between instant settlement or protected payments with claim, expiration, and refund safeguards.',
-                style: AppTypography.bodyMedium.copyWith(color: colors.textSecondary),
+                style: AppTypography.bodyMedium
+                    .copyWith(color: colors.textSecondary),
                 textAlign: TextAlign.center,
               ),
               const Spacer(),

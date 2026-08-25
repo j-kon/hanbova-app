@@ -31,10 +31,12 @@ class UserProfile {
       email: json['email'] as String,
       firstName: json['first_name'] as String? ?? '',
       lastName: json['last_name'] as String? ?? '',
-      displayName: json['display_name'] as String? ?? json['username'] as String,
+      displayName:
+          json['display_name'] as String? ?? json['username'] as String,
       phone: json['phone'] as String?,
       emailVerified: json['email_verified'] as bool? ?? false,
-      createdAt: DateTime.tryParse(json['created_at'] as String? ?? '') ?? DateTime.now(),
+      createdAt: DateTime.tryParse(json['created_at'] as String? ?? '') ??
+          DateTime.now(),
     );
   }
 

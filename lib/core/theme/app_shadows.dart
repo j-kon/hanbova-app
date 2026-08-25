@@ -5,7 +5,9 @@ class AppShadows {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     return [
       BoxShadow(
-        color: isDark ? Colors.black.withValues(alpha: 0.35) : Colors.black.withValues(alpha: 0.04),
+        color: isDark
+            ? Colors.black.withValues(alpha: 0.35)
+            : Colors.black.withValues(alpha: 0.04),
         blurRadius: 12,
         offset: const Offset(0, 4),
       ),

@@ -30,7 +30,8 @@ class NotificationsScreen extends ConsumerWidget {
               icon: Icons.shield_outlined,
               iconColor: colors.protected,
               title: 'Protected payment active',
-              message: 'Your payment of 25,000 sats to @amina is awaiting claim.',
+              message:
+                  'Your payment of 25,000 sats to @amina is awaiting claim.',
               time: '2 hours ago',
               isUnread: true,
             ),
@@ -83,10 +84,13 @@ class _NotificationTile extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(AppSpacing.md),
       decoration: BoxDecoration(
-        color: isUnread ? colors.primary.withValues(alpha: 0.05) : colors.surfaceCard,
+        color: isUnread
+            ? colors.primary.withValues(alpha: 0.05)
+            : colors.surfaceCard,
         borderRadius: AppRadius.mdRadius,
         border: Border.all(
-          color: isUnread ? colors.primary.withValues(alpha: 0.3) : colors.border,
+          color:
+              isUnread ? colors.primary.withValues(alpha: 0.3) : colors.border,
         ),
       ),
       child: Row(
@@ -108,12 +112,18 @@ class _NotificationTile extends StatelessWidget {
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    Text(title, style: AppTypography.titleSmall.copyWith(color: colors.textPrimary, fontSize: 13)),
-                    Text(time, style: AppTypography.bodySmall.copyWith(color: colors.textTertiary, fontSize: 10)),
+                    Text(title,
+                        style: AppTypography.titleSmall
+                            .copyWith(color: colors.textPrimary, fontSize: 13)),
+                    Text(time,
+                        style: AppTypography.bodySmall.copyWith(
+                            color: colors.textTertiary, fontSize: 10)),
                   ],
                 ),
                 const SizedBox(height: 2),
-                Text(message, style: AppTypography.bodySmall.copyWith(color: colors.textSecondary, fontSize: 12)),
+                Text(message,
+                    style: AppTypography.bodySmall
+                        .copyWith(color: colors.textSecondary, fontSize: 12)),
               ],
             ),
           ),

@@ -7,7 +7,8 @@ void main() {
     final x25519 = X25519();
     final envelopeService = EncryptedEnvelopeService();
 
-    test('Alice encrypts envelope for Bob, Bob decrypts successfully', () async {
+    test('Alice encrypts envelope for Bob, Bob decrypts successfully',
+        () async {
       // 1. Generate Bob's Transport KeyPair
       final bobKeyPair = await x25519.newKeyPair();
       final bobPublicKey = await bobKeyPair.extractPublicKey();
@@ -19,7 +20,8 @@ void main() {
       const envelope = ProtectedPaymentEnvelope(
         version: 1,
         paymentId: 'pay_test_uuid_12345',
-        cashuToken: 'cashuAeyJ0b2tlbiI6W3sibWludCI6Imh0dHBzOi8vdGVzdG51dC5jYXNodS5zcGFjZSIsInByb29mcyI6W3siaWQiOiIwMCIsImFtb3VudCI6NTAwLCJzZWNyZXQiOiJbMDJudXQxMTowMmJvYnB1YmtleTpsb2NrdGltZT0xNzg3NTEwNDAwOnJlZnVuZD0wMmFsaWNlcHVia2V5XSJdfV1dfQ==',
+        cashuToken:
+            'cashuAeyJ0b2tlbiI6W3sibWludCI6Imh0dHBzOi8vdGVzdG51dC5jYXNodS5zcGFjZSIsInByb29mcyI6W3siaWQiOiIwMCIsImFtb3VudCI6NTAwLCJzZWNyZXQiOiJbMDJudXQxMTowMmJvYnB1YmtleTpsb2NrdGltZT0xNzg3NTEwNDAwOnJlZnVuZD0wMmFsaWNlcHVia2V5XSJdfV1dfQ==',
         mintUrl: 'https://testnut.cashu.space',
         amountSats: 500,
         senderUsername: 'alice',
@@ -112,8 +114,11 @@ void main() {
 
       // Tamper with one character in ciphertext
       final parts = ciphertext.split(':');
-      final tamperedCipher = 'a${parts[3].substring(1)}';
-      final tamperedString = '${parts[0]}:${parts[1]}:${parts[2]}:$tamperedCipher:${parts[4]}';
+      final firstChar = parts[3][0];
+      final replacement = firstChar == 'a' ? 'b' : 'a';
+      final tamperedCipher = '$replacement${parts[3].substring(1)}';
+      final tamperedString =
+          '${parts[0]}:${parts[1]}:${parts[2]}:$tamperedCipher:${parts[4]}';
 
       expect(
         () async => await envelopeService.decryptEnvelope(

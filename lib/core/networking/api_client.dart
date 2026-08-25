@@ -48,11 +48,13 @@ class ApiClient {
       return _handleResponse(response);
     } catch (e) {
       if (e is AppFailure) rethrow;
-      throw AppFailure(message: 'Network connection failed: $e', originalError: e);
+      throw AppFailure(
+          message: 'Network connection failed: $e', originalError: e);
     }
   }
 
-  Future<Map<String, dynamic>> post(String path, Map<String, dynamic> body) async {
+  Future<Map<String, dynamic>> post(
+      String path, Map<String, dynamic> body) async {
     try {
       final uri = Uri.parse('$baseUrl$path');
       final response = await _httpClient
@@ -70,7 +72,8 @@ class ApiClient {
     }
   }
 
-  Future<Map<String, dynamic>> put(String path, {Map<String, dynamic>? body}) async {
+  Future<Map<String, dynamic>> put(String path,
+      {Map<String, dynamic>? body}) async {
     try {
       final uri = Uri.parse('$baseUrl$path');
       final response = await _httpClient
@@ -117,7 +120,8 @@ class ApiClient {
 
     try {
       final errorJson = jsonDecode(response.body);
-      final message = errorJson['message'] ?? errorJson['error'] ?? 'Request failed';
+      final message =
+          errorJson['message'] ?? errorJson['error'] ?? 'Request failed';
       throw AppFailure(
         message: message.toString(),
         code: errorJson['error']?.toString() ?? status.toString(),

@@ -26,7 +26,8 @@ class PrimaryButton extends StatelessWidget {
     final colors = context.colors;
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final bg = backgroundColor ?? colors.primary;
-    final fg = foregroundColor ?? (isDark ? AppColors.deepForest : Colors.white);
+    final fg =
+        foregroundColor ?? (isDark ? AppColors.deepForest : Colors.white);
 
     return ElevatedButton(
       onPressed: isLoading ? null : onPressed,

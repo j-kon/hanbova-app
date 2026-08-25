@@ -22,7 +22,8 @@ class UnifiedDepositSheet extends ConsumerStatefulWidget {
   }
 
   @override
-  ConsumerState<UnifiedDepositSheet> createState() => _UnifiedDepositSheetState();
+  ConsumerState<UnifiedDepositSheet> createState() =>
+      _UnifiedDepositSheetState();
 }
 
 class _UnifiedDepositSheetState extends ConsumerState<UnifiedDepositSheet>
@@ -30,9 +31,12 @@ class _UnifiedDepositSheetState extends ConsumerState<UnifiedDepositSheet>
   late final TabController _tabController;
 
   // Lightning state
-  final TextEditingController _amountController = TextEditingController(text: '5000');
+  final TextEditingController _amountController =
+      TextEditingController(text: '5000');
   bool _isGeneratingInvoice = false;
+  bool _isMinting = false;
   String? _generatedInvoice;
+  String? _quoteId;
   String? _errorMessage;
 
   // Cashu token state
@@ -64,6 +68,7 @@ class _UnifiedDepositSheetState extends ConsumerState<UnifiedDepositSheet>
     setState(() {
       _isGeneratingInvoice = true;
       _errorMessage = null;
+      _quoteId = null;
     });
 
     try {
@@ -72,17 +77,46 @@ class _UnifiedDepositSheetState extends ConsumerState<UnifiedDepositSheet>
         throw StateError('Wallet not initialized');
       }
 
-      // Mint quote / test mint simulation
-      await wallet.mintTestTokens(amount);
+      final quote = await wallet.createMintQuote(amount);
       setState(() {
-        _generatedInvoice = 'lnbc${amount}0u1p3mock_mint_invoice_${DateTime.now().millisecondsSinceEpoch}';
+        _quoteId = quote.quoteId;
+        _generatedInvoice = quote.bolt11Invoice;
         _isGeneratingInvoice = false;
       });
-      ref.invalidate(cashuBalanceProvider);
     } catch (e) {
       setState(() {
         _errorMessage = e.toString();
         _isGeneratingInvoice = false;
+      });
+    }
+  }
+
+  Future<void> _checkAndMint() async {
+    if (_quoteId == null) return;
+    setState(() {
+      _isMinting = true;
+      _errorMessage = null;
+    });
+
+    try {
+      final wallet = ref.read(cashuWalletServiceProvider);
+      if (wallet == null) {
+        throw StateError('Wallet not initialized');
+      }
+
+      final minted = await wallet.mintQuote(_quoteId!);
+      ref.invalidate(cashuBalanceProvider);
+
+      setState(() {
+        _isMinting = false;
+        _generatedInvoice = null;
+        _quoteId = null;
+        _claimSuccessMessage = 'Successfully minted $minted sats into wallet!';
+      });
+    } catch (e) {
+      setState(() {
+        _isMinting = false;
+        _errorMessage = 'Invoice not yet paid or mint failed: $e';
       });
     }
   }
@@ -137,7 +171,8 @@ class _UnifiedDepositSheetState extends ConsumerState<UnifiedDepositSheet>
       margin: EdgeInsets.only(bottom: bottomInset),
       decoration: BoxDecoration(
         color: colors.surface,
-        borderRadius: const BorderRadius.vertical(top: Radius.circular(AppRadius.xl)),
+        borderRadius:
+            const BorderRadius.vertical(top: Radius.circular(AppRadius.xl)),
         border: Border.all(color: colors.border),
       ),
       child: Column(
@@ -149,7 +184,8 @@ class _UnifiedDepositSheetState extends ConsumerState<UnifiedDepositSheet>
             child: Container(
               width: 40,
               height: 4,
-              margin: const EdgeInsets.only(top: AppSpacing.sm, bottom: AppSpacing.xs),
+              margin: const EdgeInsets.only(
+                  top: AppSpacing.sm, bottom: AppSpacing.xs),
               decoration: BoxDecoration(
                 color: colors.border,
                 borderRadius: BorderRadius.circular(2),
@@ -164,7 +200,8 @@ class _UnifiedDepositSheetState extends ConsumerState<UnifiedDepositSheet>
               children: [
                 Text(
                   'Receive & Deposit Funds',
-                  style: AppTypography.titleMedium.copyWith(color: colors.textPrimary),
+                  style: AppTypography.titleMedium
+                      .copyWith(color: colors.textPrimary),
                 ),
                 IconButton(
                   icon: const Icon(Icons.close),
@@ -182,8 +219,12 @@ class _UnifiedDepositSheetState extends ConsumerState<UnifiedDepositSheet>
             unselectedLabelColor: colors.textSecondary,
             tabs: const [
               Tab(icon: Icon(Icons.bolt, size: 20), text: 'Lightning'),
-              Tab(icon: Icon(Icons.currency_bitcoin, size: 20), text: 'On-Chain'),
-              Tab(icon: Icon(Icons.token_outlined, size: 20), text: 'Ecash Token'),
+              Tab(
+                  icon: Icon(Icons.currency_bitcoin, size: 20),
+                  text: 'On-Chain'),
+              Tab(
+                  icon: Icon(Icons.token_outlined, size: 20),
+                  text: 'Ecash Token'),
             ],
           ),
 
@@ -215,10 +256,10 @@ class _UnifiedDepositSheetState extends ConsumerState<UnifiedDepositSheet>
           const SizedBox(height: 2),
           Text(
             'Pay this invoice with any Lightning wallet to deposit spendable ecash directly.',
-            style: AppTypography.bodySmall.copyWith(color: colors.textSecondary),
+            style:
+                AppTypography.bodySmall.copyWith(color: colors.textSecondary),
           ),
           const SizedBox(height: AppSpacing.md),
-
           if (_generatedInvoice == null) ...[
             TextField(
               controller: _amountController,
@@ -232,7 +273,8 @@ class _UnifiedDepositSheetState extends ConsumerState<UnifiedDepositSheet>
             ),
             const SizedBox(height: AppSpacing.md),
             ElevatedButton.icon(
-              onPressed: _isGeneratingInvoice ? null : _generateLightningInvoice,
+              onPressed:
+                  _isGeneratingInvoice ? null : _generateLightningInvoice,
               icon: _isGeneratingInvoice
                   ? const SizedBox(
                       width: 18,
@@ -263,9 +305,12 @@ class _UnifiedDepositSheetState extends ConsumerState<UnifiedDepositSheet>
                 Expanded(
                   child: OutlinedButton.icon(
                     onPressed: () {
-                      Clipboard.setData(ClipboardData(text: _generatedInvoice!));
+                      Clipboard.setData(
+                          ClipboardData(text: _generatedInvoice!));
                       ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(content: Text('Lightning invoice copied to clipboard')),
+                        const SnackBar(
+                            content:
+                                Text('Lightning invoice copied to clipboard')),
                       );
                     },
                     icon: const Icon(Icons.copy, size: 18),
@@ -275,15 +320,30 @@ class _UnifiedDepositSheetState extends ConsumerState<UnifiedDepositSheet>
                 const SizedBox(width: AppSpacing.sm),
                 IconButton(
                   icon: const Icon(Icons.refresh),
-                  onPressed: () => setState(() => _generatedInvoice = null),
+                  onPressed: () => setState(() {
+                    _generatedInvoice = null;
+                    _quoteId = null;
+                  }),
                 ),
               ],
             ),
+            const SizedBox(height: AppSpacing.md),
+            ElevatedButton.icon(
+              onPressed: _isMinting ? null : _checkAndMint,
+              icon: _isMinting
+                  ? const SizedBox(
+                      width: 18,
+                      height: 18,
+                      child: CircularProgressIndicator(strokeWidth: 2),
+                    )
+                  : const Icon(Icons.check_circle_outline),
+              label: const Text('Check Payment & Mint Ecash'),
+            ),
           ],
-
           if (_errorMessage != null) ...[
             const SizedBox(height: AppSpacing.sm),
-            Text(_errorMessage!, style: AppTypography.bodySmall.copyWith(color: colors.error)),
+            Text(_errorMessage!,
+                style: AppTypography.bodySmall.copyWith(color: colors.error)),
           ],
         ],
       ),
@@ -303,18 +363,21 @@ class _UnifiedDepositSheetState extends ConsumerState<UnifiedDepositSheet>
               color: colors.gold.withValues(alpha: 0.12),
               shape: BoxShape.circle,
             ),
-            child: Icon(Icons.currency_bitcoin_rounded, color: colors.gold, size: 36),
+            child: Icon(Icons.currency_bitcoin_rounded,
+                color: colors.gold, size: 36),
           ),
           const SizedBox(height: AppSpacing.md),
           Text(
             'On-Chain Bitcoin Swaps',
-            style: AppTypography.titleMedium.copyWith(color: colors.textPrimary),
+            style:
+                AppTypography.titleMedium.copyWith(color: colors.textPrimary),
             textAlign: TextAlign.center,
           ),
           const SizedBox(height: AppSpacing.xs),
           Text(
             'On-chain Bitcoin deposits via trust-minimized swaps are under active development and disabled in this test build.',
-            style: AppTypography.bodySmall.copyWith(color: colors.textSecondary),
+            style:
+                AppTypography.bodySmall.copyWith(color: colors.textSecondary),
             textAlign: TextAlign.center,
           ),
           const SizedBox(height: AppSpacing.lg),
@@ -332,7 +395,8 @@ class _UnifiedDepositSheetState extends ConsumerState<UnifiedDepositSheet>
                 const SizedBox(width: 6),
                 Text(
                   'Please use Lightning (NUT-04) or Ecash Tokens',
-                  style: AppTypography.labelSmall.copyWith(color: colors.textSecondary),
+                  style: AppTypography.labelSmall
+                      .copyWith(color: colors.textSecondary),
                 ),
               ],
             ),
@@ -355,10 +419,10 @@ class _UnifiedDepositSheetState extends ConsumerState<UnifiedDepositSheet>
           const SizedBox(height: 2),
           Text(
             'Paste a standard cashuA / cashuB ecash token string to swap into your spendable balance.',
-            style: AppTypography.bodySmall.copyWith(color: colors.textSecondary),
+            style:
+                AppTypography.bodySmall.copyWith(color: colors.textSecondary),
           ),
           const SizedBox(height: AppSpacing.md),
-
           TextField(
             controller: _tokenController,
             maxLines: 4,
@@ -368,7 +432,6 @@ class _UnifiedDepositSheetState extends ConsumerState<UnifiedDepositSheet>
             ),
           ),
           const SizedBox(height: AppSpacing.md),
-
           ElevatedButton.icon(
             onPressed: _isClaimingToken ? null : _claimCashuToken,
             icon: _isClaimingToken
@@ -380,7 +443,6 @@ class _UnifiedDepositSheetState extends ConsumerState<UnifiedDepositSheet>
                 : const Icon(Icons.download_rounded),
             label: const Text('Redeem Token into Wallet'),
           ),
-
           if (_claimSuccessMessage != null) ...[
             const SizedBox(height: AppSpacing.sm),
             Container(
@@ -395,10 +457,10 @@ class _UnifiedDepositSheetState extends ConsumerState<UnifiedDepositSheet>
               ),
             ),
           ],
-
           if (_errorMessage != null) ...[
             const SizedBox(height: AppSpacing.sm),
-            Text(_errorMessage!, style: AppTypography.bodySmall.copyWith(color: colors.error)),
+            Text(_errorMessage!,
+                style: AppTypography.bodySmall.copyWith(color: colors.error)),
           ],
         ],
       ),

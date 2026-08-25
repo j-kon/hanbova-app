@@ -38,7 +38,8 @@ void main() {
     expect(find.text('Me'), findsOneWidget);
   });
 
-  testWidgets('Bottom navigation tabs switch between Home, Activity, Protected, Me', (
+  testWidgets(
+      'Bottom navigation tabs switch between Home, Activity, Protected, Me', (
     WidgetTester tester,
   ) async {
     tester.view.physicalSize = const Size(800, 1600);

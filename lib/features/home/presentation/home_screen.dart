@@ -1,8 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import '../../../core/cashu/cashu_wallet_models.dart';
+import '../../../core/cashu/cashu_wallet_provider.dart';
 import '../../../core/currency/balance_visibility_provider.dart';
 import '../../../core/currency/currency_provider.dart';
+import '../../../core/network/network_environment.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_radius.dart';
 import '../../../core/theme/app_shadows.dart';
@@ -14,8 +17,6 @@ import '../../security/presentation/mainnet_safety_dialog.dart';
 import '../../transactions/domain/transaction_model.dart';
 import '../../transactions/presentation/transactions_provider.dart';
 import '../../wallet/presentation/unified_deposit_sheet.dart';
-import '../../wallet/presentation/wallet_provider.dart';
-import '../../../core/network/network_environment.dart';
 
 class HomeScreen extends ConsumerWidget {
   const HomeScreen({super.key});
@@ -31,34 +32,47 @@ class HomeScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final colors = context.colors;
     final user = ref.watch(currentUserProvider);
-    final wallet = ref.watch(walletStateProvider);
     final isBalanceVisible = ref.watch(balanceVisibilityProvider);
     final currency = ref.watch(currencyProvider);
     final transactions = ref.watch(transactionsProvider);
+    final cashuBalanceAsync = ref.watch(cashuBalanceProvider);
+    final cashuBalance = cashuBalanceAsync.value ??
+        const CashuWalletBalance(spendableSats: 0, lockedEscrowSats: 0);
 
-    final totalBalanceSats = wallet.totalSats;
+    final protectedCount = transactions
+        .where((t) =>
+            t.type == TransactionType.protectedSend &&
+            t.status == TransactionStatus.claimable)
+        .length;
+    final protectedSats = cashuBalance.lockedEscrowSats > 0
+        ? cashuBalance.lockedEscrowSats
+        : transactions
+            .where((t) =>
+                t.type == TransactionType.protectedSend &&
+                t.status == TransactionStatus.claimable)
+            .fold<int>(0, (sum, t) => sum + t.amountSats);
+    final spendableSats = cashuBalance.spendableSats;
+    final totalBalanceSats = spendableSats + protectedSats;
+
     final greeting = _getGreeting();
-    final firstName = user?.firstName.isNotEmpty == true ? user!.firstName : 'Jeremiah';
+    final firstName =
+        user?.firstName.isNotEmpty == true ? user!.firstName : 'Jeremiah';
 
     final currentNetwork = ref.watch(networkEnvironmentProvider);
     final isMainnet = currentNetwork == HanbovaNetwork.mainnet;
-
-    final protectedCount = transactions.where((t) => t.type == TransactionType.protectedSend && t.status == TransactionStatus.claimable).length;
-    final protectedSats = transactions
-        .where((t) => t.type == TransactionType.protectedSend && t.status == TransactionStatus.claimable)
-        .fold<int>(0, (sum, t) => sum + t.amountSats);
 
     return Scaffold(
       backgroundColor: colors.background,
       body: SafeArea(
         child: RefreshIndicator(
           onRefresh: () async {
-            ref.invalidate(walletStateProvider);
+            ref.invalidate(cashuBalanceProvider);
             ref.invalidate(transactionsProvider);
           },
           child: SingleChildScrollView(
             physics: const AlwaysScrollableScrollPhysics(),
-            padding: const EdgeInsets.symmetric(horizontal: AppSpacing.lg, vertical: AppSpacing.md),
+            padding: const EdgeInsets.symmetric(
+                horizontal: AppSpacing.lg, vertical: AppSpacing.md),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
@@ -70,10 +84,14 @@ class HomeScreen extends ConsumerWidget {
                       children: [
                         CircleAvatar(
                           radius: 20,
-                          backgroundColor: colors.primary.withValues(alpha: 0.15),
+                          backgroundColor:
+                              colors.primary.withValues(alpha: 0.15),
                           child: Text(
-                            firstName.isNotEmpty ? firstName[0].toUpperCase() : 'H',
-                            style: AppTypography.titleMedium.copyWith(color: colors.primary),
+                            firstName.isNotEmpty
+                                ? firstName[0].toUpperCase()
+                                : 'H',
+                            style: AppTypography.titleMedium
+                                .copyWith(color: colors.primary),
                           ),
                         ),
                         const SizedBox(width: AppSpacing.sm),
@@ -82,11 +100,13 @@ class HomeScreen extends ConsumerWidget {
                           children: [
                             Text(
                               greeting,
-                              style: AppTypography.caption.copyWith(color: colors.textSecondary),
+                              style: AppTypography.caption
+                                  .copyWith(color: colors.textSecondary),
                             ),
                             Text(
                               firstName,
-                              style: AppTypography.titleMedium.copyWith(color: colors.textPrimary),
+                              style: AppTypography.titleMedium
+                                  .copyWith(color: colors.textPrimary),
                             ),
                           ],
                         ),
@@ -95,7 +115,8 @@ class HomeScreen extends ConsumerWidget {
                     Row(
                       children: [
                         IconButton(
-                          icon: Icon(Icons.notifications_none_rounded, color: colors.textPrimary),
+                          icon: Icon(Icons.notifications_none_rounded,
+                              color: colors.textPrimary),
                           onPressed: () => context.push('/notifications'),
                         ),
                       ],
@@ -125,27 +146,35 @@ class HomeScreen extends ConsumerWidget {
                         borderRadius: AppRadius.xsRadius,
                         child: Container(
                           margin: const EdgeInsets.only(bottom: AppSpacing.sm),
-                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 8, vertical: 4),
                           decoration: BoxDecoration(
-                            color: (isMainnet ? colors.success : colors.gold).withValues(alpha: 0.12),
+                            color: (isMainnet ? colors.success : colors.gold)
+                                .withValues(alpha: 0.12),
                             borderRadius: AppRadius.xsRadius,
                             border: Border.all(
-                              color: (isMainnet ? colors.success : colors.gold).withValues(alpha: 0.3),
+                              color: (isMainnet ? colors.success : colors.gold)
+                                  .withValues(alpha: 0.3),
                             ),
                           ),
                           child: Row(
                             mainAxisSize: MainAxisSize.min,
                             children: [
                               Icon(
-                                isMainnet ? Icons.verified_user : Icons.science_outlined,
+                                isMainnet
+                                    ? Icons.verified_user
+                                    : Icons.science_outlined,
                                 color: isMainnet ? colors.success : colors.gold,
                                 size: 14,
                               ),
                               const SizedBox(width: 4),
                               Text(
-                                isMainnet ? 'MAINNET BETA • Real Bitcoin' : 'TEST MODE • No monetary value',
+                                isMainnet
+                                    ? 'MAINNET BETA • Real Bitcoin'
+                                    : 'TEST MODE • No monetary value',
                                 style: AppTypography.labelSmall.copyWith(
-                                  color: isMainnet ? colors.success : colors.gold,
+                                  color:
+                                      isMainnet ? colors.success : colors.gold,
                                   fontSize: 10,
                                   fontWeight: FontWeight.w700,
                                 ),
@@ -159,17 +188,22 @@ class HomeScreen extends ConsumerWidget {
                         children: [
                           Text(
                             'Total Balance',
-                            style: AppTypography.bodySmall.copyWith(color: colors.textSecondary),
+                            style: AppTypography.bodySmall
+                                .copyWith(color: colors.textSecondary),
                           ),
                           IconButton(
                             icon: Icon(
-                              isBalanceVisible ? Icons.visibility_outlined : Icons.visibility_off_outlined,
+                              isBalanceVisible
+                                  ? Icons.visibility_outlined
+                                  : Icons.visibility_off_outlined,
                               color: colors.textTertiary,
                               size: 20,
                             ),
                             padding: EdgeInsets.zero,
                             constraints: const BoxConstraints(),
-                            onPressed: () => ref.read(balanceVisibilityProvider.notifier).toggle(),
+                            onPressed: () => ref
+                                .read(balanceVisibilityProvider.notifier)
+                                .toggle(),
                           ),
                         ],
                       ),
@@ -177,7 +211,9 @@ class HomeScreen extends ConsumerWidget {
 
                       // Fiat display
                       Text(
-                        isBalanceVisible ? currency.format(totalBalanceSats) : '••••••••',
+                        isBalanceVisible
+                            ? currency.format(totalBalanceSats)
+                            : '••••••••',
                         style: AppTypography.display.copyWith(
                           color: colors.textPrimary,
                           fontWeight: FontWeight.w800,
@@ -209,12 +245,13 @@ class HomeScreen extends ConsumerWidget {
                               children: [
                                 Text(
                                   'Spendable',
-                                  style: AppTypography.caption.copyWith(color: colors.textTertiary),
+                                  style: AppTypography.caption
+                                      .copyWith(color: colors.textTertiary),
                                 ),
                                 const SizedBox(height: 2),
                                 Text(
                                   isBalanceVisible
-                                      ? Formatters.formatSats(wallet.spendableSats)
+                                      ? Formatters.formatSats(spendableSats)
                                       : '••••',
                                   style: AppTypography.titleSmall.copyWith(
                                     color: colors.textPrimary,
@@ -224,7 +261,8 @@ class HomeScreen extends ConsumerWidget {
                               ],
                             ),
                           ),
-                          Container(height: 28, width: 1, color: colors.divider),
+                          Container(
+                              height: 28, width: 1, color: colors.divider),
                           const SizedBox(width: AppSpacing.md),
                           Expanded(
                             child: Column(
@@ -232,12 +270,13 @@ class HomeScreen extends ConsumerWidget {
                               children: [
                                 Text(
                                   'Protected balance',
-                                  style: AppTypography.caption.copyWith(color: colors.textTertiary),
+                                  style: AppTypography.caption
+                                      .copyWith(color: colors.textTertiary),
                                 ),
                                 const SizedBox(height: 2),
                                 Text(
                                   isBalanceVisible
-                                      ? Formatters.formatSats(wallet.protectedOutgoingSats)
+                                      ? Formatters.formatSats(protectedSats)
                                       : '••••',
                                   style: AppTypography.titleSmall.copyWith(
                                     color: colors.protected,
@@ -264,9 +303,10 @@ class HomeScreen extends ConsumerWidget {
                         label: const Text('Send'),
                         style: ElevatedButton.styleFrom(
                           backgroundColor: colors.primary,
-                          foregroundColor: Theme.of(context).brightness == Brightness.dark
-                              ? AppColors.deepForest
-                              : Colors.white,
+                          foregroundColor:
+                              Theme.of(context).brightness == Brightness.dark
+                                  ? AppColors.deepForest
+                                  : Colors.white,
                           padding: const EdgeInsets.symmetric(vertical: 14),
                         ),
                       ),
@@ -293,7 +333,9 @@ class HomeScreen extends ConsumerWidget {
                   decoration: BoxDecoration(
                     color: colors.protected.withValues(alpha: 0.08),
                     borderRadius: AppRadius.mdRadius,
-                    border: Border.all(color: colors.protected.withValues(alpha: 0.25), width: 1),
+                    border: Border.all(
+                        color: colors.protected.withValues(alpha: 0.25),
+                        width: 1),
                   ),
                   child: Row(
                     children: [
@@ -304,7 +346,8 @@ class HomeScreen extends ConsumerWidget {
                           color: colors.protected.withValues(alpha: 0.15),
                           shape: BoxShape.circle,
                         ),
-                        child: Icon(Icons.shield_outlined, color: colors.protected, size: 20),
+                        child: Icon(Icons.shield_outlined,
+                            color: colors.protected, size: 20),
                       ),
                       const SizedBox(width: AppSpacing.sm),
                       Expanded(
@@ -313,12 +356,14 @@ class HomeScreen extends ConsumerWidget {
                           children: [
                             Text(
                               'Protected Payments',
-                              style: AppTypography.titleSmall.copyWith(color: colors.textPrimary),
+                              style: AppTypography.titleSmall
+                                  .copyWith(color: colors.textPrimary),
                             ),
                             const SizedBox(height: 2),
                             Text(
                               '$protectedCount active • ${Formatters.formatSats(protectedSats)} protected',
-                              style: AppTypography.bodySmall.copyWith(color: colors.textSecondary),
+                              style: AppTypography.bodySmall
+                                  .copyWith(color: colors.textSecondary),
                             ),
                           ],
                         ),
@@ -340,27 +385,33 @@ class HomeScreen extends ConsumerWidget {
                     onTap: () => context.push('/claim'),
                     borderRadius: AppRadius.mdRadius,
                     child: Container(
-                      padding: const EdgeInsets.symmetric(horizontal: AppSpacing.md, vertical: AppSpacing.sm + 2),
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: AppSpacing.md,
+                          vertical: AppSpacing.sm + 2),
                       decoration: BoxDecoration(
                         borderRadius: AppRadius.mdRadius,
                         border: Border.all(color: colors.border, width: 1),
                       ),
                       child: Row(
                         children: [
-                          Icon(Icons.vpn_key_outlined, color: colors.primary, size: 20),
+                          Icon(Icons.vpn_key_outlined,
+                              color: colors.primary, size: 20),
                           const SizedBox(width: AppSpacing.sm),
                           Expanded(
                             child: Text(
                               'Have a claim code?',
-                              style: AppTypography.bodyMedium.copyWith(color: colors.textPrimary),
+                              style: AppTypography.bodyMedium
+                                  .copyWith(color: colors.textPrimary),
                             ),
                           ),
                           Text(
                             'Claim',
-                            style: AppTypography.titleSmall.copyWith(color: colors.primary),
+                            style: AppTypography.titleSmall
+                                .copyWith(color: colors.primary),
                           ),
                           const SizedBox(width: 4),
-                          Icon(Icons.chevron_right, color: colors.primary, size: 18),
+                          Icon(Icons.chevron_right,
+                              color: colors.primary, size: 18),
                         ],
                       ),
                     ),
@@ -374,7 +425,8 @@ class HomeScreen extends ConsumerWidget {
                   children: [
                     Text(
                       'Recent Activity',
-                      style: AppTypography.titleMedium.copyWith(color: colors.textPrimary),
+                      style: AppTypography.titleMedium
+                          .copyWith(color: colors.textPrimary),
                     ),
                     TextButton(
                       onPressed: () => context.go('/activity'),
@@ -396,16 +448,19 @@ class HomeScreen extends ConsumerWidget {
                     child: Center(
                       child: Column(
                         children: [
-                          Icon(Icons.receipt_long_outlined, color: colors.textTertiary, size: 36),
+                          Icon(Icons.receipt_long_outlined,
+                              color: colors.textTertiary, size: 36),
                           const SizedBox(height: AppSpacing.xs),
                           Text(
                             'No transactions yet',
-                            style: AppTypography.titleSmall.copyWith(color: colors.textSecondary),
+                            style: AppTypography.titleSmall
+                                .copyWith(color: colors.textSecondary),
                           ),
                           const SizedBox(height: 2),
                           Text(
                             'Your Hanbova payments will appear here.',
-                            style: AppTypography.bodySmall.copyWith(color: colors.textTertiary),
+                            style: AppTypography.bodySmall
+                                .copyWith(color: colors.textTertiary),
                           ),
                         ],
                       ),
@@ -477,7 +532,8 @@ class _TransactionCard extends ConsumerWidget {
         onTap: () => context.push('/activity/details', extra: tx),
         borderRadius: AppRadius.mdRadius,
         child: Container(
-          padding: const EdgeInsets.symmetric(horizontal: AppSpacing.md, vertical: AppSpacing.sm),
+          padding: const EdgeInsets.symmetric(
+              horizontal: AppSpacing.md, vertical: AppSpacing.sm),
           decoration: BoxDecoration(
             borderRadius: AppRadius.mdRadius,
             border: Border.all(color: colors.border, width: 1),
@@ -500,13 +556,15 @@ class _TransactionCard extends ConsumerWidget {
                   children: [
                     Text(
                       tx.recipientOrSender,
-                      style: AppTypography.titleSmall.copyWith(color: colors.textPrimary, fontSize: 14),
+                      style: AppTypography.titleSmall
+                          .copyWith(color: colors.textPrimary, fontSize: 14),
                       overflow: TextOverflow.ellipsis,
                     ),
                     const SizedBox(height: 2),
                     Text(
                       Formatters.formatDate(tx.createdAt),
-                      style: AppTypography.bodySmall.copyWith(color: colors.textTertiary, fontSize: 11),
+                      style: AppTypography.bodySmall
+                          .copyWith(color: colors.textTertiary, fontSize: 11),
                     ),
                   ],
                 ),
@@ -517,14 +575,16 @@ class _TransactionCard extends ConsumerWidget {
                   Text(
                     '$prefix${Formatters.formatSats(tx.amountSats)}',
                     style: AppTypography.titleSmall.copyWith(
-                      color: tx.isOutgoing ? colors.textPrimary : colors.success,
+                      color:
+                          tx.isOutgoing ? colors.textPrimary : colors.success,
                       fontWeight: FontWeight.w700,
                     ),
                   ),
                   const SizedBox(height: 2),
                   Text(
                     currency.format(tx.amountSats),
-                    style: AppTypography.bodySmall.copyWith(color: colors.textTertiary, fontSize: 11),
+                    style: AppTypography.bodySmall
+                        .copyWith(color: colors.textTertiary, fontSize: 11),
                   ),
                 ],
               ),

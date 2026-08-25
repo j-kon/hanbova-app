@@ -25,11 +25,13 @@ class AuthState {
     this.errorMessage,
   });
 
-  bool get isAuthenticated => status == AuthStatus.authenticated && user != null;
+  bool get isAuthenticated =>
+      status == AuthStatus.authenticated && user != null;
 
   factory AuthState.initial() => const AuthState(status: AuthStatus.initial);
   factory AuthState.loading() => const AuthState(status: AuthStatus.loading);
-  factory AuthState.unauthenticated() => const AuthState(status: AuthStatus.unauthenticated);
+  factory AuthState.unauthenticated() =>
+      const AuthState(status: AuthStatus.unauthenticated);
   factory AuthState.authenticated(UserProfile user, String token) => AuthState(
         status: AuthStatus.authenticated,
         user: user,

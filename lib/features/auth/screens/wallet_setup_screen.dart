@@ -48,7 +48,8 @@ class _WalletSetupScreenState extends State<WalletSetupScreen> {
                       height: 36,
                       child: CircularProgressIndicator(
                         strokeWidth: 3,
-                        valueColor: AlwaysStoppedAnimation<Color>(colors.primary),
+                        valueColor:
+                            AlwaysStoppedAnimation<Color>(colors.primary),
                       ),
                     ),
                   ),
@@ -56,13 +57,15 @@ class _WalletSetupScreenState extends State<WalletSetupScreen> {
                 const SizedBox(height: AppSpacing.xl),
                 Text(
                   'Setting up your Hanbova wallet...',
-                  style: AppTypography.titleLarge.copyWith(color: colors.textPrimary),
+                  style: AppTypography.titleLarge
+                      .copyWith(color: colors.textPrimary),
                   textAlign: TextAlign.center,
                 ),
                 const SizedBox(height: AppSpacing.xs),
                 Text(
                   'Generating secure keys and initializing protected escrow.',
-                  style: AppTypography.bodyMedium.copyWith(color: colors.textSecondary),
+                  style: AppTypography.bodyMedium
+                      .copyWith(color: colors.textSecondary),
                   textAlign: TextAlign.center,
                 ),
               ],

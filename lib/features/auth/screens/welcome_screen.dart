@@ -102,7 +102,8 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
                     slide['image']!,
                     fit: BoxFit.cover,
                     alignment: Alignment.topCenter,
-                    errorBuilder: (_, __, ___) => Container(color: colors.background),
+                    errorBuilder: (_, __, ___) =>
+                        Container(color: colors.background),
                   ),
 
                   // Rich Gradient Overlay
@@ -133,7 +134,8 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
               children: [
                 // Top Navigation Bar (Logo + Skip)
                 Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: AppSpacing.lg, vertical: AppSpacing.sm),
+                  padding: const EdgeInsets.symmetric(
+                      horizontal: AppSpacing.lg, vertical: AppSpacing.sm),
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
@@ -143,7 +145,10 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
                             'assets/branding/hanbova_icon_EXACT_MASTER.png',
                             width: 34,
                             height: 34,
-                            errorBuilder: (_, __, ___) => Icon(Icons.shield_outlined, color: colors.primary, size: 28),
+                            errorBuilder: (_, __, ___) => Icon(
+                                Icons.shield_outlined,
+                                color: colors.primary,
+                                size: 28),
                           ),
                           const SizedBox(width: AppSpacing.xs),
                           Column(
@@ -159,7 +164,9 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
                               Text(
                                 'Send protected.',
                                 style: AppTypography.caption.copyWith(
-                                  color: isDark ? AppColors.leafGreen : AppColors.forestGreen,
+                                  color: isDark
+                                      ? AppColors.leafGreen
+                                      : AppColors.forestGreen,
                                   fontWeight: FontWeight.w600,
                                   fontSize: 10,
                                 ),
@@ -173,7 +180,8 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
                           onPressed: _skip,
                           style: TextButton.styleFrom(
                             foregroundColor: colors.textSecondary,
-                            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                            padding: const EdgeInsets.symmetric(
+                                horizontal: 12, vertical: 6),
                           ),
                           child: const Text('Skip'),
                         )
@@ -187,7 +195,8 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
 
                 // Bottom Content Card (Title, Body, Dots, Buttons)
                 Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: AppSpacing.lg, vertical: AppSpacing.md),
+                  padding: const EdgeInsets.symmetric(
+                      horizontal: AppSpacing.lg, vertical: AppSpacing.md),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
@@ -245,7 +254,8 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
                           if (_currentPage < _slides.length - 1)
                             IconButton(
                               onPressed: _next,
-                              icon: Icon(Icons.arrow_forward_rounded, color: colors.primary, size: 20),
+                              icon: Icon(Icons.arrow_forward_rounded,
+                                  color: colors.primary, size: 20),
                               tooltip: 'Next',
                             ),
                         ],
@@ -259,12 +269,16 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
                             : _next,
                         style: ElevatedButton.styleFrom(
                           backgroundColor: colors.primary,
-                          foregroundColor: isDark ? AppColors.deepForest : Colors.white,
+                          foregroundColor:
+                              isDark ? AppColors.deepForest : Colors.white,
                           padding: const EdgeInsets.symmetric(vertical: 16),
-                          shape: const RoundedRectangleBorder(borderRadius: AppRadius.mdRadius),
+                          shape: const RoundedRectangleBorder(
+                              borderRadius: AppRadius.mdRadius),
                         ),
                         child: Text(
-                          _currentPage == _slides.length - 1 ? 'Get Started' : 'Next',
+                          _currentPage == _slides.length - 1
+                              ? 'Get Started'
+                              : 'Next',
                           style: AppTypography.titleSmall.copyWith(
                             fontWeight: FontWeight.w700,
                             color: isDark ? AppColors.deepForest : Colors.white,
@@ -280,9 +294,12 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
                               onPressed: () => context.push('/signup'),
                               style: OutlinedButton.styleFrom(
                                 foregroundColor: colors.textPrimary,
-                                side: BorderSide(color: colors.border, width: 1.2),
-                                padding: const EdgeInsets.symmetric(vertical: 14),
-                                shape: const RoundedRectangleBorder(borderRadius: AppRadius.mdRadius),
+                                side: BorderSide(
+                                    color: colors.border, width: 1.2),
+                                padding:
+                                    const EdgeInsets.symmetric(vertical: 14),
+                                shape: const RoundedRectangleBorder(
+                                    borderRadius: AppRadius.mdRadius),
                               ),
                               child: const Text('Create account'),
                             ),
@@ -293,9 +310,12 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
                               onPressed: () => context.push('/login'),
                               style: OutlinedButton.styleFrom(
                                 foregroundColor: colors.textPrimary,
-                                side: BorderSide(color: colors.border, width: 1.2),
-                                padding: const EdgeInsets.symmetric(vertical: 14),
-                                shape: const RoundedRectangleBorder(borderRadius: AppRadius.mdRadius),
+                                side: BorderSide(
+                                    color: colors.border, width: 1.2),
+                                padding:
+                                    const EdgeInsets.symmetric(vertical: 14),
+                                shape: const RoundedRectangleBorder(
+                                    borderRadius: AppRadius.mdRadius),
                               ),
                               child: const Text('Sign in'),
                             ),

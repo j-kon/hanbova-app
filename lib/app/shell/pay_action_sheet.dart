@@ -24,10 +24,12 @@ class PayActionSheet extends StatelessWidget {
     return Container(
       decoration: BoxDecoration(
         color: colors.surfaceCard,
-        borderRadius: const BorderRadius.vertical(top: Radius.circular(AppRadius.xl)),
+        borderRadius:
+            const BorderRadius.vertical(top: Radius.circular(AppRadius.xl)),
         border: Border.all(color: colors.border, width: 1),
       ),
-      padding: const EdgeInsets.fromLTRB(AppSpacing.xl, AppSpacing.sm, AppSpacing.xl, AppSpacing.xl),
+      padding: const EdgeInsets.fromLTRB(
+          AppSpacing.xl, AppSpacing.sm, AppSpacing.xl, AppSpacing.xl),
       child: SafeArea(
         child: Column(
           mainAxisSize: MainAxisSize.min,
@@ -48,7 +50,8 @@ class PayActionSheet extends StatelessWidget {
 
             Text(
               'What would you like to do?',
-              style: AppTypography.titleMedium.copyWith(color: colors.textPrimary),
+              style:
+                  AppTypography.titleMedium.copyWith(color: colors.textPrimary),
             ),
             const SizedBox(height: AppSpacing.md),
 
@@ -143,7 +146,8 @@ class _ActionTile extends StatelessWidget {
         onTap: onTap,
         borderRadius: AppRadius.mdRadius,
         child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: AppSpacing.md, vertical: AppSpacing.sm + 2),
+          padding: const EdgeInsets.symmetric(
+              horizontal: AppSpacing.md, vertical: AppSpacing.sm + 2),
           child: Row(
             children: [
               Container(
@@ -164,14 +168,17 @@ class _ActionTile extends StatelessWidget {
                       children: [
                         Text(
                           title,
-                          style: AppTypography.titleSmall.copyWith(color: colors.textPrimary),
+                          style: AppTypography.titleSmall
+                              .copyWith(color: colors.textPrimary),
                         ),
                         if (badge != null) ...[
                           const SizedBox(width: AppSpacing.xs),
                           Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                            padding: const EdgeInsets.symmetric(
+                                horizontal: 6, vertical: 2),
                             decoration: BoxDecoration(
-                              color: (badgeColor ?? colors.primary).withValues(alpha: 0.15),
+                              color: (badgeColor ?? colors.primary)
+                                  .withValues(alpha: 0.15),
                               borderRadius: BorderRadius.circular(4),
                             ),
                             child: Text(
@@ -188,7 +195,8 @@ class _ActionTile extends StatelessWidget {
                     const SizedBox(height: 2),
                     Text(
                       subtitle,
-                      style: AppTypography.bodySmall.copyWith(color: colors.textSecondary),
+                      style: AppTypography.bodySmall
+                          .copyWith(color: colors.textSecondary),
                     ),
                   ],
                 ),

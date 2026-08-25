@@ -59,7 +59,8 @@ class ProtectedEscrowRecord {
   final int amountSats;
   final String recipientPubkey;
   final String? refundPubkey;
-  final String? refundPrivkeyHex; // Retained strictly client-side by sender for post-locktime refund
+  final String?
+      refundPrivkeyHex; // Retained strictly client-side by sender for post-locktime refund
   final DateTime locktime;
   final bool isOutgoing;
   final String status; // 'locked', 'claimed', 'refunded', 'expired'
@@ -148,3 +149,15 @@ class MeltExecutionResult {
   });
 }
 
+/// Result of requesting a mint quote (NUT-04) for funding ecash via Lightning invoice.
+class MintQuoteResult {
+  final String quoteId;
+  final String bolt11Invoice;
+  final int amountSats;
+
+  const MintQuoteResult({
+    required this.quoteId,
+    required this.bolt11Invoice,
+    required this.amountSats,
+  });
+}

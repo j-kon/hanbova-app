@@ -26,7 +26,8 @@ class MainnetSafetyDialog extends ConsumerWidget {
       backgroundColor: colors.surface,
       shape: RoundedRectangleBorder(
         borderRadius: AppRadius.lgRadius,
-        side: BorderSide(color: Colors.amber.withValues(alpha: 0.4), width: 1.5),
+        side:
+            BorderSide(color: Colors.amber.withValues(alpha: 0.4), width: 1.5),
       ),
       title: Row(
         children: [
@@ -36,13 +37,15 @@ class MainnetSafetyDialog extends ConsumerWidget {
               color: Colors.amber.withValues(alpha: 0.2),
               borderRadius: AppRadius.smRadius,
             ),
-            child: const Icon(Icons.lock_rounded, color: Colors.amber, size: 24),
+            child:
+                const Icon(Icons.lock_rounded, color: Colors.amber, size: 24),
           ),
           const SizedBox(width: AppSpacing.sm),
           Expanded(
             child: Text(
               'Mainnet Safety Lock Active',
-              style: AppTypography.titleMedium.copyWith(color: colors.textPrimary),
+              style:
+                  AppTypography.titleMedium.copyWith(color: colors.textPrimary),
             ),
           ),
         ],
@@ -54,11 +57,14 @@ class MainnetSafetyDialog extends ConsumerWidget {
           children: [
             Text(
               'Bitcoin Mainnet is strictly disabled in this test build. All transactions use test ecash with zero monetary value.',
-              style: AppTypography.bodySmall.copyWith(color: colors.textSecondary),
+              style:
+                  AppTypography.bodySmall.copyWith(color: colors.textSecondary),
             ),
             const SizedBox(height: AppSpacing.md),
-            _buildBullet(colors, 'Production Mainnet mints are blocked by protocol safety guards.'),
-            _buildBullet(colors, 'Supported environments: Local Nutshell & Cashu Testnet.'),
+            _buildBullet(colors,
+                'Production Mainnet mints are blocked by protocol safety guards.'),
+            _buildBullet(colors,
+                'Supported environments: Local Nutshell & Cashu Testnet.'),
             _buildBullet(colors, 'Zero risk to real Bitcoin or user funds.'),
           ],
         ),
@@ -81,11 +87,13 @@ class MainnetSafetyDialog extends ConsumerWidget {
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text('• ', style: AppTypography.bodySmall.copyWith(color: Colors.amber)),
+          Text('• ',
+              style: AppTypography.bodySmall.copyWith(color: Colors.amber)),
           Expanded(
             child: Text(
               text,
-              style: AppTypography.bodySmall.copyWith(color: colors.textPrimary),
+              style:
+                  AppTypography.bodySmall.copyWith(color: colors.textPrimary),
             ),
           ),
         ],

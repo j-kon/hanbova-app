@@ -52,7 +52,8 @@ class _ClaimPaymentScreenState extends ConsumerState<ClaimPaymentScreen> {
 
     try {
       final repo = ref.read(paymentIntentRepositoryProvider);
-      final intent = await repo.getPaymentIntentByReference(_codeController.text.trim());
+      final intent =
+          await repo.getPaymentIntentByReference(_codeController.text.trim());
       if (!mounted) return;
       setState(() {
         _isLoading = false;
@@ -146,10 +147,10 @@ class _ClaimPaymentScreenState extends ConsumerState<ClaimPaymentScreen> {
             const SizedBox(height: AppSpacing.xs),
             Text(
               'Enter the claim code or paste the claim URL to verify and claim locked Bitcoin.',
-              style: AppTypography.bodyMedium.copyWith(color: colors.textSecondary),
+              style: AppTypography.bodyMedium
+                  .copyWith(color: colors.textSecondary),
             ),
             const SizedBox(height: AppSpacing.xl),
-
             if (_errorMessage != null) ...[
               Container(
                 padding: const EdgeInsets.all(AppSpacing.sm),
@@ -157,11 +158,12 @@ class _ClaimPaymentScreenState extends ConsumerState<ClaimPaymentScreen> {
                   color: colors.error.withValues(alpha: 0.1),
                   borderRadius: AppRadius.smRadius,
                 ),
-                child: Text(_errorMessage!, style: AppTypography.bodySmall.copyWith(color: colors.error)),
+                child: Text(_errorMessage!,
+                    style:
+                        AppTypography.bodySmall.copyWith(color: colors.error)),
               ),
               const SizedBox(height: AppSpacing.md),
             ],
-
             TextFormField(
               controller: _codeController,
               decoration: InputDecoration(
@@ -172,14 +174,18 @@ class _ClaimPaymentScreenState extends ConsumerState<ClaimPaymentScreen> {
                   onPressed: () => context.push('/scan'),
                 ),
               ),
-              validator: (v) => (v == null || v.trim().isEmpty) ? 'Please enter claim code' : null,
+              validator: (v) => (v == null || v.trim().isEmpty)
+                  ? 'Please enter claim code'
+                  : null,
             ),
             const SizedBox(height: AppSpacing.xl),
-
             ElevatedButton(
               onPressed: _isLoading ? null : _fetchIntent,
               child: _isLoading
-                  ? const SizedBox(height: 20, width: 20, child: CircularProgressIndicator(strokeWidth: 2))
+                  ? const SizedBox(
+                      height: 20,
+                      width: 20,
+                      child: CircularProgressIndicator(strokeWidth: 2))
                   : const Text('Verify Payment'),
             ),
           ],
@@ -207,21 +213,28 @@ class _ClaimPaymentScreenState extends ConsumerState<ClaimPaymentScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text('Protected Payment Found', style: AppTypography.titleMedium.copyWith(color: colors.textPrimary)),
+                Text('Protected Payment Found',
+                    style: AppTypography.titleMedium
+                        .copyWith(color: colors.textPrimary)),
                 const SizedBox(height: AppSpacing.md),
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    Text('Amount', style: AppTypography.bodySmall.copyWith(color: colors.textSecondary)),
+                    Text('Amount',
+                        style: AppTypography.bodySmall
+                            .copyWith(color: colors.textSecondary)),
                     Text(
                       Formatters.formatSats(intent.amountSats),
-                      style: AppTypography.titleLarge.copyWith(color: colors.primary),
+                      style: AppTypography.titleLarge
+                          .copyWith(color: colors.primary),
                     ),
                   ],
                 ),
                 Align(
                   alignment: Alignment.centerRight,
-                  child: Text(currency.format(intent.amountSats), style: AppTypography.bodySmall.copyWith(color: colors.textTertiary)),
+                  child: Text(currency.format(intent.amountSats),
+                      style: AppTypography.bodySmall
+                          .copyWith(color: colors.textTertiary)),
                 ),
                 const SizedBox(height: AppSpacing.sm),
                 Divider(color: colors.divider),
@@ -229,15 +242,18 @@ class _ClaimPaymentScreenState extends ConsumerState<ClaimPaymentScreen> {
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    Text('Intended Recipient', style: AppTypography.bodySmall.copyWith(color: colors.textSecondary)),
-                    Text(intent.recipientIdentifier, style: AppTypography.titleSmall.copyWith(color: colors.textPrimary)),
+                    Text('Intended Recipient',
+                        style: AppTypography.bodySmall
+                            .copyWith(color: colors.textSecondary)),
+                    Text(intent.recipientIdentifier,
+                        style: AppTypography.titleSmall
+                            .copyWith(color: colors.textPrimary)),
                   ],
                 ),
               ],
             ),
           ),
           const SizedBox(height: AppSpacing.xl),
-
           if (_errorMessage != null) ...[
             Container(
               padding: const EdgeInsets.all(AppSpacing.sm),
@@ -245,15 +261,18 @@ class _ClaimPaymentScreenState extends ConsumerState<ClaimPaymentScreen> {
                 color: colors.error.withValues(alpha: 0.1),
                 borderRadius: AppRadius.smRadius,
               ),
-              child: Text(_errorMessage!, style: AppTypography.bodySmall.copyWith(color: colors.error)),
+              child: Text(_errorMessage!,
+                  style: AppTypography.bodySmall.copyWith(color: colors.error)),
             ),
             const SizedBox(height: AppSpacing.md),
           ],
-
           ElevatedButton(
             onPressed: _isLoading ? null : _claim,
             child: _isLoading
-                ? const SizedBox(height: 20, width: 20, child: CircularProgressIndicator(strokeWidth: 2))
+                ? const SizedBox(
+                    height: 20,
+                    width: 20,
+                    child: CircularProgressIndicator(strokeWidth: 2))
                 : const Text('Claim to Wallet Now'),
           ),
         ],
@@ -290,7 +309,8 @@ class _ClaimPaymentScreenState extends ConsumerState<ClaimPaymentScreen> {
           const SizedBox(height: 4),
           Text(
             'The Bitcoin has been settled directly into your spendable balance.',
-            style: AppTypography.bodyMedium.copyWith(color: colors.textSecondary),
+            style:
+                AppTypography.bodyMedium.copyWith(color: colors.textSecondary),
             textAlign: TextAlign.center,
           ),
           const SizedBox(height: AppSpacing.xl),

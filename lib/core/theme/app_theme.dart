@@ -32,7 +32,8 @@ class AppTheme {
           statusBarBrightness: Brightness.dark,
         ),
         iconTheme: const IconThemeData(color: AppColors.darkTextPrimary),
-        titleTextStyle: AppTypography.titleLarge.copyWith(color: AppColors.darkTextPrimary),
+        titleTextStyle:
+            AppTypography.titleLarge.copyWith(color: AppColors.darkTextPrimary),
       ),
       cardTheme: CardThemeData(
         color: AppColors.darkSurfaceCard,
@@ -62,7 +63,8 @@ class AppTheme {
           elevation: 0,
           minimumSize: const Size(double.infinity, 52),
           shape: const RoundedRectangleBorder(borderRadius: AppRadius.mdRadius),
-          textStyle: AppTypography.titleSmall.copyWith(fontWeight: FontWeight.w700),
+          textStyle:
+              AppTypography.titleSmall.copyWith(fontWeight: FontWeight.w700),
         ),
       ),
       outlinedButtonTheme: OutlinedButtonThemeData(
@@ -84,7 +86,8 @@ class AppTheme {
       inputDecorationTheme: InputDecorationTheme(
         filled: true,
         fillColor: AppColors.darkSurfaceElevated,
-        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+        contentPadding:
+            const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
         border: const OutlineInputBorder(
           borderRadius: AppRadius.mdRadius,
           borderSide: BorderSide(color: AppColors.darkBorder, width: 1),
@@ -101,8 +104,10 @@ class AppTheme {
           borderRadius: AppRadius.mdRadius,
           borderSide: BorderSide(color: AppColors.danger, width: 1),
         ),
-        hintStyle: AppTypography.bodyMedium.copyWith(color: AppColors.darkTextTertiary),
-        labelStyle: AppTypography.bodyMedium.copyWith(color: AppColors.darkTextSecondary),
+        hintStyle: AppTypography.bodyMedium
+            .copyWith(color: AppColors.darkTextTertiary),
+        labelStyle: AppTypography.bodyMedium
+            .copyWith(color: AppColors.darkTextSecondary),
       ),
     );
   }
@@ -134,7 +139,8 @@ class AppTheme {
           statusBarBrightness: Brightness.light,
         ),
         iconTheme: const IconThemeData(color: AppColors.lightTextPrimary),
-        titleTextStyle: AppTypography.titleLarge.copyWith(color: AppColors.lightTextPrimary),
+        titleTextStyle: AppTypography.titleLarge
+            .copyWith(color: AppColors.lightTextPrimary),
       ),
       cardTheme: CardThemeData(
         color: AppColors.lightSurfaceCard,
@@ -164,7 +170,8 @@ class AppTheme {
           elevation: 0,
           minimumSize: const Size(double.infinity, 52),
           shape: const RoundedRectangleBorder(borderRadius: AppRadius.mdRadius),
-          textStyle: AppTypography.titleSmall.copyWith(fontWeight: FontWeight.w700),
+          textStyle:
+              AppTypography.titleSmall.copyWith(fontWeight: FontWeight.w700),
         ),
       ),
       outlinedButtonTheme: OutlinedButtonThemeData(
@@ -186,7 +193,8 @@ class AppTheme {
       inputDecorationTheme: InputDecorationTheme(
         filled: true,
         fillColor: AppColors.lightSurfaceElevated,
-        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+        contentPadding:
+            const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
         border: const OutlineInputBorder(
           borderRadius: AppRadius.mdRadius,
           borderSide: BorderSide(color: AppColors.lightBorder, width: 1),
@@ -203,8 +211,10 @@ class AppTheme {
           borderRadius: AppRadius.mdRadius,
           borderSide: BorderSide(color: AppColors.danger, width: 1),
         ),
-        hintStyle: AppTypography.bodyMedium.copyWith(color: AppColors.lightTextTertiary),
-        labelStyle: AppTypography.bodyMedium.copyWith(color: AppColors.lightTextSecondary),
+        hintStyle: AppTypography.bodyMedium
+            .copyWith(color: AppColors.lightTextTertiary),
+        labelStyle: AppTypography.bodyMedium
+            .copyWith(color: AppColors.lightTextSecondary),
       ),
     );
   }

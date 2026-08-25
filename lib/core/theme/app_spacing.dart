@@ -10,7 +10,8 @@ class AppSpacing {
   static const double xxl = 32.0;
   static const double xxxl = 48.0;
 
-  static const EdgeInsets screenPadding = EdgeInsets.symmetric(horizontal: md, vertical: sm);
+  static const EdgeInsets screenPadding =
+      EdgeInsets.symmetric(horizontal: md, vertical: sm);
   static const EdgeInsets cardPadding = EdgeInsets.all(md);
   static const EdgeInsets dialogPadding = EdgeInsets.all(xl);
 }

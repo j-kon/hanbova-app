@@ -10,7 +10,7 @@ class WalletStateNotifier extends StateNotifier<WalletModel> {
   WalletStateNotifier()
       : super(
           const WalletModel(
-            spendableSats: 250000,
+            spendableSats: 0,
             protectedOutgoingSats: 0,
             protectedIncomingSats: 0,
             nodeAlias: 'hanbova-cashu-dev',
@@ -29,20 +29,23 @@ class WalletStateNotifier extends StateNotifier<WalletModel> {
   void unlockRefundToSpendable(int sats) {
     state = state.copyWith(
       spendableSats: state.spendableSats + sats,
-      protectedOutgoingSats: (state.protectedOutgoingSats - sats).clamp(0, 100000000),
+      protectedOutgoingSats:
+          (state.protectedOutgoingSats - sats).clamp(0, 100000000),
     );
   }
 
   void confirmClaimedByRecipient(int sats) {
     state = state.copyWith(
-      protectedOutgoingSats: (state.protectedOutgoingSats - sats).clamp(0, 100000000),
+      protectedOutgoingSats:
+          (state.protectedOutgoingSats - sats).clamp(0, 100000000),
     );
   }
 
   void creditBalance(int sats) {
     state = state.copyWith(
       spendableSats: state.spendableSats + sats,
-      protectedIncomingSats: (state.protectedIncomingSats - sats).clamp(0, 100000000),
+      protectedIncomingSats:
+          (state.protectedIncomingSats - sats).clamp(0, 100000000),
     );
   }
 

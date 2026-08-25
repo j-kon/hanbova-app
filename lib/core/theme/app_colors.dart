@@ -180,7 +180,8 @@ class HanbovaColors extends ThemeExtension<HanbovaColors> {
   }
 
   @override
-  ThemeExtension<HanbovaColors> lerp(covariant ThemeExtension<HanbovaColors>? other, double t) {
+  ThemeExtension<HanbovaColors> lerp(
+      covariant ThemeExtension<HanbovaColors>? other, double t) {
     if (other is! HanbovaColors) return this;
     return HanbovaColors(
       background: Color.lerp(background, other.background, t)!,
@@ -206,5 +207,6 @@ class HanbovaColors extends ThemeExtension<HanbovaColors> {
 }
 
 extension HanbovaColorsContext on BuildContext {
-  HanbovaColors get colors => Theme.of(this).extension<HanbovaColors>() ?? HanbovaColors.dark;
+  HanbovaColors get colors =>
+      Theme.of(this).extension<HanbovaColors>() ?? HanbovaColors.dark;
 }

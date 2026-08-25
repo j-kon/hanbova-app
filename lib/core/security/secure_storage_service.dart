@@ -16,7 +16,8 @@ class SecureStorageService {
       key: key,
       value: value,
       aOptions: const AndroidOptions(encryptedSharedPreferences: true),
-      iOptions: const IOSOptions(accessibility: KeychainAccessibility.first_unlock),
+      iOptions:
+          const IOSOptions(accessibility: KeychainAccessibility.first_unlock),
     );
   }
 
@@ -24,7 +25,8 @@ class SecureStorageService {
     return await _storage.read(
       key: key,
       aOptions: const AndroidOptions(encryptedSharedPreferences: true),
-      iOptions: const IOSOptions(accessibility: KeychainAccessibility.first_unlock),
+      iOptions:
+          const IOSOptions(accessibility: KeychainAccessibility.first_unlock),
     );
   }
 

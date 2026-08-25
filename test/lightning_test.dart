@@ -26,7 +26,8 @@ void main() {
         return http.Response('Not Found', 404);
       });
 
-      final apiClient = ApiClient(baseUrl: 'http://127.0.0.1:8080/api/v1', httpClient: mockClient);
+      final apiClient = ApiClient(
+          baseUrl: 'http://127.0.0.1:8080/api/v1', httpClient: mockClient);
       final lightningService = LightningService(apiClient: apiClient);
 
       final result = await lightningService.createInvoice(
@@ -57,7 +58,8 @@ void main() {
         return http.Response('Not Found', 404);
       });
 
-      final apiClient = ApiClient(baseUrl: 'http://127.0.0.1:8080/api/v1', httpClient: mockClient);
+      final apiClient = ApiClient(
+          baseUrl: 'http://127.0.0.1:8080/api/v1', httpClient: mockClient);
       final lightningService = LightningService(apiClient: apiClient);
 
       final result = await lightningService.payInvoice(

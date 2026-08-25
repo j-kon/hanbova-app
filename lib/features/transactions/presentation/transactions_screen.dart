@@ -49,7 +49,8 @@ class _TransactionsScreenState extends ConsumerState<TransactionsScreen> {
             children: [
               Text(
                 '${transactions.length} transactions prepared for export in standard RFC-4180 CSV format.',
-                style: AppTypography.bodySmall.copyWith(color: colors.textSecondary),
+                style: AppTypography.bodySmall
+                    .copyWith(color: colors.textSecondary),
               ),
               const SizedBox(height: AppSpacing.md),
               Container(
@@ -63,7 +64,8 @@ class _TransactionsScreenState extends ConsumerState<TransactionsScreen> {
                 child: SingleChildScrollView(
                   child: Text(
                     csv,
-                    style: const TextStyle(fontFamily: 'monospace', fontSize: 11),
+                    style:
+                        const TextStyle(fontFamily: 'monospace', fontSize: 11),
                   ),
                 ),
               ),
@@ -104,10 +106,12 @@ class _TransactionsScreenState extends ConsumerState<TransactionsScreen> {
           matchesCategory = true;
           break;
         case ActivityFilter.sent:
-          matchesCategory = tx.type == TransactionType.instantSend || tx.type == TransactionType.protectedSend;
+          matchesCategory = tx.type == TransactionType.instantSend ||
+              tx.type == TransactionType.protectedSend;
           break;
         case ActivityFilter.received:
-          matchesCategory = tx.type == TransactionType.instantReceive || tx.type == TransactionType.protectedClaim;
+          matchesCategory = tx.type == TransactionType.instantReceive ||
+              tx.type == TransactionType.protectedClaim;
           break;
         case ActivityFilter.protected:
           matchesCategory = tx.type == TransactionType.protectedSend ||
@@ -163,7 +167,8 @@ class _TransactionsScreenState extends ConsumerState<TransactionsScreen> {
             // Search Input Bar
             if (_isSearchVisible)
               Padding(
-                padding: const EdgeInsets.fromLTRB(AppSpacing.md, 0, AppSpacing.md, AppSpacing.xs),
+                padding: const EdgeInsets.fromLTRB(
+                    AppSpacing.md, 0, AppSpacing.md, AppSpacing.xs),
                 child: TextField(
                   controller: _searchController,
                   autofocus: true,
@@ -180,7 +185,8 @@ class _TransactionsScreenState extends ConsumerState<TransactionsScreen> {
                           )
                         : null,
                     isDense: true,
-                    contentPadding: const EdgeInsets.symmetric(vertical: 10, horizontal: 12),
+                    contentPadding: const EdgeInsets.symmetric(
+                        vertical: 10, horizontal: 12),
                   ),
                   onChanged: (val) => setState(() => _searchQuery = val.trim()),
                 ),
@@ -188,7 +194,8 @@ class _TransactionsScreenState extends ConsumerState<TransactionsScreen> {
 
             // Filter Chips
             Padding(
-              padding: const EdgeInsets.symmetric(horizontal: AppSpacing.md, vertical: AppSpacing.xs),
+              padding: const EdgeInsets.symmetric(
+                  horizontal: AppSpacing.md, vertical: AppSpacing.xs),
               child: SingleChildScrollView(
                 scrollDirection: Axis.horizontal,
                 child: Row(
@@ -196,25 +203,29 @@ class _TransactionsScreenState extends ConsumerState<TransactionsScreen> {
                     _FilterChip(
                       label: 'All',
                       isSelected: _selectedFilter == ActivityFilter.all,
-                      onTap: () => setState(() => _selectedFilter = ActivityFilter.all),
+                      onTap: () =>
+                          setState(() => _selectedFilter = ActivityFilter.all),
                     ),
                     const SizedBox(width: AppSpacing.xs),
                     _FilterChip(
                       label: 'Sent',
                       isSelected: _selectedFilter == ActivityFilter.sent,
-                      onTap: () => setState(() => _selectedFilter = ActivityFilter.sent),
+                      onTap: () =>
+                          setState(() => _selectedFilter = ActivityFilter.sent),
                     ),
                     const SizedBox(width: AppSpacing.xs),
                     _FilterChip(
                       label: 'Received',
                       isSelected: _selectedFilter == ActivityFilter.received,
-                      onTap: () => setState(() => _selectedFilter = ActivityFilter.received),
+                      onTap: () => setState(
+                          () => _selectedFilter = ActivityFilter.received),
                     ),
                     const SizedBox(width: AppSpacing.xs),
                     _FilterChip(
                       label: 'Protected',
                       isSelected: _selectedFilter == ActivityFilter.protected,
-                      onTap: () => setState(() => _selectedFilter = ActivityFilter.protected),
+                      onTap: () => setState(
+                          () => _selectedFilter = ActivityFilter.protected),
                     ),
                   ],
                 ),
@@ -229,26 +240,33 @@ class _TransactionsScreenState extends ConsumerState<TransactionsScreen> {
                       child: Column(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
-                          Icon(Icons.receipt_long_outlined, color: colors.textTertiary, size: 48),
+                          Icon(Icons.receipt_long_outlined,
+                              color: colors.textTertiary, size: 48),
                           const SizedBox(height: AppSpacing.sm),
                           Text(
-                            _searchQuery.isNotEmpty ? 'No matches found' : 'No transactions found',
-                            style: AppTypography.titleSmall.copyWith(color: colors.textSecondary),
+                            _searchQuery.isNotEmpty
+                                ? 'No matches found'
+                                : 'No transactions found',
+                            style: AppTypography.titleSmall
+                                .copyWith(color: colors.textSecondary),
                           ),
                           const SizedBox(height: 4),
                           Text(
                             _searchQuery.isNotEmpty
                                 ? 'Try searching for a different handle or keyword.'
                                 : 'Payments matching this filter will show here.',
-                            style: AppTypography.bodySmall.copyWith(color: colors.textTertiary),
+                            style: AppTypography.bodySmall
+                                .copyWith(color: colors.textTertiary),
                           ),
                         ],
                       ),
                     )
                   : ListView.separated(
-                      padding: const EdgeInsets.fromLTRB(AppSpacing.md, AppSpacing.sm, AppSpacing.md, 100),
+                      padding: const EdgeInsets.fromLTRB(
+                          AppSpacing.md, AppSpacing.sm, AppSpacing.md, 100),
                       itemCount: filtered.length,
-                      separatorBuilder: (_, __) => const SizedBox(height: AppSpacing.xs),
+                      separatorBuilder: (_, __) =>
+                          const SizedBox(height: AppSpacing.xs),
                       itemBuilder: (context, index) {
                         final tx = filtered[index];
                         return _ActivityItemTile(tx: tx);
@@ -355,7 +373,8 @@ class _ActivityItemTile extends ConsumerWidget {
         onTap: () => context.push('/activity/details', extra: tx),
         borderRadius: AppRadius.mdRadius,
         child: Container(
-          padding: const EdgeInsets.symmetric(horizontal: AppSpacing.md, vertical: AppSpacing.sm + 2),
+          padding: const EdgeInsets.symmetric(
+              horizontal: AppSpacing.md, vertical: AppSpacing.sm + 2),
           decoration: BoxDecoration(
             borderRadius: AppRadius.mdRadius,
             border: Border.all(color: colors.border, width: 1),
@@ -387,7 +406,8 @@ class _ActivityItemTile extends ConsumerWidget {
                   children: [
                     Text(
                       tx.recipientOrSender,
-                      style: AppTypography.titleSmall.copyWith(color: colors.textPrimary),
+                      style: AppTypography.titleSmall
+                          .copyWith(color: colors.textPrimary),
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                     ),
@@ -397,7 +417,8 @@ class _ActivityItemTile extends ConsumerWidget {
                         Flexible(
                           child: Text(
                             Formatters.formatDate(tx.createdAt),
-                            style: AppTypography.bodySmall.copyWith(color: colors.textTertiary, fontSize: 11),
+                            style: AppTypography.bodySmall.copyWith(
+                                color: colors.textTertiary, fontSize: 11),
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,
                           ),
@@ -405,14 +426,16 @@ class _ActivityItemTile extends ConsumerWidget {
                         if (tx.type == TransactionType.protectedSend) ...[
                           const SizedBox(width: 6),
                           Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 1),
+                            padding: const EdgeInsets.symmetric(
+                                horizontal: 5, vertical: 1),
                             decoration: BoxDecoration(
                               color: colors.protected.withValues(alpha: 0.15),
                               borderRadius: BorderRadius.circular(4),
                             ),
                             child: Text(
                               'PROTECTED',
-                              style: AppTypography.labelSmall.copyWith(color: colors.protected, fontSize: 9),
+                              style: AppTypography.labelSmall.copyWith(
+                                  color: colors.protected, fontSize: 9),
                             ),
                           ),
                         ],
@@ -429,14 +452,16 @@ class _ActivityItemTile extends ConsumerWidget {
                   Text(
                     '$prefix${Formatters.formatSats(tx.amountSats)}',
                     style: AppTypography.titleSmall.copyWith(
-                      color: tx.isOutgoing ? colors.textPrimary : colors.success,
+                      color:
+                          tx.isOutgoing ? colors.textPrimary : colors.success,
                       fontWeight: FontWeight.w700,
                     ),
                   ),
                   const SizedBox(height: 2),
                   Text(
                     currency.format(tx.amountSats),
-                    style: AppTypography.bodySmall.copyWith(color: colors.textTertiary, fontSize: 11),
+                    style: AppTypography.bodySmall
+                        .copyWith(color: colors.textTertiary, fontSize: 11),
                   ),
                 ],
               ),

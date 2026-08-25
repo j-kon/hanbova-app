@@ -20,7 +20,8 @@ class RestoreSeedScreen extends ConsumerStatefulWidget {
 }
 
 class _RestoreSeedScreenState extends ConsumerState<RestoreSeedScreen> {
-  final List<TextEditingController> _controllers = List.generate(12, (_) => TextEditingController());
+  final List<TextEditingController> _controllers =
+      List.generate(12, (_) => TextEditingController());
   final List<FocusNode> _focusNodes = List.generate(12, (_) => FocusNode());
   int _activeField = 0;
   List<String> _suggestions = [];
@@ -77,7 +78,9 @@ class _RestoreSeedScreenState extends ConsumerState<RestoreSeedScreen> {
     final words = _controllers.map((c) => c.text.trim().toLowerCase()).toList();
     if (words.any((w) => w.isEmpty)) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Please fill in all 12 words of your recovery phrase')),
+        const SnackBar(
+            content:
+                Text('Please fill in all 12 words of your recovery phrase')),
       );
       return;
     }
@@ -92,7 +95,8 @@ class _RestoreSeedScreenState extends ConsumerState<RestoreSeedScreen> {
         setState(() => _isRestoring = false);
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
-            content: Text('Invalid recovery phrase or checksum mismatch. Please check spelling.'),
+            content: Text(
+                'Invalid recovery phrase or checksum mismatch. Please check spelling.'),
             backgroundColor: Colors.redAccent,
           ),
         );
@@ -170,12 +174,14 @@ class _RestoreSeedScreenState extends ConsumerState<RestoreSeedScreen> {
                   children: [
                     Text(
                       'Enter Your 12-Word Phrase',
-                      style: AppTypography.titleMedium.copyWith(color: colors.textPrimary),
+                      style: AppTypography.titleMedium
+                          .copyWith(color: colors.textPrimary),
                     ),
                     const SizedBox(height: AppSpacing.xs),
                     Text(
                       'Type in your recovery words in the exact sequence they were generated.',
-                      style: AppTypography.bodySmall.copyWith(color: colors.textSecondary),
+                      style: AppTypography.bodySmall
+                          .copyWith(color: colors.textSecondary),
                     ),
                     const SizedBox(height: AppSpacing.md),
 
@@ -183,7 +189,8 @@ class _RestoreSeedScreenState extends ConsumerState<RestoreSeedScreen> {
                     GridView.builder(
                       shrinkWrap: true,
                       physics: const NeverScrollableScrollPhysics(),
-                      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                      gridDelegate:
+                          const SliverGridDelegateWithFixedCrossAxisCount(
                         crossAxisCount: 2,
                         childAspectRatio: 2.8,
                         crossAxisSpacing: AppSpacing.sm,
@@ -196,16 +203,20 @@ class _RestoreSeedScreenState extends ConsumerState<RestoreSeedScreen> {
                             color: colors.surfaceCard,
                             borderRadius: AppRadius.smRadius,
                             border: Border.all(
-                              color: _activeField == i ? colors.primary : colors.border,
+                              color: _activeField == i
+                                  ? colors.primary
+                                  : colors.border,
                             ),
                           ),
                           child: Row(
                             children: [
                               Padding(
-                                padding: const EdgeInsets.only(left: 10, right: 4),
+                                padding:
+                                    const EdgeInsets.only(left: 10, right: 4),
                                 child: Text(
                                   '${i + 1}.',
-                                  style: AppTypography.labelSmall.copyWith(color: colors.textTertiary),
+                                  style: AppTypography.labelSmall
+                                      .copyWith(color: colors.textTertiary),
                                 ),
                               ),
                               Expanded(
@@ -214,11 +225,13 @@ class _RestoreSeedScreenState extends ConsumerState<RestoreSeedScreen> {
                                   focusNode: _focusNodes[i],
                                   autocorrect: false,
                                   enableSuggestions: false,
-                                  style: AppTypography.titleSmall.copyWith(color: colors.textPrimary, fontSize: 13),
+                                  style: AppTypography.titleSmall.copyWith(
+                                      color: colors.textPrimary, fontSize: 13),
                                   decoration: const InputDecoration(
                                     border: InputBorder.none,
                                     isDense: true,
-                                    contentPadding: EdgeInsets.symmetric(horizontal: 4, vertical: 8),
+                                    contentPadding: EdgeInsets.symmetric(
+                                        horizontal: 4, vertical: 8),
                                   ),
                                   onChanged: (val) => _updateSuggestions(val),
                                 ),
@@ -233,7 +246,10 @@ class _RestoreSeedScreenState extends ConsumerState<RestoreSeedScreen> {
                     ElevatedButton.icon(
                       onPressed: _isRestoring ? null : _restoreWallet,
                       icon: _isRestoring
-                          ? const SizedBox(width: 18, height: 18, child: CircularProgressIndicator(strokeWidth: 2))
+                          ? const SizedBox(
+                              width: 18,
+                              height: 18,
+                              child: CircularProgressIndicator(strokeWidth: 2))
                           : const Icon(Icons.download_rounded, size: 18),
                       label: const Text('Restore Wallet'),
                     ),
@@ -251,14 +267,16 @@ class _RestoreSeedScreenState extends ConsumerState<RestoreSeedScreen> {
                 child: ListView.separated(
                   scrollDirection: Axis.horizontal,
                   itemCount: _suggestions.length,
-                  separatorBuilder: (_, __) => const SizedBox(width: AppSpacing.xs),
+                  separatorBuilder: (_, __) =>
+                      const SizedBox(width: AppSpacing.xs),
                   itemBuilder: (context, idx) {
                     final sug = _suggestions[idx];
                     return ActionChip(
                       label: Text(sug),
                       onPressed: () => _selectSuggestion(sug),
                       backgroundColor: colors.surfaceCard,
-                      labelStyle: AppTypography.bodySmall.copyWith(color: colors.primary, fontWeight: FontWeight.w600),
+                      labelStyle: AppTypography.bodySmall.copyWith(
+                          color: colors.primary, fontWeight: FontWeight.w600),
                     );
                   },
                 ),

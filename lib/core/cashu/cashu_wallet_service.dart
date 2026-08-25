@@ -10,6 +10,8 @@ import 'cdk_ffi_bindings.dart';
 
 abstract class CashuWalletService {
   Future<CashuWalletBalance> getBalance();
+  Future<MintQuoteResult> createMintQuote(int amountSats);
+  Future<int> mintQuote(String quoteId);
   Future<int> mintTestTokens(int amountSats);
   Future<String> createProtectedSend({
     required int amountSats,
@@ -85,7 +87,8 @@ class CdkCashuWalletServiceImpl implements CashuWalletService {
     final outHandle = calloc<Pointer<Void>>();
 
     try {
-      final rc = _ffi.walletCreate(mintUrlPtr, dbPathPtr, seedHexPtr, outHandle);
+      final rc =
+          _ffi.walletCreate(mintUrlPtr, dbPathPtr, seedHexPtr, outHandle);
       if (rc != 0) {
         final err = _ffi.retrieveLastError() ?? 'Unknown error (code $rc)';
         throw StateError('Failed to initialize CDK wallet: $err');
@@ -127,7 +130,7 @@ class CdkCashuWalletServiceImpl implements CashuWalletService {
   }
 
   @override
-  Future<int> mintTestTokens(int amountSats) async {
+  Future<MintQuoteResult> createMintQuote(int amountSats) async {
     if (amountSats <= 0) {
       throw ArgumentError('Amount must be greater than zero');
     }
@@ -136,23 +139,38 @@ class CdkCashuWalletServiceImpl implements CashuWalletService {
     final outQuoteId = calloc<Pointer<Utf8>>();
     final outInvoice = calloc<Pointer<Utf8>>();
 
-    String quoteId;
     try {
-      final rcQuote = _ffi.walletMintQuote(handle, amountSats, outQuoteId, outInvoice);
+      final rcQuote =
+          _ffi.walletMintQuote(handle, amountSats, outQuoteId, outInvoice);
       if (rcQuote != 0) {
         final err = _ffi.retrieveLastError() ?? 'Unknown error (code $rcQuote)';
         throw StateError('Failed to request mint quote from mint: $err');
       }
-      quoteId = outQuoteId.value.toDartString();
+      final quoteId = outQuoteId.value.toDartString();
+      final invoice =
+          outInvoice.value.address != 0 ? outInvoice.value.toDartString() : '';
       _ffi.freeString(outQuoteId.value);
       if (outInvoice.value.address != 0) {
         _ffi.freeString(outInvoice.value);
       }
+
+      return MintQuoteResult(
+        quoteId: quoteId,
+        bolt11Invoice: invoice,
+        amountSats: amountSats,
+      );
     } finally {
       calloc.free(outQuoteId);
       calloc.free(outInvoice);
     }
+  }
 
+  @override
+  Future<int> mintQuote(String quoteId) async {
+    if (quoteId.isEmpty) {
+      throw ArgumentError('Quote ID cannot be empty');
+    }
+    final handle = await _ensureHandle();
     final quoteIdPtr = quoteId.toNativeUtf8();
     final outMinted = calloc<Uint64>();
 
@@ -167,6 +185,12 @@ class CdkCashuWalletServiceImpl implements CashuWalletService {
       calloc.free(quoteIdPtr);
       calloc.free(outMinted);
     }
+  }
+
+  @override
+  Future<int> mintTestTokens(int amountSats) async {
+    final quote = await createMintQuote(amountSats);
+    return await mintQuote(quote.quoteId);
   }
 
   @override
@@ -193,7 +217,8 @@ class CdkCashuWalletServiceImpl implements CashuWalletService {
 
     // Client-side sender refund keypair
     final refundPrivHex = Secp256k1Service.generatePrivateKeyHex();
-    final refundPubHex = Secp256k1Service.getCompressedPublicKeyHex(refundPrivHex);
+    final refundPubHex =
+        Secp256k1Service.getCompressedPublicKeyHex(refundPrivHex);
 
     final handle = await _ensureHandle();
     final recPubPtr = recipientPubkey.toNativeUtf8();
@@ -291,7 +316,8 @@ class CdkCashuWalletServiceImpl implements CashuWalletService {
     final escrows = await _storage.loadEscrowRecords(userId, network);
     final escrow = escrows.firstWhere(
       (e) => e.paymentId == paymentId && e.isOutgoing,
-      orElse: () => throw StateError('Escrow record for payment $paymentId not found'),
+      orElse: () =>
+          throw StateError('Escrow record for payment $paymentId not found'),
     );
 
     if (DateTime.now().isBefore(escrow.locktime)) {
@@ -301,7 +327,8 @@ class CdkCashuWalletServiceImpl implements CashuWalletService {
     }
 
     if (escrow.refundPrivkeyHex == null) {
-      throw StateError('Cannot refund: Refund private key not found on this device');
+      throw StateError(
+          'Cannot refund: Refund private key not found on this device');
     }
 
     final handle = await _ensureHandle();
@@ -311,7 +338,8 @@ class CdkCashuWalletServiceImpl implements CashuWalletService {
 
     int receivedSats;
     try {
-      final rc = _ffi.walletReceive(handle, tokenPtr, refundPrivPtr, outReceived);
+      final rc =
+          _ffi.walletReceive(handle, tokenPtr, refundPrivPtr, outReceived);
       if (rc != 0) {
         final err = _ffi.retrieveLastError() ?? 'Unknown error (code $rc)';
         throw StateError('Failed to execute post-locktime refund: $err');
@@ -323,7 +351,8 @@ class CdkCashuWalletServiceImpl implements CashuWalletService {
       calloc.free(outReceived);
     }
 
-    await _storage.saveEscrowRecord(userId, network, escrow.copyWith(status: 'refunded'));
+    await _storage.saveEscrowRecord(
+        userId, network, escrow.copyWith(status: 'refunded'));
     return receivedSats;
   }
 
