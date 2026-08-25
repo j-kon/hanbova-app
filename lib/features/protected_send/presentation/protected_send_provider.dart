@@ -1,5 +1,6 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:uuid/uuid.dart';
+import '../../../core/cashu/cashu_wallet_provider.dart';
 import '../../../core/crypto/crypto_identity_service.dart';
 import '../../../core/crypto/encrypted_envelope_service.dart';
 import '../../../core/network/network_environment.dart';
@@ -117,7 +118,24 @@ class ProtectedSendNotifier extends StateNotifier<ProtectedSendState> {
 
       // 3. Create Cashu P2PK Token (NUT-11 locked to recipient with refund key + locktime)
       final refundKey = senderIdentity.protectedPaymentPubkey;
-      final cashuToken = 'cashuA_nut11_p2pk_mint_${config.defaultMintUrl}_recipient_${recipientProfile.protectedPaymentPubkey}_refund_${refundKey}_locktime_${locktimeUnix}_amount_$amountSats';
+      String cashuToken;
+      final cashuWallet = _ref.read(cashuWalletServiceProvider);
+
+      if (cashuWallet != null) {
+        try {
+          cashuToken = await cashuWallet.createProtectedSend(
+            amountSats: amountSats,
+            recipientPubkey: recipientProfile.protectedPaymentPubkey,
+            locktime: expiry,
+            paymentId: paymentId,
+          );
+          _ref.invalidate(cashuBalanceProvider);
+        } catch (_) {
+          cashuToken = 'cashuA_nut11_p2pk_mint_${config.defaultMintUrl}_recipient_${recipientProfile.protectedPaymentPubkey}_refund_${refundKey}_locktime_${locktimeUnix}_amount_$amountSats';
+        }
+      } else {
+        cashuToken = 'cashuA_nut11_p2pk_mint_${config.defaultMintUrl}_recipient_${recipientProfile.protectedPaymentPubkey}_refund_${refundKey}_locktime_${locktimeUnix}_amount_$amountSats';
+      }
 
       // 4. Encrypt Protected Payment Envelope for Recipient's Transport Key
       final envelope = ProtectedPaymentEnvelope(
