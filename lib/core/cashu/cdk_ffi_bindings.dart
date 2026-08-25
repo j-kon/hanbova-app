@@ -51,6 +51,34 @@ typedef HanbovaCdkWalletMintDart = int Function(
   Pointer<Uint64> outMintedSats,
 );
 
+typedef HanbovaCdkWalletMeltQuoteC = Int32 Function(
+  Pointer<Void> handle,
+  Pointer<Utf8> invoice,
+  Pointer<Pointer<Utf8>> outQuoteId,
+  Pointer<Uint64> outAmountSats,
+  Pointer<Uint64> outFeeReserveSats,
+);
+typedef HanbovaCdkWalletMeltQuoteDart = int Function(
+  Pointer<Void> handle,
+  Pointer<Utf8> invoice,
+  Pointer<Pointer<Utf8>> outQuoteId,
+  Pointer<Uint64> outAmountSats,
+  Pointer<Uint64> outFeeReserveSats,
+);
+
+typedef HanbovaCdkWalletMeltC = Int32 Function(
+  Pointer<Void> handle,
+  Pointer<Utf8> quoteId,
+  Pointer<Int32> outPaid,
+  Pointer<Pointer<Utf8>> outPreimage,
+);
+typedef HanbovaCdkWalletMeltDart = int Function(
+  Pointer<Void> handle,
+  Pointer<Utf8> quoteId,
+  Pointer<Int32> outPaid,
+  Pointer<Pointer<Utf8>> outPreimage,
+);
+
 typedef HanbovaCdkWalletSendLockedC = Int32 Function(
   Pointer<Void> handle,
   Uint64 amountSats,
@@ -110,6 +138,8 @@ class CdkFfiBindings {
   final HanbovaCdkWalletGetBalanceDart walletGetBalance;
   final HanbovaCdkWalletMintQuoteDart walletMintQuote;
   final HanbovaCdkWalletMintDart walletMint;
+  final HanbovaCdkWalletMeltQuoteDart walletMeltQuote;
+  final HanbovaCdkWalletMeltDart walletMelt;
   final HanbovaCdkWalletSendLockedDart walletSendLocked;
   final HanbovaCdkWalletReceiveDart walletReceive;
   final HanbovaCdkCheckTokenStateDart checkTokenState;
@@ -124,6 +154,8 @@ class CdkFfiBindings {
     required this.walletGetBalance,
     required this.walletMintQuote,
     required this.walletMint,
+    required this.walletMeltQuote,
+    required this.walletMelt,
     required this.walletSendLocked,
     required this.walletReceive,
     required this.checkTokenState,
@@ -146,6 +178,12 @@ class CdkFfiBindings {
             .asFunction(),
         walletMint = dylib
             .lookup<NativeFunction<HanbovaCdkWalletMintC>>('hanbova_cdk_mint')
+            .asFunction(),
+        walletMeltQuote = dylib
+            .lookup<NativeFunction<HanbovaCdkWalletMeltQuoteC>>('hanbova_cdk_melt_quote')
+            .asFunction(),
+        walletMelt = dylib
+            .lookup<NativeFunction<HanbovaCdkWalletMeltC>>('hanbova_cdk_melt')
             .asFunction(),
         walletSendLocked = dylib
             .lookup<NativeFunction<HanbovaCdkWalletSendLockedC>>('hanbova_cdk_prepare_p2pk_send')

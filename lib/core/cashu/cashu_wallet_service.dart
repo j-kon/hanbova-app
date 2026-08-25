@@ -24,6 +24,8 @@ abstract class CashuWalletService {
   Future<int> refundProtectedPayment({
     required String paymentId,
   });
+  Future<MeltQuoteResult> createMeltQuote(String bolt11Invoice);
+  Future<MeltExecutionResult> payMeltQuote(String quoteId);
   Future<TokenState> checkTokenState(String token);
   void dispose();
 }
@@ -323,6 +325,74 @@ class CdkCashuWalletServiceImpl implements CashuWalletService {
 
     await _storage.saveEscrowRecord(userId, network, escrow.copyWith(status: 'refunded'));
     return receivedSats;
+  }
+
+  @override
+  Future<MeltQuoteResult> createMeltQuote(String bolt11Invoice) async {
+    if (bolt11Invoice.trim().isEmpty) {
+      throw ArgumentError('BOLT11 invoice cannot be empty');
+    }
+    final handle = await _ensureHandle();
+    final invPtr = bolt11Invoice.trim().toNativeUtf8();
+    final outQuoteId = calloc<Pointer<Utf8>>();
+    final outAmount = calloc<Uint64>();
+    final outFeeReserve = calloc<Uint64>();
+
+    try {
+      final rc = _ffi.walletMeltQuote(
+        handle,
+        invPtr,
+        outQuoteId,
+        outAmount,
+        outFeeReserve,
+      );
+      if (rc != 0) {
+        final err = _ffi.retrieveLastError() ?? 'Unknown error (code $rc)';
+        throw StateError('Failed to create melt quote: $err');
+      }
+      final qid = outQuoteId.value.toDartString();
+      _ffi.freeString(outQuoteId.value);
+      return MeltQuoteResult(
+        quoteId: qid,
+        amountSats: outAmount.value,
+        feeReserveSats: outFeeReserve.value,
+      );
+    } finally {
+      calloc.free(invPtr);
+      calloc.free(outQuoteId);
+      calloc.free(outAmount);
+      calloc.free(outFeeReserve);
+    }
+  }
+
+  @override
+  Future<MeltExecutionResult> payMeltQuote(String quoteId) async {
+    if (quoteId.trim().isEmpty) {
+      throw ArgumentError('Quote ID cannot be empty');
+    }
+    final handle = await _ensureHandle();
+    final qidPtr = quoteId.trim().toNativeUtf8();
+    final outPaid = calloc<Int32>();
+    final outPreimage = calloc<Pointer<Utf8>>();
+
+    try {
+      final rc = _ffi.walletMelt(handle, qidPtr, outPaid, outPreimage);
+      if (rc != 0) {
+        final err = _ffi.retrieveLastError() ?? 'Unknown error (code $rc)';
+        throw StateError('Failed to execute melt quote: $err');
+      }
+      final isPaid = outPaid.value == 1;
+      String? preimage;
+      if (outPreimage.value.address != 0) {
+        preimage = outPreimage.value.toDartString();
+        _ffi.freeString(outPreimage.value);
+      }
+      return MeltExecutionResult(isPaid: isPaid, preimage: preimage);
+    } finally {
+      calloc.free(qidPtr);
+      calloc.free(outPaid);
+      calloc.free(outPreimage);
+    }
   }
 
   @override

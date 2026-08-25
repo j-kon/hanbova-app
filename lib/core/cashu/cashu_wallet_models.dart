@@ -121,3 +121,30 @@ class ProtectedEscrowRecord {
         createdAt: createdAt,
       );
 }
+
+/// Result of requesting a melt quote (NUT-05) for paying a Lightning invoice from ecash.
+class MeltQuoteResult {
+  final String quoteId;
+  final int amountSats;
+  final int feeReserveSats;
+
+  const MeltQuoteResult({
+    required this.quoteId,
+    required this.amountSats,
+    required this.feeReserveSats,
+  });
+
+  int get totalRequiredSats => amountSats + feeReserveSats;
+}
+
+/// Result of executing a melt operation (NUT-05).
+class MeltExecutionResult {
+  final bool isPaid;
+  final String? preimage;
+
+  const MeltExecutionResult({
+    required this.isPaid,
+    this.preimage,
+  });
+}
+

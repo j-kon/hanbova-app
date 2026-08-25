@@ -9,6 +9,8 @@ __attribute__((used)) void __hanbova_cdk_ffi_retain_symbols(void) {
     (void)hanbova_cdk_wallet_get_balance(NULL, NULL, NULL);
     (void)hanbova_cdk_mint_quote(NULL, 0, NULL, NULL);
     (void)hanbova_cdk_mint(NULL, NULL, NULL);
+    (void)hanbova_cdk_melt_quote(NULL, NULL, NULL, NULL, NULL);
+    (void)hanbova_cdk_melt(NULL, NULL, NULL, NULL);
     (void)hanbova_cdk_prepare_p2pk_send(NULL, 0, NULL, NULL, 0, NULL);
     (void)hanbova_cdk_receive_p2pk(NULL, NULL, NULL, NULL);
     (void)hanbova_cdk_check_token_state(NULL, NULL, NULL);
