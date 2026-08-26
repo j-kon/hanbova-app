@@ -1,3 +1,5 @@
+import 'dart:io';
+
 class AppConfig {
   final String appName;
   final String appVersion;
@@ -17,21 +19,28 @@ class AppConfig {
 
   bool get isDevelopment => environment == 'development';
 
-  static const AppConfig development = AppConfig(
-    appName: 'Hanbova',
-    appVersion: '0.1.0',
-    apiBaseUrl: 'http://127.0.0.1:8080/api/v1',
-    mintUrl: 'http://127.0.0.1:3338',
-    environment: 'development',
-    isMockEnvironment: false,
-  );
+  static String get defaultHost {
+    try {
+      if (Platform.isAndroid) return '10.0.2.2';
+    } catch (_) {}
+    return '127.0.0.1';
+  }
 
-  static const AppConfig mock = AppConfig(
-    appName: 'Hanbova (Mock)',
-    appVersion: '0.1.0-mock',
-    apiBaseUrl: 'http://localhost:8080/api/v1',
-    mintUrl: 'http://127.0.0.1:3338',
-    environment: 'mock',
-    isMockEnvironment: true,
-  );
+  static AppConfig get development => AppConfig(
+        appName: 'Hanbova',
+        appVersion: '0.1.0',
+        apiBaseUrl: 'http://$defaultHost:8080/api/v1',
+        mintUrl: 'http://$defaultHost:3338',
+        environment: 'development',
+        isMockEnvironment: false,
+      );
+
+  static AppConfig get mock => AppConfig(
+        appName: 'Hanbova (Mock)',
+        appVersion: '0.1.0-mock',
+        apiBaseUrl: 'http://$defaultHost:8080/api/v1',
+        mintUrl: 'http://$defaultHost:3338',
+        environment: 'mock',
+        isMockEnvironment: true,
+      );
 }
