@@ -100,30 +100,11 @@ class CryptoIdentityNotifier extends AsyncNotifier<WalletCryptoIdentity?> {
       final walletSeedHex =
           await MnemonicService.mnemonicToSeedHex(savedMnemonic);
 
-      SimpleKeyPair transportKeyPair;
-      String protectedPaymentPrivHex;
-
-      if (savedTransportPriv != null && savedProtectedPriv != null) {
-        // Load existing saved keys
-        final privBytes = base64Decode(savedTransportPriv);
-        transportKeyPair = await _x25519.newKeyPairFromSeed(privBytes);
-        protectedPaymentPrivHex = savedProtectedPriv;
-      } else {
-        // Derive deterministically from the user's BIP-39 mnemonic seed
-        transportKeyPair = await deriveTransportKeyPair(walletSeedHex, _x25519);
-        protectedPaymentPrivHex =
-            await deriveProtectedPaymentPrivHex(walletSeedHex);
-
-        final seedBytes = await transportKeyPair.extractPrivateKeyBytes();
-        await _storage.write(
-          key: '${keyPrefix}_transport_priv',
-          value: base64Encode(seedBytes),
-        );
-        await _storage.write(
-          key: '${keyPrefix}_protected_priv',
-          value: protectedPaymentPrivHex,
-        );
-      }
+      // Derive deterministically from the user's BIP-39 mnemonic seed
+      final transportKeyPair =
+          await deriveTransportKeyPair(walletSeedHex, _x25519);
+      final protectedPaymentPrivHex =
+          await deriveProtectedPaymentPrivHex(walletSeedHex);
 
       final transportPublicKey = await transportKeyPair.extractPublicKey();
       final transportPubHex = transportPublicKey.bytes
@@ -177,18 +158,9 @@ class CryptoIdentityNotifier extends AsyncNotifier<WalletCryptoIdentity?> {
       final protectedPaymentPrivHex =
           await deriveProtectedPaymentPrivHex(walletSeedHex);
 
-      final seedBytes = await transportKeyPair.extractPrivateKeyBytes();
       await _storage.write(
         key: '${keyPrefix}_mnemonic',
         value: cleanMnemonic,
-      );
-      await _storage.write(
-        key: '${keyPrefix}_transport_priv',
-        value: base64Encode(seedBytes),
-      );
-      await _storage.write(
-        key: '${keyPrefix}_protected_priv',
-        value: protectedPaymentPrivHex,
       );
 
       final transportPublicKey = await transportKeyPair.extractPublicKey();

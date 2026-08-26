@@ -1,5 +1,6 @@
 import 'package:cryptography/cryptography.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:hanbova_app/core/crypto/crypto_identity_service.dart';
 import 'package:hanbova_app/core/crypto/encrypted_envelope_service.dart';
 
 void main() {
@@ -127,6 +128,53 @@ void main() {
         ),
         throwsA(anything),
       );
+    });
+    test('Deterministic X25519 transport key derivation is idempotent across reloads',
+        () async {
+      const seedHex =
+          '000102030405060708090a0b0c0d0e0f101112131415161718191a1b1c1d1e1f202122232425262728292a2b2c2d2e2f303132333435363738393a3b3c3d3e3f';
+
+      // 1. First derivation (e.g. at wallet setup)
+      final kp1 = await CryptoIdentityNotifier.deriveTransportKeyPair(
+          seedHex, x25519);
+      final pub1 = await kp1.extractPublicKey();
+      final pub1Hex =
+          pub1.bytes.map((b) => b.toRadixString(16).padLeft(2, '0')).join();
+
+      // 2. Second derivation (e.g. at app restart/reload)
+      final kp2 = await CryptoIdentityNotifier.deriveTransportKeyPair(
+          seedHex, x25519);
+      final pub2 = await kp2.extractPublicKey();
+      final pub2Hex =
+          pub2.bytes.map((b) => b.toRadixString(16).padLeft(2, '0')).join();
+
+      expect(pub1Hex, equals(pub2Hex));
+
+      // 3. Sender encrypts with pub1Hex
+      const envelope = ProtectedPaymentEnvelope(
+        version: 1,
+        paymentId: 'pay_reload_test',
+        cashuToken: 'cashuA_token',
+        mintUrl: 'http://127.0.0.1:3338',
+        amountSats: 2000,
+        senderUsername: 'alice',
+        recipientUsername: 'jaykon',
+        locktime: 1787510400,
+      );
+
+      final ciphertext = await envelopeService.encryptEnvelope(
+        envelope: envelope,
+        recipientTransportPubkeyHex: pub1Hex,
+      );
+
+      // 4. Recipient decrypts with kp2 (derived on second reload) -> MUST SUCCEED
+      final decrypted = await envelopeService.decryptEnvelope(
+        ciphertextString: ciphertext,
+        recipientKeyPair: kp2,
+      );
+
+      expect(decrypted.amountSats, 2000);
+      expect(decrypted.recipientUsername, 'jaykon');
     });
   });
 }

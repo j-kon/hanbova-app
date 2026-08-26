@@ -4,9 +4,11 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../../core/cashu/cashu_wallet_models.dart';
 import '../../../core/cashu/cashu_wallet_provider.dart';
+import '../../../core/crypto/crypto_identity_service.dart';
 import '../../../core/currency/balance_visibility_provider.dart';
 import '../../../core/currency/currency_provider.dart';
 import '../../../core/network/network_environment.dart';
+import '../../../core/networking/api_client.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_radius.dart';
 import '../../../core/theme/app_shadows.dart';
@@ -30,6 +32,7 @@ class HomeScreen extends ConsumerStatefulWidget {
 
 class _HomeScreenState extends ConsumerState<HomeScreen> {
   Timer? _syncTimer;
+  bool _keysSynced = false;
 
   String _getGreeting() {
     final hour = DateTime.now().hour;
@@ -59,6 +62,17 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     final authState = ref.read(authProvider);
     if (authState.user == null) return;
     try {
+      if (!_keysSynced) {
+        final network = ref.read(networkEnvironmentProvider);
+        final identity = await ref
+            .read(cryptoIdentityProvider.notifier)
+            .getOrCreateIdentity(userId: authState.user!.id, network: network);
+        final apiClient = ref.read(apiClientProvider);
+        await ref
+            .read(cryptoIdentityProvider.notifier)
+            .publishPublicKeys(apiClient: apiClient, identity: identity);
+        _keysSynced = true;
+      }
       final messageService = ref.read(protectedMessageServiceProvider);
       final intentRepo = ref.read(paymentIntentRepositoryProvider);
       final inbox = await messageService.getInbox();
