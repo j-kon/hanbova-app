@@ -24,8 +24,18 @@ class CustomMintEntry {
 }
 
 final configuredMintsProvider = StateProvider<List<CustomMintEntry>>((ref) {
-  final currentNet = ref.watch(networkEnvironmentProvider);
-  final netCfg = NetworkConfig.fromNetwork(currentNet);
+  final netCfg = ref.watch(activeNetworkConfigProvider);
+
+  if (netCfg.isPilot) {
+    return [
+      CustomMintEntry(
+        url: netCfg.defaultMintUrl,
+        name: 'Minibits Bitcoin Mint (Allowlisted)',
+        isNut11Supported: true,
+        isDefault: true,
+      ),
+    ];
+  }
 
   return [
     CustomMintEntry(
@@ -34,12 +44,13 @@ final configuredMintsProvider = StateProvider<List<CustomMintEntry>>((ref) {
       isNut11Supported: true,
       isDefault: true,
     ),
-    const CustomMintEntry(
-      url: 'https://testnut.cashu.space',
-      name: 'Cashu Space Testnut (NUT-11 enabled)',
-      isNut11Supported: true,
-      isDefault: false,
-    ),
+    if (netCfg.network != HanbovaNetwork.mainnet)
+      const CustomMintEntry(
+        url: 'https://testnut.cashu.space',
+        name: 'Cashu Space Testnut (NUT-11 enabled)',
+        isNut11Supported: true,
+        isDefault: false,
+      ),
   ];
 });
 
@@ -195,6 +206,7 @@ class _MintsScreenState extends ConsumerState<MintsScreen> {
   @override
   Widget build(BuildContext context) {
     final colors = context.colors;
+    final netCfg = ref.watch(activeNetworkConfigProvider);
     final mints = ref.watch(configuredMintsProvider);
 
     return Scaffold(
@@ -206,11 +218,12 @@ class _MintsScreenState extends ConsumerState<MintsScreen> {
           onPressed: () => context.pop(),
         ),
         actions: [
-          IconButton(
-            icon: const Icon(Icons.add),
-            tooltip: 'Add Custom Mint',
-            onPressed: _showAddMintSheet,
-          ),
+          if (!netCfg.isPilot)
+            IconButton(
+              icon: const Icon(Icons.add),
+              tooltip: 'Add Custom Mint',
+              onPressed: _showAddMintSheet,
+            ),
         ],
       ),
       body: SafeArea(
@@ -220,18 +233,28 @@ class _MintsScreenState extends ConsumerState<MintsScreen> {
             Container(
               padding: const EdgeInsets.all(AppSpacing.md),
               decoration: BoxDecoration(
-                color: colors.primary.withValues(alpha: 0.1),
+                color: netCfg.isPilot
+                    ? Colors.amber.withValues(alpha: 0.1)
+                    : colors.primary.withValues(alpha: 0.1),
                 borderRadius: AppRadius.mdRadius,
-                border:
-                    Border.all(color: colors.primary.withValues(alpha: 0.3)),
+                border: Border.all(
+                  color: netCfg.isPilot
+                      ? Colors.amber.withValues(alpha: 0.3)
+                      : colors.primary.withValues(alpha: 0.3),
+                ),
               ),
               child: Row(
                 children: [
-                  Icon(Icons.info_outline, color: colors.primary),
+                  Icon(
+                    netCfg.isPilot ? Icons.lock_outline : Icons.info_outline,
+                    color: netCfg.isPilot ? Colors.amber : colors.primary,
+                  ),
                   const SizedBox(width: AppSpacing.sm),
                   Expanded(
                     child: Text(
-                      'Hanbova supports multi-mint routing. Never combine proofs across different mints.',
+                      netCfg.isPilot
+                          ? 'Controlled Mainnet Pilot: Arbitrary mint selection is disabled for safety. All transactions route through the single allowlisted Minibits Bitcoin mint.'
+                          : 'Hanbova supports multi-mint routing. Never combine proofs across different mints.',
                       style: AppTypography.bodySmall
                           .copyWith(color: colors.textPrimary),
                     ),
@@ -241,14 +264,24 @@ class _MintsScreenState extends ConsumerState<MintsScreen> {
             ),
             const SizedBox(height: AppSpacing.md),
             ...mints.map((mint) {
-              final activeMintUrl = ref.watch(selectedMintUrlProvider) ??
-                  NetworkConfig.fromNetwork(
-                          ref.watch(networkEnvironmentProvider))
-                      .defaultMintUrl;
+              final activeMintUrl = netCfg.isPilot
+                  ? netCfg.defaultMintUrl
+                  : (ref.watch(selectedMintUrlProvider) ??
+                      netCfg.defaultMintUrl);
               final isActive = mint.url == activeMintUrl;
 
               return InkWell(
                 onTap: () {
+                  if (netCfg.isPilot) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(
+                        content: Text(
+                            'Arbitrary mint selection is disabled for the Controlled Mainnet Pilot.'),
+                        duration: Duration(seconds: 2),
+                      ),
+                    );
+                    return;
+                  }
                   ref.read(selectedMintUrlProvider.notifier).state = mint.url;
                   ref.invalidate(cashuBalanceProvider);
                   ScaffoldMessenger.of(context).showSnackBar(

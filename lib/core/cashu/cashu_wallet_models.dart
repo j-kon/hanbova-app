@@ -161,3 +161,51 @@ class MintQuoteResult {
     required this.amountSats,
   });
 }
+
+/// Status of a mint quote (NUT-04).
+enum MintQuoteStatus {
+  unpaid,
+  paid,
+  issued,
+  expired,
+  unknown,
+}
+
+/// Typed result of checking a mint quote status (NUT-04).
+class MintQuoteStatusResult {
+  final String state;
+  final bool isPaid;
+  final MintQuoteStatus status;
+
+  const MintQuoteStatusResult({
+    required this.state,
+    required this.isPaid,
+    required this.status,
+  });
+
+  factory MintQuoteStatusResult.fromStateString(String stateStr,
+      [bool? isPaid]) {
+    final s = stateStr.trim().toUpperCase();
+    MintQuoteStatus status;
+    if (s == 'PAID') {
+      status = MintQuoteStatus.paid;
+    } else if (s == 'UNPAID') {
+      status = MintQuoteStatus.unpaid;
+    } else if (s == 'ISSUED') {
+      status = MintQuoteStatus.issued;
+    } else if (s == 'EXPIRED') {
+      status = MintQuoteStatus.expired;
+    } else if (s.contains('UNPAID')) {
+      status = MintQuoteStatus.unpaid;
+    } else if (s.contains('PAID')) {
+      status = MintQuoteStatus.paid;
+    } else {
+      status = MintQuoteStatus.unknown;
+    }
+    return MintQuoteStatusResult(
+      state: stateStr,
+      isPaid: (isPaid ?? false) || status == MintQuoteStatus.paid,
+      status: status,
+    );
+  }
+}

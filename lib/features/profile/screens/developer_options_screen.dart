@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import '../../../core/cashu/cashu_wallet_provider.dart';
 import '../../../core/cashu/mint_validator.dart';
 import '../../../core/crypto/crypto_identity_service.dart';
 import '../../../core/network/network_environment.dart';
@@ -89,9 +90,11 @@ class _DeveloperOptionsScreenState
               onPressed: () {
                 Navigator.pop(ctx);
                 ref.read(mainnetPilotOverrideProvider.notifier).state = true;
+                ref.read(selectedMintUrlProvider.notifier).state = null;
                 ref
                     .read(networkEnvironmentProvider.notifier)
                     .setNetwork(HanbovaNetwork.mainnet, pilotOverride: true);
+                ref.invalidate(cashuBalanceProvider);
                 ScaffoldMessenger.of(context).showSnackBar(
                   const SnackBar(
                     content:
@@ -125,9 +128,11 @@ class _DeveloperOptionsScreenState
           ElevatedButton(
             onPressed: () {
               Navigator.pop(ctx);
+              ref.read(selectedMintUrlProvider.notifier).state = null;
               ref
                   .read(networkEnvironmentProvider.notifier)
                   .setNetwork(selectedNet);
+              ref.invalidate(cashuBalanceProvider);
               ScaffoldMessenger.of(context).showSnackBar(
                 SnackBar(
                   content: Text(

@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../../core/cashu/cashu_wallet_provider.dart';
 import '../../../core/currency/currency_provider.dart';
+import '../../../core/network/network_environment.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_radius.dart';
 import '../../../core/theme/app_spacing.dart';
@@ -63,6 +64,13 @@ class _SendScreenState extends ConsumerState<SendScreen> {
 
       // Execute genuine NUT-05 ecash melt through CDK
       final quote = await cashuWallet.createMeltQuote(invoice);
+
+      final config = ref.read(activeNetworkConfigProvider);
+      if (quote.amountSats > config.maxSendSats) {
+        throw StateError(
+            'Invoice amount of ${quote.amountSats} sats exceeds maximum single send limit of ${config.maxSendSats} sats for ${config.displayName}.');
+      }
+
       final meltResult = await cashuWallet.payMeltQuote(quote.quoteId);
       if (!meltResult.isPaid) {
         throw StateError('Melt payment could not be completed by the mint');

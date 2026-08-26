@@ -96,8 +96,11 @@ class ProtectedSendNotifier extends StateNotifier<ProtectedSendState> {
             'User must be authenticated to send protected payments.');
       }
 
-      final network = _ref.read(networkEnvironmentProvider);
-      final config = NetworkConfig.fromNetwork(network);
+      final config = _ref.read(activeNetworkConfigProvider);
+      if (amountSats > config.maxSendSats) {
+        throw StateError(
+            'Amount of $amountSats sats exceeds maximum send limit of ${config.maxSendSats} sats for ${config.displayName}.');
+      }
 
       final senderUsername = authState.user!.username;
       final senderId = authState.user!.id;
@@ -122,7 +125,7 @@ class ProtectedSendNotifier extends StateNotifier<ProtectedSendState> {
       final cryptoService = _ref.read(cryptoIdentityProvider.notifier);
       await cryptoService.getOrCreateIdentity(
         userId: senderId,
-        network: network,
+        network: config.network,
       );
 
       final now = DateTime.now();

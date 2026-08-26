@@ -324,6 +324,15 @@ class MockSuccessfulCashuWalletService implements CashuWalletService {
   }
 
   @override
+  Future<MintQuoteStatusResult> checkMintQuoteStatus(String quoteId) async {
+    return const MintQuoteStatusResult(
+      state: 'PAID',
+      isPaid: true,
+      status: MintQuoteStatus.paid,
+    );
+  }
+
+  @override
   Future<int> mintTestTokens(int amountSats) async {
     currentBalance = CashuWalletBalance(
       spendableSats: currentBalance.spendableSats + amountSats,
@@ -427,6 +436,11 @@ class MockFailingCashuWalletService implements CashuWalletService {
   @override
   Future<int> mintQuote(String quoteId) async {
     throw StateError('Mint quote payment failed');
+  }
+
+  @override
+  Future<MintQuoteStatusResult> checkMintQuoteStatus(String quoteId) async {
+    throw StateError('Failed to check quote status');
   }
 
   @override

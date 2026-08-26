@@ -547,7 +547,7 @@ class _ActiveTab extends ConsumerWidget {
                       ),
                       const SizedBox(height: 2),
                       Text(
-                        'Payment was not claimed. Tap Refund to return funds to your spendable balance.',
+                        'Protection window has ended. Tap Refund to return funds to your spendable balance before the recipient claims.',
                         style: AppTypography.bodySmall.copyWith(
                             color: colors.textSecondary, fontSize: 11),
                       ),

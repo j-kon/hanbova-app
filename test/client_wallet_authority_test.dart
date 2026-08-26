@@ -108,6 +108,11 @@ CdkFfiBindings createMockCdkFfiBindings() {
       outReceived.value = amount;
       return 0;
     },
+    checkMintQuoteStatus: (handle, quoteId, outState, outPaid) {
+      outState.value = 'PAID'.toNativeUtf8();
+      outPaid.value = 1;
+      return 0;
+    },
     checkTokenState: (handle, tokenStr, outState) {
       outState.value = 0; // Unspent
       return 0;

@@ -15,7 +15,7 @@ final selectedMintUrlProvider = StateProvider<String?>((ref) => null);
 final cashuWalletServiceProvider = Provider<CashuWalletService?>((ref) {
   final authState = ref.watch(authProvider);
   final cryptoIdentity = ref.watch(cryptoIdentityProvider).value;
-  final network = ref.watch(networkEnvironmentProvider);
+  final config = ref.watch(activeNetworkConfigProvider);
   final selectedMint = ref.watch(selectedMintUrlProvider);
   final storage = ref.watch(cashuWalletStorageProvider);
 
@@ -23,13 +23,20 @@ final cashuWalletServiceProvider = Provider<CashuWalletService?>((ref) {
     return null;
   }
 
+  // When Controlled Mainnet Pilot is active:
+  // effective mint URL MUST ALWAYS equal config.defaultMintUrl (Minibits Bitcoin mint).
+  // cashuWalletServiceProvider must ignore selectedMintUrlProvider in pilot mode.
+  final effectiveMintUrl = config.isPilot
+      ? config.defaultMintUrl
+      : (selectedMint ?? config.defaultMintUrl);
+
   final service = CdkCashuWalletServiceImpl(
     userId: authState.user!.id,
-    network: network,
+    network: config.network,
     walletSeedHex: cryptoIdentity.walletSeedHex,
     p2pkPrivateKeyHex: cryptoIdentity.protectedPaymentPrivkeyHex,
     p2pkPublicKeyHex: cryptoIdentity.protectedPaymentPubkey,
-    mintUrl: selectedMint,
+    mintUrl: effectiveMintUrl,
     storage: storage,
   );
 

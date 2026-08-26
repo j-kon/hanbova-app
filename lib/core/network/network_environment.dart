@@ -16,6 +16,7 @@ class NetworkConfig {
   final bool isEnabled;
   final String storagePrefix;
   final bool isPilot;
+  final int maxWalletBalanceSats;
   final int maxDepositSats;
   final int maxSendSats;
 
@@ -28,6 +29,7 @@ class NetworkConfig {
     required this.isEnabled,
     required this.storagePrefix,
     this.isPilot = false,
+    this.maxWalletBalanceSats = 1000000,
     this.maxDepositSats = 1000000,
     this.maxSendSats = 1000000,
   });
@@ -44,6 +46,7 @@ class NetworkConfig {
     isTestMode: true,
     isEnabled: true,
     storagePrefix: 'wallet_local',
+    maxWalletBalanceSats: 500000,
     maxDepositSats: 500000,
     maxSendSats: 500000,
   );
@@ -56,6 +59,7 @@ class NetworkConfig {
     isTestMode: true,
     isEnabled: true,
     storagePrefix: 'wallet_cashu_test',
+    maxWalletBalanceSats: 100000,
     maxDepositSats: 100000,
     maxSendSats: 100000,
   );
@@ -68,6 +72,7 @@ class NetworkConfig {
     isTestMode: false,
     isEnabled: false,
     storagePrefix: 'wallet_mainnet',
+    maxWalletBalanceSats: 0,
     maxDepositSats: 0,
     maxSendSats: 0,
   );
@@ -77,14 +82,15 @@ class NetworkConfig {
   static const mainnetPilot = NetworkConfig(
     network: HanbovaNetwork.mainnet,
     displayName: 'Bitcoin Mainnet (Pilot)',
-    description: 'Controlled Pilot • Max 10,000 sats deposit / 5,000 sats send',
+    description: 'Controlled Pilot • Max 10,000 sats wallet / 5,000 sats send',
     defaultMintUrl: 'https://mint.minibits.cash/Bitcoin',
     isTestMode: false,
     isEnabled: true,
     storagePrefix: 'wallet_mainnet_pilot',
     isPilot: true,
-    maxDepositSats: 10000, // Strict pilot limit: ~\$6 USD
-    maxSendSats: 5000, // Strict pilot limit: ~\$3 USD
+    maxWalletBalanceSats: 10000, // Strict pilot limit in sats
+    maxDepositSats: 10000, // Strict pilot limit in sats
+    maxSendSats: 5000, // Strict pilot limit in sats
   );
 
   static NetworkConfig fromNetwork(HanbovaNetwork net,
@@ -110,6 +116,13 @@ final networkEnvironmentProvider =
 /// Tracks whether developer has activated the explicit Mainnet Pilot mode in runtime
 final mainnetPilotOverrideProvider = StateProvider<bool>((ref) {
   return NetworkConfig.isMainnetPilotBuild;
+});
+
+/// Centralized active network configuration watching environment and pilot overrides
+final activeNetworkConfigProvider = Provider<NetworkConfig>((ref) {
+  final net = ref.watch(networkEnvironmentProvider);
+  final pilotActive = ref.watch(mainnetPilotOverrideProvider);
+  return NetworkConfig.fromNetwork(net, pilotActive: pilotActive);
 });
 
 class NetworkEnvironmentNotifier extends StateNotifier<HanbovaNetwork> {

@@ -40,6 +40,19 @@ typedef HanbovaCdkWalletMintQuoteDart = int Function(
   Pointer<Pointer<Utf8>> outInvoice,
 );
 
+typedef HanbovaCdkCheckMintQuoteStatusC = Int32 Function(
+  Pointer<Void> handle,
+  Pointer<Utf8> quoteId,
+  Pointer<Pointer<Utf8>> outState,
+  Pointer<Int32> outPaid,
+);
+typedef HanbovaCdkCheckMintQuoteStatusDart = int Function(
+  Pointer<Void> handle,
+  Pointer<Utf8> quoteId,
+  Pointer<Pointer<Utf8>> outState,
+  Pointer<Int32> outPaid,
+);
+
 typedef HanbovaCdkWalletMintC = Int32 Function(
   Pointer<Void> handle,
   Pointer<Utf8> quoteId,
@@ -137,6 +150,7 @@ class CdkFfiBindings {
   final HanbovaCdkWalletCreateDart walletCreate;
   final HanbovaCdkWalletGetBalanceDart walletGetBalance;
   final HanbovaCdkWalletMintQuoteDart walletMintQuote;
+  final HanbovaCdkCheckMintQuoteStatusDart checkMintQuoteStatus;
   final HanbovaCdkWalletMintDart walletMint;
   final HanbovaCdkWalletMeltQuoteDart walletMeltQuote;
   final HanbovaCdkWalletMeltDart walletMelt;
@@ -153,6 +167,7 @@ class CdkFfiBindings {
     required this.walletCreate,
     required this.walletGetBalance,
     required this.walletMintQuote,
+    required this.checkMintQuoteStatus,
     required this.walletMint,
     required this.walletMeltQuote,
     required this.walletMelt,
@@ -178,6 +193,10 @@ class CdkFfiBindings {
         walletMintQuote = dylib
             .lookup<NativeFunction<HanbovaCdkWalletMintQuoteC>>(
                 'hanbova_cdk_mint_quote')
+            .asFunction(),
+        checkMintQuoteStatus = dylib
+            .lookup<NativeFunction<HanbovaCdkCheckMintQuoteStatusC>>(
+                'hanbova_cdk_check_mint_quote_status')
             .asFunction(),
         walletMint = dylib
             .lookup<NativeFunction<HanbovaCdkWalletMintC>>('hanbova_cdk_mint')

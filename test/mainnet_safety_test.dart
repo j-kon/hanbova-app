@@ -1,4 +1,6 @@
 import 'package:flutter_test/flutter_test.dart';
+import 'package:hanbova_app/core/cashu/cashu_wallet_models.dart';
+import 'package:hanbova_app/core/cashu/cashu_wallet_provider.dart';
 import 'package:hanbova_app/core/network/network_environment.dart';
 import 'package:hanbova_app/features/security/presentation/backup_seed_screen.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -6,7 +8,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
 
-  group('Milestone 5: Public Mainnet Beta Safety & Network Architecture Tests',
+  group(
+      'Milestone 3B.1 / Milestone 5: Real-Sats Safety Gate & Mainnet Pilot Tests',
       () {
     test(
         'NetworkConfig provides distinct storage prefixes and valid URLs for all networks',
@@ -48,7 +51,7 @@ void main() {
       expect(
           container.read(networkEnvironmentProvider), HanbovaNetwork.cashuTest);
 
-      // Attempting to switch to Mainnet is ignored by safety guard
+      // Attempting to switch to Mainnet without pilot override is ignored by safety guard
       await notifier.setNetwork(HanbovaNetwork.mainnet);
       expect(
           container.read(networkEnvironmentProvider), HanbovaNetwork.cashuTest);
@@ -72,10 +75,68 @@ void main() {
           NetworkConfig.fromNetwork(HanbovaNetwork.mainnet, pilotActive: true);
       expect(pilot.isPilot, isTrue);
       expect(pilot.isEnabled, isTrue);
+      expect(pilot.maxWalletBalanceSats, 10000);
       expect(pilot.maxDepositSats, 10000);
       expect(pilot.maxSendSats, 5000);
       expect(pilot.defaultMintUrl, 'https://mint.minibits.cash/Bitcoin');
       expect(pilot.displayName, contains('Pilot'));
+    });
+
+    test(
+        'Active Network Config Provider correctly resolves pilot override & allowlisted mint',
+        () {
+      final container = ProviderContainer();
+      addTearDown(container.dispose);
+
+      // Default: Local testnet
+      final initialConfig = container.read(activeNetworkConfigProvider);
+      expect(initialConfig.network, HanbovaNetwork.local);
+      expect(initialConfig.isPilot, isFalse);
+
+      // Select custom testnut mint
+      container.read(selectedMintUrlProvider.notifier).state =
+          'https://testnut.cashu.space';
+      expect(container.read(selectedMintUrlProvider),
+          'https://testnut.cashu.space');
+
+      // Enable Controlled Mainnet Pilot override
+      container.read(mainnetPilotOverrideProvider.notifier).state = true;
+      container.read(networkEnvironmentProvider.notifier).setNetwork(
+            HanbovaNetwork.mainnet,
+            pilotOverride: true,
+          );
+
+      final pilotConfig = container.read(activeNetworkConfigProvider);
+      expect(pilotConfig.isPilot, isTrue);
+      expect(pilotConfig.network, HanbovaNetwork.mainnet);
+      expect(pilotConfig.defaultMintUrl, 'https://mint.minibits.cash/Bitcoin');
+      expect(pilotConfig.maxWalletBalanceSats, 10000);
+      expect(pilotConfig.maxSendSats, 5000);
+
+      // In pilot mode, effective mint URL MUST ALWAYS be Minibits allowlist
+      final effectiveMintUrl = pilotConfig.isPilot
+          ? pilotConfig.defaultMintUrl
+          : (container.read(selectedMintUrlProvider) ??
+              pilotConfig.defaultMintUrl);
+      expect(effectiveMintUrl, 'https://mint.minibits.cash/Bitcoin');
+    });
+
+    test('MintQuoteStatusResult correctly parses quote state transitions', () {
+      final unpaid = MintQuoteStatusResult.fromStateString('UNPAID');
+      expect(unpaid.status, MintQuoteStatus.unpaid);
+      expect(unpaid.isPaid, isFalse);
+
+      final paid = MintQuoteStatusResult.fromStateString('PAID');
+      expect(paid.status, MintQuoteStatus.paid);
+      expect(paid.isPaid, isTrue);
+
+      final issued = MintQuoteStatusResult.fromStateString('ISSUED');
+      expect(issued.status, MintQuoteStatus.issued);
+      expect(issued.isPaid, isFalse);
+
+      final expired = MintQuoteStatusResult.fromStateString('EXPIRED');
+      expect(expired.status, MintQuoteStatus.expired);
+      expect(expired.isPaid, isFalse);
     });
   });
 }

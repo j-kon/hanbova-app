@@ -127,7 +127,7 @@ class _ProtectedSendScreenState extends ConsumerState<ProtectedSendScreen> {
                   const SizedBox(width: AppSpacing.sm),
                   Expanded(
                     child: Text(
-                      'Funds are locked in Cashu P2PK escrow. The recipient can claim until locktime. If unclaimed, you can refund after expiry.',
+                      'Funds are locked in Cashu P2PK escrow. After the protection window ends, Refund becomes available. Until either claim or refund is accepted by the mint, the payment may still be claimable by the recipient.',
                       style: AppTypography.bodySmall
                           .copyWith(color: colors.textPrimary),
                     ),

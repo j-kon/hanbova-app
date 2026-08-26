@@ -11,6 +11,7 @@ import 'cdk_ffi_bindings.dart';
 abstract class CashuWalletService {
   Future<CashuWalletBalance> getBalance();
   Future<MintQuoteResult> createMintQuote(int amountSats);
+  Future<MintQuoteStatusResult> checkMintQuoteStatus(String quoteId);
   Future<int> mintQuote(String quoteId);
   Future<int> mintTestTokens(int amountSats);
   Future<String> createProtectedSend({
@@ -162,6 +163,40 @@ class CdkCashuWalletServiceImpl implements CashuWalletService {
     } finally {
       calloc.free(outQuoteId);
       calloc.free(outInvoice);
+    }
+  }
+
+  @override
+  Future<MintQuoteStatusResult> checkMintQuoteStatus(String quoteId) async {
+    if (quoteId.isEmpty) {
+      throw ArgumentError('Quote ID cannot be empty');
+    }
+    final handle = await _ensureHandle();
+    final quoteIdPtr = quoteId.toNativeUtf8();
+    final outState = calloc<Pointer<Utf8>>();
+    final outPaid = calloc<Int32>();
+
+    try {
+      final rc =
+          _ffi.checkMintQuoteStatus(handle, quoteIdPtr, outState, outPaid);
+      if (rc != 0) {
+        final err = _ffi.retrieveLastError() ?? 'Unknown error (code $rc)';
+        throw StateError('Failed to check mint quote status: $err');
+      }
+
+      final stateStr = outState.value.address != 0
+          ? outState.value.toDartString()
+          : 'UNKNOWN';
+      final isPaid = outPaid.value == 1;
+      if (outState.value.address != 0) {
+        _ffi.freeString(outState.value);
+      }
+
+      return MintQuoteStatusResult.fromStateString(stateStr, isPaid);
+    } finally {
+      calloc.free(quoteIdPtr);
+      calloc.free(outState);
+      calloc.free(outPaid);
     }
   }
 

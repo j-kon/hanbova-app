@@ -70,28 +70,54 @@ class _UnifiedDepositSheetState extends ConsumerState<UnifiedDepositSheet>
         timer.cancel();
         return;
       }
-      try {
-        final wallet = ref.read(cashuWalletServiceProvider);
-        if (wallet == null) return;
-        final minted = await wallet.mintQuote(quoteId);
-        if (minted > 0) {
-          timer.cancel();
-          ref.invalidate(cashuBalanceProvider);
-          if (mounted) {
-            setState(() {
-              _isMinting = false;
-              _generatedInvoice = null;
-              _quoteId = null;
-              _errorMessage = null;
-              _claimSuccessMessage =
-                  'Payment confirmed! Successfully minted $minted sats into your wallet.';
-            });
-          }
-        }
-      } catch (_) {
-        // Still pending payment on mint - continue polling
-      }
+      await _checkQuoteStatusAndMint(quoteId, fromPolling: true);
     });
+  }
+
+  Future<void> _checkQuoteStatusAndMint(String quoteId,
+      {bool fromPolling = false}) async {
+    if (_isMinting || _quoteId != quoteId) return;
+
+    try {
+      final wallet = ref.read(cashuWalletServiceProvider);
+      if (wallet == null) return;
+
+      // 1. Check quote status with mint without triggering premature proof minting
+      final statusResult = await wallet.checkMintQuoteStatus(quoteId);
+
+      if (statusResult.isPaid) {
+        _pollTimer?.cancel();
+        if (_isMinting) return;
+        setState(() => _isMinting = true);
+
+        final minted = await wallet.mintQuote(quoteId);
+        ref.invalidate(cashuBalanceProvider);
+
+        if (mounted) {
+          setState(() {
+            _isMinting = false;
+            _generatedInvoice = null;
+            _quoteId = null;
+            _errorMessage = null;
+            _claimSuccessMessage =
+                'Payment confirmed! Successfully minted $minted sats into your wallet.';
+          });
+        }
+      } else if (!fromPolling) {
+        if (mounted) {
+          setState(() {
+            _errorMessage =
+                'Invoice is still unpaid (status: ${statusResult.state}). Please complete payment in your Lightning wallet.';
+          });
+        }
+      }
+    } catch (e) {
+      if (!fromPolling && mounted) {
+        setState(() {
+          _errorMessage = 'Failed to verify quote status: $e';
+        });
+      }
+    }
   }
 
   Future<void> _generateLightningInvoice() async {
@@ -101,14 +127,22 @@ class _UnifiedDepositSheetState extends ConsumerState<UnifiedDepositSheet>
       return;
     }
 
-    final network = ref.read(networkEnvironmentProvider);
-    final isPilot = ref.read(mainnetPilotOverrideProvider);
-    final config = NetworkConfig.fromNetwork(network, pilotActive: isPilot);
+    final config = ref.read(activeNetworkConfigProvider);
     if (amount > config.maxDepositSats) {
       setState(() => _errorMessage =
           'Amount exceeds maximum deposit limit of ${config.maxDepositSats} sats for ${config.displayName}');
       return;
     }
+
+    // Verify wallet balance cap
+    try {
+      final balance = await ref.read(cashuBalanceProvider.future);
+      if (balance.spendableSats + amount > config.maxWalletBalanceSats) {
+        setState(() => _errorMessage =
+            'Total wallet balance cannot exceed ${config.maxWalletBalanceSats} sats in ${config.displayName} (Current: ${balance.spendableSats} sats, requested: $amount sats).');
+        return;
+      }
+    } catch (_) {}
 
     setState(() {
       _isGeneratingInvoice = true;
@@ -141,37 +175,17 @@ class _UnifiedDepositSheetState extends ConsumerState<UnifiedDepositSheet>
 
   Future<void> _checkAndMint() async {
     if (_quoteId == null) return;
-    setState(() {
-      _isMinting = true;
-      _errorMessage = null;
-    });
-
-    try {
-      final wallet = ref.read(cashuWalletServiceProvider);
-      if (wallet == null) {
-        throw StateError('Wallet not initialized');
-      }
-
-      final minted = await wallet.mintQuote(_quoteId!);
-      _pollTimer?.cancel();
-      ref.invalidate(cashuBalanceProvider);
-
-      setState(() {
-        _isMinting = false;
-        _generatedInvoice = null;
-        _quoteId = null;
-        _claimSuccessMessage =
-            'Payment confirmed! Successfully minted $minted sats into your wallet.';
-      });
-    } catch (e) {
-      setState(() {
-        _isMinting = false;
-        _errorMessage = 'Invoice not yet paid or mint failed: $e';
-      });
-    }
+    await _checkQuoteStatusAndMint(_quoteId!, fromPolling: false);
   }
 
   Future<void> _claimCashuToken() async {
+    final config = ref.read(activeNetworkConfigProvider);
+    if (config.isPilot) {
+      setState(() => _errorMessage =
+          'Direct Cashu token import is disabled for the Controlled Mainnet Pilot to prevent bypassing pilot deposit limits.');
+      return;
+    }
+
     final token = _tokenController.text.trim();
     if (token.isEmpty) {
       setState(() => _errorMessage = 'Please paste a Cashu token string');
