@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'dart:io';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:http/http.dart' as http;
 import '../config/app_config.dart';
@@ -10,7 +11,17 @@ final appConfigProvider = Provider<AppConfig>((ref) {
 
 final apiClientProvider = Provider<ApiClient>((ref) {
   final config = ref.watch(appConfigProvider);
-  return ApiClient(baseUrl: config.apiBaseUrl, httpClient: http.Client());
+  String effectiveBaseUrl = config.apiBaseUrl;
+  try {
+    if (Platform.isAndroid &&
+        (effectiveBaseUrl.contains('127.0.0.1') ||
+            effectiveBaseUrl.contains('localhost'))) {
+      effectiveBaseUrl = effectiveBaseUrl
+          .replaceAll('127.0.0.1', '10.0.2.2')
+          .replaceAll('localhost', '10.0.2.2');
+    }
+  } catch (_) {}
+  return ApiClient(baseUrl: effectiveBaseUrl, httpClient: http.Client());
 });
 
 class ApiClient {
