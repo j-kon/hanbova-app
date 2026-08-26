@@ -237,9 +237,30 @@ class _ProtectedSendScreenState extends ConsumerState<ProtectedSendScreen> {
                   color: colors.error.withValues(alpha: 0.1),
                   borderRadius: AppRadius.smRadius,
                 ),
-                child: Text(
-                  state.errorMessage!,
-                  style: AppTypography.bodySmall.copyWith(color: colors.error),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      state.errorMessage!.contains('access token')
+                          ? 'Your session has expired. Please sign in again to continue.'
+                          : state.errorMessage!,
+                      style:
+                          AppTypography.bodySmall.copyWith(color: colors.error),
+                    ),
+                    if (state.errorMessage!.contains('access token')) ...[
+                      const SizedBox(height: AppSpacing.xs),
+                      TextButton.icon(
+                        onPressed: () async {
+                          await ref.read(authProvider.notifier).logout();
+                          if (context.mounted) {
+                            context.go('/login');
+                          }
+                        },
+                        icon: const Icon(Icons.login, size: 16),
+                        label: const Text('Sign In Again'),
+                      ),
+                    ],
+                  ],
                 ),
               ),
               const SizedBox(height: AppSpacing.md),
