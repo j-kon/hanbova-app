@@ -167,9 +167,19 @@ class _ClaimPaymentScreenState extends ConsumerState<ClaimPaymentScreen> {
       });
     } catch (e) {
       if (!mounted) return;
+      final errStr = e.toString().replaceAll('Exception:', '').trim();
+      String friendlyMessage;
+      if (errStr.contains('SecretBoxAuthenticationError') ||
+          errStr.contains('wrong message authentication code') ||
+          errStr.contains('MAC')) {
+        friendlyMessage =
+            'Decryption failed: This payment was encrypted for a different set of keys. If this account was re-registered, please send a new payment to your active keys.';
+      } else {
+        friendlyMessage = errStr;
+      }
       setState(() {
         _isLoading = false;
-        _errorMessage = e.toString().replaceAll('Exception:', '').trim();
+        _errorMessage = friendlyMessage;
       });
     }
   }
