@@ -36,6 +36,7 @@ final cashuWalletServiceProvider = Provider<CashuWalletService?>((ref) {
     walletSeedHex: cryptoIdentity.walletSeedHex,
     p2pkPrivateKeyHex: cryptoIdentity.protectedPaymentPrivkeyHex,
     p2pkPublicKeyHex: cryptoIdentity.protectedPaymentPubkey,
+    storagePrefix: config.storagePrefix,
     mintUrl: effectiveMintUrl,
     storage: storage,
   );

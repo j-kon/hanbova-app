@@ -40,6 +40,7 @@ class CdkCashuWalletServiceImpl implements CashuWalletService {
   final String _walletSeedHex;
   final String _p2pkPrivateKeyHex;
   final String _p2pkPublicKeyHex;
+  final String _storagePrefix;
   final String _mintUrl;
   final String? _dbPath;
   final CashuWalletStorage _storage;
@@ -53,6 +54,7 @@ class CdkCashuWalletServiceImpl implements CashuWalletService {
     required String walletSeedHex,
     required String p2pkPrivateKeyHex,
     required String p2pkPublicKeyHex,
+    String? storagePrefix,
     String? mintUrl,
     String? dbPath,
     CashuWalletStorage? storage,
@@ -60,6 +62,8 @@ class CdkCashuWalletServiceImpl implements CashuWalletService {
   })  : _walletSeedHex = walletSeedHex,
         _p2pkPrivateKeyHex = p2pkPrivateKeyHex,
         _p2pkPublicKeyHex = p2pkPublicKeyHex,
+        _storagePrefix =
+            storagePrefix ?? NetworkConfig.fromNetwork(network).storagePrefix,
         _mintUrl = mintUrl ?? NetworkConfig.fromNetwork(network).defaultMintUrl,
         _dbPath = dbPath,
         _storage = storage ?? CashuWalletStorage(),
@@ -67,13 +71,19 @@ class CdkCashuWalletServiceImpl implements CashuWalletService {
 
   String get p2pkPrivateKeyHex => _p2pkPrivateKeyHex;
   String get p2pkPublicKeyHex => _p2pkPublicKeyHex;
+  String get storagePrefix => _storagePrefix;
+
+  static String computeDbDirName(String userId, String storagePrefix) {
+    return 'hanbova_cdk_${userId}_$storagePrefix';
+  }
 
   Future<String> _getDefaultDbPath() async {
+    final dirName = computeDbDirName(userId, _storagePrefix);
     try {
       final dir = await getApplicationSupportDirectory();
-      return '${dir.path}/hanbova_cdk_${userId}_${network.name}';
+      return '${dir.path}/$dirName';
     } catch (_) {
-      return '${Directory.systemTemp.path}/hanbova_cdk_${userId}_${network.name}';
+      return '${Directory.systemTemp.path}/$dirName';
     }
   }
 
@@ -296,7 +306,8 @@ class CdkCashuWalletServiceImpl implements CashuWalletService {
       status: 'locked',
       createdAt: DateTime.now(),
     );
-    await _storage.saveEscrowRecord(userId, network, escrow);
+    await _storage.saveEscrowRecord(userId, network, escrow,
+        storagePrefix: _storagePrefix);
 
     return tokenStr;
   }
@@ -339,7 +350,8 @@ class CdkCashuWalletServiceImpl implements CashuWalletService {
       status: 'claimed',
       createdAt: DateTime.now(),
     );
-    await _storage.saveEscrowRecord(userId, network, escrow);
+    await _storage.saveEscrowRecord(userId, network, escrow,
+        storagePrefix: _storagePrefix);
 
     return receivedSats;
   }
@@ -348,7 +360,8 @@ class CdkCashuWalletServiceImpl implements CashuWalletService {
   Future<int> refundProtectedPayment({
     required String paymentId,
   }) async {
-    final escrows = await _storage.loadEscrowRecords(userId, network);
+    final escrows = await _storage.loadEscrowRecords(userId, network,
+        storagePrefix: _storagePrefix);
     final escrow = escrows.firstWhere(
       (e) => e.paymentId == paymentId && e.isOutgoing,
       orElse: () =>
@@ -387,7 +400,8 @@ class CdkCashuWalletServiceImpl implements CashuWalletService {
     }
 
     await _storage.saveEscrowRecord(
-        userId, network, escrow.copyWith(status: 'refunded'));
+        userId, network, escrow.copyWith(status: 'refunded'),
+        storagePrefix: _storagePrefix);
     return receivedSats;
   }
 

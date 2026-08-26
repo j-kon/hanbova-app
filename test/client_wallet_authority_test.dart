@@ -17,27 +17,33 @@ class InMemoryCashuWalletStorage extends CashuWalletStorage {
   final Map<String, List<ProtectedEscrowRecord>> _escrows = {};
 
   @override
-  Future<List<CashuProof>> loadProofs(
-      String userId, HanbovaNetwork network) async {
-    return _proofs['${userId}_${network.name}'] ?? [];
+  Future<List<CashuProof>> loadProofs(String userId, HanbovaNetwork network,
+      {String? storagePrefix}) async {
+    final key = '${userId}_${storagePrefix ?? network.name}';
+    return _proofs[key] ?? [];
   }
 
   @override
   Future<void> saveProofs(
-      String userId, HanbovaNetwork network, List<CashuProof> proofs) async {
-    _proofs['${userId}_${network.name}'] = List.from(proofs);
+      String userId, HanbovaNetwork network, List<CashuProof> proofs,
+      {String? storagePrefix}) async {
+    final key = '${userId}_${storagePrefix ?? network.name}';
+    _proofs[key] = List.from(proofs);
   }
 
   @override
   Future<List<ProtectedEscrowRecord>> loadEscrowRecords(
-      String userId, HanbovaNetwork network) async {
-    return _escrows['${userId}_${network.name}'] ?? [];
+      String userId, HanbovaNetwork network,
+      {String? storagePrefix}) async {
+    final key = '${userId}_${storagePrefix ?? network.name}';
+    return _escrows[key] ?? [];
   }
 
   @override
-  Future<void> saveEscrowRecord(String userId, HanbovaNetwork network,
-      ProtectedEscrowRecord record) async {
-    final key = '${userId}_${network.name}';
+  Future<void> saveEscrowRecord(
+      String userId, HanbovaNetwork network, ProtectedEscrowRecord record,
+      {String? storagePrefix}) async {
+    final key = '${userId}_${storagePrefix ?? network.name}';
     final records = _escrows[key] ?? [];
     final idx = records.indexWhere((r) => r.paymentId == record.paymentId);
     if (idx >= 0) {

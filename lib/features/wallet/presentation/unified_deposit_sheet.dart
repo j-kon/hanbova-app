@@ -134,15 +134,21 @@ class _UnifiedDepositSheetState extends ConsumerState<UnifiedDepositSheet>
       return;
     }
 
-    // Verify wallet balance cap
+    // Verify wallet balance cap (Fail-closed in pilot mode)
     try {
       final balance = await ref.read(cashuBalanceProvider.future);
-      if (balance.spendableSats + amount > config.maxWalletBalanceSats) {
+      if (balance.totalSats + amount > config.maxWalletBalanceSats) {
         setState(() => _errorMessage =
-            'Total wallet balance cannot exceed ${config.maxWalletBalanceSats} sats in ${config.displayName} (Current: ${balance.spendableSats} sats, requested: $amount sats).');
+            'Total wallet balance cannot exceed ${config.maxWalletBalanceSats} sats in ${config.displayName} (Current: ${balance.totalSats} sats [${balance.spendableSats} spendable + ${balance.lockedEscrowSats} locked], requested: $amount sats).');
         return;
       }
-    } catch (_) {}
+    } catch (_) {
+      if (config.isPilot) {
+        setState(() => _errorMessage =
+            'Unable to verify wallet balance. Deposit disabled for safety.');
+        return;
+      }
+    }
 
     setState(() {
       _isGeneratingInvoice = true;

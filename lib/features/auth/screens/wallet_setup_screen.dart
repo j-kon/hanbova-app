@@ -110,15 +110,13 @@ class _WalletSetupScreenState extends ConsumerState<WalletSetupScreen> {
         }
       }
 
-      // 3. Initialize CDK wallet if FFI available
-      try {
-        final wallet = ref.read(cashuWalletServiceProvider);
-        if (wallet != null) {
-          await wallet.getBalance();
-        }
-      } catch (_) {
-        // Non-blocking in test harnesses without native FFI runtime
+      // 3. Initialize Cashu CDK wallet (Fail-closed)
+      final wallet = ref.read(cashuWalletServiceProvider);
+      if (wallet == null) {
+        throw StateError(
+            'Failed to initialize Cashu wallet service. CDK wallet is required to proceed.');
       }
+      await wallet.getBalance();
 
       final words = identity.mnemonic.split(' ');
       _prepareQuiz(words);
@@ -399,7 +397,7 @@ class _WalletSetupScreenState extends ConsumerState<WalletSetupScreen> {
             const SizedBox(height: AppSpacing.lg),
             ElevatedButton(
               onPressed: _initializeWallet,
-              child: const Text('Retry Setup'),
+              child: const Text('Retry'),
             ),
           ],
         ],

@@ -73,50 +73,76 @@ class MintValidator {
       final motd = json['motd'] as String?;
       final nuts = json['nuts'] as Map<String, dynamic>? ?? {};
 
-      // Check NUT-04 (bolt11 minting)
-      final nut04 = nuts['4'] as Map<String, dynamic>?;
-      final nut04Supported = nut04 == null ||
-          (nut04['disabled'] != true && nut04['supported'] != false);
+      Map<String, dynamic>? getNutMap(dynamic key) {
+        final val = nuts[key.toString()];
+        if (val is Map<String, dynamic>) {
+          return val;
+        } else if (val is Map) {
+          return val.cast<String, dynamic>();
+        }
+        return null;
+      }
 
-      // Check NUT-07 (state check)
-      final nut07 = nuts['7'] as Map<String, dynamic>?;
-      final nut07Supported = nut07 == null ||
-          (nut07['disabled'] != true && nut07['supported'] != false);
+      // Check NUT-04 (bolt11 sat minting required)
+      final nut04 = getNutMap('4') ?? getNutMap('04');
+      bool nut04Supported = false;
+      if (nut04 != null && nut04['disabled'] != true) {
+        final methods = nut04['methods'];
+        if (methods is List) {
+          nut04Supported = methods.any((m) {
+            if (m is Map) {
+              final method = m['method']?.toString().toLowerCase();
+              final unit = m['unit']?.toString().toLowerCase();
+              return method == 'bolt11' && unit == 'sat';
+            }
+            return false;
+          });
+        }
+      }
 
-      // Check NUT-10 (spending conditions)
-      final nut10 = nuts['10'] as Map<String, dynamic>?;
-      final nut10Supported = nut10 == null ||
-          (nut10['disabled'] != true && nut10['supported'] != false);
+      // Check NUT-07 (state check required)
+      final nut07 = getNutMap('7') ?? getNutMap('07');
+      final nut07Supported = nut07 != null &&
+          nut07['disabled'] != true &&
+          (nut07['supported'] == true || !nut07.containsKey('supported'));
 
-      // Check NUT-11 support
-      final nut11 = nuts['11'] as Map<String, dynamic>?;
+      // Check NUT-10 (spending conditions required)
+      final nut10 = getNutMap('10');
+      final nut10Supported = nut10 != null &&
+          nut10['disabled'] != true &&
+          (nut10['supported'] == true || !nut10.containsKey('supported'));
+
+      // Check NUT-11 (P2PK / timelock spending conditions required)
+      final nut11 = getNutMap('11');
       final nut11Supported = nut11 != null &&
-          (nut11['supported'] == true || nut11['disabled'] != true);
+          nut11['disabled'] != true &&
+          (nut11['supported'] == true || !nut11.containsKey('supported'));
 
+      String? errorMessage;
       if (!nut11Supported) {
-        return MintValidationResult(
-          isValid: true,
-          nut11Supported: false,
-          nut04Supported: nut04Supported,
-          nut07Supported: nut07Supported,
-          nut10Supported: nut10Supported,
-          mintName: name,
-          description: description,
-          motd: motd,
-          errorMessage:
-              'This Cashu mint does not support Hanbova Protected Payments (NUT-11).',
-        );
+        errorMessage =
+            'This Cashu mint does not support Hanbova Protected Payments (NUT-11).';
+      } else if (!nut04Supported) {
+        errorMessage =
+            'This Cashu mint does not support Lightning sat deposits (NUT-04 bolt11/sat).';
+      } else if (!nut07Supported) {
+        errorMessage =
+            'This Cashu mint does not support ecash proof state checks (NUT-07).';
+      } else if (!nut10Supported) {
+        errorMessage =
+            'This Cashu mint does not support spending condition rules (NUT-10).';
       }
 
       return MintValidationResult(
         isValid: true,
-        nut11Supported: true,
+        nut11Supported: nut11Supported,
         nut04Supported: nut04Supported,
         nut07Supported: nut07Supported,
         nut10Supported: nut10Supported,
         mintName: name,
         description: description,
         motd: motd,
+        errorMessage: errorMessage,
       );
     } catch (e) {
       return MintValidationResult(

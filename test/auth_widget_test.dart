@@ -2,7 +2,9 @@ import 'package:cryptography/cryptography.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:hanbova_app/core/cashu/cashu_wallet_models.dart';
 import 'package:hanbova_app/core/cashu/cashu_wallet_provider.dart';
+import 'package:hanbova_app/core/cashu/cashu_wallet_service.dart';
 import 'package:hanbova_app/core/crypto/crypto_identity_service.dart';
 import 'package:hanbova_app/core/network/network_environment.dart';
 import 'package:hanbova_app/core/networking/api_client.dart';
@@ -46,6 +48,28 @@ class MockCryptoIdentityNotifier extends CryptoIdentityNotifier {
     required ApiClient apiClient,
     required WalletCryptoIdentity identity,
   }) async {}
+}
+
+class MockCashuWalletService implements CashuWalletService {
+  final CashuWalletBalance balance;
+  final bool shouldThrowOnGetBalance;
+
+  MockCashuWalletService({
+    this.balance =
+        const CashuWalletBalance(spendableSats: 1000, lockedEscrowSats: 0),
+    this.shouldThrowOnGetBalance = false,
+  });
+
+  @override
+  Future<CashuWalletBalance> getBalance() async {
+    if (shouldThrowOnGetBalance) {
+      throw StateError('Simulated CDK Redb initialization failure');
+    }
+    return balance;
+  }
+
+  @override
+  dynamic noSuchMethod(Invocation invocation) => super.noSuchMethod(invocation);
 }
 
 void main() {
@@ -130,7 +154,86 @@ void main() {
     });
 
     testWidgets(
-        'WalletSetupScreen renders step 1 backup phrase when authenticated',
+        'WalletSetupScreen renders step 1 backup phrase when CDK wallet succeeds',
+        (tester) async {
+      tester.view.physicalSize = const Size(800, 1600);
+      tester.view.devicePixelRatio = 1.0;
+      addTearDown(tester.view.resetPhysicalSize);
+
+      final mockUser = UserProfile(
+        id: 'test_user_id',
+        username: 'alice',
+        handle: '@alice',
+        email: 'alice@hanbova.test',
+        firstName: 'Alice',
+        lastName: 'Test',
+        displayName: 'Alice Test',
+        emailVerified: true,
+        createdAt: DateTime.now(),
+      );
+
+      final mockKeyPair = await X25519().newKeyPair();
+      final mockIdentity = WalletCryptoIdentity(
+        userId: 'test_user_id',
+        network: HanbovaNetwork.local,
+        protectedPaymentPubkey:
+            '02abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789',
+        transportEncryptionPubkey:
+            'abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789',
+        transportKeyPair: mockKeyPair,
+        protectedPaymentPrivkeyHex:
+            '0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef',
+        mnemonic:
+            'abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon about',
+        walletSeedHex:
+            '0000000000000000000000000000000000000000000000000000000000000000',
+      );
+
+      final mockHttpClient = MockClient((request) async {
+        return http.Response('{"success": true}', 200,
+            headers: {'content-type': 'application/json'});
+      });
+
+      await tester.pumpWidget(
+        MaterialApp(
+          theme: AppTheme.darkTheme,
+          home: ProviderScope(
+            overrides: [
+              authProvider.overrideWith(
+                (ref) => MockAuthNotifier(
+                  AuthState.authenticated(mockUser, 'mock_jwt_token'),
+                ),
+              ),
+              cryptoIdentityProvider
+                  .overrideWith(() => MockCryptoIdentityNotifier(mockIdentity)),
+              cashuWalletServiceProvider
+                  .overrideWithValue(MockCashuWalletService()),
+              apiClientProvider.overrideWithValue(
+                ApiClient(
+                    baseUrl: 'https://mock.api', httpClient: mockHttpClient),
+              ),
+            ],
+            child: const WalletSetupScreen(),
+          ),
+        ),
+      );
+
+      // Initial loading state
+      expect(find.byType(CircularProgressIndicator), findsOneWidget);
+
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 100));
+
+      expect(find.text('Write Down Your Recovery Phrase'), findsOneWidget);
+      expect(
+          find.text(
+              'Write these words down and keep them private. Never share them with anyone.'),
+          findsOneWidget);
+      expect(find.text('I Have Written It Down'), findsOneWidget);
+    });
+
+    testWidgets(
+        'WalletSetupScreen blocks onboarding if cashuWalletServiceProvider is null',
         (tester) async {
       tester.view.physicalSize = const Size(800, 1600);
       tester.view.devicePixelRatio = 1.0;
@@ -193,18 +296,88 @@ void main() {
         ),
       );
 
-      // Initial loading state
-      expect(find.byType(CircularProgressIndicator), findsOneWidget);
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 100));
+
+      // Must show Initialization Failed and NOT show step 1 backup phrase
+      expect(find.text('Initialization Failed'), findsOneWidget);
+      expect(find.text('Retry'), findsOneWidget);
+      expect(find.text('Write Down Your Recovery Phrase'), findsNothing);
+    });
+
+    testWidgets(
+        'WalletSetupScreen blocks onboarding if wallet.getBalance throws',
+        (tester) async {
+      tester.view.physicalSize = const Size(800, 1600);
+      tester.view.devicePixelRatio = 1.0;
+      addTearDown(tester.view.resetPhysicalSize);
+
+      final mockUser = UserProfile(
+        id: 'test_user_id',
+        username: 'alice',
+        handle: '@alice',
+        email: 'alice@hanbova.test',
+        firstName: 'Alice',
+        lastName: 'Test',
+        displayName: 'Alice Test',
+        emailVerified: true,
+        createdAt: DateTime.now(),
+      );
+
+      final mockKeyPair = await X25519().newKeyPair();
+      final mockIdentity = WalletCryptoIdentity(
+        userId: 'test_user_id',
+        network: HanbovaNetwork.local,
+        protectedPaymentPubkey:
+            '02abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789',
+        transportEncryptionPubkey:
+            'abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789',
+        transportKeyPair: mockKeyPair,
+        protectedPaymentPrivkeyHex:
+            '0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef',
+        mnemonic:
+            'abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon about',
+        walletSeedHex:
+            '0000000000000000000000000000000000000000000000000000000000000000',
+      );
+
+      final mockHttpClient = MockClient((request) async {
+        return http.Response('{"success": true}', 200,
+            headers: {'content-type': 'application/json'});
+      });
+
+      await tester.pumpWidget(
+        MaterialApp(
+          theme: AppTheme.darkTheme,
+          home: ProviderScope(
+            overrides: [
+              authProvider.overrideWith(
+                (ref) => MockAuthNotifier(
+                  AuthState.authenticated(mockUser, 'mock_jwt_token'),
+                ),
+              ),
+              cryptoIdentityProvider
+                  .overrideWith(() => MockCryptoIdentityNotifier(mockIdentity)),
+              cashuWalletServiceProvider.overrideWithValue(
+                MockCashuWalletService(shouldThrowOnGetBalance: true),
+              ),
+              apiClientProvider.overrideWithValue(
+                ApiClient(
+                    baseUrl: 'https://mock.api', httpClient: mockHttpClient),
+              ),
+            ],
+            child: const WalletSetupScreen(),
+          ),
+        ),
+      );
 
       await tester.pump();
       await tester.pump(const Duration(milliseconds: 100));
 
-      expect(find.text('Write Down Your Recovery Phrase'), findsOneWidget);
-      expect(
-          find.text(
-              'Write these words down and keep them private. Never share them with anyone.'),
-          findsOneWidget);
-      expect(find.text('I Have Written It Down'), findsOneWidget);
+      // Must show Initialization Failed and NOT show step 1 backup phrase
+      expect(find.text('Initialization Failed'), findsOneWidget);
+      expect(find.text('Retry'), findsOneWidget);
+      expect(find.text('Write Down Your Recovery Phrase'), findsNothing);
     });
 
     testWidgets('WalletSetupScreen fails closed if user is unauthenticated',
