@@ -9,6 +9,7 @@ import '../../../core/theme/app_radius.dart';
 import '../../../core/theme/app_spacing.dart';
 import '../../../core/theme/app_typography.dart';
 import '../../../core/utils/formatters.dart';
+import '../../auth/providers/auth_provider.dart';
 import '../domain/protected_payment_intent.dart';
 import 'protected_send_provider.dart';
 

@@ -39,6 +39,25 @@ class _ClaimPaymentScreenState extends ConsumerState<ClaimPaymentScreen> {
   void initState() {
     super.initState();
     _codeController = TextEditingController(text: widget.initialCode ?? '');
+    if (widget.initialCode != null && widget.initialCode!.isNotEmpty) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        _fetchIntent();
+      });
+    } else {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        final incoming = ref
+            .read(transactionsProvider)
+            .where((t) =>
+                t.type == TransactionType.protectedClaim &&
+                t.status == TransactionStatus.claimable)
+            .toList();
+        if (incoming.length == 1) {
+          _codeController.text =
+              incoming.first.claimReference ?? incoming.first.id;
+          _fetchIntent();
+        }
+      });
+    }
   }
 
   @override
@@ -264,6 +283,86 @@ class _ClaimPaymentScreenState extends ConsumerState<ClaimPaymentScreen> {
                       width: 20,
                       child: CircularProgressIndicator(strokeWidth: 2))
                   : const Text('Verify Payment'),
+            ),
+            Builder(
+              builder: (context) {
+                final incoming = ref
+                    .watch(transactionsProvider)
+                    .where((t) =>
+                        t.type == TransactionType.protectedClaim &&
+                        t.status == TransactionStatus.claimable)
+                    .toList();
+                if (incoming.isEmpty) return const SizedBox.shrink();
+
+                return Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    const SizedBox(height: AppSpacing.xl),
+                    Row(
+                      children: [
+                        Expanded(child: Divider(color: colors.divider)),
+                        Padding(
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: AppSpacing.sm),
+                          child: Text(
+                            'OR SELECT PENDING PAYMENT',
+                            style: AppTypography.caption
+                                .copyWith(color: colors.textTertiary),
+                          ),
+                        ),
+                        Expanded(child: Divider(color: colors.divider)),
+                      ],
+                    ),
+                    const SizedBox(height: AppSpacing.md),
+                    ...incoming.map(
+                      (tx) => InkWell(
+                        onTap: () {
+                          _codeController.text = tx.claimReference ?? tx.id;
+                          _fetchIntent();
+                        },
+                        borderRadius: AppRadius.mdRadius,
+                        child: Container(
+                          margin: const EdgeInsets.only(bottom: AppSpacing.sm),
+                          padding: const EdgeInsets.all(AppSpacing.md),
+                          decoration: BoxDecoration(
+                            color: colors.surfaceCard,
+                            borderRadius: AppRadius.mdRadius,
+                            border: Border.all(
+                                color: colors.incoming.withValues(alpha: 0.3)),
+                          ),
+                          child: Row(
+                            children: [
+                              Icon(Icons.shield_outlined,
+                                  color: colors.incoming, size: 24),
+                              const SizedBox(width: AppSpacing.sm),
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(
+                                      '${Formatters.formatSats(tx.amountSats)} from ${tx.recipientOrSender}',
+                                      style: AppTypography.titleSmall
+                                          .copyWith(color: colors.textPrimary),
+                                    ),
+                                    if (tx.description != null)
+                                      Text(
+                                        tx.description!,
+                                        style: AppTypography.caption.copyWith(
+                                            color: colors.textTertiary),
+                                      ),
+                                  ],
+                                ),
+                              ),
+                              Icon(Icons.arrow_forward_ios,
+                                  size: 14, color: colors.textTertiary),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
+                );
+              },
             ),
           ],
         ),

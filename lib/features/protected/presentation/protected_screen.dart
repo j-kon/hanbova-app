@@ -43,9 +43,28 @@ class _ProtectedScreenState extends ConsumerState<ProtectedScreen> {
   @override
   void initState() {
     super.initState();
-    _timer = Timer.periodic(const Duration(seconds: 1), (_) {
-      if (mounted) setState(() {});
+    _syncInbox();
+    _timer = Timer.periodic(const Duration(seconds: 2), (_) {
+      if (mounted) {
+        _syncInbox();
+        setState(() {});
+      }
     });
+  }
+
+  Future<void> _syncInbox() async {
+    final authState = ref.read(authProvider);
+    if (authState.user == null) return;
+    try {
+      final messageService = ref.read(protectedMessageServiceProvider);
+      final intentRepo = ref.read(paymentIntentRepositoryProvider);
+      final inbox = await messageService.getInbox();
+      if (!mounted) return;
+      await ref.read(transactionsProvider.notifier).syncIncomingMessages(
+            inbox: inbox,
+            getIntentDetails: (id) => intentRepo.getPaymentIntent(id),
+          );
+    } catch (_) {}
   }
 
   @override

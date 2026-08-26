@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -13,13 +14,22 @@ import '../../../core/theme/app_spacing.dart';
 import '../../../core/theme/app_typography.dart';
 import '../../../core/utils/formatters.dart';
 import '../../auth/providers/auth_provider.dart';
+import '../../protected/data/protected_message_service.dart';
+import '../../protected_send/data/payment_intent_repository.dart';
 import '../../security/presentation/mainnet_safety_dialog.dart';
 import '../../transactions/domain/transaction_model.dart';
 import '../../transactions/presentation/transactions_provider.dart';
 import '../../wallet/presentation/unified_deposit_sheet.dart';
 
-class HomeScreen extends ConsumerWidget {
+class HomeScreen extends ConsumerStatefulWidget {
   const HomeScreen({super.key});
+
+  @override
+  ConsumerState<HomeScreen> createState() => _HomeScreenState();
+}
+
+class _HomeScreenState extends ConsumerState<HomeScreen> {
+  Timer? _syncTimer;
 
   String _getGreeting() {
     final hour = DateTime.now().hour;
@@ -29,7 +39,39 @@ class HomeScreen extends ConsumerWidget {
   }
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  void initState() {
+    super.initState();
+    _syncInbox();
+    _syncTimer = Timer.periodic(const Duration(seconds: 2), (_) {
+      if (mounted) {
+        _syncInbox();
+      }
+    });
+  }
+
+  @override
+  void dispose() {
+    _syncTimer?.cancel();
+    super.dispose();
+  }
+
+  Future<void> _syncInbox() async {
+    final authState = ref.read(authProvider);
+    if (authState.user == null) return;
+    try {
+      final messageService = ref.read(protectedMessageServiceProvider);
+      final intentRepo = ref.read(paymentIntentRepositoryProvider);
+      final inbox = await messageService.getInbox();
+      if (!mounted) return;
+      await ref.read(transactionsProvider.notifier).syncIncomingMessages(
+            inbox: inbox,
+            getIntentDetails: (id) => intentRepo.getPaymentIntent(id),
+          );
+    } catch (_) {}
+  }
+
+  @override
+  Widget build(BuildContext context) {
     final colors = context.colors;
     final user = ref.watch(currentUserProvider);
     final isBalanceVisible = ref.watch(balanceVisibilityProvider);
@@ -44,6 +86,11 @@ class HomeScreen extends ConsumerWidget {
             t.type == TransactionType.protectedSend &&
             t.status == TransactionStatus.claimable)
         .length;
+    final incomingClaimable = transactions
+        .where((t) =>
+            t.type == TransactionType.protectedClaim &&
+            t.status == TransactionStatus.claimable)
+        .toList();
     final protectedSats = cashuBalance.lockedEscrowSats;
     final spendableSats = cashuBalance.spendableSats;
     final totalBalanceSats = cashuBalance.totalSats;
@@ -307,7 +354,91 @@ class HomeScreen extends ConsumerWidget {
                     ],
                   ),
                 ),
-                const SizedBox(height: AppSpacing.md),
+                // 2.5 Incoming Payment Alert Banner
+                if (incomingClaimable.isNotEmpty) ...[
+                  Container(
+                    margin: const EdgeInsets.only(bottom: AppSpacing.md),
+                    padding: const EdgeInsets.all(AppSpacing.md),
+                    decoration: BoxDecoration(
+                      color: colors.incoming.withValues(alpha: 0.12),
+                      borderRadius: AppRadius.mdRadius,
+                      border: Border.all(
+                        color: colors.incoming.withValues(alpha: 0.4),
+                        width: 1.5,
+                      ),
+                    ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Row(
+                          children: [
+                            Container(
+                              padding: const EdgeInsets.all(6),
+                              decoration: BoxDecoration(
+                                color: colors.incoming,
+                                shape: BoxShape.circle,
+                              ),
+                              child: const Icon(
+                                Icons.shield_outlined,
+                                color: Colors.white,
+                                size: 18,
+                              ),
+                            ),
+                            const SizedBox(width: AppSpacing.sm),
+                            Expanded(
+                              child: Text(
+                                'Protected Payment Received!',
+                                style: AppTypography.titleSmall.copyWith(
+                                  color: colors.textPrimary,
+                                  fontWeight: FontWeight.w700,
+                                ),
+                              ),
+                            ),
+                            Container(
+                              padding: const EdgeInsets.symmetric(
+                                  horizontal: 8, vertical: 2),
+                              decoration: BoxDecoration(
+                                color: colors.incoming.withValues(alpha: 0.2),
+                                borderRadius: AppRadius.xsRadius,
+                              ),
+                              child: Text(
+                                '${incomingClaimable.length} Waiting',
+                                style: AppTypography.caption.copyWith(
+                                  color: colors.incoming,
+                                  fontWeight: FontWeight.w700,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: AppSpacing.xs),
+                        Text(
+                          '${Formatters.formatSats(incomingClaimable.first.amountSats)} waiting from ${incomingClaimable.first.recipientOrSender}',
+                          style: AppTypography.bodySmall.copyWith(
+                            color: colors.textSecondary,
+                          ),
+                        ),
+                        const SizedBox(height: AppSpacing.sm),
+                        SizedBox(
+                          width: double.infinity,
+                          child: ElevatedButton.icon(
+                            onPressed: () {
+                              context.push('/claim');
+                            },
+                            icon: const Icon(Icons.check_circle_outline,
+                                size: 18),
+                            label: const Text('Claim to Wallet Now'),
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: colors.incoming,
+                              foregroundColor: Colors.white,
+                              padding: const EdgeInsets.symmetric(vertical: 12),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
 
                 // 3. Primary Action Buttons (Send / Receive)
                 Row(

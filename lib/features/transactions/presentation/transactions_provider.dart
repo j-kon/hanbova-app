@@ -104,4 +104,76 @@ class TransactionsNotifier extends StateNotifier<List<TransactionModel>> {
       return tx;
     }).toList();
   }
+
+  Future<void> syncIncomingMessages({
+    required List<dynamic> inbox,
+    Future<dynamic> Function(String intentId)? getIntentDetails,
+  }) async {
+    for (final rawMsg in inbox) {
+      final msg = rawMsg as dynamic;
+      final paymentIntentId = msg.paymentIntentId as String;
+      final senderUsername = msg.senderUsername as String;
+      final createdAt = msg.createdAt as DateTime;
+      final status = (msg.status as String?)?.toLowerCase() ?? '';
+
+      if (status == 'claimed' || status == 'refunded') {
+        // Mark locally completed if present
+        final idx = state.indexWhere((t) => t.id == paymentIntentId);
+        if (idx >= 0 && state[idx].status == TransactionStatus.claimable) {
+          updateTransactionStatus(paymentIntentId, TransactionStatus.completed);
+        }
+        continue;
+      }
+
+      final existingIndex = state.indexWhere((t) => t.id == paymentIntentId);
+      if (existingIndex >= 0) {
+        final existing = state[existingIndex];
+        if (existing.status == TransactionStatus.completed ||
+            existing.status == TransactionStatus.refunded) {
+          continue;
+        }
+      }
+
+      int amountSats = 0;
+      DateTime expiresAt = createdAt.add(const Duration(hours: 24));
+      String? description;
+      String claimRef = paymentIntentId;
+
+      if (getIntentDetails != null) {
+        try {
+          final dynamic intent = await getIntentDetails(paymentIntentId);
+          if (intent != null) {
+            final intentStatus = (intent.status as String).toLowerCase();
+            if (intentStatus == 'claimed' ||
+                intentStatus == 'refunded' ||
+                intentStatus == 'expired') {
+              continue;
+            }
+            amountSats = intent.amountSats as int;
+            expiresAt = intent.expiresAt as DateTime;
+            description = intent.description as String?;
+            claimRef = (intent.claimReference as String?) ?? paymentIntentId;
+          }
+        } catch (_) {}
+      }
+
+      final incomingTx = TransactionModel(
+        id: paymentIntentId,
+        type: TransactionType.protectedClaim,
+        status: TransactionStatus.claimable,
+        amountSats: amountSats,
+        recipientOrSender: '@$senderUsername',
+        description: description ?? 'Incoming Protected Payment',
+        createdAt: createdAt,
+        expiresAt: expiresAt,
+        claimReference: claimRef,
+      );
+
+      if (existingIndex >= 0) {
+        updateTransaction(incomingTx);
+      } else {
+        addTransaction(incomingTx);
+      }
+    }
+  }
 }
