@@ -841,10 +841,27 @@ class _WalletSetupScreenState extends ConsumerState<WalletSetupScreen> {
                   style: AppTypography.bodySmall.copyWith(color: colors.error),
                 ),
                 const SizedBox(height: AppSpacing.sm),
-                OutlinedButton.icon(
-                  onPressed: _probeActiveMint,
-                  icon: const Icon(Icons.refresh, size: 16),
-                  label: const Text('Retry Connection'),
+                Wrap(
+                  spacing: AppSpacing.sm,
+                  runSpacing: AppSpacing.xs,
+                  children: [
+                    OutlinedButton.icon(
+                      onPressed: _probeActiveMint,
+                      icon: const Icon(Icons.refresh, size: 16),
+                      label: const Text('Retry Connection'),
+                    ),
+                    if (config.network == HanbovaNetwork.local)
+                      ElevatedButton.icon(
+                        onPressed: () async {
+                          await ref
+                              .read(networkEnvironmentProvider.notifier)
+                              .setNetwork(HanbovaNetwork.cashuTest);
+                          await _probeActiveMint();
+                        },
+                        icon: const Icon(Icons.public, size: 16),
+                        label: const Text('Switch to Public Testnut Mint'),
+                      ),
+                  ],
                 ),
               ],
             ],
