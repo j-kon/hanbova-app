@@ -201,7 +201,10 @@ class MockFailingMessageService extends ProtectedMessageService {
             ApiClient(baseUrl: 'http://localhost', httpClient: http.Client()));
 
   @override
-  Future<UserPaymentProfile> resolveUserPaymentProfile(String username) async {
+  Future<UserPaymentProfile> resolveUserPaymentProfile(
+    String username, {
+    String? environment,
+  }) async {
     throw StateError('User not found');
   }
 
@@ -211,6 +214,9 @@ class MockFailingMessageService extends ProtectedMessageService {
     required String encryptedPayload,
     int payloadVersion = 1,
     String? paymentIntentId,
+    String? recipientTransportKeyFingerprint,
+    String? recipientP2pkKeyFingerprint,
+    String? walletEnvironment,
   }) async {
     throw StateError('Relay network unreachable');
   }
@@ -228,12 +234,16 @@ class MockSuccessMessageService extends ProtectedMessageService {
             ApiClient(baseUrl: 'http://localhost', httpClient: http.Client()));
 
   @override
-  Future<UserPaymentProfile> resolveUserPaymentProfile(String username) async {
+  Future<UserPaymentProfile> resolveUserPaymentProfile(
+    String username, {
+    String? environment,
+  }) async {
     final clean = username.trim().replaceAll('@', '').toLowerCase();
     if (clean == 'carol') {
       return const UserPaymentProfile(
         username: 'carol',
         handle: '@carol',
+        walletEnvironment: 'wallet_local',
         protectedPaymentPubkey:
             '03c1633cafcc01ebfb6d78e39f687a1f0995c62fc95f51ead10a02ee0be551b5cc',
         transportEncryptionPubkey:
@@ -243,6 +253,7 @@ class MockSuccessMessageService extends ProtectedMessageService {
       return const UserPaymentProfile(
         username: 'malformed_key_user',
         handle: '@malformed_key_user',
+        walletEnvironment: 'wallet_local',
         protectedPaymentPubkey:
             '02a1633cafcc01ebfb6d78e39f687a1f0995c62fc95f51ead10a02ee0be551b5af',
         transportEncryptionPubkey: 'invalid_transport_pubkey_hex',
@@ -251,6 +262,7 @@ class MockSuccessMessageService extends ProtectedMessageService {
     return UserPaymentProfile(
       username: clean,
       handle: '@$clean',
+      walletEnvironment: environment ?? 'wallet_local',
       protectedPaymentPubkey:
           '02a1633cafcc01ebfb6d78e39f687a1f0995c62fc95f51ead10a02ee0be551b5af',
       transportEncryptionPubkey:
@@ -264,6 +276,9 @@ class MockSuccessMessageService extends ProtectedMessageService {
     required String encryptedPayload,
     int payloadVersion = 1,
     String? paymentIntentId,
+    String? recipientTransportKeyFingerprint,
+    String? recipientP2pkKeyFingerprint,
+    String? walletEnvironment,
   }) async {
     lastPaymentIntentId = paymentIntentId;
     lastRecipientUsername = recipientUsername;
@@ -279,6 +294,9 @@ class MockSuccessMessageService extends ProtectedMessageService {
       encryptedPayload: encryptedPayload,
       payloadVersion: payloadVersion,
       status: 'pending',
+      recipientTransportKeyFingerprint: recipientTransportKeyFingerprint,
+      recipientP2pkKeyFingerprint: recipientP2pkKeyFingerprint,
+      walletEnvironment: walletEnvironment,
       createdAt: DateTime.now(),
     );
     inboxMessages.add(msg);

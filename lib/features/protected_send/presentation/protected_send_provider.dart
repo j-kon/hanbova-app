@@ -67,7 +67,11 @@ class ProtectedSendNotifier extends StateNotifier<ProtectedSendState> {
       clearResolvedRecipient: true,
     );
     try {
-      final profile = await _messageService.resolveUserPaymentProfile(clean);
+      final config = _ref.read(activeNetworkConfigProvider);
+      final profile = await _messageService.resolveUserPaymentProfile(
+        clean,
+        environment: config.storagePrefix,
+      );
       state = state.copyWith(isLoading: false, resolvedRecipient: profile);
       return profile;
     } catch (e) {
@@ -75,7 +79,7 @@ class ProtectedSendNotifier extends StateNotifier<ProtectedSendState> {
         isLoading: false,
         clearResolvedRecipient: true,
         errorMessage:
-            'Recipient @$username could not be found or has not registered payment keys.',
+            'Recipient @$username could not be found or has not registered payment keys for this environment.',
       );
       return null;
     }
@@ -126,6 +130,7 @@ class ProtectedSendNotifier extends StateNotifier<ProtectedSendState> {
       await cryptoService.getOrCreateIdentity(
         userId: senderId,
         network: config.network,
+        config: config,
       );
 
       final now = DateTime.now();
@@ -222,6 +227,11 @@ class ProtectedSendNotifier extends StateNotifier<ProtectedSendState> {
           encryptedPayload: ciphertext,
           payloadVersion: 1,
           paymentIntentId: canonicalPaymentId,
+          recipientTransportKeyFingerprint:
+              recipientProfile.transportKeyFingerprint,
+          recipientP2pkKeyFingerprint:
+              recipientProfile.protectedPaymentFingerprint,
+          walletEnvironment: config.storagePrefix,
         );
 
         // Lifecycle: encrypted message accepted by relay -> update local to Claimable

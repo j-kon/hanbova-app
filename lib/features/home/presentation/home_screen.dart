@@ -63,14 +63,19 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     if (authState.user == null) return;
     try {
       if (!_keysSynced) {
-        final network = ref.read(networkEnvironmentProvider);
-        final identity = await ref
-            .read(cryptoIdentityProvider.notifier)
-            .getOrCreateIdentity(userId: authState.user!.id, network: network);
+        final config = ref.read(activeNetworkConfigProvider);
+        final identity =
+            await ref.read(cryptoIdentityProvider.notifier).getOrCreateIdentity(
+                  userId: authState.user!.id,
+                  network: config.network,
+                  config: config,
+                );
         final apiClient = ref.read(apiClientProvider);
-        await ref
-            .read(cryptoIdentityProvider.notifier)
-            .publishPublicKeys(apiClient: apiClient, identity: identity);
+        await ref.read(cryptoIdentityProvider.notifier).publishPublicKeys(
+              apiClient: apiClient,
+              identity: identity,
+              walletEnvironment: config.storagePrefix,
+            );
         _keysSynced = true;
       }
       final messageService = ref.read(protectedMessageServiceProvider);

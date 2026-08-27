@@ -803,14 +803,31 @@ class _IncomingTab extends ConsumerWidget {
                           'No encrypted envelope found in inbox for payment ${tx.id}'),
                     );
 
-                    // 2. Decrypt envelope using recipient transport keypair
-                    final network = ref.read(networkEnvironmentProvider);
+                    // 2. Pre-decryption fingerprint check
+                    final config = ref.read(activeNetworkConfigProvider);
                     final cryptoService =
                         ref.read(cryptoIdentityProvider.notifier);
                     final identity = await cryptoService.getOrCreateIdentity(
                       userId: authState.user!.id,
-                      network: network,
+                      network: config.network,
+                      config: config,
                     );
+
+                    final currentFingerprint = identity.transportKeyFingerprint;
+                    final recordedFingerprint =
+                        matchingMsg.recipientTransportKeyFingerprint;
+
+                    if (recordedFingerprint != null &&
+                        recordedFingerprint.isNotEmpty &&
+                        recordedFingerprint.toLowerCase() !=
+                            currentFingerprint.toLowerCase()) {
+                      throw StateError(
+                        'This payment was encrypted to a previous wallet identity. '
+                        'Your current wallet keys cannot decrypt it. Ask the sender to wait for '
+                        'refund availability and send a new payment to your current identity.',
+                      );
+                    }
+
                     final envelope =
                         await EncryptedEnvelopeService().decryptEnvelope(
                       ciphertextString: matchingMsg.encryptedPayload,
@@ -848,9 +865,23 @@ class _IncomingTab extends ConsumerWidget {
                               'Claimed ${Formatters.formatSats(tx.amountSats)} successfully!')),
                     );
                   } catch (e) {
+                    final errStr = e
+                        .toString()
+                        .replaceAll('Exception:', '')
+                        .replaceAll('Bad state:', '')
+                        .trim();
+                    String friendlyMessage;
+                    if (errStr.contains('SecretBoxAuthenticationError') ||
+                        errStr.contains('wrong message authentication code') ||
+                        errStr.contains('MAC')) {
+                      friendlyMessage =
+                          'This payment was encrypted to a previous wallet identity. Your current wallet keys cannot decrypt it. Ask the sender to wait for refund availability and send a new payment to your current identity.';
+                    } else {
+                      friendlyMessage = errStr;
+                    }
                     messenger.showSnackBar(
                       SnackBar(
-                        content: Text('Claim failed: $e'),
+                        content: Text(friendlyMessage),
                         backgroundColor: Colors.redAccent,
                       ),
                     );

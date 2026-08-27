@@ -3,6 +3,7 @@ import 'dart:typed_data';
 import 'package:cryptography/cryptography.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
+import 'package:pointycastle/digests/sha256.dart';
 import '../network/network_environment.dart';
 import '../networking/api_client.dart';
 import 'mnemonic_service.dart';
@@ -11,6 +12,7 @@ import 'secp256k1_service.dart';
 class WalletCryptoIdentity {
   final String userId;
   final HanbovaNetwork network;
+  final String walletEnvironment;
   final String protectedPaymentPubkey;
   final String transportEncryptionPubkey;
   final SimpleKeyPair transportKeyPair;
@@ -21,6 +23,7 @@ class WalletCryptoIdentity {
   const WalletCryptoIdentity({
     required this.userId,
     required this.network,
+    required this.walletEnvironment,
     required this.protectedPaymentPubkey,
     required this.transportEncryptionPubkey,
     required this.transportKeyPair,
@@ -28,6 +31,11 @@ class WalletCryptoIdentity {
     required this.mnemonic,
     required this.walletSeedHex,
   });
+
+  String get transportKeyFingerprint =>
+      CryptoIdentityNotifier.computeFingerprint(transportEncryptionPubkey);
+  String get protectedPaymentFingerprint =>
+      CryptoIdentityNotifier.computeFingerprint(protectedPaymentPubkey);
 }
 
 final cryptoIdentityProvider =
@@ -42,6 +50,14 @@ class CryptoIdentityNotifier extends AsyncNotifier<WalletCryptoIdentity?> {
   @override
   Future<WalletCryptoIdentity?> build() async {
     return null;
+  }
+
+  /// Calculates a non-secret, 16-character SHA-256 hex fingerprint of a public key.
+  static String computeFingerprint(String pubkeyHex) {
+    final clean = pubkeyHex.trim().toLowerCase();
+    final bytes = Secp256k1Service.hexToBytes(clean);
+    final digest = SHA256Digest().process(bytes);
+    return Secp256k1Service.bytesToHex(digest).substring(0, 16);
   }
 
   /// Derives the 32-byte private key hex scalar for P2PK (secp256k1) deterministically from seed.
@@ -77,17 +93,15 @@ class CryptoIdentityNotifier extends AsyncNotifier<WalletCryptoIdentity?> {
   Future<WalletCryptoIdentity> getOrCreateIdentity({
     required String userId,
     required HanbovaNetwork network,
+    NetworkConfig? config,
   }) async {
     state = const AsyncValue.loading();
     try {
-      final config = NetworkConfig.fromNetwork(network);
-      final keyPrefix = 'hanbova_${config.storagePrefix}_$userId';
+      final effectiveConfig = config ?? NetworkConfig.fromNetwork(network);
+      final envName = effectiveConfig.storagePrefix;
+      final keyPrefix = 'hanbova_${envName}_$userId';
 
       String? savedMnemonic = await _storage.read(key: '${keyPrefix}_mnemonic');
-      final savedTransportPriv =
-          await _storage.read(key: '${keyPrefix}_transport_priv');
-      final savedProtectedPriv =
-          await _storage.read(key: '${keyPrefix}_protected_priv');
 
       if (savedMnemonic == null || savedMnemonic.trim().isEmpty) {
         savedMnemonic = await MnemonicService.generateMnemonic();
@@ -118,6 +132,7 @@ class CryptoIdentityNotifier extends AsyncNotifier<WalletCryptoIdentity?> {
       final identity = WalletCryptoIdentity(
         userId: userId,
         network: network,
+        walletEnvironment: envName,
         protectedPaymentPubkey: protectedPubHex,
         transportEncryptionPubkey: transportPubHex,
         transportKeyPair: transportKeyPair,
@@ -139,6 +154,7 @@ class CryptoIdentityNotifier extends AsyncNotifier<WalletCryptoIdentity?> {
     required String mnemonic,
     required String userId,
     required HanbovaNetwork network,
+    NetworkConfig? config,
   }) async {
     state = const AsyncValue.loading();
     try {
@@ -147,8 +163,9 @@ class CryptoIdentityNotifier extends AsyncNotifier<WalletCryptoIdentity?> {
         throw ArgumentError('Invalid 12-word BIP-39 mnemonic phrase');
       }
 
-      final config = NetworkConfig.fromNetwork(network);
-      final keyPrefix = 'hanbova_${config.storagePrefix}_$userId';
+      final effectiveConfig = config ?? NetworkConfig.fromNetwork(network);
+      final envName = effectiveConfig.storagePrefix;
+      final keyPrefix = 'hanbova_${envName}_$userId';
       final cleanMnemonic = mnemonic.trim().toLowerCase();
 
       final walletSeedHex =
@@ -173,6 +190,7 @@ class CryptoIdentityNotifier extends AsyncNotifier<WalletCryptoIdentity?> {
       final identity = WalletCryptoIdentity(
         userId: userId,
         network: network,
+        walletEnvironment: envName,
         protectedPaymentPubkey: protectedPubHex,
         transportEncryptionPubkey: transportPubHex,
         transportKeyPair: transportKeyPair,
@@ -193,12 +211,15 @@ class CryptoIdentityNotifier extends AsyncNotifier<WalletCryptoIdentity?> {
   Future<void> publishPublicKeys({
     required ApiClient apiClient,
     required WalletCryptoIdentity identity,
+    String? walletEnvironment,
   }) async {
+    final env = walletEnvironment ?? identity.walletEnvironment;
     await apiClient.put(
       '/me/payment-keys',
       body: {
         'protected_payment_pubkey': identity.protectedPaymentPubkey,
         'transport_encryption_pubkey': identity.transportEncryptionPubkey,
+        'wallet_environment': env,
       },
     );
   }
@@ -207,9 +228,11 @@ class CryptoIdentityNotifier extends AsyncNotifier<WalletCryptoIdentity?> {
   Future<void> deleteWalletKeys({
     required String userId,
     required HanbovaNetwork network,
+    NetworkConfig? config,
   }) async {
-    final config = NetworkConfig.fromNetwork(network);
-    final keyPrefix = 'hanbova_${config.storagePrefix}_$userId';
+    final effectiveConfig = config ?? NetworkConfig.fromNetwork(network);
+    final envName = effectiveConfig.storagePrefix;
+    final keyPrefix = 'hanbova_${envName}_$userId';
     await _storage.delete(key: '${keyPrefix}_transport_priv');
     await _storage.delete(key: '${keyPrefix}_protected_priv');
     await _storage.delete(key: '${keyPrefix}_mnemonic');

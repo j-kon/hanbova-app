@@ -124,12 +124,28 @@ class _ClaimPaymentScreenState extends ConsumerState<ClaimPaymentScreen> {
             'No encrypted protected envelope found for this payment intent in your inbox.'),
       );
 
-      final network = ref.read(networkEnvironmentProvider);
+      final activeConfig = ref.read(activeNetworkConfigProvider);
       final cryptoService = ref.read(cryptoIdentityProvider.notifier);
       final identity = await cryptoService.getOrCreateIdentity(
         userId: authState.user!.id,
-        network: network,
+        network: activeConfig.network,
+        config: activeConfig,
       );
+
+      // Pre-decryption fingerprint check:
+      final currentFingerprint = identity.transportKeyFingerprint;
+      final recordedFingerprint = matchingMsg.recipientTransportKeyFingerprint;
+
+      if (recordedFingerprint != null &&
+          recordedFingerprint.isNotEmpty &&
+          recordedFingerprint.toLowerCase() !=
+              currentFingerprint.toLowerCase()) {
+        throw StateError(
+          'This payment was encrypted to a previous wallet identity. '
+          'Your current wallet keys cannot decrypt it. Ask the sender to wait for '
+          'refund availability and send a new payment to your current identity.',
+        );
+      }
 
       final envelopeService = EncryptedEnvelopeService();
       final envelope = await envelopeService.decryptEnvelope(
@@ -186,13 +202,17 @@ class _ClaimPaymentScreenState extends ConsumerState<ClaimPaymentScreen> {
       });
     } catch (e) {
       if (!mounted) return;
-      final errStr = e.toString().replaceAll('Exception:', '').trim();
+      final errStr = e
+          .toString()
+          .replaceAll('Exception:', '')
+          .replaceAll('Bad state:', '')
+          .trim();
       String friendlyMessage;
       if (errStr.contains('SecretBoxAuthenticationError') ||
           errStr.contains('wrong message authentication code') ||
           errStr.contains('MAC')) {
         friendlyMessage =
-            'Decryption failed: This payment was encrypted for a different set of keys. If this account was re-registered, please send a new payment to your active keys.';
+            'This payment was encrypted to a previous wallet identity. Your current wallet keys cannot decrypt it. Ask the sender to wait for refund availability and send a new payment to your current identity.';
       } else {
         friendlyMessage = errStr;
       }

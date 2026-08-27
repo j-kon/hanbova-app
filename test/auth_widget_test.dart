@@ -39,6 +39,7 @@ class MockCryptoIdentityNotifier extends CryptoIdentityNotifier {
   Future<WalletCryptoIdentity> getOrCreateIdentity({
     required String userId,
     required HanbovaNetwork network,
+    NetworkConfig? config,
   }) async {
     return _mockIdentity;
   }
@@ -47,6 +48,7 @@ class MockCryptoIdentityNotifier extends CryptoIdentityNotifier {
   Future<void> publishPublicKeys({
     required ApiClient apiClient,
     required WalletCryptoIdentity identity,
+    String? walletEnvironment,
   }) async {}
 }
 
@@ -176,6 +178,7 @@ void main() {
       final mockIdentity = WalletCryptoIdentity(
         userId: 'test_user_id',
         network: HanbovaNetwork.local,
+        walletEnvironment: 'wallet_local',
         protectedPaymentPubkey:
             '02abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789',
         transportEncryptionPubkey:
@@ -255,6 +258,7 @@ void main() {
       final mockIdentity = WalletCryptoIdentity(
         userId: 'test_user_id',
         network: HanbovaNetwork.local,
+        walletEnvironment: 'wallet_local',
         protectedPaymentPubkey:
             '02abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789',
         transportEncryptionPubkey:
@@ -328,6 +332,7 @@ void main() {
       final mockIdentity = WalletCryptoIdentity(
         userId: 'test_user_id',
         network: HanbovaNetwork.local,
+        walletEnvironment: 'wallet_local',
         protectedPaymentPubkey:
             '02abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789',
         transportEncryptionPubkey:

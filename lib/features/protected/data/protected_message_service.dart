@@ -1,23 +1,32 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../../../core/crypto/crypto_identity_service.dart';
 import '../../../core/networking/api_client.dart';
 
 class UserPaymentProfile {
   final String username;
   final String handle;
+  final String walletEnvironment;
   final String protectedPaymentPubkey;
   final String transportEncryptionPubkey;
 
   const UserPaymentProfile({
     required this.username,
     required this.handle,
+    required this.walletEnvironment,
     required this.protectedPaymentPubkey,
     required this.transportEncryptionPubkey,
   });
+
+  String get transportKeyFingerprint =>
+      CryptoIdentityNotifier.computeFingerprint(transportEncryptionPubkey);
+  String get protectedPaymentFingerprint =>
+      CryptoIdentityNotifier.computeFingerprint(protectedPaymentPubkey);
 
   factory UserPaymentProfile.fromJson(Map<String, dynamic> json) {
     return UserPaymentProfile(
       username: json['username'] as String,
       handle: json['handle'] as String,
+      walletEnvironment: json['wallet_environment'] as String? ?? 'cashu_test',
       protectedPaymentPubkey: json['protected_payment_pubkey'] as String,
       transportEncryptionPubkey: json['transport_encryption_pubkey'] as String,
     );
@@ -32,6 +41,9 @@ class RemoteProtectedMessage {
   final String encryptedPayload;
   final int payloadVersion;
   final String status;
+  final String? recipientTransportKeyFingerprint;
+  final String? recipientP2pkKeyFingerprint;
+  final String? walletEnvironment;
   final DateTime createdAt;
   final DateTime? acknowledgedAt;
 
@@ -43,6 +55,9 @@ class RemoteProtectedMessage {
     required this.encryptedPayload,
     required this.payloadVersion,
     required this.status,
+    this.recipientTransportKeyFingerprint,
+    this.recipientP2pkKeyFingerprint,
+    this.walletEnvironment,
     required this.createdAt,
     this.acknowledgedAt,
   });
@@ -56,6 +71,11 @@ class RemoteProtectedMessage {
       encryptedPayload: json['encrypted_payload'] as String,
       payloadVersion: json['payload_version'] as int? ?? 1,
       status: json['status'] as String,
+      recipientTransportKeyFingerprint:
+          json['recipient_transport_key_fingerprint'] as String?,
+      recipientP2pkKeyFingerprint:
+          json['recipient_p2pk_key_fingerprint'] as String?,
+      walletEnvironment: json['wallet_environment'] as String?,
       createdAt: DateTime.parse(json['created_at'] as String),
       acknowledgedAt: json['acknowledged_at'] != null
           ? DateTime.parse(json['acknowledged_at'] as String)
@@ -75,19 +95,27 @@ class ProtectedMessageService {
 
   ProtectedMessageService(this._apiClient);
 
-  /// Resolves recipient payment profile and public keys.
-  Future<UserPaymentProfile> resolveUserPaymentProfile(String username) async {
+  /// Resolves recipient payment profile and public keys for a specific wallet environment.
+  Future<UserPaymentProfile> resolveUserPaymentProfile(
+    String username, {
+    String? environment,
+  }) async {
     final clean = username.trim().replaceAll('@', '');
-    final response = await _apiClient.get('/users/$clean/payment-profile');
+    final envParam = environment != null ? '?environment=$environment' : '';
+    final response =
+        await _apiClient.get('/users/$clean/payment-profile$envParam');
     return UserPaymentProfile.fromJson(response);
   }
 
-  /// Sends an encrypted protected envelope to a recipient.
+  /// Sends an encrypted protected envelope to a recipient with public key fingerprints.
   Future<RemoteProtectedMessage> sendProtectedMessage({
     required String recipientUsername,
     required String encryptedPayload,
     int payloadVersion = 1,
     String? paymentIntentId,
+    String? recipientTransportKeyFingerprint,
+    String? recipientP2pkKeyFingerprint,
+    String? walletEnvironment,
   }) async {
     final response = await _apiClient.post(
       '/protected-messages',
@@ -96,6 +124,9 @@ class ProtectedMessageService {
         'encrypted_payload': encryptedPayload,
         'payload_version': payloadVersion,
         'payment_intent_id': paymentIntentId,
+        'recipient_transport_key_fingerprint': recipientTransportKeyFingerprint,
+        'recipient_p2pk_key_fingerprint': recipientP2pkKeyFingerprint,
+        'wallet_environment': walletEnvironment,
       },
     );
     return RemoteProtectedMessage.fromJson(response);

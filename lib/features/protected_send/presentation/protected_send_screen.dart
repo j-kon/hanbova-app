@@ -253,7 +253,7 @@ class _ProtectedSendScreenState extends ConsumerState<ProtectedSendScreen> {
                       TextButton.icon(
                         onPressed: () async {
                           await ref.read(authProvider.notifier).logout();
-                          if (context.mounted) {
+                          if (mounted) {
                             context.go('/login');
                           }
                         },
