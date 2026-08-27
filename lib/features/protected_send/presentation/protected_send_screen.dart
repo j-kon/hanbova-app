@@ -361,9 +361,16 @@ class _ProtectedSendScreenState extends ConsumerState<ProtectedSendScreen> {
                     Text('Recipient',
                         style: AppTypography.bodySmall
                             .copyWith(color: colors.textSecondary)),
-                    Text(intent.recipientIdentifier,
+                    const SizedBox(width: AppSpacing.md),
+                    Flexible(
+                      child: Text(
+                        intent.recipientIdentifier,
                         style: AppTypography.titleSmall
-                            .copyWith(color: colors.textPrimary)),
+                            .copyWith(color: colors.textPrimary),
+                        textAlign: TextAlign.end,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ),
                   ],
                 ),
                 const SizedBox(height: AppSpacing.sm),
@@ -373,10 +380,44 @@ class _ProtectedSendScreenState extends ConsumerState<ProtectedSendScreen> {
                     Text('Claim Code',
                         style: AppTypography.bodySmall
                             .copyWith(color: colors.textSecondary)),
-                    SelectableText(
-                      intent.claimReference ?? 'N/A',
-                      style: AppTypography.titleSmall.copyWith(
-                          color: colors.primary, fontFamily: 'monospace'),
+                    const SizedBox(width: AppSpacing.md),
+                    Flexible(
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Flexible(
+                            child: Text(
+                              intent.claimReference ?? 'N/A',
+                              style: AppTypography.bodySmall.copyWith(
+                                color: colors.primary,
+                                fontFamily: 'monospace',
+                                fontWeight: FontWeight.w600,
+                              ),
+                              textAlign: TextAlign.end,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ),
+                          if (intent.claimReference != null &&
+                              intent.claimReference!.isNotEmpty) ...[
+                            const SizedBox(width: 6),
+                            GestureDetector(
+                              onTap: () {
+                                Clipboard.setData(ClipboardData(
+                                    text: intent.claimReference!));
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  const SnackBar(
+                                    content:
+                                        Text('Claim code copied to clipboard'),
+                                    duration: Duration(seconds: 2),
+                                  ),
+                                );
+                              },
+                              child: Icon(Icons.copy,
+                                  size: 14, color: colors.textTertiary),
+                            ),
+                          ],
+                        ],
+                      ),
                     ),
                   ],
                 ),
@@ -388,10 +429,14 @@ class _ProtectedSendScreenState extends ConsumerState<ProtectedSendScreen> {
                       Text('Expires At',
                           style: AppTypography.bodySmall
                               .copyWith(color: colors.textSecondary)),
-                      Text(
-                        Formatters.formatDate(intent.expiresAt!),
-                        style: AppTypography.bodySmall
-                            .copyWith(color: colors.textSecondary),
+                      const SizedBox(width: AppSpacing.md),
+                      Flexible(
+                        child: Text(
+                          Formatters.formatDate(intent.expiresAt!),
+                          style: AppTypography.bodySmall
+                              .copyWith(color: colors.textSecondary),
+                          textAlign: TextAlign.end,
+                        ),
                       ),
                     ],
                   ),

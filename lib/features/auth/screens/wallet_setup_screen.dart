@@ -644,10 +644,12 @@ class _WalletSetupScreenState extends ConsumerState<WalletSetupScreen> {
                   children: [
                     Row(
                       children: [
-                        Text(
-                          'Biometric Hardware Security',
-                          style: AppTypography.titleSmall
-                              .copyWith(color: colors.textPrimary),
+                        Flexible(
+                          child: Text(
+                            'Biometric Hardware Security',
+                            style: AppTypography.titleSmall
+                                .copyWith(color: colors.textPrimary),
+                          ),
                         ),
                         const SizedBox(width: AppSpacing.xs),
                         Container(
