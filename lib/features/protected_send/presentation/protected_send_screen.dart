@@ -277,8 +277,7 @@ class _ProtectedSendScreenState extends ConsumerState<ProtectedSendScreen> {
             ],
 
             ElevatedButton.icon(
-              onPressed:
-                  (state.isLoading || _isSubmitting) ? null : _submit,
+              onPressed: (state.isLoading || _isSubmitting) ? null : _submit,
               icon: const Icon(Icons.shield_outlined, size: 18),
               label: (state.isLoading || _isSubmitting)
                   ? const SizedBox(

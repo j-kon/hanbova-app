@@ -94,8 +94,7 @@ class ApiClient {
       return _handleResponse(response);
     } catch (e) {
       if (e is AppFailure) rethrow;
-      throw AppFailure(
-          message: _formatNetworkError(e), originalError: e);
+      throw AppFailure(message: _formatNetworkError(e), originalError: e);
     }
   }
 
@@ -114,8 +113,7 @@ class ApiClient {
       return _handleResponse(response);
     } catch (e) {
       if (e is AppFailure) rethrow;
-      throw AppFailure(
-          message: _formatNetworkError(e), originalError: e);
+      throw AppFailure(message: _formatNetworkError(e), originalError: e);
     }
   }
 
@@ -134,8 +132,7 @@ class ApiClient {
       return _handleResponse(response);
     } catch (e) {
       if (e is AppFailure) rethrow;
-      throw AppFailure(
-          message: _formatNetworkError(e), originalError: e);
+      throw AppFailure(message: _formatNetworkError(e), originalError: e);
     }
   }
 
@@ -149,8 +146,7 @@ class ApiClient {
       return _handleResponse(response);
     } catch (e) {
       if (e is AppFailure) rethrow;
-      throw AppFailure(
-          message: _formatNetworkError(e), originalError: e);
+      throw AppFailure(message: _formatNetworkError(e), originalError: e);
     }
   }
 

@@ -198,9 +198,8 @@ class _ClaimPaymentScreenState extends ConsumerState<ClaimPaymentScreen> {
 
       if (!mounted) return;
       ref.read(inAppNotificationProvider.notifier).show(
-            title: 'Payment Claimed!',
-            message:
-                'Added ${Formatters.formatSats(_loadedIntent!.amountSats)} to your wallet',
+            title: 'Protected payment claimed successfully.',
+            message: 'Your spendable balance has been updated.',
             icon: Icons.check_circle_outline,
             type: InAppNotificationType.success,
           );
@@ -270,7 +269,7 @@ class _ClaimPaymentScreenState extends ConsumerState<ClaimPaymentScreen> {
             ),
             const SizedBox(height: AppSpacing.xs),
             Text(
-              'Enter the claim code or paste the claim URL to verify and claim locked Bitcoin.',
+              'Enter the claim code or paste the claim URL to verify and claim your protected payment.',
               style: AppTypography.bodyMedium
                   .copyWith(color: colors.textSecondary),
             ),
@@ -512,7 +511,7 @@ class _ClaimPaymentScreenState extends ConsumerState<ClaimPaymentScreen> {
           ),
           const SizedBox(height: 4),
           Text(
-            'The Bitcoin has been settled directly into your spendable balance.',
+            'Protected payment claimed successfully. Your spendable balance has been updated.',
             style:
                 AppTypography.bodyMedium.copyWith(color: colors.textSecondary),
             textAlign: TextAlign.center,

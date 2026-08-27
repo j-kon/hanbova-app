@@ -195,8 +195,6 @@ class TransactionsNotifier extends StateNotifier<List<TransactionModel>> {
     for (final intent in intents) {
       final senderId = intent.senderId?.toLowerCase() ?? '';
       final cleanSender = senderId.replaceAll('@', '');
-      final cleanRecipient =
-          intent.recipientIdentifier.replaceAll('@', '').toLowerCase();
 
       final isSender = cleanSender == cleanCurrentUsername ||
           cleanSender == cleanCurrentUserId ||

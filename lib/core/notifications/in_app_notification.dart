@@ -37,8 +37,7 @@ final inAppNotificationProvider =
   return InAppNotificationNotifier();
 });
 
-class InAppNotificationNotifier
-    extends StateNotifier<InAppNotificationModel?> {
+class InAppNotificationNotifier extends StateNotifier<InAppNotificationModel?> {
   Timer? _dismissTimer;
 
   InAppNotificationNotifier() : super(null);
@@ -123,7 +122,6 @@ class _InAppNotificationOverlayState
     }
 
     final colors = context.colors;
-    final isDark = Theme.of(context).brightness == Brightness.dark;
 
     return Positioned(
       top: 0,
@@ -195,15 +193,15 @@ class _InAppNotificationOverlayState
                                     width: 38,
                                     height: 38,
                                     decoration: BoxDecoration(
-                                      color: _getAccentColor(
-                                              notification, colors)
-                                          .withValues(alpha: 0.15),
+                                      color:
+                                          _getAccentColor(notification, colors)
+                                              .withValues(alpha: 0.15),
                                       shape: BoxShape.circle,
                                     ),
                                     child: Icon(
                                       notification.icon,
-                                      color: _getAccentColor(
-                                          notification, colors),
+                                      color:
+                                          _getAccentColor(notification, colors),
                                       size: 20,
                                     ),
                                   ),
@@ -215,8 +213,8 @@ class _InAppNotificationOverlayState
                                       children: [
                                         Text(
                                           notification.title,
-                                          style: AppTypography.titleSmall
-                                              .copyWith(
+                                          style:
+                                              AppTypography.titleSmall.copyWith(
                                             color: colors.textPrimary,
                                             fontWeight: FontWeight.w700,
                                             fontSize: 13,
@@ -225,8 +223,8 @@ class _InAppNotificationOverlayState
                                         const SizedBox(height: 2),
                                         Text(
                                           notification.message,
-                                          style: AppTypography.bodySmall
-                                              .copyWith(
+                                          style:
+                                              AppTypography.bodySmall.copyWith(
                                             color: colors.textSecondary,
                                             fontSize: 11,
                                           ),
@@ -245,8 +243,8 @@ class _InAppNotificationOverlayState
                                     padding: EdgeInsets.zero,
                                     constraints: const BoxConstraints(),
                                     onPressed: () => ref
-                                        .read(inAppNotificationProvider
-                                            .notifier)
+                                        .read(
+                                            inAppNotificationProvider.notifier)
                                         .dismiss(),
                                   ),
                                 ],
@@ -259,8 +257,8 @@ class _InAppNotificationOverlayState
                                 return LinearProgressIndicator(
                                   value: 1.0 - _progressController.value,
                                   minHeight: 2.5,
-                                  backgroundColor: colors.border
-                                      .withValues(alpha: 0.2),
+                                  backgroundColor:
+                                      colors.border.withValues(alpha: 0.2),
                                   valueColor: AlwaysStoppedAnimation<Color>(
                                     _getAccentColor(notification, colors),
                                   ),
