@@ -1395,5 +1395,172 @@ void main() {
       expect(clearedTx.coordinationSyncPending, isFalse);
       expect(clearedTx.syncPendingStatus, isNull);
     });
+
+    test(
+        'retryDelivery uses activeNetworkConfigProvider and isolates storage in wallet_mainnet_pilot without creating another CDK token',
+        () async {
+      final mockWallet = MockSuccessfulCashuWalletService();
+      final mockMessageService = MockSuccessMessageService();
+      final mockRepo = MockPaymentIntentRepository();
+
+      const pilotConfig = NetworkConfig.mainnetPilot;
+
+      final container = ProviderContainer(
+        overrides: [
+          authProvider.overrideWith((ref) =>
+              MockAuthNotifier(AuthState.authenticated(testUser, 'jwt'))),
+          secureStorageServiceProvider
+              .overrideWithValue(InMemorySecureStorageService()),
+          paymentIntentRepositoryProvider.overrideWithValue(mockRepo),
+          protectedMessageServiceProvider.overrideWithValue(mockMessageService),
+          cashuWalletServiceProvider.overrideWithValue(mockWallet),
+          activeNetworkConfigProvider.overrideWith((ref) => pilotConfig),
+        ],
+      );
+      addTearDown(container.dispose);
+
+      const canonicalId = 'pay_pilot_retry_test_123';
+      const recipientUsername = 'bob';
+
+      // 1. Pre-populate local transaction
+      final tx = TransactionModel(
+        id: canonicalId,
+        type: TransactionType.protectedSend,
+        status: TransactionStatus.pending,
+        amountSats: 300,
+        recipientOrSender: '@$recipientUsername',
+        createdAt: DateTime.now(),
+      );
+      container.read(transactionsProvider.notifier).addTransaction(tx);
+
+      // 2. Save an existing escrow in Mainnet Pilot storage namespace
+      final storage = CashuWalletStorage();
+      final escrowRecord = ProtectedEscrowRecord(
+        paymentId: canonicalId,
+        amountSats: 300,
+        recipientPubkey:
+            '02a1633cafcc01ebfb6d78e39f687a1f0995c62fc95f51ead10a02ee0be551b5af',
+        refundPubkey:
+            '03b2744dbfdd02fc0c7e89f40a798b201aa6d73ad06062fbe21b13ff1cf662c6ba',
+        refundPrivkeyHex:
+            '0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef',
+        token: 'cashuA_existing_pilot_escrow_token',
+        locktime: DateTime.now().add(const Duration(hours: 1)),
+        isOutgoing: true,
+        status: 'locked',
+        createdAt: DateTime.now(),
+      );
+
+      await storage.saveEscrowRecord(
+        testUser.id,
+        pilotConfig.network,
+        escrowRecord,
+        storagePrefix: pilotConfig.storagePrefix,
+      );
+
+      final initialEscrowMapCount = mockWallet.recordedEscrows.length;
+
+      // 3. Execute retryDelivery
+      final notifier = container.read(protectedSendProvider.notifier);
+      final success = await notifier.retryDelivery(canonicalId);
+
+      expect(success, isTrue);
+
+      // 4. Verify NO new token was minted/locked in CDK during retry
+      expect(mockWallet.recordedEscrows.length, equals(initialEscrowMapCount));
+
+      // 5. Verify message relay payload contains proper fingerprints and environment
+      expect(mockMessageService.lastPaymentIntentId, equals(canonicalId));
+      expect(mockMessageService.lastRecipientUsername, equals('bob'));
+      final lastMsg = mockMessageService.inboxMessages.last;
+      expect(lastMsg.walletEnvironment, equals('wallet_mainnet_pilot'));
+      expect(lastMsg.recipientTransportKeyFingerprint, isNotEmpty);
+      expect(lastMsg.recipientP2pkKeyFingerprint, isNotEmpty);
+
+      // 6. Verify isolation: looking up escrow under cashu_test returns null
+      final cashuTestEscrow = await storage.getEscrowRecord(
+        testUser.id,
+        HanbovaNetwork.local,
+        canonicalId,
+        storagePrefix: 'wallet_cashu_test',
+      );
+      expect(cashuTestEscrow, isNull);
+    });
+
+    test(
+        'cached resolvedRecipient across environments is invalidated and re-resolved for active environment',
+        () async {
+      final mockWallet = MockSuccessfulCashuWalletService();
+      final mockMessageService = MockSuccessMessageService();
+      final mockRepo = MockPaymentIntentRepository();
+
+      const cashuTestConfig = NetworkConfig.cashuTest;
+      const pilotConfig = NetworkConfig.mainnetPilot;
+
+      // State controller for network config
+      final configContainer = ProviderContainer(
+        overrides: [
+          authProvider.overrideWith((ref) =>
+              MockAuthNotifier(AuthState.authenticated(testUser, 'jwt'))),
+          secureStorageServiceProvider
+              .overrideWithValue(InMemorySecureStorageService()),
+          paymentIntentRepositoryProvider.overrideWithValue(mockRepo),
+          protectedMessageServiceProvider.overrideWithValue(mockMessageService),
+          cashuWalletServiceProvider.overrideWithValue(mockWallet),
+          activeNetworkConfigProvider.overrideWith((ref) => cashuTestConfig),
+        ],
+      );
+      addTearDown(configContainer.dispose);
+
+      final notifier = configContainer.read(protectedSendProvider.notifier);
+
+      // 1. Resolve Bob under wallet_cashu_test
+      final bobCashuTest = await notifier.resolveRecipient('bob');
+      expect(bobCashuTest, isNotNull);
+      expect(bobCashuTest!.walletEnvironment, equals('wallet_cashu_test'));
+      expect(
+          configContainer
+              .read(protectedSendProvider)
+              .resolvedRecipient
+              ?.walletEnvironment,
+          equals('wallet_cashu_test'));
+
+      // 2. Switch active environment to wallet_mainnet_pilot
+      // We create a new container representing the environment switch
+      final switchedContainer = ProviderContainer(
+        overrides: [
+          authProvider.overrideWith((ref) =>
+              MockAuthNotifier(AuthState.authenticated(testUser, 'jwt'))),
+          secureStorageServiceProvider
+              .overrideWithValue(InMemorySecureStorageService()),
+          paymentIntentRepositoryProvider.overrideWithValue(mockRepo),
+          protectedMessageServiceProvider.overrideWithValue(mockMessageService),
+          cashuWalletServiceProvider.overrideWithValue(mockWallet),
+          activeNetworkConfigProvider.overrideWith((ref) => pilotConfig),
+        ],
+      );
+      addTearDown(switchedContainer.dispose);
+
+      // Simulate prior cached recipient from previous environment in state
+      final switchedNotifier =
+          switchedContainer.read(protectedSendProvider.notifier);
+      switchedNotifier.state = switchedNotifier.state.copyWith(
+        resolvedRecipient: bobCashuTest,
+      );
+
+      // 3. createProtectedPayment is invoked under wallet_mainnet_pilot
+      final success = await switchedNotifier.createProtectedPayment(
+        amountSats: 200,
+        recipientIdentifier: '@bob',
+        description: 'Pilot test with switched env',
+        expirationSeconds: 3600,
+      );
+
+      expect(success, isTrue);
+
+      // 4. Verify that cached Cashu Test profile was NOT reused for the message envelope
+      final lastMsg = mockMessageService.inboxMessages.last;
+      expect(lastMsg.walletEnvironment, equals('wallet_mainnet_pilot'));
+    });
   });
 }

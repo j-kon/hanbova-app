@@ -114,7 +114,8 @@ class ProtectedSendNotifier extends StateNotifier<ProtectedSendState> {
       // 1. Resolve recipient keys strictly matching current entered recipient
       UserPaymentProfile? recipientProfile;
       if (state.resolvedRecipient != null &&
-          state.resolvedRecipient!.username.toLowerCase() == cleanRecipient) {
+          state.resolvedRecipient!.username.toLowerCase() == cleanRecipient &&
+          state.resolvedRecipient!.walletEnvironment == config.storagePrefix) {
         recipientProfile = state.resolvedRecipient;
       } else {
         recipientProfile = await resolveRecipient(cleanRecipient);
@@ -301,15 +302,15 @@ class ProtectedSendNotifier extends StateNotifier<ProtectedSendState> {
         throw StateError('Recipient @$cleanRecipient could not be found');
       }
 
-      final network = _ref.read(networkEnvironmentProvider);
-      final config = NetworkConfig.fromNetwork(network);
+      final config = _ref.read(activeNetworkConfigProvider);
 
       // Load the existing escrow record from client storage (no new token minted or locked)
       final storage = CashuWalletStorage();
       final escrow = await storage.getEscrowRecord(
         authState.user!.id,
-        network,
+        config.network,
         canonicalPaymentId,
+        storagePrefix: config.storagePrefix,
       );
       if (escrow == null) {
         throw StateError(
@@ -337,6 +338,11 @@ class ProtectedSendNotifier extends StateNotifier<ProtectedSendState> {
         encryptedPayload: ciphertext,
         payloadVersion: 1,
         paymentIntentId: canonicalPaymentId,
+        recipientTransportKeyFingerprint:
+            recipientProfile.transportKeyFingerprint,
+        recipientP2pkKeyFingerprint:
+            recipientProfile.protectedPaymentFingerprint,
+        walletEnvironment: config.storagePrefix,
       );
 
       _ref.read(transactionsProvider.notifier).updateTransactionStatus(
