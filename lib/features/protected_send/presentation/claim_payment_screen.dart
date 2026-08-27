@@ -6,6 +6,7 @@ import '../../../core/crypto/crypto_identity_service.dart';
 import '../../../core/crypto/encrypted_envelope_service.dart';
 import '../../../core/currency/currency_provider.dart';
 import '../../../core/network/network_environment.dart';
+import '../../../core/notifications/in_app_notification.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_radius.dart';
 import '../../../core/theme/app_spacing.dart';
@@ -196,6 +197,13 @@ class _ClaimPaymentScreenState extends ConsumerState<ClaimPaymentScreen> {
           );
 
       if (!mounted) return;
+      ref.read(inAppNotificationProvider.notifier).show(
+            title: 'Payment Claimed!',
+            message:
+                'Added ${Formatters.formatSats(_loadedIntent!.amountSats)} to your wallet',
+            icon: Icons.check_circle_outline,
+            type: InAppNotificationType.success,
+          );
       setState(() {
         _isLoading = false;
         _isClaimed = true;

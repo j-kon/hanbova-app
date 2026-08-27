@@ -1,9 +1,12 @@
+import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/cashu/cashu_wallet_provider.dart';
 import '../../../core/cashu/cashu_wallet_storage.dart';
 import '../../../core/crypto/crypto_identity_service.dart';
 import '../../../core/crypto/encrypted_envelope_service.dart';
 import '../../../core/network/network_environment.dart';
+import '../../../core/notifications/in_app_notification.dart';
+import '../../../core/utils/formatters.dart';
 import '../../auth/providers/auth_provider.dart';
 import '../../protected/data/protected_message_service.dart';
 import '../../transactions/domain/transaction_model.dart';
@@ -267,6 +270,13 @@ class ProtectedSendNotifier extends StateNotifier<ProtectedSendState> {
       }
 
       state = state.copyWith(isLoading: false, createdIntent: intent);
+      _ref.read(inAppNotificationProvider.notifier).show(
+            title: 'Protected Payment Sent',
+            message:
+                'Locked ${Formatters.formatSats(amountSats)} in escrow for $recipientIdentifier',
+            icon: Icons.shield_outlined,
+            type: InAppNotificationType.protected,
+          );
       return true;
     } catch (e) {
       state = state.copyWith(isLoading: false, errorMessage: e.toString());

@@ -9,6 +9,7 @@ import '../../../core/currency/balance_visibility_provider.dart';
 import '../../../core/currency/currency_provider.dart';
 import '../../../core/network/network_environment.dart';
 import '../../../core/networking/api_client.dart';
+import '../../../core/notifications/in_app_notification.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_radius.dart';
 import '../../../core/theme/app_shadows.dart';
@@ -82,10 +83,24 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
       final intentRepo = ref.read(paymentIntentRepositoryProvider);
       final inbox = await messageService.getInbox();
       if (!mounted) return;
-      await ref.read(transactionsProvider.notifier).syncIncomingMessages(
-            inbox: inbox,
-            getIntentDetails: (id) => intentRepo.getPaymentIntent(id),
-          );
+      final newTxs =
+          await ref.read(transactionsProvider.notifier).syncIncomingMessages(
+                inbox: inbox,
+                getIntentDetails: (id) => intentRepo.getPaymentIntent(id),
+              );
+      if (newTxs.isNotEmpty && mounted) {
+        final newest = newTxs.first;
+        ref.read(inAppNotificationProvider.notifier).show(
+              title: 'Protected Payment Received!',
+              message:
+                  '${Formatters.formatSats(newest.amountSats)} waiting from ${newest.recipientOrSender}',
+              icon: Icons.shield_outlined,
+              type: InAppNotificationType.incoming,
+              onTap: () {
+                context.push('/claim');
+              },
+            );
+      }
     } catch (_) {}
   }
 
@@ -373,6 +388,8 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                     ],
                   ),
                 ),
+                const SizedBox(height: AppSpacing.md),
+
                 // 2.5 Incoming Payment Alert Banner
                 if (incomingClaimable.isNotEmpty) ...[
                   Container(
@@ -541,7 +558,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                     ],
                   ),
                 ),
-                const SizedBox(height: AppSpacing.sm),
+                const SizedBox(height: AppSpacing.md),
 
                 // 5. Quick Claim Banner
                 Material(

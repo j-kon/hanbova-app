@@ -5,10 +5,12 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:qr_flutter/qr_flutter.dart';
 import '../../../core/cashu/cashu_wallet_provider.dart';
 import '../../../core/network/network_environment.dart';
+import '../../../core/notifications/in_app_notification.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_radius.dart';
 import '../../../core/theme/app_spacing.dart';
 import '../../../core/theme/app_typography.dart';
+import '../../../core/utils/formatters.dart';
 
 /// Unified Deposit Sheet supporting Lightning Invoice (NUT-04), On-Chain Bitcoin, and Cashu Token redeem
 class UnifiedDepositSheet extends ConsumerStatefulWidget {
@@ -92,6 +94,13 @@ class _UnifiedDepositSheetState extends ConsumerState<UnifiedDepositSheet>
 
         final minted = await wallet.mintQuote(quoteId);
         ref.invalidate(cashuBalanceProvider);
+        ref.read(inAppNotificationProvider.notifier).show(
+              title: 'Ecash Minted!',
+              message:
+                  'Deposited ${Formatters.formatSats(minted)} into your wallet',
+              icon: Icons.bolt,
+              type: InAppNotificationType.success,
+            );
 
         if (mounted) {
           setState(() {
@@ -215,6 +224,13 @@ class _UnifiedDepositSheetState extends ConsumerState<UnifiedDepositSheet>
         paymentId: 'deposit_${DateTime.now().millisecondsSinceEpoch}',
       );
       ref.invalidate(cashuBalanceProvider);
+      ref.read(inAppNotificationProvider.notifier).show(
+            title: 'Token Claimed!',
+            message:
+                'Successfully claimed ${Formatters.formatSats(received)} to wallet',
+            icon: Icons.check_circle_outline,
+            type: InAppNotificationType.success,
+          );
 
       setState(() {
         _claimSuccessMessage = 'Successfully claimed $received sats to wallet!';

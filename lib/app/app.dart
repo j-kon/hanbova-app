@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../core/constants/app_constants.dart';
+import '../core/notifications/in_app_notification.dart';
 import '../core/theme/app_theme.dart';
 import '../core/theme/theme_controller.dart';
 import 'router.dart';
@@ -20,6 +21,14 @@ class HanbovaApp extends ConsumerWidget {
       darkTheme: AppTheme.darkTheme,
       themeMode: themeMode,
       routerConfig: router,
+      builder: (context, child) {
+        return Stack(
+          children: [
+            if (child != null) child,
+            const InAppNotificationOverlay(),
+          ],
+        );
+      },
     );
   }
 }

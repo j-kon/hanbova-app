@@ -105,10 +105,11 @@ class TransactionsNotifier extends StateNotifier<List<TransactionModel>> {
     }).toList();
   }
 
-  Future<void> syncIncomingMessages({
+  Future<List<TransactionModel>> syncIncomingMessages({
     required List<dynamic> inbox,
     Future<dynamic> Function(String intentId)? getIntentDetails,
   }) async {
+    final List<TransactionModel> newIncoming = [];
     for (final rawMsg in inbox) {
       final msg = rawMsg as dynamic;
       final paymentIntentId = msg.paymentIntentId as String;
@@ -173,7 +174,9 @@ class TransactionsNotifier extends StateNotifier<List<TransactionModel>> {
         updateTransaction(incomingTx);
       } else {
         addTransaction(incomingTx);
+        newIncoming.add(incomingTx);
       }
     }
+    return newIncoming;
   }
 }
