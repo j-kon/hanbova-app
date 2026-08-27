@@ -856,6 +856,10 @@ class _IncomingTab extends ConsumerWidget {
                     );
                   }
                 },
+                style: ElevatedButton.styleFrom(
+                  minimumSize: const Size(72, 36),
+                  padding: const EdgeInsets.symmetric(horizontal: 12),
+                ),
                 child: const Text('Claim'),
               ),
             ],
