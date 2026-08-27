@@ -49,18 +49,53 @@ class ApiClient {
     return headers;
   }
 
+  Future<http.Response> _sendWithRetry(
+      Future<http.Response> Function() requestFn) async {
+    try {
+      return await requestFn();
+    } catch (e) {
+      final errStr = e.toString().toLowerCase();
+      if (errStr.contains('connection reset') ||
+          errStr.contains('broken pipe') ||
+          errStr.contains('clientexception') ||
+          errStr.contains('socketexception')) {
+        // Transient socket drop / idle keepalive reset -> retry once
+        await Future.delayed(const Duration(milliseconds: 250));
+        return await requestFn();
+      }
+      rethrow;
+    }
+  }
+
+  String _formatNetworkError(dynamic e) {
+    final str = e.toString();
+    if (str.contains('Connection reset by peer') ||
+        str.contains('Broken pipe') ||
+        str.contains('SocketException') ||
+        str.contains('Failed host lookup')) {
+      return 'Unable to connect to server. Please check your network connection.';
+    }
+    if (str.contains('TimeoutException')) {
+      return 'Server request timed out. Please try again.';
+    }
+    return str
+        .replaceAll('Exception:', '')
+        .replaceAll('ClientException:', '')
+        .trim();
+  }
+
   Future<Map<String, dynamic>> get(String path) async {
     try {
       final uri = Uri.parse('$baseUrl$path');
-      final response = await _httpClient
+      final response = await _sendWithRetry(() => _httpClient
           .get(uri, headers: _buildHeaders())
-          .timeout(const Duration(seconds: 10));
+          .timeout(const Duration(seconds: 10)));
 
       return _handleResponse(response);
     } catch (e) {
       if (e is AppFailure) rethrow;
       throw AppFailure(
-          message: 'Network connection failed: $e', originalError: e);
+          message: _formatNetworkError(e), originalError: e);
     }
   }
 
@@ -68,18 +103,19 @@ class ApiClient {
       String path, Map<String, dynamic> body) async {
     try {
       final uri = Uri.parse('$baseUrl$path');
-      final response = await _httpClient
+      final response = await _sendWithRetry(() => _httpClient
           .post(
             uri,
             headers: _buildHeaders(),
             body: jsonEncode(body),
           )
-          .timeout(const Duration(seconds: 10));
+          .timeout(const Duration(seconds: 10)));
 
       return _handleResponse(response);
     } catch (e) {
       if (e is AppFailure) rethrow;
-      throw AppFailure(message: 'Network request failed: $e', originalError: e);
+      throw AppFailure(
+          message: _formatNetworkError(e), originalError: e);
     }
   }
 
@@ -87,32 +123,34 @@ class ApiClient {
       {Map<String, dynamic>? body}) async {
     try {
       final uri = Uri.parse('$baseUrl$path');
-      final response = await _httpClient
+      final response = await _sendWithRetry(() => _httpClient
           .put(
             uri,
             headers: _buildHeaders(),
             body: body != null ? jsonEncode(body) : null,
           )
-          .timeout(const Duration(seconds: 10));
+          .timeout(const Duration(seconds: 10)));
 
       return _handleResponse(response);
     } catch (e) {
       if (e is AppFailure) rethrow;
-      throw AppFailure(message: 'Network request failed: $e', originalError: e);
+      throw AppFailure(
+          message: _formatNetworkError(e), originalError: e);
     }
   }
 
   Future<Map<String, dynamic>> delete(String path) async {
     try {
       final uri = Uri.parse('$baseUrl$path');
-      final response = await _httpClient
+      final response = await _sendWithRetry(() => _httpClient
           .delete(uri, headers: _buildHeaders())
-          .timeout(const Duration(seconds: 10));
+          .timeout(const Duration(seconds: 10)));
 
       return _handleResponse(response);
     } catch (e) {
       if (e is AppFailure) rethrow;
-      throw AppFailure(message: 'Network request failed: $e', originalError: e);
+      throw AppFailure(
+          message: _formatNetworkError(e), originalError: e);
     }
   }
 
