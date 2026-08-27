@@ -7,6 +7,7 @@ import '../network/network_environment.dart';
 import 'cashu_wallet_models.dart';
 import 'cashu_wallet_storage.dart';
 import 'cdk_ffi_bindings.dart';
+import 'wallet_policy.dart';
 
 abstract class CashuWalletService {
   Future<CashuWalletBalance> getBalance();
@@ -45,6 +46,9 @@ class CdkCashuWalletServiceImpl implements CashuWalletService {
   final String? _dbPath;
   final CashuWalletStorage _storage;
   final CdkFfiBindings _ffi;
+  final WalletPolicy _walletPolicy;
+  final Future<CashuWalletBalance> Function()? _balanceProvider;
+  final Map<String, int> _meltQuoteAmounts = {};
 
   Pointer<Void>? _handle;
 
@@ -59,6 +63,9 @@ class CdkCashuWalletServiceImpl implements CashuWalletService {
     String? dbPath,
     CashuWalletStorage? storage,
     CdkFfiBindings? ffi,
+    NetworkConfig? networkConfig,
+    WalletPolicy? walletPolicy,
+    Future<CashuWalletBalance> Function()? balanceProvider,
   })  : _walletSeedHex = walletSeedHex,
         _p2pkPrivateKeyHex = p2pkPrivateKeyHex,
         _p2pkPublicKeyHex = p2pkPublicKeyHex,
@@ -67,7 +74,18 @@ class CdkCashuWalletServiceImpl implements CashuWalletService {
         _mintUrl = mintUrl ?? NetworkConfig.fromNetwork(network).defaultMintUrl,
         _dbPath = dbPath,
         _storage = storage ?? CashuWalletStorage(),
-        _ffi = ffi ?? CdkFfiBindings.instance;
+        _ffi = ffi ?? CdkFfiBindings.instance,
+        _walletPolicy = walletPolicy ??
+            WalletPolicy(networkConfig ?? NetworkConfig.fromNetwork(network)),
+        _balanceProvider = balanceProvider {
+    if (_walletPolicy.config.network != network) {
+      throw ArgumentError.value(
+        _walletPolicy.config.network,
+        'networkConfig',
+        'Wallet policy network must match the wallet network.',
+      );
+    }
+  }
 
   String get p2pkPrivateKeyHex => _p2pkPrivateKeyHex;
   String get p2pkPublicKeyHex => _p2pkPublicKeyHex;
@@ -140,11 +158,17 @@ class CdkCashuWalletServiceImpl implements CashuWalletService {
     }
   }
 
+  Future<CashuWalletBalance> _getBalanceForPolicy() {
+    return _balanceProvider?.call() ?? getBalance();
+  }
+
   @override
   Future<MintQuoteResult> createMintQuote(int amountSats) async {
-    if (amountSats <= 0) {
-      throw ArgumentError('Amount must be greater than zero');
-    }
+    final balance = await _getBalanceForPolicy();
+    _walletPolicy.validateMint(
+      amountSats: amountSats,
+      currentBalance: balance,
+    );
     final handle = await _ensureHandle();
 
     final outQuoteId = calloc<Pointer<Utf8>>();
@@ -245,9 +269,7 @@ class CdkCashuWalletServiceImpl implements CashuWalletService {
     required DateTime locktime,
     required String paymentId,
   }) async {
-    if (amountSats <= 0) {
-      throw ArgumentError('Amount must be greater than zero');
-    }
+    _walletPolicy.validateSend(amountSats: amountSats);
     if (!Secp256k1Service.isValidCompressedPublicKeyHex(recipientPubkey)) {
       throw ArgumentError('Invalid recipient secp256k1 compressed public key');
     }
@@ -430,6 +452,7 @@ class CdkCashuWalletServiceImpl implements CashuWalletService {
       }
       final qid = outQuoteId.value.toDartString();
       _ffi.freeString(outQuoteId.value);
+      _meltQuoteAmounts[qid] = outAmount.value;
       return MeltQuoteResult(
         quoteId: qid,
         amountSats: outAmount.value,
@@ -448,8 +471,17 @@ class CdkCashuWalletServiceImpl implements CashuWalletService {
     if (quoteId.trim().isEmpty) {
       throw ArgumentError('Quote ID cannot be empty');
     }
+    final normalizedQuoteId = quoteId.trim();
+    final amountSats = _meltQuoteAmounts[normalizedQuoteId];
+    if (amountSats == null) {
+      throw const WalletPolicyViolation(
+        'unknown_melt_quote',
+        'Melt quote amount is unavailable for policy validation.',
+      );
+    }
+    _walletPolicy.validateSend(amountSats: amountSats);
     final handle = await _ensureHandle();
-    final qidPtr = quoteId.trim().toNativeUtf8();
+    final qidPtr = normalizedQuoteId.toNativeUtf8();
     final outPaid = calloc<Int32>();
     final outPreimage = calloc<Pointer<Utf8>>();
 
@@ -464,6 +496,9 @@ class CdkCashuWalletServiceImpl implements CashuWalletService {
       if (outPreimage.value.address != 0) {
         preimage = outPreimage.value.toDartString();
         _ffi.freeString(outPreimage.value);
+      }
+      if (isPaid) {
+        _meltQuoteAmounts.remove(normalizedQuoteId);
       }
       return MeltExecutionResult(isPaid: isPaid, preimage: preimage);
     } finally {
