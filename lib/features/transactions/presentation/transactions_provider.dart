@@ -1,5 +1,6 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../../protected_send/domain/protected_payment_intent.dart';
 import '../domain/transaction_model.dart';
 
 final transactionsProvider =
@@ -178,5 +179,92 @@ class TransactionsNotifier extends StateNotifier<List<TransactionModel>> {
       }
     }
     return newIncoming;
+  }
+
+  void syncPaymentIntents({
+    required List<ProtectedPaymentIntent> intents,
+    required String currentUserId,
+    required String currentUsername,
+  }) {
+    final cleanCurrentUsername =
+        currentUsername.replaceAll('@', '').toLowerCase();
+    final cleanCurrentUserId = currentUserId.toLowerCase();
+
+    final List<TransactionModel> updatedList = List.from(state);
+
+    for (final intent in intents) {
+      final senderId = intent.senderId?.toLowerCase() ?? '';
+      final cleanSender = senderId.replaceAll('@', '');
+      final cleanRecipient =
+          intent.recipientIdentifier.replaceAll('@', '').toLowerCase();
+
+      final isSender = cleanSender == cleanCurrentUsername ||
+          cleanSender == cleanCurrentUserId ||
+          senderId == cleanCurrentUserId;
+
+      final TransactionType txType;
+      final String counterparty;
+
+      if (isSender) {
+        txType = TransactionType.protectedSend;
+        counterparty = intent.recipientIdentifier.startsWith('@')
+            ? intent.recipientIdentifier
+            : '@${intent.recipientIdentifier}';
+      } else {
+        txType = TransactionType.protectedClaim;
+        counterparty = intent.senderId != null && intent.senderId!.isNotEmpty
+            ? (intent.senderId!.startsWith('@')
+                ? intent.senderId!
+                : '@${intent.senderId}')
+            : 'Sender';
+      }
+
+      final TransactionStatus txStatus;
+      switch (intent.status.toLowerCase()) {
+        case 'claimed':
+          txStatus = TransactionStatus.completed;
+          break;
+        case 'refunded':
+          txStatus = TransactionStatus.refunded;
+          break;
+        case 'expired':
+          txStatus = TransactionStatus.expired;
+          break;
+        case 'claimable':
+        case 'protected':
+        default:
+          txStatus = TransactionStatus.claimable;
+          break;
+      }
+
+      final model = TransactionModel(
+        id: intent.id,
+        type: txType,
+        status: txStatus,
+        amountSats: intent.amountSats,
+        recipientOrSender: counterparty,
+        description: intent.description ??
+            (isSender
+                ? 'Protected Payment to $counterparty'
+                : 'Incoming Protected Payment'),
+        createdAt: intent.createdAt,
+        expiresAt: intent.expiresAt,
+        claimReference: intent.claimReference ?? intent.id,
+      );
+
+      final idx = updatedList.indexWhere((t) => t.id == intent.id);
+      if (idx >= 0) {
+        final local = updatedList[idx];
+        updatedList[idx] = model.copyWith(
+          coordinationSyncPending: local.coordinationSyncPending,
+          syncPendingStatus: local.syncPendingStatus,
+        );
+      } else {
+        updatedList.add(model);
+      }
+    }
+
+    updatedList.sort((a, b) => b.createdAt.compareTo(a.createdAt));
+    state = updatedList;
   }
 }

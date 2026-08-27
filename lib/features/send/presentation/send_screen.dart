@@ -45,6 +45,7 @@ class _SendScreenState extends ConsumerState<SendScreen> {
   }
 
   Future<void> _payInstant() async {
+    if (_isLoading) return;
     if (!_formKey.currentState!.validate()) return;
 
     setState(() => _isLoading = true);

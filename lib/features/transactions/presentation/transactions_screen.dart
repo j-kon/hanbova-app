@@ -8,6 +8,8 @@ import '../../../core/theme/app_radius.dart';
 import '../../../core/theme/app_spacing.dart';
 import '../../../core/theme/app_typography.dart';
 import '../../../core/utils/formatters.dart';
+import '../../auth/providers/auth_provider.dart';
+import '../../protected_send/data/payment_intent_repository.dart';
 import '../domain/activity_export_service.dart';
 import '../domain/transaction_model.dart';
 import 'transactions_provider.dart';
@@ -26,6 +28,27 @@ class _TransactionsScreenState extends ConsumerState<TransactionsScreen> {
   final TextEditingController _searchController = TextEditingController();
   String _searchQuery = '';
   bool _isSearchVisible = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _fetchTransactions();
+  }
+
+  Future<void> _fetchTransactions() async {
+    final authState = ref.read(authProvider);
+    if (authState.user == null) return;
+    try {
+      final intentRepo = ref.read(paymentIntentRepositoryProvider);
+      final intents = await intentRepo.getPaymentIntents();
+      if (!mounted) return;
+      ref.read(transactionsProvider.notifier).syncPaymentIntents(
+            intents: intents,
+            currentUserId: authState.user!.id,
+            currentUsername: authState.user!.username,
+          );
+    } catch (_) {}
+  }
 
   @override
   void dispose() {
@@ -253,43 +276,50 @@ class _TransactionsScreenState extends ConsumerState<TransactionsScreen> {
 
             // Transactions list
             Expanded(
-              child: filtered.isEmpty
-                  ? Center(
-                      child: Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Icon(Icons.receipt_long_outlined,
-                              color: colors.textTertiary, size: 48),
-                          const SizedBox(height: AppSpacing.sm),
-                          Text(
-                            _searchQuery.isNotEmpty
-                                ? 'No matches found'
-                                : 'No transactions found',
-                            style: AppTypography.titleSmall
-                                .copyWith(color: colors.textSecondary),
+              child: RefreshIndicator(
+                onRefresh: _fetchTransactions,
+                child: filtered.isEmpty
+                    ? Center(
+                        child: SingleChildScrollView(
+                          physics: const AlwaysScrollableScrollPhysics(),
+                          child: Column(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Icon(Icons.receipt_long_outlined,
+                                  color: colors.textTertiary, size: 48),
+                              const SizedBox(height: AppSpacing.sm),
+                              Text(
+                                _searchQuery.isNotEmpty
+                                    ? 'No matches found'
+                                    : 'No transactions found',
+                                style: AppTypography.titleSmall
+                                    .copyWith(color: colors.textSecondary),
+                              ),
+                              const SizedBox(height: 4),
+                              Text(
+                                _searchQuery.isNotEmpty
+                                    ? 'Try searching for a different handle or keyword.'
+                                    : 'Payments matching this filter will show here.',
+                                style: AppTypography.bodySmall
+                                    .copyWith(color: colors.textTertiary),
+                              ),
+                            ],
                           ),
-                          const SizedBox(height: 4),
-                          Text(
-                            _searchQuery.isNotEmpty
-                                ? 'Try searching for a different handle or keyword.'
-                                : 'Payments matching this filter will show here.',
-                            style: AppTypography.bodySmall
-                                .copyWith(color: colors.textTertiary),
-                          ),
-                        ],
+                        ),
+                      )
+                    : ListView.separated(
+                        physics: const AlwaysScrollableScrollPhysics(),
+                        padding: const EdgeInsets.fromLTRB(
+                            AppSpacing.md, AppSpacing.sm, AppSpacing.md, 100),
+                        itemCount: filtered.length,
+                        separatorBuilder: (_, __) =>
+                            const SizedBox(height: AppSpacing.xs),
+                        itemBuilder: (context, index) {
+                          final tx = filtered[index];
+                          return _ActivityItemTile(tx: tx);
+                        },
                       ),
-                    )
-                  : ListView.separated(
-                      padding: const EdgeInsets.fromLTRB(
-                          AppSpacing.md, AppSpacing.sm, AppSpacing.md, 100),
-                      itemCount: filtered.length,
-                      separatorBuilder: (_, __) =>
-                          const SizedBox(height: AppSpacing.xs),
-                      itemBuilder: (context, index) {
-                        final tx = filtered[index];
-                        return _ActivityItemTile(tx: tx);
-                      },
-                    ),
+              ),
             ),
           ],
         ),

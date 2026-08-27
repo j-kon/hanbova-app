@@ -27,6 +27,7 @@ class _ProtectedSendScreenState extends ConsumerState<ProtectedSendScreen> {
   final _amountController = TextEditingController();
   final _descriptionController = TextEditingController();
   int _selectedExpirationSeconds = 86400; // 24h default
+  bool _isSubmitting = false;
 
   final List<Map<String, dynamic>> _expirationOptions = [
     {'label': '30s (Dev)', 'seconds': 30},
@@ -47,6 +48,7 @@ class _ProtectedSendScreenState extends ConsumerState<ProtectedSendScreen> {
   }
 
   Future<void> _submit() async {
+    if (_isSubmitting) return;
     if (!_formKey.currentState!.validate()) return;
 
     final amountSats = int.parse(_amountController.text.trim());
@@ -67,12 +69,19 @@ class _ProtectedSendScreenState extends ConsumerState<ProtectedSendScreen> {
       return;
     }
 
-    await ref.read(protectedSendProvider.notifier).createProtectedPayment(
-          amountSats: amountSats,
-          recipientIdentifier: recipient,
-          description: description,
-          expirationSeconds: _selectedExpirationSeconds,
-        );
+    setState(() => _isSubmitting = true);
+    try {
+      await ref.read(protectedSendProvider.notifier).createProtectedPayment(
+            amountSats: amountSats,
+            recipientIdentifier: recipient,
+            description: description,
+            expirationSeconds: _selectedExpirationSeconds,
+          );
+    } finally {
+      if (mounted) {
+        setState(() => _isSubmitting = false);
+      }
+    }
   }
 
   @override
@@ -268,9 +277,10 @@ class _ProtectedSendScreenState extends ConsumerState<ProtectedSendScreen> {
             ],
 
             ElevatedButton.icon(
-              onPressed: state.isLoading ? null : _submit,
+              onPressed:
+                  (state.isLoading || _isSubmitting) ? null : _submit,
               icon: const Icon(Icons.shield_outlined, size: 18),
-              label: state.isLoading
+              label: (state.isLoading || _isSubmitting)
                   ? const SizedBox(
                       height: 20,
                       width: 20,

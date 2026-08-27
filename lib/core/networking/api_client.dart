@@ -103,13 +103,13 @@ class ApiClient {
       String path, Map<String, dynamic> body) async {
     try {
       final uri = Uri.parse('$baseUrl$path');
-      final response = await _sendWithRetry(() => _httpClient
+      final response = await _httpClient
           .post(
             uri,
             headers: _buildHeaders(),
             body: jsonEncode(body),
           )
-          .timeout(const Duration(seconds: 10)));
+          .timeout(const Duration(seconds: 10));
 
       return _handleResponse(response);
     } catch (e) {
@@ -123,13 +123,13 @@ class ApiClient {
       {Map<String, dynamic>? body}) async {
     try {
       final uri = Uri.parse('$baseUrl$path');
-      final response = await _sendWithRetry(() => _httpClient
+      final response = await _httpClient
           .put(
             uri,
             headers: _buildHeaders(),
             body: body != null ? jsonEncode(body) : null,
           )
-          .timeout(const Duration(seconds: 10)));
+          .timeout(const Duration(seconds: 10));
 
       return _handleResponse(response);
     } catch (e) {
@@ -142,9 +142,9 @@ class ApiClient {
   Future<Map<String, dynamic>> delete(String path) async {
     try {
       final uri = Uri.parse('$baseUrl$path');
-      final response = await _sendWithRetry(() => _httpClient
+      final response = await _httpClient
           .delete(uri, headers: _buildHeaders())
-          .timeout(const Duration(seconds: 10)));
+          .timeout(const Duration(seconds: 10));
 
       return _handleResponse(response);
     } catch (e) {

@@ -101,6 +101,18 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
               },
             );
       }
+
+      // Sync full payment intent history (sent & received)
+      try {
+        final intents = await intentRepo.getPaymentIntents();
+        if (mounted) {
+          ref.read(transactionsProvider.notifier).syncPaymentIntents(
+                intents: intents,
+                currentUserId: authState.user!.id,
+                currentUsername: authState.user!.username,
+              );
+        }
+      } catch (_) {}
     } catch (_) {}
   }
 
