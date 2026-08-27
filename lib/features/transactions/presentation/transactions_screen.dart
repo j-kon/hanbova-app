@@ -98,6 +98,24 @@ class _TransactionsScreenState extends ConsumerState<TransactionsScreen> {
     final colors = context.colors;
     final allTransactions = ref.watch(transactionsProvider);
 
+    final allCount = allTransactions.length;
+    final sentCount = allTransactions
+        .where((tx) =>
+            tx.type == TransactionType.instantSend ||
+            tx.type == TransactionType.protectedSend)
+        .length;
+    final receivedCount = allTransactions
+        .where((tx) =>
+            tx.type == TransactionType.instantReceive ||
+            tx.type == TransactionType.protectedClaim)
+        .length;
+    final protectedCount = allTransactions
+        .where((tx) =>
+            tx.type == TransactionType.protectedSend ||
+            tx.type == TransactionType.protectedClaim ||
+            tx.type == TransactionType.protectedRefund)
+        .length;
+
     final filtered = allTransactions.where((tx) {
       // 1. Filter by category
       bool matchesCategory = true;
@@ -201,28 +219,28 @@ class _TransactionsScreenState extends ConsumerState<TransactionsScreen> {
                 child: Row(
                   children: [
                     _FilterChip(
-                      label: 'All',
+                      label: 'All ($allCount)',
                       isSelected: _selectedFilter == ActivityFilter.all,
                       onTap: () =>
                           setState(() => _selectedFilter = ActivityFilter.all),
                     ),
                     const SizedBox(width: AppSpacing.xs),
                     _FilterChip(
-                      label: 'Sent',
+                      label: 'Sent ($sentCount)',
                       isSelected: _selectedFilter == ActivityFilter.sent,
                       onTap: () =>
                           setState(() => _selectedFilter = ActivityFilter.sent),
                     ),
                     const SizedBox(width: AppSpacing.xs),
                     _FilterChip(
-                      label: 'Received',
+                      label: 'Received ($receivedCount)',
                       isSelected: _selectedFilter == ActivityFilter.received,
                       onTap: () => setState(
                           () => _selectedFilter = ActivityFilter.received),
                     ),
                     const SizedBox(width: AppSpacing.xs),
                     _FilterChip(
-                      label: 'Protected',
+                      label: 'Protected ($protectedCount)',
                       isSelected: _selectedFilter == ActivityFilter.protected,
                       onTap: () => setState(
                           () => _selectedFilter = ActivityFilter.protected),

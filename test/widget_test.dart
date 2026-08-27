@@ -56,8 +56,8 @@ void main() {
     // Switch to Activity Tab
     await tester.tap(find.text('Activity'));
     await tester.pumpAndSettle();
-    expect(find.text('Sent'), findsOneWidget);
-    expect(find.text('Received'), findsOneWidget);
+    expect(find.textContaining('Sent'), findsOneWidget);
+    expect(find.textContaining('Received'), findsOneWidget);
 
     // Switch to Protected Tab via Bottom Navigation icon
     await tester.tap(find.byIcon(Icons.shield_outlined).last);
