@@ -47,3 +47,6 @@ migrate_working_dir/
 
 # Local iOS Frameworks build artifacts
 /ios/Frameworks/
+
+# Isolated feature workspaces
+.worktrees/
