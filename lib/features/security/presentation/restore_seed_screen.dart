@@ -4,11 +4,11 @@ import 'package:go_router/go_router.dart';
 import '../../../core/cashu/cashu_wallet_provider.dart';
 import '../../../core/crypto/crypto_identity_service.dart';
 import '../../../core/crypto/mnemonic_service.dart';
+import '../../../core/security/wallet_backup_store.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_radius.dart';
 import '../../../core/theme/app_spacing.dart';
 import '../../../core/theme/app_typography.dart';
-import 'backup_seed_screen.dart';
 
 class RestoreSeedScreen extends ConsumerStatefulWidget {
   const RestoreSeedScreen({super.key});
@@ -105,7 +105,7 @@ class _RestoreSeedScreenState extends ConsumerState<RestoreSeedScreen> {
             mnemonic: phrase,
           );
 
-      ref.read(walletBackupStatusProvider.notifier).state = true;
+      await ref.read(walletBackupStatusProvider.notifier).confirm();
       ref.invalidate(cashuBalanceProvider);
 
       if (!mounted) return;

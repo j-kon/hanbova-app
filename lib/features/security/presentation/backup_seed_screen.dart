@@ -2,16 +2,15 @@ import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import '../../../core/crypto/bip39_words.dart';
 import '../../../core/crypto/crypto_identity_service.dart';
-import '../../../core/crypto/mnemonic_service.dart';
 import '../../../core/security/biometric_service.dart';
+import '../../../core/security/wallet_backup_store.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_radius.dart';
 import '../../../core/theme/app_spacing.dart';
 import '../../../core/theme/app_typography.dart';
-import '../../auth/providers/auth_provider.dart';
-
-final walletBackupStatusProvider = StateProvider<bool>((ref) => false);
+import '../../../core/wallet/wallet_context.dart';
 
 class BackupSeedScreen extends ConsumerStatefulWidget {
   const BackupSeedScreen({super.key});
@@ -23,7 +22,10 @@ class BackupSeedScreen extends ConsumerStatefulWidget {
 class _BackupSeedScreenState extends ConsumerState<BackupSeedScreen> {
   List<String> _words = [];
   bool _isLoading = true;
+  bool _isConfirming = false;
   bool _isRevealed = false;
+  WalletContextKey? _loadedContext;
+  String? _loadError;
   int _currentStep = 0; // 0: View words, 1: Quiz, 2: Success
 
   // Quiz state
@@ -44,24 +46,44 @@ class _BackupSeedScreenState extends ConsumerState<BackupSeedScreen> {
   }
 
   Future<void> _loadWalletMnemonic() async {
-    final authState = ref.read(authProvider);
-    String phrase;
-
-    if (authState.user != null) {
+    try {
+      await ref.read(cryptoIdentityProvider.future);
       final identity =
-          await ref.read(cryptoIdentityProvider.notifier).getOrCreateIdentity();
-      phrase = identity.mnemonic;
-    } else {
-      phrase = await MnemonicService.generateMnemonic();
+          await ref.read(cryptoIdentityProvider.notifier).requireIdentity();
+      if (!mounted) return;
+
+      final words = identity.mnemonic.split(' ');
+      setState(() {
+        _words = words;
+        _loadedContext = identity.context;
+        _loadError = null;
+        _isLoading = false;
+        _prepareQuiz(words);
+      });
+    } on WalletContextUnavailableException {
+      _showUnavailable();
+    } on WalletIdentityUnavailableException {
+      _showUnavailable();
+    } on StaleWalletContextException {
+      _showUnavailable();
+    } catch (_) {
+      if (!mounted) return;
+      setState(() {
+        _words = [];
+        _loadedContext = null;
+        _loadError = 'Could not load the recovery phrase.';
+        _isLoading = false;
+      });
     }
+  }
 
+  void _showUnavailable() {
     if (!mounted) return;
-
-    final words = phrase.split(' ');
     setState(() {
-      _words = words;
+      _words = [];
+      _loadedContext = null;
+      _loadError = 'Wallet unavailable';
       _isLoading = false;
-      _prepareQuiz(words);
     });
   }
 
@@ -71,7 +93,14 @@ class _BackupSeedScreenState extends ConsumerState<BackupSeedScreen> {
 
     List<String> generateOptions(int targetIndex) {
       final target = words[targetIndex];
-      final pool = words.where((w) => w != target).toList();
+      final pool = words.where((w) => w != target).toSet().toList();
+      while (pool.length < 3) {
+        final candidate =
+            bip39EnglishWords[random.nextInt(bip39EnglishWords.length)];
+        if (candidate != target && !pool.contains(candidate)) {
+          pool.add(candidate);
+        }
+      }
       pool.shuffle(random);
       final options = [target, pool[0], pool[1], pool[2]];
       options.shuffle(random);
@@ -87,19 +116,41 @@ class _BackupSeedScreenState extends ConsumerState<BackupSeedScreen> {
     final bio = ref.read(biometricServiceProvider);
     final authorized =
         await bio.authenticate(reason: 'Authenticate to view recovery phrase');
-    if (authorized && mounted) {
+    if (!mounted) return;
+    if (authorized) {
       setState(() => _isRevealed = true);
+      return;
     }
+    setState(() => _isRevealed = false);
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text('Authentication was not completed.')),
+    );
   }
 
-  void _verifyQuiz() {
+  Future<void> _verifyQuiz() async {
     final correct1 = _selectedWord1 == _words[_quizWordIndex1];
     final correct2 = _selectedWord2 == _words[_quizWordIndex2];
     final correct3 = _selectedWord3 == _words[_quizWordIndex3];
 
     if (correct1 && correct2 && correct3) {
-      ref.read(walletBackupStatusProvider.notifier).state = true;
-      setState(() => _currentStep = 2);
+      setState(() => _isConfirming = true);
+      try {
+        await ref.read(walletBackupStatusProvider.notifier).confirm();
+        if (!mounted) return;
+        setState(() {
+          _isConfirming = false;
+          _currentStep = 2;
+        });
+      } catch (_) {
+        if (!mounted) return;
+        setState(() => _isConfirming = false);
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Backup confirmation could not be saved.'),
+            backgroundColor: Colors.redAccent,
+          ),
+        );
+      }
     } else {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
@@ -114,6 +165,9 @@ class _BackupSeedScreenState extends ConsumerState<BackupSeedScreen> {
   @override
   Widget build(BuildContext context) {
     final colors = context.colors;
+    final activeContext = ref.watch(activeWalletContextKeyProvider);
+    final contextMatches =
+        _loadedContext != null && _loadedContext == activeContext;
 
     return Scaffold(
       backgroundColor: colors.background,
@@ -127,14 +181,52 @@ class _BackupSeedScreenState extends ConsumerState<BackupSeedScreen> {
       body: SafeArea(
         child: _isLoading
             ? const Center(child: CircularProgressIndicator())
-            : SingleChildScrollView(
-                padding: const EdgeInsets.all(AppSpacing.md),
-                child: _currentStep == 0
-                    ? _buildViewWordsStep(colors)
-                    : _currentStep == 1
-                        ? _buildQuizStep(colors)
-                        : _buildSuccessStep(colors),
+            : _loadError != null || !contextMatches
+                ? _buildUnavailableState(colors)
+                : SingleChildScrollView(
+                    padding: const EdgeInsets.all(AppSpacing.md),
+                    child: _currentStep == 0
+                        ? _buildViewWordsStep(colors)
+                        : _currentStep == 1
+                            ? _buildQuizStep(colors)
+                            : _buildSuccessStep(colors),
+                  ),
+      ),
+    );
+  }
+
+  Widget _buildUnavailableState(HanbovaColors colors) {
+    final message = _loadError ?? 'Wallet unavailable';
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.all(AppSpacing.lg),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(Icons.lock_outline, color: colors.textSecondary, size: 40),
+            const SizedBox(height: AppSpacing.sm),
+            Text(
+              message,
+              style: AppTypography.titleMedium.copyWith(
+                color: colors.textPrimary,
               ),
+              textAlign: TextAlign.center,
+            ),
+            if (_loadError != 'Wallet unavailable') ...[
+              const SizedBox(height: AppSpacing.md),
+              OutlinedButton(
+                onPressed: () {
+                  setState(() {
+                    _isLoading = true;
+                    _loadError = null;
+                  });
+                  _loadWalletMnemonic();
+                },
+                child: const Text('Try Again'),
+              ),
+            ],
+          ],
+        ),
       ),
     );
   }
@@ -282,9 +374,11 @@ class _BackupSeedScreenState extends ConsumerState<BackupSeedScreen> {
           onPressed: (_selectedWord1 != null &&
                   _selectedWord2 != null &&
                   _selectedWord3 != null)
-              ? _verifyQuiz
+              ? (_isConfirming ? null : _verifyQuiz)
               : null,
-          child: const Text('Verify & Complete Backup'),
+          child: Text(
+            _isConfirming ? 'Saving…' : 'Verify & Complete Backup',
+          ),
         ),
       ],
     );

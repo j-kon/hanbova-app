@@ -8,6 +8,7 @@ import '../../../core/crypto/bip39_words.dart';
 import '../../../core/crypto/crypto_identity_service.dart';
 import '../../../core/network/network_environment.dart';
 import '../../../core/networking/api_client.dart';
+import '../../../core/security/wallet_backup_store.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_radius.dart';
 import '../../../core/theme/app_spacing.dart';
@@ -49,6 +50,7 @@ class _WalletSetupScreenState extends ConsumerState<WalletSetupScreen> {
   List<String> _options2 = [];
   List<String> _options3 = [];
   String? _quizError;
+  bool _isConfirmingBackup = false;
 
   // Mint probe state
   bool _isProbingMint = false;
@@ -192,16 +194,28 @@ class _WalletSetupScreenState extends ConsumerState<WalletSetupScreen> {
     _options3 = generateOptions(_quizWordIndex3);
   }
 
-  void _verifyQuiz() {
+  Future<void> _verifyQuiz() async {
     final correct1 = _selectedWord1 == _mnemonicWords[_quizWordIndex1];
     final correct2 = _selectedWord2 == _mnemonicWords[_quizWordIndex2];
     final correct3 = _selectedWord3 == _mnemonicWords[_quizWordIndex3];
 
     if (correct1 && correct2 && correct3) {
-      setState(() {
-        _quizError = null;
-        _currentStep = 3; // Proceed to Security
-      });
+      setState(() => _isConfirmingBackup = true);
+      try {
+        await ref.read(walletBackupStatusProvider.notifier).confirm();
+        if (!mounted) return;
+        setState(() {
+          _isConfirmingBackup = false;
+          _quizError = null;
+          _currentStep = 3; // Proceed to Security
+        });
+      } catch (_) {
+        if (!mounted) return;
+        setState(() {
+          _isConfirmingBackup = false;
+          _quizError = 'Backup confirmation could not be saved. Please retry.';
+        });
+      }
     } else {
       setState(() {
         _quizError =
@@ -553,9 +567,9 @@ class _WalletSetupScreenState extends ConsumerState<WalletSetupScreen> {
             onPressed: (_selectedWord1 != null &&
                     _selectedWord2 != null &&
                     _selectedWord3 != null)
-                ? _verifyQuiz
+                ? (_isConfirmingBackup ? null : _verifyQuiz)
                 : null,
-            child: const Text('Verify Backup'),
+            child: Text(_isConfirmingBackup ? 'Saving…' : 'Verify Backup'),
           ),
         ],
       ),

@@ -4,13 +4,13 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../../core/networking/api_client.dart';
 import '../../../core/currency/currency_provider.dart';
+import '../../../core/security/wallet_backup_store.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_radius.dart';
 import '../../../core/theme/app_spacing.dart';
 import '../../../core/theme/app_typography.dart';
 import '../../../core/theme/theme_controller.dart';
 import '../../auth/providers/auth_provider.dart';
-import '../../security/presentation/backup_seed_screen.dart';
 
 class ProfileScreen extends ConsumerStatefulWidget {
   const ProfileScreen({super.key});
@@ -205,6 +205,8 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
     final isDev = ref.watch(appConfigProvider).isDevelopment;
     final currentTheme = ref.watch(themeControllerProvider);
     final currentCurrency = ref.watch(currencyProvider);
+    final isBackedUp =
+        ref.watch(walletBackupStatusProvider).valueOrNull ?? false;
 
     final displayName =
         user?.displayName.isNotEmpty == true ? user!.displayName : 'Jeremiah';
@@ -330,7 +332,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
               icon: Icons.key_rounded,
               title: 'Recovery Phrase Backup',
               subtitle: '12-word recovery phrase for test-build backup',
-              trailing: ref.watch(walletBackupStatusProvider)
+              trailing: isBackedUp
                   ? Container(
                       padding: const EdgeInsets.symmetric(
                           horizontal: 8, vertical: 3),

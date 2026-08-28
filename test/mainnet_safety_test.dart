@@ -5,10 +5,24 @@ import 'package:hanbova_app/core/cashu/cashu_wallet_provider.dart';
 import 'package:hanbova_app/core/cashu/cashu_wallet_service.dart';
 import 'package:hanbova_app/core/cashu/mint_validator.dart';
 import 'package:hanbova_app/core/network/network_environment.dart';
-import 'package:hanbova_app/features/security/presentation/backup_seed_screen.dart';
+import 'package:hanbova_app/core/security/wallet_backup_store.dart';
+import 'package:hanbova_app/core/wallet/wallet_context.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:http/http.dart' as http;
 import 'package:http/testing.dart';
+
+final class MemoryWalletBackupStore implements WalletBackupStore {
+  final Map<WalletContextKey, bool> values = {};
+
+  @override
+  Future<bool> isConfirmed(WalletContextKey context) async =>
+      values[context] ?? false;
+
+  @override
+  Future<void> setConfirmed(WalletContextKey context, bool value) async {
+    values[context] = value;
+  }
+}
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
@@ -87,14 +101,24 @@ void main() {
     });
 
     test('WalletBackupStatusProvider defaults to false until backup completed',
-        () {
-      final container = ProviderContainer();
+        () async {
+      const context = WalletContextKey(
+        userId: 'alice',
+        network: HanbovaNetwork.cashuTest,
+        storagePrefix: 'wallet_cashu_test',
+      );
+      final store = MemoryWalletBackupStore();
+      final container = ProviderContainer(overrides: [
+        activeWalletContextKeyProvider.overrideWithValue(context),
+        walletBackupStoreProvider.overrideWithValue(store),
+      ]);
       addTearDown(container.dispose);
 
-      expect(container.read(walletBackupStatusProvider), isFalse);
+      expect(await container.read(walletBackupStatusProvider.future), isFalse);
 
-      container.read(walletBackupStatusProvider.notifier).state = true;
-      expect(container.read(walletBackupStatusProvider), isTrue);
+      await container.read(walletBackupStatusProvider.notifier).confirm();
+      expect(container.read(walletBackupStatusProvider).valueOrNull, isTrue);
+      expect(store.values[context], isTrue);
     });
 
     test(
