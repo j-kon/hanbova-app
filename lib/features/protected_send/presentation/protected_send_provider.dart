@@ -131,11 +131,7 @@ class ProtectedSendNotifier extends StateNotifier<ProtectedSendState> {
 
       // 2. Generate or load Sender Cryptographic Identity
       final cryptoService = _ref.read(cryptoIdentityProvider.notifier);
-      await cryptoService.getOrCreateIdentity(
-        userId: senderId,
-        network: config.network,
-        config: config,
-      );
+      await cryptoService.requireIdentity();
 
       final now = DateTime.now();
       final expiry = now.add(Duration(seconds: expirationSeconds));

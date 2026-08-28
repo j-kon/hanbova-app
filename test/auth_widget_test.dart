@@ -9,6 +9,7 @@ import 'package:hanbova_app/core/crypto/crypto_identity_service.dart';
 import 'package:hanbova_app/core/network/network_environment.dart';
 import 'package:hanbova_app/core/networking/api_client.dart';
 import 'package:hanbova_app/core/theme/app_theme.dart';
+import 'package:hanbova_app/core/wallet/wallet_context.dart';
 import 'package:hanbova_app/features/auth/models/user_profile.dart';
 import 'package:hanbova_app/features/auth/providers/auth_provider.dart';
 import 'package:hanbova_app/features/auth/screens/forgot_password_screen.dart';
@@ -36,11 +37,7 @@ class MockCryptoIdentityNotifier extends CryptoIdentityNotifier {
   Future<WalletCryptoIdentity?> build() async => _mockIdentity;
 
   @override
-  Future<WalletCryptoIdentity> getOrCreateIdentity({
-    required String userId,
-    required HanbovaNetwork network,
-    NetworkConfig? config,
-  }) async {
+  Future<WalletCryptoIdentity> getOrCreateIdentity() async {
     return _mockIdentity;
   }
 
@@ -176,9 +173,11 @@ void main() {
 
       final mockKeyPair = await X25519().newKeyPair();
       final mockIdentity = WalletCryptoIdentity(
-        userId: 'test_user_id',
-        network: HanbovaNetwork.local,
-        walletEnvironment: 'wallet_local',
+        context: const WalletContextKey(
+          userId: 'test_user_id',
+          network: HanbovaNetwork.local,
+          storagePrefix: 'wallet_local',
+        ),
         protectedPaymentPubkey:
             '02abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789',
         transportEncryptionPubkey:
@@ -256,9 +255,11 @@ void main() {
 
       final mockKeyPair = await X25519().newKeyPair();
       final mockIdentity = WalletCryptoIdentity(
-        userId: 'test_user_id',
-        network: HanbovaNetwork.local,
-        walletEnvironment: 'wallet_local',
+        context: const WalletContextKey(
+          userId: 'test_user_id',
+          network: HanbovaNetwork.local,
+          storagePrefix: 'wallet_local',
+        ),
         protectedPaymentPubkey:
             '02abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789',
         transportEncryptionPubkey:
@@ -330,9 +331,11 @@ void main() {
 
       final mockKeyPair = await X25519().newKeyPair();
       final mockIdentity = WalletCryptoIdentity(
-        userId: 'test_user_id',
-        network: HanbovaNetwork.local,
-        walletEnvironment: 'wallet_local',
+        context: const WalletContextKey(
+          userId: 'test_user_id',
+          network: HanbovaNetwork.local,
+          storagePrefix: 'wallet_local',
+        ),
         protectedPaymentPubkey:
             '02abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789',
         transportEncryptionPubkey:

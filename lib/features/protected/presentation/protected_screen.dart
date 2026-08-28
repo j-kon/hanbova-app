@@ -12,7 +12,6 @@ import '../../../core/theme/app_typography.dart';
 import '../../../core/utils/formatters.dart';
 import '../../../core/crypto/crypto_identity_service.dart';
 import '../../../core/crypto/encrypted_envelope_service.dart';
-import '../../../core/network/network_environment.dart';
 import '../data/protected_message_service.dart';
 import '../../auth/providers/auth_provider.dart';
 import '../../protected_send/data/payment_intent_repository.dart';
@@ -804,14 +803,9 @@ class _IncomingTab extends ConsumerWidget {
                     );
 
                     // 2. Pre-decryption fingerprint check
-                    final config = ref.read(activeNetworkConfigProvider);
                     final cryptoService =
                         ref.read(cryptoIdentityProvider.notifier);
-                    final identity = await cryptoService.getOrCreateIdentity(
-                      userId: authState.user!.id,
-                      network: config.network,
-                      config: config,
-                    );
+                    final identity = await cryptoService.requireIdentity();
 
                     final currentFingerprint = identity.transportKeyFingerprint;
                     final recordedFingerprint =

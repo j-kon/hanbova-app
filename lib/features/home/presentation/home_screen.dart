@@ -16,6 +16,7 @@ import '../../../core/theme/app_shadows.dart';
 import '../../../core/theme/app_spacing.dart';
 import '../../../core/theme/app_typography.dart';
 import '../../../core/utils/formatters.dart';
+import '../../../core/wallet/wallet_context.dart';
 import '../../auth/providers/auth_provider.dart';
 import '../../protected/data/protected_message_service.dart';
 import '../../protected_send/data/payment_intent_repository.dart';
@@ -33,7 +34,7 @@ class HomeScreen extends ConsumerStatefulWidget {
 
 class _HomeScreenState extends ConsumerState<HomeScreen> {
   Timer? _syncTimer;
-  bool _keysSynced = false;
+  String? _syncedContextId;
 
   String _getGreeting() {
     final hour = DateTime.now().hour;
@@ -61,23 +62,18 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
 
   Future<void> _syncInbox() async {
     final authState = ref.read(authProvider);
-    if (authState.user == null) return;
+    final walletContext = ref.read(activeWalletContextKeyProvider);
+    if (authState.user == null || walletContext == null) return;
     try {
-      if (!_keysSynced) {
-        final config = ref.read(activeNetworkConfigProvider);
+      if (_syncedContextId != walletContext.storageId) {
         final identity =
-            await ref.read(cryptoIdentityProvider.notifier).getOrCreateIdentity(
-                  userId: authState.user!.id,
-                  network: config.network,
-                  config: config,
-                );
+            await ref.read(cryptoIdentityProvider.notifier).requireIdentity();
         final apiClient = ref.read(apiClientProvider);
         await ref.read(cryptoIdentityProvider.notifier).publishPublicKeys(
               apiClient: apiClient,
               identity: identity,
-              walletEnvironment: config.storagePrefix,
             );
-        _keysSynced = true;
+        _syncedContextId = walletContext.storageId;
       }
       final messageService = ref.read(protectedMessageServiceProvider);
       final intentRepo = ref.read(paymentIntentRepositoryProvider);

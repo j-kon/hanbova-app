@@ -5,7 +5,6 @@ import '../../../core/cashu/cashu_wallet_provider.dart';
 import '../../../core/crypto/crypto_identity_service.dart';
 import '../../../core/crypto/encrypted_envelope_service.dart';
 import '../../../core/currency/currency_provider.dart';
-import '../../../core/network/network_environment.dart';
 import '../../../core/notifications/in_app_notification.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_radius.dart';
@@ -125,13 +124,8 @@ class _ClaimPaymentScreenState extends ConsumerState<ClaimPaymentScreen> {
             'No encrypted protected envelope found for this payment intent in your inbox.'),
       );
 
-      final activeConfig = ref.read(activeNetworkConfigProvider);
       final cryptoService = ref.read(cryptoIdentityProvider.notifier);
-      final identity = await cryptoService.getOrCreateIdentity(
-        userId: authState.user!.id,
-        network: activeConfig.network,
-        config: activeConfig,
-      );
+      final identity = await cryptoService.requireIdentity();
 
       // Pre-decryption fingerprint check:
       final currentFingerprint = identity.transportKeyFingerprint;

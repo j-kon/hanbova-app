@@ -10,7 +10,6 @@ import '../../../core/theme/app_radius.dart';
 import '../../../core/theme/app_spacing.dart';
 import '../../../core/theme/app_typography.dart';
 import '../../auth/providers/auth_provider.dart';
-import '../../../core/network/network_environment.dart';
 
 final walletBackupStatusProvider = StateProvider<bool>((ref) => false);
 
@@ -46,13 +45,11 @@ class _BackupSeedScreenState extends ConsumerState<BackupSeedScreen> {
 
   Future<void> _loadWalletMnemonic() async {
     final authState = ref.read(authProvider);
-    final network = ref.read(networkEnvironmentProvider);
     String phrase;
 
     if (authState.user != null) {
-      final identity = await ref
-          .read(cryptoIdentityProvider.notifier)
-          .getOrCreateIdentity(userId: authState.user!.id, network: network);
+      final identity =
+          await ref.read(cryptoIdentityProvider.notifier).getOrCreateIdentity();
       phrase = identity.mnemonic;
     } else {
       phrase = await MnemonicService.generateMnemonic();

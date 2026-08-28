@@ -85,16 +85,9 @@ class _WalletSetupScreenState extends ConsumerState<WalletSetupScreen> {
         return;
       }
 
-      final userId = auth.user!.id;
-      final config = ref.read(activeNetworkConfigProvider);
-
       // 1. Get or create deterministic cryptographic identity
       final identity =
-          await ref.read(cryptoIdentityProvider.notifier).getOrCreateIdentity(
-                userId: userId,
-                network: config.network,
-                config: config,
-              );
+          await ref.read(cryptoIdentityProvider.notifier).getOrCreateIdentity();
 
       // 2. Publish public keys to backend directory
       final apiClient = ref.read(apiClientProvider);
@@ -104,7 +97,6 @@ class _WalletSetupScreenState extends ConsumerState<WalletSetupScreen> {
           await ref.read(cryptoIdentityProvider.notifier).publishPublicKeys(
                 apiClient: apiClient,
                 identity: identity,
-                walletEnvironment: config.storagePrefix,
               );
           _keyPubStatus = KeyPublicationStatus.published;
           _keyPubError = null;

@@ -4,12 +4,10 @@ import 'package:go_router/go_router.dart';
 import '../../../core/cashu/cashu_wallet_provider.dart';
 import '../../../core/crypto/crypto_identity_service.dart';
 import '../../../core/crypto/mnemonic_service.dart';
-import '../../../core/network/network_environment.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_radius.dart';
 import '../../../core/theme/app_spacing.dart';
 import '../../../core/theme/app_typography.dart';
-import '../../auth/providers/auth_provider.dart';
 import 'backup_seed_screen.dart';
 
 class RestoreSeedScreen extends ConsumerStatefulWidget {
@@ -103,14 +101,8 @@ class _RestoreSeedScreenState extends ConsumerState<RestoreSeedScreen> {
         return;
       }
 
-      final user = ref.read(currentUserProvider);
-      final userId = user?.id ?? 'default_user';
-      final network = ref.read(networkEnvironmentProvider);
-
       await ref.read(cryptoIdentityProvider.notifier).restoreFromMnemonic(
             mnemonic: phrase,
-            userId: userId,
-            network: network,
           );
 
       ref.read(walletBackupStatusProvider.notifier).state = true;

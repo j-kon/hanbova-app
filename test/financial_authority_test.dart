@@ -518,6 +518,13 @@ void main() {
       MethodChannel('plugins.it_nomads.com/flutter_secure_storage');
 
   setUp(() {
+    const mnemonic =
+        'abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon about';
+    memoryStorage['hanbova_wallet_local_usr_alice_123_mnemonic'] = mnemonic;
+    memoryStorage['hanbova_wallet_cashu_test_usr_alice_123_mnemonic'] =
+        mnemonic;
+    memoryStorage['hanbova_wallet_mainnet_pilot_usr_alice_123_mnemonic'] =
+        mnemonic;
     TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
         .setMockMethodCallHandler(storageChannel,
             (MethodCall methodCall) async {
@@ -1195,10 +1202,7 @@ void main() {
 
       // Create a genuine encrypted envelope for testUser
       final cryptoService = container.read(cryptoIdentityProvider.notifier);
-      final recipientIdentity = await cryptoService.getOrCreateIdentity(
-        userId: testUser.id,
-        network: HanbovaNetwork.local,
-      );
+      final recipientIdentity = await cryptoService.getOrCreateIdentity();
 
       final envelopeService = EncryptedEnvelopeService();
       const canonicalPaymentId = 'intent_incoming_999';
