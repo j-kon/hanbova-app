@@ -100,10 +100,13 @@ class ProtectedMessageService {
     String username, {
     String? environment,
   }) async {
-    final clean = username.trim().replaceAll('@', '');
+    final clean = username.trim().startsWith('@')
+        ? username.trim().substring(1)
+        : username.trim();
+    final encoded = Uri.encodeComponent(clean);
     final envParam = environment != null ? '?environment=$environment' : '';
     final response =
-        await _apiClient.get('/users/$clean/payment-profile$envParam');
+        await _apiClient.get('/users/$encoded/payment-profile$envParam');
     return UserPaymentProfile.fromJson(response);
   }
 

@@ -63,7 +63,9 @@ class ProtectedSendNotifier extends StateNotifier<ProtectedSendState> {
 
   /// Resolves the recipient payment profile before confirmation.
   Future<UserPaymentProfile?> resolveRecipient(String username) async {
-    final clean = username.trim().replaceAll('@', '').toLowerCase();
+    final clean = username.trim().startsWith('@')
+        ? username.trim().substring(1).toLowerCase()
+        : username.trim().toLowerCase();
     state = state.copyWith(
       isLoading: true,
       errorMessage: null,
@@ -78,11 +80,15 @@ class ProtectedSendNotifier extends StateNotifier<ProtectedSendState> {
       state = state.copyWith(isLoading: false, resolvedRecipient: profile);
       return profile;
     } catch (e) {
+      final displayHandle =
+          username.trim().startsWith('@') || username.contains('@')
+              ? username.trim()
+              : '@${username.trim()}';
       state = state.copyWith(
         isLoading: false,
         clearResolvedRecipient: true,
         errorMessage:
-            'Recipient @$username could not be found or has not registered payment keys for this environment.',
+            'Recipient $displayHandle could not be found or has not registered payment keys for this environment.',
       );
       return null;
     }
@@ -111,13 +117,17 @@ class ProtectedSendNotifier extends StateNotifier<ProtectedSendState> {
 
       final senderUsername = authState.user!.username;
       final senderId = authState.user!.id;
-      final cleanRecipient =
-          recipientIdentifier.trim().replaceAll('@', '').toLowerCase();
+      final cleanRecipient = recipientIdentifier.trim().startsWith('@')
+          ? recipientIdentifier.trim().substring(1).toLowerCase()
+          : recipientIdentifier.trim().toLowerCase();
 
       // 1. Resolve recipient keys strictly matching current entered recipient
       UserPaymentProfile? recipientProfile;
       if (state.resolvedRecipient != null &&
-          state.resolvedRecipient!.username.toLowerCase() == cleanRecipient &&
+          (state.resolvedRecipient!.username.toLowerCase() == cleanRecipient ||
+              state.resolvedRecipient!.handle.toLowerCase() == cleanRecipient ||
+              state.resolvedRecipient!.handle.toLowerCase() ==
+                  '@$cleanRecipient') &&
           state.resolvedRecipient!.walletEnvironment == config.storagePrefix) {
         recipientProfile = state.resolvedRecipient;
       } else {
@@ -125,8 +135,12 @@ class ProtectedSendNotifier extends StateNotifier<ProtectedSendState> {
       }
 
       if (recipientProfile == null) {
+        final display = recipientIdentifier.trim().startsWith('@') ||
+                recipientIdentifier.contains('@')
+            ? recipientIdentifier.trim()
+            : '@${recipientIdentifier.trim()}';
         throw StateError(
-            'Recipient @$cleanRecipient could not be found or has not registered payment keys.');
+            'Recipient $display could not be found or has not registered payment keys.');
       }
 
       // 2. Generate or load Sender Cryptographic Identity
@@ -275,7 +289,12 @@ class ProtectedSendNotifier extends StateNotifier<ProtectedSendState> {
           );
       return true;
     } catch (e) {
-      state = state.copyWith(isLoading: false, errorMessage: e.toString());
+      final cleanMsg = e
+          .toString()
+          .replaceAll('Bad state:', '')
+          .replaceAll('Exception:', '')
+          .trim();
+      state = state.copyWith(isLoading: false, errorMessage: cleanMsg);
       return false;
     }
   }
@@ -301,11 +320,16 @@ class ProtectedSendNotifier extends StateNotifier<ProtectedSendState> {
             throw StateError('Transaction $canonicalPaymentId not found'),
       );
 
-      final cleanRecipient =
-          tx.recipientOrSender.trim().replaceAll('@', '').toLowerCase();
+      final cleanRecipient = tx.recipientOrSender.trim().startsWith('@')
+          ? tx.recipientOrSender.trim().substring(1).toLowerCase()
+          : tx.recipientOrSender.trim().toLowerCase();
       final recipientProfile = await resolveRecipient(cleanRecipient);
       if (recipientProfile == null) {
-        throw StateError('Recipient @$cleanRecipient could not be found');
+        final display = tx.recipientOrSender.trim().startsWith('@') ||
+                tx.recipientOrSender.contains('@')
+            ? tx.recipientOrSender.trim()
+            : '@${tx.recipientOrSender.trim()}';
+        throw StateError('Recipient $display could not be found');
       }
 
       final config = _ref.read(activeNetworkConfigProvider);
@@ -330,7 +354,7 @@ class ProtectedSendNotifier extends StateNotifier<ProtectedSendState> {
         mintUrl: config.defaultMintUrl,
         amountSats: escrow.amountSats,
         senderUsername: authState.user!.username,
-        recipientUsername: cleanRecipient,
+        recipientUsername: recipientProfile.username,
         locktime: escrow.locktime.millisecondsSinceEpoch ~/ 1000,
       );
 
@@ -340,7 +364,7 @@ class ProtectedSendNotifier extends StateNotifier<ProtectedSendState> {
       );
 
       await _messageService.sendProtectedMessage(
-        recipientUsername: cleanRecipient,
+        recipientUsername: recipientProfile.username,
         encryptedPayload: ciphertext,
         payloadVersion: 1,
         paymentIntentId: canonicalPaymentId,
@@ -370,7 +394,12 @@ class ProtectedSendNotifier extends StateNotifier<ProtectedSendState> {
       state = state.copyWith(isLoading: false);
       return true;
     } catch (e) {
-      state = state.copyWith(isLoading: false, errorMessage: e.toString());
+      final cleanMsg = e
+          .toString()
+          .replaceAll('Bad state:', '')
+          .replaceAll('Exception:', '')
+          .trim();
+      state = state.copyWith(isLoading: false, errorMessage: cleanMsg);
       return false;
     }
   }
