@@ -125,7 +125,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
       try {
         final intents = await intentRepo.getPaymentIntents();
         if (mounted) {
-          ref.read(transactionsProvider.notifier).syncPaymentIntents(
+          await ref.read(transactionsProvider.notifier).syncPaymentIntents(
                 intents: intents,
                 currentUserId: authState.user!.id,
                 currentUsername: authState.user!.username,
@@ -177,7 +177,9 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
         child: RefreshIndicator(
           onRefresh: () async {
             ref.invalidate(cashuBalanceProvider);
-            ref.invalidate(transactionsProvider);
+            await ref.read(transactionsProvider.notifier).reconcile(
+                  sync: _syncInbox,
+                );
           },
           child: SingleChildScrollView(
             physics: const AlwaysScrollableScrollPhysics(),
@@ -186,6 +188,23 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
+                if (transactions.isStale) ...[
+                  Container(
+                    padding: const EdgeInsets.all(AppSpacing.sm),
+                    decoration: BoxDecoration(
+                      color: Colors.amber.withValues(alpha: 0.12),
+                      borderRadius: AppRadius.smRadius,
+                    ),
+                    child: Text(
+                      transactions.syncMessage ??
+                          'Showing saved activity while offline.',
+                      style: AppTypography.bodySmall.copyWith(
+                        color: Colors.amber,
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: AppSpacing.sm),
+                ],
                 // 1. Header (User profile avatar, Greeting, Actions)
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -652,8 +671,8 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
 
                 // 2.5 Other Balances (Compact card preserving Bitcoin as primary hero)
                 Container(
-                  padding: const EdgeInsets.symmetric(
-                      horizontal: 14, vertical: 10),
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
                   decoration: BoxDecoration(
                     color: colors.surfaceCard,
                     borderRadius: AppRadius.mdRadius,

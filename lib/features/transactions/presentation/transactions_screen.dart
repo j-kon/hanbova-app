@@ -58,7 +58,7 @@ class _TransactionsScreenState extends ConsumerState<TransactionsScreen> {
       final intentRepo = ref.read(paymentIntentRepositoryProvider);
       final intents = await intentRepo.getPaymentIntents();
       if (!mounted) return;
-      ref.read(transactionsProvider.notifier).syncPaymentIntents(
+      await ref.read(transactionsProvider.notifier).syncPaymentIntents(
             intents: intents,
             currentUserId: authState.user!.id,
             currentUsername: authState.user!.username,

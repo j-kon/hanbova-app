@@ -146,7 +146,7 @@ class _SendScreenState extends ConsumerState<SendScreen> {
       final preimage = meltResult.preimage;
       ref.invalidate(cashuBalanceProvider);
 
-      ref.read(transactionsProvider.notifier).addTransaction(
+      await ref.read(transactionsProvider.notifier).addTransaction(
             TransactionModel(
               id: 'ln_pay_${DateTime.now().millisecondsSinceEpoch}',
               type: TransactionType.instantSend,

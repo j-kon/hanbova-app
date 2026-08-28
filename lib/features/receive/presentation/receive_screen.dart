@@ -118,7 +118,7 @@ class _ReceiveScreenState extends ConsumerState<ReceiveScreen> {
       final minted = await cashuWallet.mintQuote(_quoteId!);
       ref.invalidate(cashuBalanceProvider);
 
-      ref.read(transactionsProvider.notifier).addTransaction(
+      await ref.read(transactionsProvider.notifier).addTransaction(
             TransactionModel(
               id: 'mint_${DateTime.now().millisecondsSinceEpoch}',
               type: TransactionType.instantReceive,

@@ -316,6 +316,87 @@ class TransactionModel {
     }
   }
 
+  Map<String, Object?> toJson() => {
+        'id': id,
+        'type': type.name,
+        'status': status.name,
+        'amountSats': amountSats,
+        'recipientOrSender': recipientOrSender,
+        'description': description,
+        'createdAt': createdAt.toUtc().toIso8601String(),
+        'expiresAt': expiresAt?.toUtc().toIso8601String(),
+        'claimReference': claimReference,
+        'coordinationSyncPending': coordinationSyncPending,
+        'syncPendingStatus': syncPendingStatus,
+      };
+
+  factory TransactionModel.fromJson(Map<String, dynamic> json) {
+    T enumValue<T extends Enum>(List<T> values, Object? raw, String field) {
+      if (raw is! String) {
+        throw FormatException('Invalid transaction $field.');
+      }
+      return values.firstWhere(
+        (value) => value.name == raw,
+        orElse: () => throw FormatException('Invalid transaction $field.'),
+      );
+    }
+
+    String requiredString(String field) {
+      final value = json[field];
+      if (value is! String || value.isEmpty) {
+        throw FormatException('Invalid transaction $field.');
+      }
+      return value;
+    }
+
+    DateTime requiredDate(String field) {
+      final raw = requiredString(field);
+      return DateTime.tryParse(raw)?.toUtc() ??
+          (throw FormatException('Invalid transaction $field.'));
+    }
+
+    DateTime? optionalDate(String field) {
+      final raw = json[field];
+      if (raw == null) return null;
+      if (raw is! String) {
+        throw FormatException('Invalid transaction $field.');
+      }
+      return DateTime.tryParse(raw)?.toUtc() ??
+          (throw FormatException('Invalid transaction $field.'));
+    }
+
+    String? optionalString(String field) {
+      final value = json[field];
+      if (value == null) return null;
+      if (value is! String) {
+        throw FormatException('Invalid transaction $field.');
+      }
+      return value;
+    }
+
+    final amountSats = json['amountSats'];
+    final coordinationSyncPending = json['coordinationSyncPending'] ?? false;
+    if (amountSats is! int ||
+        amountSats < 0 ||
+        coordinationSyncPending is! bool) {
+      throw const FormatException('Invalid transaction values.');
+    }
+
+    return TransactionModel(
+      id: requiredString('id'),
+      type: enumValue(TransactionType.values, json['type'], 'type'),
+      status: enumValue(TransactionStatus.values, json['status'], 'status'),
+      amountSats: amountSats,
+      recipientOrSender: requiredString('recipientOrSender'),
+      description: optionalString('description'),
+      createdAt: requiredDate('createdAt'),
+      expiresAt: optionalDate('expiresAt'),
+      claimReference: optionalString('claimReference'),
+      coordinationSyncPending: coordinationSyncPending,
+      syncPendingStatus: optionalString('syncPendingStatus'),
+    );
+  }
+
   static const Object _sentinel = Object();
 
   TransactionModel copyWith({

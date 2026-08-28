@@ -786,7 +786,7 @@ class _SpendScreenState extends ConsumerState<SpendScreen> {
           break;
       }
 
-      ref.read(transactionsProvider.notifier).recordBillPayment(
+      await ref.read(transactionsProvider.notifier).recordBillPayment(
             id: tx.id,
             type: txType,
             billerName: biller.name,

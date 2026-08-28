@@ -530,6 +530,7 @@ void main() {
       MethodChannel('plugins.it_nomads.com/flutter_secure_storage');
 
   setUp(() {
+    memoryStorage.clear();
     const mnemonic =
         'abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon about';
     memoryStorage['hanbova_wallet_local_usr_alice_123_mnemonic'] = mnemonic;
@@ -966,6 +967,8 @@ void main() {
         () async {
       final container = ProviderContainer(
         overrides: [
+          authProvider.overrideWith((ref) =>
+              MockAuthNotifier(AuthState.authenticated(testUser, 'jwt'))),
           cashuWalletServiceProvider.overrideWithValue(null),
         ],
       );
@@ -981,7 +984,9 @@ void main() {
         createdAt: DateTime.now(),
         claimReference: 'cashuBmock_token',
       );
-      container.read(transactionsProvider.notifier).addTransaction(tx);
+      await container
+          .read(transactionsProvider.notifier)
+          .addTransaction(tx);
 
       final cashuWallet = container.read(cashuWalletServiceProvider);
 
@@ -1010,6 +1015,8 @@ void main() {
       final mockWallet = MockFailingCashuWalletService();
       final container = ProviderContainer(
         overrides: [
+          authProvider.overrideWith((ref) =>
+              MockAuthNotifier(AuthState.authenticated(testUser, 'jwt'))),
           cashuWalletServiceProvider.overrideWithValue(mockWallet),
         ],
       );
@@ -1025,7 +1032,9 @@ void main() {
         createdAt: DateTime.now(),
         claimReference: 'cashuBmock_token',
       );
-      container.read(transactionsProvider.notifier).addTransaction(tx);
+      await container
+          .read(transactionsProvider.notifier)
+          .addTransaction(tx);
 
       final cashuWallet = container.read(cashuWalletServiceProvider)!;
 
@@ -1050,6 +1059,8 @@ void main() {
         () async {
       final container = ProviderContainer(
         overrides: [
+          authProvider.overrideWith((ref) =>
+              MockAuthNotifier(AuthState.authenticated(testUser, 'jwt'))),
           cashuWalletServiceProvider.overrideWithValue(null),
         ],
       );
@@ -1065,7 +1076,9 @@ void main() {
         createdAt: DateTime.now().subtract(const Duration(hours: 48)),
         expiresAt: DateTime.now().subtract(const Duration(hours: 24)),
       );
-      container.read(transactionsProvider.notifier).addTransaction(tx);
+      await container
+          .read(transactionsProvider.notifier)
+          .addTransaction(tx);
 
       final cashuWallet = container.read(cashuWalletServiceProvider);
 
@@ -1091,6 +1104,8 @@ void main() {
       final mockWallet = MockFailingCashuWalletService();
       final container = ProviderContainer(
         overrides: [
+          authProvider.overrideWith((ref) =>
+              MockAuthNotifier(AuthState.authenticated(testUser, 'jwt'))),
           cashuWalletServiceProvider.overrideWithValue(mockWallet),
         ],
       );
@@ -1106,7 +1121,9 @@ void main() {
         createdAt: DateTime.now(),
         expiresAt: DateTime.now().add(const Duration(hours: 24)),
       );
-      container.read(transactionsProvider.notifier).addTransaction(tx);
+      await container
+          .read(transactionsProvider.notifier)
+          .addTransaction(tx);
 
       final cashuWallet = container.read(cashuWalletServiceProvider)!;
 
@@ -1261,7 +1278,9 @@ void main() {
         createdAt: DateTime.now(),
         claimReference: 'hnbv_claim_ref_999',
       );
-      container.read(transactionsProvider.notifier).addTransaction(incomingTx);
+      await container
+          .read(transactionsProvider.notifier)
+          .addTransaction(incomingTx);
 
       // Execute incoming claim flow: fetch envelope -> decrypt -> CDK receive
       final inbox = await mockMessageService.getInbox();
@@ -1277,7 +1296,7 @@ void main() {
         token: decrypted.cashuToken,
         paymentId: incomingTx.id,
       );
-      container
+      await container
           .read(transactionsProvider.notifier)
           .updateTransactionStatus(incomingTx.id, TransactionStatus.completed);
 
@@ -1381,8 +1400,13 @@ void main() {
 
     test(
         'clearCoordinationSyncPending explicitly clears syncPendingStatus to null',
-        () {
-      final container = ProviderContainer();
+        () async {
+      final container = ProviderContainer(
+        overrides: [
+          authProvider.overrideWith((ref) =>
+              MockAuthNotifier(AuthState.authenticated(testUser, 'jwt'))),
+        ],
+      );
       addTearDown(container.dispose);
 
       final tx = TransactionModel(
@@ -1396,13 +1420,15 @@ void main() {
         syncPendingStatus: 'claimable',
       );
 
-      container.read(transactionsProvider.notifier).addTransaction(tx);
+      await container
+          .read(transactionsProvider.notifier)
+          .addTransaction(tx);
       final initialTx = container.read(transactionsProvider).first;
       expect(initialTx.coordinationSyncPending, isTrue);
       expect(initialTx.syncPendingStatus, equals('claimable'));
 
       // Clear coordination sync pending tracking
-      container
+      await container
           .read(transactionsProvider.notifier)
           .clearCoordinationSyncPending(tx.id);
 
@@ -1446,7 +1472,9 @@ void main() {
         recipientOrSender: '@$recipientUsername',
         createdAt: DateTime.now(),
       );
-      container.read(transactionsProvider.notifier).addTransaction(tx);
+      await container
+          .read(transactionsProvider.notifier)
+          .addTransaction(tx);
 
       // 2. Save an existing escrow in Mainnet Pilot storage namespace
       final storage = CashuWalletStorage();

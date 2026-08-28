@@ -111,8 +111,7 @@ class _PayoutsModalContentState extends ConsumerState<_PayoutsModalContent> {
             decoration: BoxDecoration(
               color: colors.primary.withValues(alpha: 0.1),
               borderRadius: BorderRadius.circular(10),
-              border:
-                  Border.all(color: colors.primary.withValues(alpha: 0.25)),
+              border: Border.all(color: colors.primary.withValues(alpha: 0.25)),
             ),
             child: Row(
               children: [
@@ -258,8 +257,7 @@ class _PayoutsModalContentState extends ConsumerState<_PayoutsModalContent> {
                   corr.isMobileMoney
                       ? 'Mobile Number / Account'
                       : 'Bank Account Number',
-                  style: TextStyle(
-                      color: colors.textSecondary, fontSize: 12)),
+                  style: TextStyle(color: colors.textSecondary, fontSize: 12)),
               const SizedBox(height: 6),
               TextField(
                 controller: destinationController,
@@ -278,8 +276,7 @@ class _PayoutsModalContentState extends ConsumerState<_PayoutsModalContent> {
               ),
               const SizedBox(height: 12),
               Text('Amount (${corr.currency})',
-                  style: TextStyle(
-                      color: colors.textSecondary, fontSize: 12)),
+                  style: TextStyle(color: colors.textSecondary, fontSize: 12)),
               const SizedBox(height: 6),
               TextField(
                 controller: amountController,
@@ -306,14 +303,15 @@ class _PayoutsModalContentState extends ConsumerState<_PayoutsModalContent> {
                     shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(10)),
                   ),
-                  onPressed: () {
+                  onPressed: () async {
                     final dest = destinationController.text.trim();
                     final amt =
                         double.tryParse(amountController.text) ?? 1000.0;
+                    final messenger = ScaffoldMessenger.of(context);
                     Navigator.pop(ctx);
                     Navigator.pop(context);
 
-                    ref.read(transactionsProvider.notifier).recordPayout(
+                    await ref.read(transactionsProvider.notifier).recordPayout(
                           id: 'payout-${DateTime.now().millisecondsSinceEpoch}',
                           destination:
                               dest.isNotEmpty ? dest : 'Recipient Account',
@@ -325,7 +323,7 @@ class _PayoutsModalContentState extends ConsumerState<_PayoutsModalContent> {
                           isMobileMoney: corr.isMobileMoney,
                         );
 
-                    ScaffoldMessenger.of(context).showSnackBar(
+                    messenger.showSnackBar(
                       SnackBar(
                           content: Text(
                               'Cash payout of ${corr.currency} $amt initiated!')),
@@ -463,8 +461,7 @@ class _CardsModalContent extends ConsumerWidget {
             decoration: BoxDecoration(
               color: colors.primary.withValues(alpha: 0.1),
               borderRadius: BorderRadius.circular(10),
-              border:
-                  Border.all(color: colors.primary.withValues(alpha: 0.25)),
+              border: Border.all(color: colors.primary.withValues(alpha: 0.25)),
             ),
             child: Row(
               children: [

@@ -196,13 +196,13 @@ class ProtectedSendNotifier extends StateNotifier<ProtectedSendState> {
         expiresAt: intent.expiresAt,
         claimReference: intent.claimReference ?? intent.id,
       );
-      _ref.read(transactionsProvider.notifier).addTransaction(activeTx);
+      await _ref.read(transactionsProvider.notifier).addTransaction(activeTx);
 
       // Lifecycle: funds successfully locked in CDK -> update backend to Protected
       try {
         await _repository.updatePaymentStatus(canonicalPaymentId, 'protected');
       } catch (_) {
-        _ref
+        await _ref
             .read(transactionsProvider.notifier)
             .markCoordinationSyncPending(canonicalPaymentId, 'protected');
       }
@@ -227,7 +227,7 @@ class ProtectedSendNotifier extends StateNotifier<ProtectedSendState> {
               recipientProfile.transportEncryptionPubkey,
         );
       } catch (encError) {
-        _ref.read(transactionsProvider.notifier).updateTransaction(
+        await _ref.read(transactionsProvider.notifier).updateTransaction(
               activeTx.copyWith(
                 description: 'Encryption pending: $encError',
               ),
@@ -250,7 +250,7 @@ class ProtectedSendNotifier extends StateNotifier<ProtectedSendState> {
         );
 
         // Lifecycle: encrypted message accepted by relay -> update local to Claimable
-        _ref.read(transactionsProvider.notifier).updateTransaction(
+        await _ref.read(transactionsProvider.notifier).updateTransaction(
               activeTx.copyWith(
                 status: TransactionStatus.claimable,
                 description: description,
@@ -260,18 +260,18 @@ class ProtectedSendNotifier extends StateNotifier<ProtectedSendState> {
         try {
           await _repository.updatePaymentStatus(
               canonicalPaymentId, 'claimable');
-          _ref
+          await _ref
               .read(transactionsProvider.notifier)
               .clearCoordinationSyncPending(canonicalPaymentId);
         } catch (_) {
-          _ref
+          await _ref
               .read(transactionsProvider.notifier)
               .markCoordinationSyncPending(canonicalPaymentId, 'claimable');
         }
       } catch (deliveryError) {
         // Backend delivery failed, but CDK value is locked in redb!
         // Local transaction is preserved with pending status.
-        _ref.read(transactionsProvider.notifier).updateTransaction(
+        await _ref.read(transactionsProvider.notifier).updateTransaction(
               activeTx.copyWith(
                 status: TransactionStatus.pending,
                 description: 'Delivery pending: $deliveryError',
@@ -381,18 +381,18 @@ class ProtectedSendNotifier extends StateNotifier<ProtectedSendState> {
         walletEnvironment: config.storagePrefix,
       );
 
-      _ref.read(transactionsProvider.notifier).updateTransactionStatus(
+      await _ref.read(transactionsProvider.notifier).updateTransactionStatus(
             canonicalPaymentId,
             TransactionStatus.claimable,
           );
 
       try {
         await _repository.updatePaymentStatus(canonicalPaymentId, 'claimable');
-        _ref
+        await _ref
             .read(transactionsProvider.notifier)
             .clearCoordinationSyncPending(canonicalPaymentId);
       } catch (_) {
-        _ref
+        await _ref
             .read(transactionsProvider.notifier)
             .markCoordinationSyncPending(canonicalPaymentId, 'claimable');
       }

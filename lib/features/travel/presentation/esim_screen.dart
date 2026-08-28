@@ -525,7 +525,9 @@ class _EsimScreenState extends ConsumerState<EsimScreen>
                   });
 
                   // Log to activity
-                  ref.read(transactionsProvider.notifier).recordEsimPurchase(
+                  await ref
+                      .read(transactionsProvider.notifier)
+                      .recordEsimPurchase(
                         id: profile.iccid,
                         planName: pkg.name,
                         amountSats: pkg.priceSats,
@@ -620,9 +622,12 @@ class _EsimScreenState extends ConsumerState<EsimScreen>
                 backgroundColor: AppColors.primary,
                 foregroundColor: Colors.black,
               ),
-              onPressed: () {
+              onPressed: () async {
+                final messenger = ScaffoldMessenger.of(context);
                 Navigator.of(ctx).pop();
-                ref.read(transactionsProvider.notifier).recordEsimPurchase(
+                await ref
+                    .read(transactionsProvider.notifier)
+                    .recordEsimPurchase(
                       id: 'topup-${DateTime.now().millisecondsSinceEpoch}',
                       planName: '${prof.packageName} (+3 GB)',
                       amountSats: 15000,
@@ -632,7 +637,7 @@ class _EsimScreenState extends ConsumerState<EsimScreen>
                       spendCountry: market.spendCountry,
                       isTopup: true,
                     );
-                ScaffoldMessenger.of(context).showSnackBar(
+                messenger.showSnackBar(
                   const SnackBar(
                       content: Text('eSIM Top-up confirmed and active!')),
                 );

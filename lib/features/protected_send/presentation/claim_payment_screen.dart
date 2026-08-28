@@ -174,7 +174,7 @@ class _ClaimPaymentScreenState extends ConsumerState<ClaimPaymentScreen> {
         syncPending = true;
       }
 
-      ref.read(transactionsProvider.notifier).addTransaction(
+      await ref.read(transactionsProvider.notifier).addTransaction(
             TransactionModel(
               id: _loadedIntent!.id,
               type: TransactionType.protectedClaim,

@@ -1,19 +1,128 @@
+import 'dart:collection';
+
+import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
+
+import '../../../core/wallet/wallet_context.dart';
 import '../../protected_send/domain/protected_payment_intent.dart';
+import '../data/secure_transaction_ledger.dart';
+import '../data/transaction_ledger.dart';
 import '../domain/transaction_model.dart';
 
-final transactionsProvider =
-    StateNotifierProvider<TransactionsNotifier, List<TransactionModel>>((ref) {
-  return TransactionsNotifier();
+final transactionLedgerProvider = Provider<TransactionLedger>((ref) {
+  return SecureTransactionLedger(storage: const FlutterSecureStorage());
 });
 
-class TransactionsNotifier extends StateNotifier<List<TransactionModel>> {
-  TransactionsNotifier([List<TransactionModel>? initial])
-      : super(initial ?? const []);
+final transactionsProvider =
+    StateNotifierProvider<TransactionsNotifier, TransactionsState>((ref) {
+  final context = ref.watch(activeWalletContextKeyProvider);
+  final notifier = TransactionsNotifier(
+    ledger: ref.watch(transactionLedgerProvider),
+    walletKey: context?.storageId,
+  );
+  notifier.load();
+  return notifier;
+});
 
-  static List<TransactionModel> defaultSampleActivity() {
+@immutable
+final class TransactionsState extends ListBase<TransactionModel> {
+  final List<TransactionModel> items;
+  final bool isSyncing;
+  final bool isStale;
+  final String? syncMessage;
+
+  TransactionsState({
+    List<TransactionModel> items = const [],
+    this.isSyncing = false,
+    this.isStale = false,
+    this.syncMessage,
+  }) : items = List.unmodifiable(items);
+
+  static const Object _sentinel = Object();
+
+  TransactionsState copyWith({
+    List<TransactionModel>? items,
+    bool? isSyncing,
+    bool? isStale,
+    Object? syncMessage = _sentinel,
+  }) {
+    return TransactionsState(
+      items: items ?? this.items,
+      isSyncing: isSyncing ?? this.isSyncing,
+      isStale: isStale ?? this.isStale,
+      syncMessage: identical(syncMessage, _sentinel)
+          ? this.syncMessage
+          : syncMessage as String?,
+    );
+  }
+
+  @override
+  int get length => items.length;
+
+  @override
+  set length(int value) =>
+      throw UnsupportedError('TransactionsState is immutable.');
+
+  @override
+  TransactionModel operator [](int index) => items[index];
+
+  @override
+  void operator []=(int index, TransactionModel value) =>
+      throw UnsupportedError('TransactionsState is immutable.');
+}
+
+class TransactionsNotifier extends StateNotifier<TransactionsState> {
+  final TransactionLedger ledger;
+  final String? walletKey;
+
+  TransactionsNotifier({
+    required this.ledger,
+    required this.walletKey,
+  }) : super(TransactionsState());
+
+  String _requireWalletKey() {
+    final key = walletKey;
+    if (key == null || key.isEmpty) {
+      throw StateError('An authenticated wallet context is required.');
+    }
+    return key;
+  }
+
+  Future<void> load() async {
+    final key = walletKey;
+    if (key == null || key.isEmpty) {
+      state = TransactionsState();
+      return;
+    }
+    try {
+      final items = await ledger.load(key);
+      if (!mounted) return;
+      state = TransactionsState(items: items);
+    } catch (_) {
+      if (!mounted) return;
+      state = state.copyWith(
+        isSyncing: false,
+        isStale: true,
+        syncMessage: 'Activity could not be refreshed.',
+      );
+    }
+  }
+
+  Future<void> addTransaction(TransactionModel tx) async {
+    final key = _requireWalletKey();
+    await ledger.upsert(key, tx);
+    if (!mounted) return;
+    final items = await ledger.load(key);
+    if (!mounted) return;
+    state = state.copyWith(items: items);
+  }
+
+  Future<void> seedDemoTransactions() async {
+    if (!kDebugMode) return;
+    final key = _requireWalletKey();
     final now = DateTime.now();
-    return [
+    final items = [
       TransactionModel(
         id: 'tx_bill_elec',
         type: TransactionType.electricity,
@@ -141,58 +250,69 @@ class TransactionsNotifier extends StateNotifier<List<TransactionModel>> {
         description: 'Refund claimed after protection expiry',
       ),
     ];
+    await ledger.replace(key, items);
+    if (!mounted) return;
+    state = state.copyWith(items: items);
   }
 
-  void addTransaction(TransactionModel tx) {
-    final idx = state.indexWhere((t) => t.id == tx.id);
-    if (idx >= 0) {
-      state = [
-        for (int i = 0; i < state.length; i++)
-          if (i == idx) tx else state[i],
-      ];
-    } else {
-      state = [tx, ...state];
+  Future<void> updateTransactionStatus(
+    String id,
+    TransactionStatus newStatus,
+  ) async {
+    final existing = state.items.where((item) => item.id == id).firstOrNull;
+    if (existing == null) return;
+    await addTransaction(existing.copyWith(status: newStatus));
+  }
+
+  Future<void> updateTransaction(TransactionModel updatedTx) =>
+      addTransaction(updatedTx);
+
+  Future<void> markCoordinationSyncPending(
+    String id,
+    String pendingStatus,
+  ) async {
+    final existing = state.items.where((item) => item.id == id).firstOrNull;
+    if (existing == null) return;
+    await addTransaction(
+      existing.copyWith(
+        coordinationSyncPending: true,
+        syncPendingStatus: pendingStatus,
+      ),
+    );
+  }
+
+  Future<void> clearCoordinationSyncPending(String id) async {
+    final existing = state.items.where((item) => item.id == id).firstOrNull;
+    if (existing == null) return;
+    await addTransaction(
+      existing.copyWith(
+        coordinationSyncPending: false,
+        clearSyncPendingStatus: true,
+      ),
+    );
+  }
+
+  Future<void> reconcile({required Future<void> Function() sync}) async {
+    state = state.copyWith(isSyncing: true, syncMessage: null);
+    try {
+      await sync();
+      if (!mounted) return;
+      state = state.copyWith(
+        isSyncing: false,
+        isStale: false,
+        syncMessage: null,
+      );
+    } catch (_) {
+      if (!mounted) return;
+      state = state.copyWith(
+        isSyncing: false,
+        isStale: true,
+        syncMessage: 'Showing saved activity while your wallet is offline.',
+      );
     }
   }
 
-  void updateTransactionStatus(String id, TransactionStatus newStatus) {
-    state = state.map((tx) {
-      if (tx.id == id) {
-        return tx.copyWith(status: newStatus);
-      }
-      return tx;
-    }).toList();
-  }
-
-  void updateTransaction(TransactionModel updatedTx) {
-    state = state.map((tx) => tx.id == updatedTx.id ? updatedTx : tx).toList();
-  }
-
-  void markCoordinationSyncPending(String id, String pendingStatus) {
-    state = state.map((tx) {
-      if (tx.id == id) {
-        return tx.copyWith(
-          coordinationSyncPending: true,
-          syncPendingStatus: pendingStatus,
-        );
-      }
-      return tx;
-    }).toList();
-  }
-
-  void clearCoordinationSyncPending(String id) {
-    state = state.map((tx) {
-      if (tx.id == id) {
-        return tx.copyWith(
-          coordinationSyncPending: false,
-          clearSyncPendingStatus: true,
-        );
-      }
-      return tx;
-    }).toList();
-  }
-
-  void recordBillPayment({
+  Future<void> recordBillPayment({
     required String id,
     required TransactionType type,
     required String billerName,
@@ -225,10 +345,10 @@ class TransactionsNotifier extends StateNotifier<List<TransactionModel>> {
       description:
           'Paid $fiatCurrency $fiatAmount to $billerName ($accountReference)',
     );
-    addTransaction(tx);
+    return addTransaction(tx);
   }
 
-  void recordEsimPurchase({
+  Future<void> recordEsimPurchase({
     required String id,
     required String planName,
     required int amountSats,
@@ -259,10 +379,10 @@ class TransactionsNotifier extends StateNotifier<List<TransactionModel>> {
         if (qrCode != null) 'qr_code': qrCode,
       },
     );
-    addTransaction(tx);
+    return addTransaction(tx);
   }
 
-  void recordPayout({
+  Future<void> recordPayout({
     required String id,
     required String destination,
     required String corridorName,
@@ -287,7 +407,7 @@ class TransactionsNotifier extends StateNotifier<List<TransactionModel>> {
       createdAt: DateTime.now(),
       description: 'Cash payout of $fiatCurrency $fiatAmount to $destination',
     );
-    addTransaction(tx);
+    return addTransaction(tx);
   }
 
   Future<List<TransactionModel>> syncIncomingMessages({
@@ -303,27 +423,34 @@ class TransactionsNotifier extends StateNotifier<List<TransactionModel>> {
       final status = (msg.status as String?)?.toLowerCase() ?? '';
 
       if (status == 'claimed') {
-        final idx = state.indexWhere((t) => t.id == paymentIntentId);
+        final idx = state.items.indexWhere((t) => t.id == paymentIntentId);
         if (idx >= 0 &&
-            (state[idx].status == TransactionStatus.waitingForRecipient ||
-                state[idx].status == TransactionStatus.claimable)) {
-          updateTransactionStatus(paymentIntentId, TransactionStatus.completed);
+            (state.items[idx].status == TransactionStatus.waitingForRecipient ||
+                state.items[idx].status == TransactionStatus.claimable)) {
+          await updateTransactionStatus(
+            paymentIntentId,
+            TransactionStatus.completed,
+          );
         }
         continue;
       }
       if (status == 'refunded') {
-        final idx = state.indexWhere((t) => t.id == paymentIntentId);
+        final idx = state.items.indexWhere((t) => t.id == paymentIntentId);
         if (idx >= 0 &&
-            (state[idx].status == TransactionStatus.waitingForRecipient ||
-                state[idx].status == TransactionStatus.claimable)) {
-          updateTransactionStatus(paymentIntentId, TransactionStatus.refunded);
+            (state.items[idx].status == TransactionStatus.waitingForRecipient ||
+                state.items[idx].status == TransactionStatus.claimable)) {
+          await updateTransactionStatus(
+            paymentIntentId,
+            TransactionStatus.refunded,
+          );
         }
         continue;
       }
 
-      final existingIndex = state.indexWhere((t) => t.id == paymentIntentId);
+      final existingIndex =
+          state.items.indexWhere((t) => t.id == paymentIntentId);
       if (existingIndex >= 0) {
-        final existing = state[existingIndex];
+        final existing = state.items[existingIndex];
         if (existing.status == TransactionStatus.claimed ||
             existing.status == TransactionStatus.completed ||
             existing.status == TransactionStatus.refunded) {
@@ -366,38 +493,31 @@ class TransactionsNotifier extends StateNotifier<List<TransactionModel>> {
         claimReference: claimRef,
       );
 
-      if (existingIndex >= 0) {
-        updateTransaction(incomingTx);
-      } else {
-        addTransaction(incomingTx);
-        newIncoming.add(incomingTx);
-      }
+      await updateTransaction(incomingTx);
+      if (existingIndex < 0) newIncoming.add(incomingTx);
     }
     return newIncoming;
   }
 
-  void syncPaymentIntents({
+  Future<void> syncPaymentIntents({
     required List<ProtectedPaymentIntent> intents,
     required String currentUserId,
     required String currentUsername,
-  }) {
+  }) async {
     final cleanCurrentUsername =
         currentUsername.replaceAll('@', '').toLowerCase();
     final cleanCurrentUserId = currentUserId.toLowerCase();
-
-    final List<TransactionModel> updatedList = List.from(state);
+    final updatedList = List<TransactionModel>.from(state.items);
 
     for (final intent in intents) {
       final senderId = intent.senderId?.toLowerCase() ?? '';
       final cleanSender = senderId.replaceAll('@', '');
-
       final isSender = cleanSender == cleanCurrentUsername ||
           cleanSender == cleanCurrentUserId ||
           senderId == cleanCurrentUserId;
 
       final TransactionType txType;
       final String counterparty;
-
       if (isSender) {
         txType = TransactionType.protectedPayment;
         counterparty = intent.recipientIdentifier.startsWith('@')
@@ -468,6 +588,9 @@ class TransactionsNotifier extends StateNotifier<List<TransactionModel>> {
     }
 
     updatedList.sort((a, b) => b.createdAt.compareTo(a.createdAt));
-    state = updatedList;
+    final key = _requireWalletKey();
+    await ledger.replace(key, updatedList);
+    if (!mounted) return;
+    state = state.copyWith(items: updatedList);
   }
 }

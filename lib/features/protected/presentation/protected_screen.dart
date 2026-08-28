@@ -868,7 +868,7 @@ class _RefundActionButtonState extends ConsumerState<_RefundActionButton> {
       }
       await cashuWallet.refundProtectedPayment(paymentId: widget.tx.id);
       ref.invalidate(cashuBalanceProvider);
-      ref
+      await ref
           .read(transactionsProvider.notifier)
           .updateTransactionStatus(widget.tx.id, TransactionStatus.refunded);
 
@@ -884,11 +884,11 @@ class _RefundActionButtonState extends ConsumerState<_RefundActionButton> {
                 senderId: auth.user!.id,
               );
         }
-        ref
+        await ref
             .read(transactionsProvider.notifier)
             .clearCoordinationSyncPending(widget.tx.id);
       } catch (_) {
-        ref
+        await ref
             .read(transactionsProvider.notifier)
             .markCoordinationSyncPending(widget.tx.id, 'refunded');
       }
@@ -999,7 +999,7 @@ class _ClaimActionButtonState extends ConsumerState<_ClaimActionButton> {
         paymentId: widget.tx.id,
       );
       ref.invalidate(cashuBalanceProvider);
-      ref
+      await ref
           .read(transactionsProvider.notifier)
           .updateTransactionStatus(widget.tx.id, TransactionStatus.completed);
 
@@ -1008,11 +1008,11 @@ class _ClaimActionButtonState extends ConsumerState<_ClaimActionButton> {
         await ref
             .read(paymentIntentRepositoryProvider)
             .claimPaymentIntent(widget.tx.id);
-        ref
+        await ref
             .read(transactionsProvider.notifier)
             .clearCoordinationSyncPending(widget.tx.id);
       } catch (_) {
-        ref
+        await ref
             .read(transactionsProvider.notifier)
             .markCoordinationSyncPending(widget.tx.id, 'claimed');
       }
