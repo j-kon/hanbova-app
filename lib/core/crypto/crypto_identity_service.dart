@@ -2,17 +2,37 @@ import 'dart:convert';
 import 'dart:typed_data';
 import 'package:cryptography/cryptography.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:pointycastle/digests/sha256.dart';
 import '../network/network_environment.dart';
 import '../networking/api_client.dart';
+import '../wallet/wallet_context.dart';
 import 'mnemonic_service.dart';
 import 'secp256k1_service.dart';
+import 'wallet_identity_store.dart';
+
+final class WalletContextUnavailableException implements Exception {
+  const WalletContextUnavailableException();
+
+  @override
+  String toString() => 'An authenticated wallet context is required.';
+}
+
+final class WalletIdentityUnavailableException implements Exception {
+  const WalletIdentityUnavailableException();
+
+  @override
+  String toString() => 'No wallet identity exists for the active context.';
+}
+
+final class StaleWalletContextException implements Exception {
+  const StaleWalletContextException();
+
+  @override
+  String toString() => 'The active wallet context changed.';
+}
 
 class WalletCryptoIdentity {
-  final String userId;
-  final HanbovaNetwork network;
-  final String walletEnvironment;
+  final WalletContextKey context;
   final String protectedPaymentPubkey;
   final String transportEncryptionPubkey;
   final SimpleKeyPair transportKeyPair;
@@ -21,9 +41,7 @@ class WalletCryptoIdentity {
   final String walletSeedHex;
 
   const WalletCryptoIdentity({
-    required this.userId,
-    required this.network,
-    required this.walletEnvironment,
+    required this.context,
     required this.protectedPaymentPubkey,
     required this.transportEncryptionPubkey,
     required this.transportKeyPair,
@@ -31,6 +49,10 @@ class WalletCryptoIdentity {
     required this.mnemonic,
     required this.walletSeedHex,
   });
+
+  String get userId => context.userId;
+  HanbovaNetwork get network => context.network;
+  String get walletEnvironment => context.storagePrefix;
 
   String get transportKeyFingerprint =>
       CryptoIdentityNotifier.computeFingerprint(transportEncryptionPubkey);
@@ -44,11 +66,21 @@ final cryptoIdentityProvider =
 });
 
 class CryptoIdentityNotifier extends AsyncNotifier<WalletCryptoIdentity?> {
-  final FlutterSecureStorage _storage = const FlutterSecureStorage();
   final X25519 _x25519 = X25519();
+  WalletContextKey? _activeContext;
 
   @override
   Future<WalletCryptoIdentity?> build() async {
+    _activeContext = ref.read(activeWalletContextKeyProvider);
+    ref.listen<WalletContextKey?>(
+      activeWalletContextKeyProvider,
+      (previous, next) {
+        _activeContext = next;
+        if (previous != next) {
+          state = const AsyncValue.data(null);
+        }
+      },
+    );
     return null;
   }
 
@@ -90,61 +122,133 @@ class CryptoIdentityNotifier extends AsyncNotifier<WalletCryptoIdentity?> {
     return x25519.newKeyPairFromSeed(keyBytes);
   }
 
-  Future<WalletCryptoIdentity> getOrCreateIdentity({
-    required String userId,
-    required HanbovaNetwork network,
-    NetworkConfig? config,
-  }) async {
+  WalletContextKey _captureContext() {
+    final context = _activeContext;
+    if (context == null) {
+      throw const WalletContextUnavailableException();
+    }
+    return context;
+  }
+
+  void _ensureCurrent(WalletContextKey captured) {
+    if (_activeContext != captured) {
+      throw const StaleWalletContextException();
+    }
+  }
+
+  void _publishIfCurrent(
+    WalletContextKey captured,
+    WalletCryptoIdentity identity,
+  ) {
+    _ensureCurrent(captured);
+    state = AsyncValue.data(identity);
+  }
+
+  void _setErrorIfCurrent(
+    WalletContextKey captured,
+    Object error,
+    StackTrace stackTrace,
+  ) {
+    if (_activeContext == captured) {
+      state = AsyncValue.error(error, stackTrace);
+    }
+  }
+
+  Future<WalletCryptoIdentity> _deriveIdentity(
+    WalletContextKey context,
+    String mnemonic,
+  ) async {
+    final cleanMnemonic = mnemonic.trim().toLowerCase();
+    if (!await MnemonicService.validateMnemonic(cleanMnemonic)) {
+      throw ArgumentError('Invalid 12-word BIP-39 mnemonic phrase');
+    }
+
+    final walletSeedHex =
+        await MnemonicService.mnemonicToSeedHex(cleanMnemonic);
+    final transportKeyPair =
+        await deriveTransportKeyPair(walletSeedHex, _x25519);
+    final protectedPaymentPrivHex =
+        await deriveProtectedPaymentPrivHex(walletSeedHex);
+    final transportPublicKey = await transportKeyPair.extractPublicKey();
+    final transportPubHex = transportPublicKey.bytes
+        .map((b) => b.toRadixString(16).padLeft(2, '0'))
+        .join();
+    final protectedPubHex =
+        Secp256k1Service.getCompressedPublicKeyHex(protectedPaymentPrivHex);
+
+    return WalletCryptoIdentity(
+      context: context,
+      protectedPaymentPubkey: protectedPubHex,
+      transportEncryptionPubkey: transportPubHex,
+      transportKeyPair: transportKeyPair,
+      protectedPaymentPrivkeyHex: protectedPaymentPrivHex,
+      mnemonic: cleanMnemonic,
+      walletSeedHex: walletSeedHex,
+    );
+  }
+
+  Future<WalletCryptoIdentity> _loadStoredIdentity(
+    WalletContextKey context,
+    StoredMnemonic stored,
+  ) async {
+    final identity = await _deriveIdentity(context, stored.mnemonic);
+    _ensureCurrent(context);
+    if (stored.source == StoredMnemonicSource.legacy) {
+      await ref
+          .read(walletIdentityStoreProvider)
+          .write(context, identity.mnemonic);
+      _ensureCurrent(context);
+    }
+    return identity;
+  }
+
+  Future<WalletCryptoIdentity> requireIdentity() async {
+    final context = _captureContext();
+    final loaded = state.valueOrNull;
+    if (loaded?.context == context) {
+      return loaded!;
+    }
+
     state = const AsyncValue.loading();
     try {
-      final effectiveConfig = config ?? NetworkConfig.fromNetwork(network);
-      final envName = effectiveConfig.storagePrefix;
-      final keyPrefix = 'hanbova_${envName}_$userId';
+      final stored = await ref.read(walletIdentityStoreProvider).read(context);
+      if (stored == null) {
+        throw const WalletIdentityUnavailableException();
+      }
+      final identity = await _loadStoredIdentity(context, stored);
+      _publishIfCurrent(context, identity);
+      return identity;
+    } catch (error, stackTrace) {
+      _setErrorIfCurrent(context, error, stackTrace);
+      rethrow;
+    }
+  }
 
-      String? savedMnemonic = await _storage.read(key: '${keyPrefix}_mnemonic');
+  Future<WalletCryptoIdentity> getOrCreateIdentity() async {
+    final context = _captureContext();
+    final loaded = state.valueOrNull;
+    if (loaded?.context == context) {
+      return loaded!;
+    }
 
-      if (savedMnemonic == null || savedMnemonic.trim().isEmpty) {
-        savedMnemonic = await MnemonicService.generateMnemonic();
-        await _storage.write(
-          key: '${keyPrefix}_mnemonic',
-          value: savedMnemonic,
-        );
+    state = const AsyncValue.loading();
+    try {
+      final store = ref.read(walletIdentityStoreProvider);
+      final stored = await store.read(context);
+      if (stored != null) {
+        final identity = await _loadStoredIdentity(context, stored);
+        _publishIfCurrent(context, identity);
+        return identity;
       }
 
-      final walletSeedHex =
-          await MnemonicService.mnemonicToSeedHex(savedMnemonic);
-
-      // Derive deterministically from the user's BIP-39 mnemonic seed
-      final transportKeyPair =
-          await deriveTransportKeyPair(walletSeedHex, _x25519);
-      final protectedPaymentPrivHex =
-          await deriveProtectedPaymentPrivHex(walletSeedHex);
-
-      final transportPublicKey = await transportKeyPair.extractPublicKey();
-      final transportPubHex = transportPublicKey.bytes
-          .map((b) => b.toRadixString(16).padLeft(2, '0'))
-          .join();
-
-      // Derived 33-byte compressed secp256k1 public key via PointyCastle
-      final protectedPubHex =
-          Secp256k1Service.getCompressedPublicKeyHex(protectedPaymentPrivHex);
-
-      final identity = WalletCryptoIdentity(
-        userId: userId,
-        network: network,
-        walletEnvironment: envName,
-        protectedPaymentPubkey: protectedPubHex,
-        transportEncryptionPubkey: transportPubHex,
-        transportKeyPair: transportKeyPair,
-        protectedPaymentPrivkeyHex: protectedPaymentPrivHex,
-        mnemonic: savedMnemonic,
-        walletSeedHex: walletSeedHex,
-      );
-
-      state = AsyncValue.data(identity);
+      final mnemonic = await MnemonicService.generateMnemonic();
+      final identity = await _deriveIdentity(context, mnemonic);
+      _ensureCurrent(context);
+      await store.write(context, identity.mnemonic);
+      _publishIfCurrent(context, identity);
       return identity;
-    } catch (e, st) {
-      state = AsyncValue.error(e, st);
+    } catch (error, stackTrace) {
+      _setErrorIfCurrent(context, error, stackTrace);
       rethrow;
     }
   }
@@ -152,57 +256,19 @@ class CryptoIdentityNotifier extends AsyncNotifier<WalletCryptoIdentity?> {
   /// Restores identity deterministically from a 12-word BIP-39 mnemonic.
   Future<WalletCryptoIdentity> restoreFromMnemonic({
     required String mnemonic,
-    required String userId,
-    required HanbovaNetwork network,
-    NetworkConfig? config,
   }) async {
+    final context = _captureContext();
     state = const AsyncValue.loading();
     try {
-      final isValid = await MnemonicService.validateMnemonic(mnemonic);
-      if (!isValid) {
-        throw ArgumentError('Invalid 12-word BIP-39 mnemonic phrase');
-      }
-
-      final effectiveConfig = config ?? NetworkConfig.fromNetwork(network);
-      final envName = effectiveConfig.storagePrefix;
-      final keyPrefix = 'hanbova_${envName}_$userId';
-      final cleanMnemonic = mnemonic.trim().toLowerCase();
-
-      final walletSeedHex =
-          await MnemonicService.mnemonicToSeedHex(cleanMnemonic);
-      final transportKeyPair =
-          await deriveTransportKeyPair(walletSeedHex, _x25519);
-      final protectedPaymentPrivHex =
-          await deriveProtectedPaymentPrivHex(walletSeedHex);
-
-      await _storage.write(
-        key: '${keyPrefix}_mnemonic',
-        value: cleanMnemonic,
-      );
-
-      final transportPublicKey = await transportKeyPair.extractPublicKey();
-      final transportPubHex = transportPublicKey.bytes
-          .map((b) => b.toRadixString(16).padLeft(2, '0'))
-          .join();
-      final protectedPubHex =
-          Secp256k1Service.getCompressedPublicKeyHex(protectedPaymentPrivHex);
-
-      final identity = WalletCryptoIdentity(
-        userId: userId,
-        network: network,
-        walletEnvironment: envName,
-        protectedPaymentPubkey: protectedPubHex,
-        transportEncryptionPubkey: transportPubHex,
-        transportKeyPair: transportKeyPair,
-        protectedPaymentPrivkeyHex: protectedPaymentPrivHex,
-        mnemonic: cleanMnemonic,
-        walletSeedHex: walletSeedHex,
-      );
-
-      state = AsyncValue.data(identity);
+      final identity = await _deriveIdentity(context, mnemonic);
+      _ensureCurrent(context);
+      await ref
+          .read(walletIdentityStoreProvider)
+          .write(context, identity.mnemonic);
+      _publishIfCurrent(context, identity);
       return identity;
-    } catch (e, st) {
-      state = AsyncValue.error(e, st);
+    } catch (error, stackTrace) {
+      _setErrorIfCurrent(context, error, stackTrace);
       rethrow;
     }
   }
@@ -225,17 +291,11 @@ class CryptoIdentityNotifier extends AsyncNotifier<WalletCryptoIdentity?> {
   }
 
   /// Explicitly removes wallet keys from the device (destructive).
-  Future<void> deleteWalletKeys({
-    required String userId,
-    required HanbovaNetwork network,
-    NetworkConfig? config,
-  }) async {
-    final effectiveConfig = config ?? NetworkConfig.fromNetwork(network);
-    final envName = effectiveConfig.storagePrefix;
-    final keyPrefix = 'hanbova_${envName}_$userId';
-    await _storage.delete(key: '${keyPrefix}_transport_priv');
-    await _storage.delete(key: '${keyPrefix}_protected_priv');
-    await _storage.delete(key: '${keyPrefix}_mnemonic');
-    state = const AsyncValue.data(null);
+  Future<void> deleteWalletKeys() async {
+    final context = _captureContext();
+    await ref.read(walletIdentityStoreProvider).delete(context);
+    if (_activeContext == context) {
+      state = const AsyncValue.data(null);
+    }
   }
 }
