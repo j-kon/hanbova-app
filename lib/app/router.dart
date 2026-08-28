@@ -29,6 +29,9 @@ import 'shell/app_shell.dart';
 
 final GlobalKey<NavigatorState> _rootNavigatorKey = GlobalKey<NavigatorState>();
 
+String safePostLoginPath(Uri uri) =>
+    uri.queryParameters['next'] == '/restore-seed' ? '/restore-seed' : '/home';
+
 class _RouterNotifier extends ChangeNotifier {
   final Ref _ref;
 
@@ -66,11 +69,12 @@ final appRouterProvider = Provider<GoRouter>((ref) {
         return '/welcome';
       }
 
-      // If authenticated and on welcome or login, redirect to home
-      if (isAuth &&
-          (location == '/welcome' ||
-              location == '/login' ||
-              location == '/signup')) {
+      if (isAuth && location == '/login') {
+        return safePostLoginPath(state.uri);
+      }
+
+      // If authenticated and on another entry page, redirect to home.
+      if (isAuth && (location == '/welcome' || location == '/signup')) {
         return '/home';
       }
 
@@ -97,7 +101,9 @@ final appRouterProvider = Provider<GoRouter>((ref) {
       ),
       GoRoute(
         path: '/login',
-        builder: (context, state) => const SignInScreen(),
+        builder: (context, state) => SignInScreen(
+          postLoginPath: safePostLoginPath(state.uri),
+        ),
       ),
       GoRoute(
         path: '/forgot-password',

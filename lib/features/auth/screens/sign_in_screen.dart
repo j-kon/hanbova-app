@@ -7,7 +7,12 @@ import '../../../core/theme/app_typography.dart';
 import '../providers/auth_provider.dart';
 
 class SignInScreen extends ConsumerStatefulWidget {
-  const SignInScreen({super.key});
+  final String postLoginPath;
+
+  const SignInScreen({
+    super.key,
+    this.postLoginPath = '/home',
+  });
 
   @override
   ConsumerState<SignInScreen> createState() => _SignInScreenState();
@@ -31,6 +36,7 @@ class _SignInScreenState extends ConsumerState<SignInScreen> {
 
   Future<void> _handleSignIn() async {
     if (!_formKey.currentState!.validate()) return;
+    final postLoginPath = widget.postLoginPath;
 
     setState(() {
       _isLoading = true;
@@ -46,7 +52,7 @@ class _SignInScreenState extends ConsumerState<SignInScreen> {
     setState(() => _isLoading = false);
 
     if (success) {
-      context.go('/home');
+      context.go(postLoginPath);
     } else {
       final authState = ref.read(authProvider);
       setState(() {

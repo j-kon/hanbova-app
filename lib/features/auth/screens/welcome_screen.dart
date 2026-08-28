@@ -323,9 +323,10 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
                         ],
                       ),
                       TextButton(
-                        onPressed: () => context.push('/restore-seed'),
+                        onPressed: () =>
+                            context.push('/login?next=%2Frestore-seed'),
                         child: Text(
-                          'I already have a wallet • Restore with phrase',
+                          'Sign in to restore with phrase',
                           style: AppTypography.bodySmall.copyWith(
                             color: colors.primary,
                             fontWeight: FontWeight.w600,
