@@ -344,6 +344,15 @@ class ProtectedSendNotifier extends StateNotifier<ProtectedSendState> {
             'Escrow record for payment $canonicalPaymentId not found in local storage');
       }
 
+      // Check recipient key rotation before relaying existing token
+      if (escrow.recipientPubkey.toLowerCase() !=
+          recipientProfile.protectedPaymentPubkey.toLowerCase()) {
+        throw StateError(
+          'Recipient wallet identity changed. This protected payment remains bound to '
+          'the previous recipient key. Wait for Refund availability, then create a new payment.',
+        );
+      }
+
       final envelope = ProtectedPaymentEnvelope(
         version: 1,
         paymentId: canonicalPaymentId,

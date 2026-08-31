@@ -895,9 +895,9 @@ class _RefundActionButtonState extends ConsumerState<_RefundActionButton> {
 
       if (!mounted) return;
       messenger.showSnackBar(
-        SnackBar(
+        const SnackBar(
           content: Text(
-              'Refunded ${Formatters.formatSats(widget.tx.amountSats)} to spendable balance'),
+              'Refund completed successfully. Your spendable balance has been updated.'),
         ),
       );
     } catch (e) {
@@ -1018,9 +1018,9 @@ class _ClaimActionButtonState extends ConsumerState<_ClaimActionButton> {
 
       if (!mounted) return;
       messenger.showSnackBar(
-        SnackBar(
+        const SnackBar(
           content: Text(
-              'Claimed ${Formatters.formatSats(widget.tx.amountSats)} successfully!'),
+              'Protected payment claimed successfully. Your spendable balance has been updated.'),
         ),
       );
     } catch (e) {

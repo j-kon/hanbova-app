@@ -11,7 +11,15 @@ class TransactionsNotifier extends StateNotifier<List<TransactionModel>> {
   TransactionsNotifier() : super(const []);
 
   void addTransaction(TransactionModel tx) {
-    state = [tx, ...state];
+    final idx = state.indexWhere((t) => t.id == tx.id);
+    if (idx >= 0) {
+      state = [
+        for (int i = 0; i < state.length; i++)
+          if (i == idx) tx else state[i],
+      ];
+    } else {
+      state = [tx, ...state];
+    }
   }
 
   void updateTransactionStatus(String id, TransactionStatus newStatus) {
@@ -63,11 +71,17 @@ class TransactionsNotifier extends StateNotifier<List<TransactionModel>> {
       final createdAt = msg.createdAt as DateTime;
       final status = (msg.status as String?)?.toLowerCase() ?? '';
 
-      if (status == 'claimed' || status == 'refunded') {
-        // Mark locally completed if present
+      if (status == 'claimed') {
         final idx = state.indexWhere((t) => t.id == paymentIntentId);
         if (idx >= 0 && state[idx].status == TransactionStatus.claimable) {
           updateTransactionStatus(paymentIntentId, TransactionStatus.completed);
+        }
+        continue;
+      }
+      if (status == 'refunded') {
+        final idx = state.indexWhere((t) => t.id == paymentIntentId);
+        if (idx >= 0 && state[idx].status == TransactionStatus.claimable) {
+          updateTransactionStatus(paymentIntentId, TransactionStatus.refunded);
         }
         continue;
       }

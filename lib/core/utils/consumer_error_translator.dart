@@ -56,7 +56,13 @@ class ConsumerErrorTranslator {
       return 'Refund not available yet. The protection locktime has not expired.';
     }
 
-    // 5. Identity / Key mismatches
+    // 5. Identity / Key mismatches & Key Rotation
+    if (lower.contains('remains bound to') ||
+        lower.contains('previous recipient key')) {
+      return 'Recipient wallet identity changed. This protected payment remains bound to '
+          'the previous recipient key. Wait for Refund availability, then create a new payment.';
+    }
+
     if (lower.contains('fingerprint') ||
         lower.contains('key mismatch') ||
         lower.contains('invalid pubkey')) {
