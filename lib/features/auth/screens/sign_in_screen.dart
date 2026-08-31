@@ -87,7 +87,7 @@ class _SignInScreenState extends ConsumerState<SignInScreen> {
                   child: Padding(
                     padding: const EdgeInsets.only(bottom: AppSpacing.md),
                     child: Image.asset(
-                      'assets/branding/hanbova_icon_EXACT_MASTER.png',
+                      'assets/brand/v4/logo/hanbova_icon_v4_EXACT_MASTER_TRANSPARENT.png',
                       width: 44,
                       height: 44,
                       errorBuilder: (_, __, ___) => const SizedBox.shrink(),

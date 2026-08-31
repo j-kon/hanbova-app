@@ -10,6 +10,7 @@ import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_radius.dart';
 import '../../../core/theme/app_spacing.dart';
 import '../../../core/theme/app_typography.dart';
+import '../../../core/utils/consumer_error_translator.dart';
 import '../../../core/utils/formatters.dart';
 
 /// Unified Deposit Sheet supporting Lightning Invoice (NUT-04), On-Chain Bitcoin, and Cashu Token redeem
@@ -123,7 +124,7 @@ class _UnifiedDepositSheetState extends ConsumerState<UnifiedDepositSheet>
     } catch (e) {
       if (!fromPolling && mounted) {
         setState(() {
-          _errorMessage = 'Failed to verify quote status: $e';
+          _errorMessage = ConsumerErrorTranslator.translate(e);
         });
       }
     }
@@ -182,7 +183,7 @@ class _UnifiedDepositSheetState extends ConsumerState<UnifiedDepositSheet>
       _startPollingQuote(quote.quoteId);
     } catch (e) {
       setState(() {
-        _errorMessage = e.toString();
+        _errorMessage = ConsumerErrorTranslator.translate(e);
         _isGeneratingInvoice = false;
       });
     }
@@ -239,7 +240,7 @@ class _UnifiedDepositSheetState extends ConsumerState<UnifiedDepositSheet>
       });
     } catch (e) {
       setState(() {
-        _errorMessage = e.toString();
+        _errorMessage = ConsumerErrorTranslator.translate(e);
         _isClaimingToken = false;
       });
     }

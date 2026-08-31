@@ -9,6 +9,7 @@ import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_radius.dart';
 import '../../../core/theme/app_spacing.dart';
 import '../../../core/theme/app_typography.dart';
+import '../../../core/utils/consumer_error_translator.dart';
 import '../../../core/utils/formatters.dart';
 import '../../../core/crypto/crypto_identity_service.dart';
 import '../../../core/crypto/encrypted_envelope_service.dart';
@@ -270,11 +271,7 @@ class _FilterChip extends StatelessWidget {
         child: Text(
           label,
           style: AppTypography.labelMedium.copyWith(
-            color: isSelected
-                ? (Theme.of(context).brightness == Brightness.dark
-                    ? AppColors.deepForest
-                    : Colors.white)
-                : colors.textSecondary,
+            color: isSelected ? AppColors.charcoal : colors.textSecondary,
             fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
           ),
         ),
@@ -363,7 +360,7 @@ class _ActiveTab extends ConsumerWidget {
               BoxShadow(
                 color: Theme.of(context).brightness == Brightness.dark
                     ? Colors.black.withValues(alpha: 0.22)
-                    : const Color(0xFF012D1B).withValues(alpha: 0.04),
+                    : AppColors.charcoal.withValues(alpha: 0.04),
                 blurRadius: 8,
                 offset: const Offset(0, 2),
               ),
@@ -573,62 +570,7 @@ class _ActiveTab extends ConsumerWidget {
                   ),
                 ),
                 const SizedBox(height: AppSpacing.sm),
-                ElevatedButton(
-                  onPressed: () async {
-                    final messenger = ScaffoldMessenger.of(context);
-                    final cashuWallet = ref.read(cashuWalletServiceProvider);
-
-                    try {
-                      if (cashuWallet == null) {
-                        throw StateError('Cashu wallet not initialized');
-                      }
-                      await cashuWallet.refundProtectedPayment(
-                          paymentId: tx.id);
-                      ref.invalidate(cashuBalanceProvider);
-                      ref
-                          .read(transactionsProvider.notifier)
-                          .updateTransactionStatus(
-                              tx.id, TransactionStatus.refunded);
-
-                      // Coordinate backend status
-                      try {
-                        await ref
-                            .read(paymentIntentRepositoryProvider)
-                            .updatePaymentStatus(tx.id, 'refund_available');
-                        final auth = ref.read(authProvider);
-                        if (auth.user != null) {
-                          await ref
-                              .read(paymentIntentRepositoryProvider)
-                              .refundPaymentIntent(
-                                id: tx.id,
-                                senderId: auth.user!.id,
-                              );
-                        }
-                        ref
-                            .read(transactionsProvider.notifier)
-                            .clearCoordinationSyncPending(tx.id);
-                      } catch (_) {
-                        ref
-                            .read(transactionsProvider.notifier)
-                            .markCoordinationSyncPending(tx.id, 'refunded');
-                      }
-
-                      messenger.showSnackBar(
-                        SnackBar(
-                            content: Text(
-                                'Refunded ${Formatters.formatSats(tx.amountSats)} to spendable balance')),
-                      );
-                    } catch (e) {
-                      messenger.showSnackBar(
-                        SnackBar(
-                          content: Text('Refund failed: $e'),
-                          backgroundColor: Colors.redAccent,
-                        ),
-                      );
-                    }
-                  },
-                  child: const Text('Refund available'),
-                ),
+                _RefundActionButton(tx: tx),
               ] else ...[
                 Container(
                   padding: const EdgeInsets.symmetric(
@@ -737,7 +679,7 @@ class _IncomingTab extends ConsumerWidget {
               BoxShadow(
                 color: Theme.of(context).brightness == Brightness.dark
                     ? Colors.black.withValues(alpha: 0.22)
-                    : const Color(0xFF012D1B).withValues(alpha: 0.04),
+                    : AppColors.charcoal.withValues(alpha: 0.04),
                 blurRadius: 8,
                 offset: const Offset(0, 2),
               ),
@@ -777,116 +719,7 @@ class _IncomingTab extends ConsumerWidget {
                 ),
               ),
               const SizedBox(width: AppSpacing.xs),
-              ElevatedButton(
-                onPressed: () async {
-                  final messenger = ScaffoldMessenger.of(context);
-                  final cashuWallet = ref.read(cashuWalletServiceProvider);
-
-                  try {
-                    if (cashuWallet == null) {
-                      throw StateError('Cashu wallet not initialized');
-                    }
-                    final authState = ref.read(authProvider);
-                    if (authState.user == null) {
-                      throw StateError(
-                          'User must be authenticated to claim incoming payments');
-                    }
-
-                    // 1. Fetch matching encrypted envelope from inbox
-                    final messageService =
-                        ref.read(protectedMessageServiceProvider);
-                    final inbox = await messageService.getInbox();
-                    final matchingMsg = inbox.firstWhere(
-                      (msg) => msg.paymentIntentId == tx.id,
-                      orElse: () => throw StateError(
-                          'No encrypted envelope found in inbox for payment ${tx.id}'),
-                    );
-
-                    // 2. Pre-decryption fingerprint check
-                    final cryptoService =
-                        ref.read(cryptoIdentityProvider.notifier);
-                    final identity = await cryptoService.requireIdentity();
-
-                    final currentFingerprint = identity.transportKeyFingerprint;
-                    final recordedFingerprint =
-                        matchingMsg.recipientTransportKeyFingerprint;
-
-                    if (recordedFingerprint != null &&
-                        recordedFingerprint.isNotEmpty &&
-                        recordedFingerprint.toLowerCase() !=
-                            currentFingerprint.toLowerCase()) {
-                      throw StateError(
-                        'This payment was encrypted to a previous wallet identity. '
-                        'Your current wallet keys cannot decrypt it. Ask the sender to wait for '
-                        'refund availability and send a new payment to your current identity.',
-                      );
-                    }
-
-                    final envelope =
-                        await EncryptedEnvelopeService().decryptEnvelope(
-                      ciphertextString: matchingMsg.encryptedPayload,
-                      recipientKeyPair: identity.transportKeyPair,
-                    );
-
-                    // 3. Claim protected payment with CDK & Mint witness
-                    await cashuWallet.claimProtectedPayment(
-                      token: envelope.cashuToken,
-                      paymentId: tx.id,
-                    );
-                    ref.invalidate(cashuBalanceProvider);
-                    ref
-                        .read(transactionsProvider.notifier)
-                        .updateTransactionStatus(
-                            tx.id, TransactionStatus.completed);
-
-                    // 4. Coordinate status with backend
-                    try {
-                      await ref
-                          .read(paymentIntentRepositoryProvider)
-                          .claimPaymentIntent(tx.id);
-                      ref
-                          .read(transactionsProvider.notifier)
-                          .clearCoordinationSyncPending(tx.id);
-                    } catch (_) {
-                      ref
-                          .read(transactionsProvider.notifier)
-                          .markCoordinationSyncPending(tx.id, 'claimed');
-                    }
-
-                    messenger.showSnackBar(
-                      SnackBar(
-                          content: Text(
-                              'Claimed ${Formatters.formatSats(tx.amountSats)} successfully!')),
-                    );
-                  } catch (e) {
-                    final errStr = e
-                        .toString()
-                        .replaceAll('Exception:', '')
-                        .replaceAll('Bad state:', '')
-                        .trim();
-                    String friendlyMessage;
-                    if (errStr.contains('SecretBoxAuthenticationError') ||
-                        errStr.contains('wrong message authentication code') ||
-                        errStr.contains('MAC')) {
-                      friendlyMessage =
-                          'This payment was encrypted to a previous wallet identity. Your current wallet keys cannot decrypt it. Ask the sender to wait for refund availability and send a new payment to your current identity.';
-                    } else {
-                      friendlyMessage = errStr;
-                    }
-                    messenger.showSnackBar(
-                      SnackBar(
-                        content: Text(friendlyMessage),
-                        backgroundColor: Colors.redAccent,
-                      ),
-                    );
-                  }
-                },
-                style: ElevatedButton.styleFrom(
-                  minimumSize: const Size(72, 36),
-                  padding: const EdgeInsets.symmetric(horizontal: 12),
-                ),
-                child: const Text('Claim'),
-              ),
+              _ClaimActionButton(tx: tx),
             ],
           ),
         );
@@ -950,7 +783,7 @@ class _CompletedTab extends ConsumerWidget {
               BoxShadow(
                 color: Theme.of(context).brightness == Brightness.dark
                     ? Colors.black.withValues(alpha: 0.22)
-                    : const Color(0xFF012D1B).withValues(alpha: 0.04),
+                    : AppColors.charcoal.withValues(alpha: 0.04),
                 blurRadius: 8,
                 offset: const Offset(0, 2),
               ),
@@ -1005,6 +838,222 @@ class _CompletedTab extends ConsumerWidget {
           ),
         );
       },
+    );
+  }
+}
+
+class _RefundActionButton extends ConsumerStatefulWidget {
+  final TransactionModel tx;
+
+  const _RefundActionButton({required this.tx});
+
+  @override
+  ConsumerState<_RefundActionButton> createState() =>
+      _RefundActionButtonState();
+}
+
+class _RefundActionButtonState extends ConsumerState<_RefundActionButton> {
+  bool _isLoading = false;
+
+  Future<void> _handleRefund() async {
+    if (_isLoading) return;
+    setState(() => _isLoading = true);
+
+    final messenger = ScaffoldMessenger.of(context);
+    final cashuWallet = ref.read(cashuWalletServiceProvider);
+
+    try {
+      if (cashuWallet == null) {
+        throw StateError('Cashu wallet not initialized');
+      }
+      await cashuWallet.refundProtectedPayment(paymentId: widget.tx.id);
+      ref.invalidate(cashuBalanceProvider);
+      ref
+          .read(transactionsProvider.notifier)
+          .updateTransactionStatus(widget.tx.id, TransactionStatus.refunded);
+
+      // Coordinate backend status
+      try {
+        await ref
+            .read(paymentIntentRepositoryProvider)
+            .updatePaymentStatus(widget.tx.id, 'refund_available');
+        final auth = ref.read(authProvider);
+        if (auth.user != null) {
+          await ref.read(paymentIntentRepositoryProvider).refundPaymentIntent(
+                id: widget.tx.id,
+                senderId: auth.user!.id,
+              );
+        }
+        ref
+            .read(transactionsProvider.notifier)
+            .clearCoordinationSyncPending(widget.tx.id);
+      } catch (_) {
+        ref
+            .read(transactionsProvider.notifier)
+            .markCoordinationSyncPending(widget.tx.id, 'refunded');
+      }
+
+      if (!mounted) return;
+      messenger.showSnackBar(
+        SnackBar(
+          content: Text(
+              'Refunded ${Formatters.formatSats(widget.tx.amountSats)} to spendable balance'),
+        ),
+      );
+    } catch (e) {
+      if (!mounted) return;
+      final friendlyMsg = ConsumerErrorTranslator.translate(e);
+      messenger.showSnackBar(
+        SnackBar(
+          content: Text(friendlyMsg),
+          backgroundColor: Colors.redAccent,
+        ),
+      );
+    } finally {
+      if (mounted) {
+        setState(() => _isLoading = false);
+      }
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return ElevatedButton(
+      onPressed: _isLoading ? null : _handleRefund,
+      child: _isLoading
+          ? const SizedBox(
+              width: 16,
+              height: 16,
+              child: CircularProgressIndicator(strokeWidth: 2),
+            )
+          : const Text('Refund available'),
+    );
+  }
+}
+
+class _ClaimActionButton extends ConsumerStatefulWidget {
+  final TransactionModel tx;
+
+  const _ClaimActionButton({required this.tx});
+
+  @override
+  ConsumerState<_ClaimActionButton> createState() => _ClaimActionButtonState();
+}
+
+class _ClaimActionButtonState extends ConsumerState<_ClaimActionButton> {
+  bool _isLoading = false;
+
+  Future<void> _handleClaim() async {
+    if (_isLoading) return;
+    setState(() => _isLoading = true);
+
+    final messenger = ScaffoldMessenger.of(context);
+    final cashuWallet = ref.read(cashuWalletServiceProvider);
+
+    try {
+      if (cashuWallet == null) {
+        throw StateError('Cashu wallet not initialized');
+      }
+      final authState = ref.read(authProvider);
+      if (authState.user == null) {
+        throw StateError(
+            'User must be authenticated to claim incoming payments');
+      }
+
+      // 1. Fetch matching encrypted envelope from inbox
+      final messageService = ref.read(protectedMessageServiceProvider);
+      final inbox = await messageService.getInbox();
+      final matchingMsg = inbox.firstWhere(
+        (msg) => msg.paymentIntentId == widget.tx.id,
+        orElse: () => throw StateError(
+            'No encrypted envelope found in inbox for payment ${widget.tx.id}'),
+      );
+
+      // 2. Pre-decryption fingerprint check
+      final cryptoService = ref.read(cryptoIdentityProvider.notifier);
+      final identity = await cryptoService.requireIdentity();
+
+      final currentFingerprint = identity.transportKeyFingerprint;
+      final recordedFingerprint = matchingMsg.recipientTransportKeyFingerprint;
+
+      if (recordedFingerprint != null &&
+          recordedFingerprint.isNotEmpty &&
+          recordedFingerprint.toLowerCase() !=
+              currentFingerprint.toLowerCase()) {
+        throw StateError(
+          'This payment was encrypted to a previous wallet identity. '
+          'Your current wallet keys cannot decrypt it. Ask the sender to wait for '
+          'refund availability and send a new payment to your current identity.',
+        );
+      }
+
+      final envelope = await EncryptedEnvelopeService().decryptEnvelope(
+        ciphertextString: matchingMsg.encryptedPayload,
+        recipientKeyPair: identity.transportKeyPair,
+      );
+
+      // 3. Claim protected payment with CDK & Mint witness
+      await cashuWallet.claimProtectedPayment(
+        token: envelope.cashuToken,
+        paymentId: widget.tx.id,
+      );
+      ref.invalidate(cashuBalanceProvider);
+      ref
+          .read(transactionsProvider.notifier)
+          .updateTransactionStatus(widget.tx.id, TransactionStatus.completed);
+
+      // 4. Coordinate status with backend
+      try {
+        await ref
+            .read(paymentIntentRepositoryProvider)
+            .claimPaymentIntent(widget.tx.id);
+        ref
+            .read(transactionsProvider.notifier)
+            .clearCoordinationSyncPending(widget.tx.id);
+      } catch (_) {
+        ref
+            .read(transactionsProvider.notifier)
+            .markCoordinationSyncPending(widget.tx.id, 'claimed');
+      }
+
+      if (!mounted) return;
+      messenger.showSnackBar(
+        SnackBar(
+          content: Text(
+              'Claimed ${Formatters.formatSats(widget.tx.amountSats)} successfully!'),
+        ),
+      );
+    } catch (e) {
+      if (!mounted) return;
+      final friendlyMsg = ConsumerErrorTranslator.translate(e);
+      messenger.showSnackBar(
+        SnackBar(
+          content: Text(friendlyMsg),
+          backgroundColor: Colors.redAccent,
+        ),
+      );
+    } finally {
+      if (mounted) {
+        setState(() => _isLoading = false);
+      }
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return ElevatedButton(
+      onPressed: _isLoading ? null : _handleClaim,
+      style: ElevatedButton.styleFrom(
+        minimumSize: const Size(72, 36),
+        padding: const EdgeInsets.symmetric(horizontal: 12),
+      ),
+      child: _isLoading
+          ? const SizedBox(
+              width: 14,
+              height: 14,
+              child: CircularProgressIndicator(strokeWidth: 2),
+            )
+          : const Text('Claim'),
     );
   }
 }

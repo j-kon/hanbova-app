@@ -10,6 +10,7 @@ import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_radius.dart';
 import '../../../core/theme/app_spacing.dart';
 import '../../../core/theme/app_typography.dart';
+import '../../../core/utils/consumer_error_translator.dart';
 import '../../../core/utils/formatters.dart';
 import '../../auth/providers/auth_provider.dart';
 import '../../protected/data/protected_message_service.dart';
@@ -203,20 +204,7 @@ class _ClaimPaymentScreenState extends ConsumerState<ClaimPaymentScreen> {
       });
     } catch (e) {
       if (!mounted) return;
-      final errStr = e
-          .toString()
-          .replaceAll('Exception:', '')
-          .replaceAll('Bad state:', '')
-          .trim();
-      String friendlyMessage;
-      if (errStr.contains('SecretBoxAuthenticationError') ||
-          errStr.contains('wrong message authentication code') ||
-          errStr.contains('MAC')) {
-        friendlyMessage =
-            'This payment was encrypted to a previous wallet identity. Your current wallet keys cannot decrypt it. Ask the sender to wait for refund availability and send a new payment to your current identity.';
-      } else {
-        friendlyMessage = errStr;
-      }
+      final friendlyMessage = ConsumerErrorTranslator.translate(e);
       setState(() {
         _isLoading = false;
         _errorMessage = friendlyMessage;

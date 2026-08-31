@@ -60,7 +60,7 @@ class AppShell extends StatelessWidget {
                   BoxShadow(
                     color: isDark
                         ? Colors.black.withValues(alpha: 0.45)
-                        : const Color(0xFF012D1B).withValues(alpha: 0.10),
+                        : AppColors.charcoal.withValues(alpha: 0.08),
                     blurRadius: 24,
                     offset: const Offset(0, 8),
                     spreadRadius: -2,
@@ -77,13 +77,13 @@ class AppShell extends StatelessWidget {
                         const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
                     decoration: BoxDecoration(
                       color: isDark
-                          ? AppColors.forestGreen.withValues(alpha: 0.82)
-                          : Colors.white.withValues(alpha: 0.85),
+                          ? AppColors.graphite.withValues(alpha: 0.88)
+                          : AppColors.warmWhite.withValues(alpha: 0.90),
                       borderRadius: BorderRadius.circular(28),
                       border: Border.all(
                         color: isDark
-                            ? AppColors.ribbonGreen.withValues(alpha: 0.8)
-                            : const Color(0xFFE8E3D8).withValues(alpha: 0.9),
+                            ? AppColors.darkBorder.withValues(alpha: 0.8)
+                            : AppColors.lightBorder.withValues(alpha: 0.9),
                         width: 1,
                       ),
                     ),
@@ -157,8 +157,6 @@ class _CenterPayButtonState extends State<_CenterPayButton> {
 
   @override
   Widget build(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-
     return GestureDetector(
       onTapDown: (_) => setState(() => _isPressed = true),
       onTapUp: (_) {
@@ -175,32 +173,26 @@ class _CenterPayButtonState extends State<_CenterPayButton> {
           height: 50,
           decoration: BoxDecoration(
             shape: BoxShape.circle,
-            gradient: LinearGradient(
+            gradient: const LinearGradient(
               begin: Alignment.topLeft,
               end: Alignment.bottomRight,
-              colors: isDark
-                  ? [
-                      AppColors.lightLeaf,
-                      AppColors.leafGreen,
-                    ]
-                  : [
-                      AppColors.ribbonGreen,
-                      AppColors.forestGreen,
-                    ],
+              colors: [
+                AppColors.orangeLight,
+                AppColors.bitcoinOrange,
+              ],
             ),
             boxShadow: [
               BoxShadow(
-                color: (isDark ? AppColors.leafGreen : AppColors.forestGreen)
-                    .withValues(alpha: 0.38),
+                color: AppColors.bitcoinOrange.withValues(alpha: 0.38),
                 blurRadius: 12,
                 offset: const Offset(0, 4),
               ),
             ],
           ),
-          child: Center(
+          child: const Center(
             child: Icon(
               Icons.arrow_upward_rounded,
-              color: isDark ? AppColors.deepForest : Colors.white,
+              color: AppColors.charcoal,
               size: 26,
             ),
           ),
@@ -228,9 +220,9 @@ class _IosNavItem extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final activeColor = isDark ? AppColors.leafGreen : AppColors.forestGreen;
+    final activeColor = AppColors.bitcoinOrange;
     final inactiveColor =
-        isDark ? const Color(0xFF7D8F87) : AppColors.softCharcoal;
+        isDark ? AppColors.darkTextTertiary : AppColors.softGray;
 
     return InkWell(
       onTap: onTap,

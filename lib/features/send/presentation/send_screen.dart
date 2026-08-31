@@ -9,6 +9,7 @@ import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_radius.dart';
 import '../../../core/theme/app_spacing.dart';
 import '../../../core/theme/app_typography.dart';
+import '../../../core/utils/consumer_error_translator.dart';
 import '../../transactions/domain/transaction_model.dart';
 import '../../transactions/presentation/transactions_provider.dart';
 
@@ -104,9 +105,10 @@ class _SendScreenState extends ConsumerState<SendScreen> {
     } catch (e) {
       if (!mounted) return;
       setState(() => _isLoading = false);
+      final friendlyMessage = ConsumerErrorTranslator.translate(e);
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text('Payment failed: $e'),
+          content: Text(friendlyMessage),
           backgroundColor: Colors.redAccent,
         ),
       );

@@ -494,10 +494,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                         label: const Text('Send'),
                         style: ElevatedButton.styleFrom(
                           backgroundColor: colors.primary,
-                          foregroundColor:
-                              Theme.of(context).brightness == Brightness.dark
-                                  ? AppColors.deepForest
-                                  : Colors.white,
+                          foregroundColor: AppColors.charcoal,
                           padding: const EdgeInsets.symmetric(vertical: 14),
                         ),
                       ),

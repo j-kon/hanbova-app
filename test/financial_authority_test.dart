@@ -688,8 +688,7 @@ void main() {
       expect(success, isFalse);
       final state = container.read(protectedSendProvider);
       expect(state.createdIntent, isNull);
-      expect(
-          state.errorMessage, contains('Insufficient funds or mint offline'));
+      expect(state.errorMessage, contains('Insufficient spendable balance'));
 
       final transactions = container.read(transactionsProvider);
       expect(transactions.length, equals(initialTxCount));
@@ -729,7 +728,7 @@ void main() {
       expect(success, isFalse);
       final state = container.read(protectedSendProvider);
       expect(state.createdIntent, isNull);
-      expect(state.errorMessage, contains('Failed to relay encrypted message'));
+      expect(state.errorMessage, contains('Delivery pending'));
 
       // BUT CDK escrow is preserved
       expect(mockWallet.recordedEscrows.length, equals(1));

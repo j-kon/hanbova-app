@@ -359,11 +359,7 @@ class _FilterChip extends StatelessWidget {
         child: Text(
           label,
           style: AppTypography.labelMedium.copyWith(
-            color: isSelected
-                ? (Theme.of(context).brightness == Brightness.dark
-                    ? AppColors.deepForest
-                    : Colors.white)
-                : colors.textSecondary,
+            color: isSelected ? AppColors.charcoal : colors.textSecondary,
             fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
           ),
         ),
@@ -430,7 +426,7 @@ class _ActivityItemTile extends ConsumerWidget {
               BoxShadow(
                 color: Theme.of(context).brightness == Brightness.dark
                     ? Colors.black.withValues(alpha: 0.22)
-                    : const Color(0xFF012D1B).withValues(alpha: 0.04),
+                    : AppColors.charcoal.withValues(alpha: 0.04),
                 blurRadius: 8,
                 offset: const Offset(0, 2),
               ),

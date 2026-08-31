@@ -34,6 +34,10 @@ dev_dependencies:
 flutter:
   uses-material-design: true
   assets:
+    - assets/brand/v4/
+    - assets/brand/v4/logo/
+    - assets/brand/v4/onboarding/
+    - assets/brand/v4/splash/
     - assets/branding/
     - assets/branding/onboarding/
   fonts:
