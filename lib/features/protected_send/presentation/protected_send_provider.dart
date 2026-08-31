@@ -6,6 +6,7 @@ import '../../../core/crypto/crypto_identity_service.dart';
 import '../../../core/crypto/encrypted_envelope_service.dart';
 import '../../../core/network/network_environment.dart';
 import '../../../core/notifications/in_app_notification.dart';
+import '../../../core/utils/consumer_error_translator.dart';
 import '../../../core/utils/formatters.dart';
 import '../../auth/providers/auth_provider.dart';
 import '../../protected/data/protected_message_service.dart';
@@ -289,11 +290,7 @@ class ProtectedSendNotifier extends StateNotifier<ProtectedSendState> {
           );
       return true;
     } catch (e) {
-      final cleanMsg = e
-          .toString()
-          .replaceAll('Bad state:', '')
-          .replaceAll('Exception:', '')
-          .trim();
+      final cleanMsg = ConsumerErrorTranslator.translate(e);
       state = state.copyWith(isLoading: false, errorMessage: cleanMsg);
       return false;
     }
@@ -347,6 +344,15 @@ class ProtectedSendNotifier extends StateNotifier<ProtectedSendState> {
             'Escrow record for payment $canonicalPaymentId not found in local storage');
       }
 
+      // Check recipient key rotation before relaying existing token
+      if (escrow.recipientPubkey.toLowerCase() !=
+          recipientProfile.protectedPaymentPubkey.toLowerCase()) {
+        throw StateError(
+          'Recipient wallet identity changed. This protected payment remains bound to '
+          'the previous recipient key. Wait for Refund availability, then create a new payment.',
+        );
+      }
+
       final envelope = ProtectedPaymentEnvelope(
         version: 1,
         paymentId: canonicalPaymentId,
@@ -394,11 +400,7 @@ class ProtectedSendNotifier extends StateNotifier<ProtectedSendState> {
       state = state.copyWith(isLoading: false);
       return true;
     } catch (e) {
-      final cleanMsg = e
-          .toString()
-          .replaceAll('Bad state:', '')
-          .replaceAll('Exception:', '')
-          .trim();
+      final cleanMsg = ConsumerErrorTranslator.translate(e);
       state = state.copyWith(isLoading: false, errorMessage: cleanMsg);
       return false;
     }

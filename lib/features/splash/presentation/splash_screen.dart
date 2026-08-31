@@ -74,7 +74,6 @@ class _SplashScreenState extends ConsumerState<SplashScreen>
   }
 
   Future<void> _navigateNext() async {
-    // Branded transition duration
     await Future.delayed(const Duration(milliseconds: 1700));
     if (!mounted || GoRouter.maybeOf(context) == null) return;
 
@@ -95,10 +94,12 @@ class _SplashScreenState extends ConsumerState<SplashScreen>
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final backgroundColor = isDark ? AppColors.deepForest : AppColors.warmCream;
-    final primaryAccent = isDark ? AppColors.leafGreen : AppColors.forestGreen;
+    final backgroundColor = isDark ? AppColors.charcoal : AppColors.warmWhite;
+    final primaryAccent = AppColors.bitcoinOrange;
+    final textPrimary =
+        isDark ? AppColors.darkTextPrimary : AppColors.lightTextPrimary;
     final textSecondary =
-        isDark ? const Color(0xFFB0C4B8) : AppColors.softCharcoal;
+        isDark ? AppColors.darkTextSecondary : AppColors.lightTextSecondary;
 
     return Scaffold(
       backgroundColor: backgroundColor,
@@ -118,7 +119,7 @@ class _SplashScreenState extends ConsumerState<SplashScreen>
                     shape: BoxShape.circle,
                     gradient: RadialGradient(
                       colors: [
-                        primaryAccent.withValues(alpha: isDark ? 0.18 : 0.08),
+                        primaryAccent.withValues(alpha: isDark ? 0.16 : 0.08),
                         backgroundColor.withValues(alpha: 0.0),
                       ],
                     ),
@@ -137,34 +138,28 @@ class _SplashScreenState extends ConsumerState<SplashScreen>
                   opacity: _logoFade,
                   child: ScaleTransition(
                     scale: _logoScale,
-                    child: isDark
-                        ? Row(
-                            mainAxisSize: MainAxisSize.min,
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              Image.asset(
-                                'assets/branding/hanbova_icon_EXACT_MASTER.png',
-                                width: 42,
-                                height: 42,
-                                fit: BoxFit.contain,
-                              ),
-                              const SizedBox(width: 12),
-                              Text(
-                                'Hanbova',
-                                style: AppTypography.display.copyWith(
-                                  color: Colors.white,
-                                  fontWeight: FontWeight.w700,
-                                  letterSpacing: -0.5,
-                                  fontSize: 32,
-                                ),
-                              ),
-                            ],
-                          )
-                        : Image.asset(
-                            'assets/branding/hanbova_logo_EXACT_MASTER.png',
-                            width: 210,
-                            fit: BoxFit.contain,
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Image.asset(
+                          'assets/brand/v4/logo/hanbova_icon_v4_EXACT_MASTER_TRANSPARENT.png',
+                          width: 44,
+                          height: 44,
+                          fit: BoxFit.contain,
+                        ),
+                        const SizedBox(width: 12),
+                        Text(
+                          'Hanbova',
+                          style: AppTypography.display.copyWith(
+                            color: textPrimary,
+                            fontWeight: FontWeight.w700,
+                            letterSpacing: -0.5,
+                            fontSize: 32,
                           ),
+                        ),
+                      ],
+                    ),
                   ),
                 ),
                 const SizedBox(height: 14),
@@ -198,9 +193,8 @@ class _SplashScreenState extends ConsumerState<SplashScreen>
                     width: 64,
                     height: 3,
                     decoration: BoxDecoration(
-                      color: isDark
-                          ? AppColors.ribbonGreen.withValues(alpha: 0.5)
-                          : const Color(0xFFE5E0D5),
+                      color:
+                          isDark ? AppColors.graphite : AppColors.lightDivider,
                       borderRadius: BorderRadius.circular(2),
                     ),
                     alignment: Alignment.centerLeft,

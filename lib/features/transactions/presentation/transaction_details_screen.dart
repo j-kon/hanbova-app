@@ -123,7 +123,7 @@ class _TransactionDetailsScreenState
                     BoxShadow(
                       color: Theme.of(context).brightness == Brightness.dark
                           ? Colors.black.withValues(alpha: 0.22)
-                          : const Color(0xFF012D1B).withValues(alpha: 0.04),
+                          : AppColors.charcoal.withValues(alpha: 0.04),
                       blurRadius: 10,
                       offset: const Offset(0, 3),
                     ),
@@ -180,6 +180,29 @@ class _TransactionDetailsScreenState
                       value: _formatPaymentType(tx.type),
                     ),
                     const SizedBox(height: AppSpacing.sm),
+
+                    if (tx.type == TransactionType.protectedSend ||
+                        tx.type == TransactionType.protectedClaim ||
+                        tx.type == TransactionType.protectedRefund) ...[
+                      _DetailRow(
+                        label: 'Financial State',
+                        value: tx.status == TransactionStatus.refunded
+                            ? 'Refunded to Spendable Balance'
+                            : (tx.status == TransactionStatus.completed
+                                ? 'Claimed & Settled'
+                                : 'Locked in Escrow'),
+                      ),
+                      const SizedBox(height: AppSpacing.sm),
+                    ],
+
+                    if (tx.coordinationSyncPending) ...[
+                      _DetailRow(
+                        label: 'Coordination State',
+                        value:
+                            'Sync Pending (${tx.syncPendingStatus ?? "pending"})',
+                      ),
+                      const SizedBox(height: AppSpacing.sm),
+                    ],
 
                     _DetailRow(
                       label: 'Date & Time',

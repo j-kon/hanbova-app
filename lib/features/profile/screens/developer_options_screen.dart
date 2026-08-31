@@ -12,7 +12,6 @@ import '../../../core/theme/app_radius.dart';
 import '../../../core/theme/app_spacing.dart';
 import '../../../core/theme/app_typography.dart';
 import '../../auth/providers/auth_provider.dart';
-import '../../transactions/presentation/transactions_provider.dart';
 
 class DeveloperOptionsScreen extends ConsumerStatefulWidget {
   const DeveloperOptionsScreen({super.key});
@@ -340,52 +339,6 @@ class _DeveloperOptionsScreenState
             const _InfoTile(
                 label: 'NUT-00 to NUT-06',
                 value: 'Supported (Mint, Keysets, Tokens, Split, Melt)'),
-            _SectionHeader(title: 'Presentation & Demo Controls'),
-            Container(
-              margin: const EdgeInsets.only(bottom: AppSpacing.md),
-              padding: const EdgeInsets.all(AppSpacing.md),
-              decoration: BoxDecoration(
-                color: colors.surfaceCard,
-                borderRadius: AppRadius.mdRadius,
-                border:
-                    Border.all(color: colors.primary.withValues(alpha: 0.3)),
-              ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  Row(
-                    children: [
-                      Icon(Icons.slideshow_rounded, color: colors.primary),
-                      const SizedBox(width: AppSpacing.sm),
-                      Text('Fellowship Demo Seeder',
-                          style: AppTypography.titleSmall
-                              .copyWith(color: colors.textPrimary)),
-                    ],
-                  ),
-                  const SizedBox(height: AppSpacing.xs),
-                  Text(
-                    'Populate realistic African commerce transactions (Instant Lightning, Protected Escrow, Claims, and Refunds) for live pitch demos.',
-                    style: AppTypography.bodySmall
-                        .copyWith(color: colors.textSecondary, fontSize: 12),
-                  ),
-                  const SizedBox(height: AppSpacing.md),
-                  ElevatedButton.icon(
-                    onPressed: () {
-                      ref
-                          .read(transactionsProvider.notifier)
-                          .seedDemoTransactions();
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(
-                            content: Text(
-                                'Populated demo transactions across all 4 categories!')),
-                      );
-                    },
-                    icon: const Icon(Icons.auto_fix_high_rounded, size: 18),
-                    label: const Text('Seed Demo Transactions'),
-                  ),
-                ],
-              ),
-            ),
 
             OutlinedButton(
               onPressed: () {

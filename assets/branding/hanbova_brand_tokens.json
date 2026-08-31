@@ -1,0 +1,27 @@
+{
+  "brand": {
+    "bitcoinOrange": "#F7931A",
+    "lightningGold": "#FFC400",
+    "charcoal": "#172027",
+    "graphite": "#25323A",
+    "warmWhite": "#FAFAF7",
+    "softGray": "#6E7A80"
+  },
+  "functional": {
+    "success": "#2E8B57",
+    "warning": "#D98B00",
+    "danger": "#C44747",
+    "info": "#3B82F6"
+  },
+  "typography": {
+    "primary": "Poppins",
+    "fallback": "Inter, system-ui, sans-serif",
+    "weights": [
+      400,
+      500,
+      600,
+      700
+    ]
+  },
+  "tagline": "Send protected."
+}

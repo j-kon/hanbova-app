@@ -224,9 +224,7 @@ class _ProtectedSendScreenState extends ConsumerState<ProtectedSendScreen> {
                       backgroundColor: colors.surfaceElevated,
                       labelStyle: AppTypography.labelMedium.copyWith(
                         color: isSelected
-                            ? (Theme.of(context).brightness == Brightness.dark
-                                ? AppColors.deepForest
-                                : Colors.white)
+                            ? AppColors.charcoal
                             : colors.textSecondary,
                         fontWeight:
                             isSelected ? FontWeight.w700 : FontWeight.w500,

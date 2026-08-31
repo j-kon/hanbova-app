@@ -1,4 +1,3 @@
-import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../protected_send/domain/protected_payment_intent.dart';
 import '../domain/transaction_model.dart';
@@ -12,61 +11,15 @@ class TransactionsNotifier extends StateNotifier<List<TransactionModel>> {
   TransactionsNotifier() : super(const []);
 
   void addTransaction(TransactionModel tx) {
-    state = [tx, ...state];
-  }
-
-  void seedDemoTransactions() {
-    if (!kDebugMode) return;
-    final now = DateTime.now();
-    state = [
-      TransactionModel(
-        id: 'tx_demo_1',
-        type: TransactionType.protectedSend,
-        status: TransactionStatus.claimable,
-        amountSats: 25000,
-        recipientOrSender: 'amina@hanbova.africa',
-        description: 'Design mockups milestone (Escrow)',
-        createdAt: now.subtract(const Duration(hours: 2)),
-        expiresAt: now.add(const Duration(hours: 22)),
-        claimReference: 'hnbv_claim_9281a',
-      ),
-      TransactionModel(
-        id: 'tx_demo_2',
-        type: TransactionType.instantReceive,
-        status: TransactionStatus.completed,
-        amountSats: 50000,
-        recipientOrSender: 'kofi@hanbova.me',
-        description: 'Instant settlement for solar equipment',
-        createdAt: now.subtract(const Duration(days: 1)),
-      ),
-      TransactionModel(
-        id: 'tx_demo_3',
-        type: TransactionType.protectedClaim,
-        status: TransactionStatus.completed,
-        amountSats: 15000,
-        recipientOrSender: 'tarik@hanbova.africa',
-        description: 'Agricultural produce delivery claim',
-        createdAt: now.subtract(const Duration(days: 2)),
-      ),
-      TransactionModel(
-        id: 'tx_demo_4',
-        type: TransactionType.instantSend,
-        status: TransactionStatus.completed,
-        amountSats: 8500,
-        recipientOrSender: 'zara@hanbova.me',
-        description: 'Mobile data topup via Lightning',
-        createdAt: now.subtract(const Duration(days: 3)),
-      ),
-      TransactionModel(
-        id: 'tx_demo_5',
-        type: TransactionType.protectedRefund,
-        status: TransactionStatus.refunded,
-        amountSats: 30000,
-        recipientOrSender: 'seller_dispute@market.ng',
-        description: 'Refund after unfulfilled delivery window',
-        createdAt: now.subtract(const Duration(days: 5)),
-      ),
-    ];
+    final idx = state.indexWhere((t) => t.id == tx.id);
+    if (idx >= 0) {
+      state = [
+        for (int i = 0; i < state.length; i++)
+          if (i == idx) tx else state[i],
+      ];
+    } else {
+      state = [tx, ...state];
+    }
   }
 
   void updateTransactionStatus(String id, TransactionStatus newStatus) {
@@ -118,11 +71,17 @@ class TransactionsNotifier extends StateNotifier<List<TransactionModel>> {
       final createdAt = msg.createdAt as DateTime;
       final status = (msg.status as String?)?.toLowerCase() ?? '';
 
-      if (status == 'claimed' || status == 'refunded') {
-        // Mark locally completed if present
+      if (status == 'claimed') {
         final idx = state.indexWhere((t) => t.id == paymentIntentId);
         if (idx >= 0 && state[idx].status == TransactionStatus.claimable) {
           updateTransactionStatus(paymentIntentId, TransactionStatus.completed);
+        }
+        continue;
+      }
+      if (status == 'refunded') {
+        final idx = state.indexWhere((t) => t.id == paymentIntentId);
+        if (idx >= 0 && state[idx].status == TransactionStatus.claimable) {
+          updateTransactionStatus(paymentIntentId, TransactionStatus.refunded);
         }
         continue;
       }
@@ -253,7 +212,13 @@ class TransactionsNotifier extends StateNotifier<List<TransactionModel>> {
       final idx = updatedList.indexWhere((t) => t.id == intent.id);
       if (idx >= 0) {
         final local = updatedList[idx];
+        // If local transaction is already financially settled, preserve client authority
+        final finalStatus = (local.status == TransactionStatus.completed ||
+                local.status == TransactionStatus.refunded)
+            ? local.status
+            : txStatus;
         updatedList[idx] = model.copyWith(
+          status: finalStatus,
           coordinationSyncPending: local.coordinationSyncPending,
           syncPendingStatus: local.syncPendingStatus,
         );

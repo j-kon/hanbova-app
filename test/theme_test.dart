@@ -11,7 +11,7 @@ void main() {
       expect(theme.brightness, Brightness.dark);
       final colors = theme.extension<HanbovaColors>();
       expect(colors, isNotNull);
-      expect(colors!.primary, AppColors.primaryGreen);
+      expect(colors!.primary, AppColors.bitcoinOrange);
       expect(colors.protected, AppColors.protected);
     });
 
@@ -20,7 +20,7 @@ void main() {
       expect(theme.brightness, Brightness.light);
       final colors = theme.extension<HanbovaColors>();
       expect(colors, isNotNull);
-      expect(colors!.primary, AppColors.primaryGreenDark);
+      expect(colors!.primary, AppColors.bitcoinOrange);
       expect(colors.protected, AppColors.protected);
     });
 

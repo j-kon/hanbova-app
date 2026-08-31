@@ -10,8 +10,9 @@ import '../../../core/wallet/wallet_context.dart';
 import '../application/restore_wallet_controller.dart';
 
 const restoredMessage =
-    'Your wallet identity has been restored. Full ecash balance recovery '
-    'after complete device loss remains experimental.';
+    'Your signing keys and account identity have been restored. '
+    'Ecash proofs stored locally on another device require local database transfer '
+    'until server-assisted proof restoration (NUT-13) is supported.';
 const syncPendingMessage =
     'Your wallet identity was restored, but payment-key sync is pending. '
     'Receiving protected payments may be unavailable until sync completes.';

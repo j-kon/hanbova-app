@@ -431,7 +431,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
               child: Column(
                 children: [
                   Image.asset(
-                    'assets/branding/hanbova_icon_EXACT_MASTER.png',
+                    'assets/brand/v4/logo/hanbova_icon_v4_EXACT_MASTER_TRANSPARENT.png',
                     width: 32,
                     height: 32,
                     errorBuilder: (_, __, ___) => const SizedBox.shrink(),

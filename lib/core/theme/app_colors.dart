@@ -1,56 +1,57 @@
 import 'package:flutter/material.dart';
+import 'hanbova_brand_tokens.dart';
 
 class AppColors {
-  // Master Brand Tokens from brand_tokens.json
-  static const Color deepForest = Color(0xFF012D1B);
-  static const Color forestGreen = Color(0xFF013B23);
-  static const Color ribbonGreen = Color(0xFF02482A);
-  static const Color leafGreen = Color(0xFF66B33D);
-  static const Color lightLeaf = Color(0xFF7BCB45);
-  static const Color lightningGold = Color(0xFFFDBF09);
-  static const Color warmCream = Color(0xFFF7F4EC);
-  static const Color charcoal = Color(0xFF1B1F23);
-  static const Color softCharcoal = Color(0xFF5C6762);
+  // Master Brand V4 Tokens
+  static const Color bitcoinOrange = HanbovaBrandV4.bitcoinOrange;
+  static const Color lightningGold = HanbovaBrandV4.lightningGold;
+  static const Color charcoal = HanbovaBrandV4.charcoal;
+  static const Color graphite = HanbovaBrandV4.graphite;
+  static const Color warmWhite = HanbovaBrandV4.warmWhite;
+  static const Color softGray = HanbovaBrandV4.softGray;
+  static const Color orangeDeep = HanbovaBrandV4.orangeDeep;
+  static const Color orangeLight = HanbovaBrandV4.orangeLight;
   static const Color pureWhite = Color(0xFFFFFFFF);
-  static const Color danger = Color(0xFFC44747);
-  static const Color pending = Color(0xFFD98B00);
-  static const Color success = Color(0xFF2E8B57);
 
-  // Aliases for semantic compatibility
-  static const Color primaryGreen = leafGreen;
-  static const Color primaryGreenDark = forestGreen;
+  // Status & Semantic Tokens
+  static const Color success = HanbovaBrandV4.success;
+  static const Color warning = HanbovaBrandV4.warning;
+  static const Color danger = HanbovaBrandV4.danger;
+  static const Color info = HanbovaBrandV4.info;
+  static const Color pending = HanbovaBrandV4.warning;
+  static const Color error = HanbovaBrandV4.danger;
+
+  // Primary & Accent Aliases
+  static const Color primary = bitcoinOrange;
+  static const Color primaryDark = orangeDeep;
   static const Color accentGold = lightningGold;
-  static const Color error = danger;
-  static const Color warning = pending;
-  static const Color info = leafGreen;
-  static const Color protectedBlue = forestGreen;
+  static const Color protected = bitcoinOrange;
 
   // Flow directions
   static const Color incoming = success;
   static const Color outgoing = danger;
-  static const Color protected = leafGreen;
 
-  // Dark Theme Palette (Deep Forest Lead)
-  static const Color darkBackground = deepForest;
-  static const Color darkSurface = forestGreen;
-  static const Color darkSurfaceElevated = ribbonGreen;
-  static const Color darkSurfaceCard = forestGreen;
-  static const Color darkTextPrimary = pureWhite;
-  static const Color darkTextSecondary = Color(0xFFC8D8CF);
-  static const Color darkTextTertiary = Color(0xFF9AB2A6);
-  static const Color darkDivider = ribbonGreen;
-  static const Color darkBorder = Color(0xFF084E31);
+  // Dark Theme Palette (Charcoal Lead)
+  static const Color darkBackground = charcoal;
+  static const Color darkSurface = graphite;
+  static const Color darkSurfaceElevated = Color(0xFF2D3B44);
+  static const Color darkSurfaceCard = graphite;
+  static const Color darkTextPrimary = warmWhite;
+  static const Color darkTextSecondary = Color(0xFF9AA6AC);
+  static const Color darkTextTertiary = softGray;
+  static const Color darkDivider = Color(0xFF2D3B44);
+  static const Color darkBorder = Color(0xFF33434E);
 
-  // Light Theme Palette (Warm Cream Lead)
-  static const Color lightBackground = warmCream;
+  // Light Theme Palette (Warm White Lead)
+  static const Color lightBackground = warmWhite;
   static const Color lightSurface = pureWhite;
-  static const Color lightSurfaceElevated = Color(0xFFEFECE4);
+  static const Color lightSurfaceElevated = Color(0xFFF2F2ED);
   static const Color lightSurfaceCard = pureWhite;
   static const Color lightTextPrimary = charcoal;
-  static const Color lightTextSecondary = Color(0xFF4A5550);
-  static const Color lightTextTertiary = Color(0xFF6E7B75);
-  static const Color lightDivider = Color(0xFFE5E0D5);
-  static const Color lightBorder = Color(0xFFD8D2C6);
+  static const Color lightTextSecondary = softGray;
+  static const Color lightTextTertiary = Color(0xFF8A969C);
+  static const Color lightDivider = Color(0xFFE8E8E1);
+  static const Color lightBorder = Color(0xFFDEDFD7);
 }
 
 class HanbovaColors extends ThemeExtension<HanbovaColors> {
@@ -99,8 +100,8 @@ class HanbovaColors extends ThemeExtension<HanbovaColors> {
     surface: AppColors.darkSurface,
     surfaceElevated: AppColors.darkSurfaceElevated,
     surfaceCard: AppColors.darkSurfaceCard,
-    primary: AppColors.leafGreen,
-    primaryDark: AppColors.forestGreen,
+    primary: AppColors.bitcoinOrange,
+    primaryDark: AppColors.orangeDeep,
     gold: AppColors.lightningGold,
     textPrimary: AppColors.darkTextPrimary,
     textSecondary: AppColors.darkTextSecondary,
@@ -110,7 +111,7 @@ class HanbovaColors extends ThemeExtension<HanbovaColors> {
     success: AppColors.success,
     warning: AppColors.warning,
     error: AppColors.error,
-    protected: AppColors.leafGreen,
+    protected: AppColors.protected,
     incoming: AppColors.incoming,
     outgoing: AppColors.outgoing,
   );
@@ -120,8 +121,8 @@ class HanbovaColors extends ThemeExtension<HanbovaColors> {
     surface: AppColors.lightSurface,
     surfaceElevated: AppColors.lightSurfaceElevated,
     surfaceCard: AppColors.lightSurfaceCard,
-    primary: AppColors.forestGreen,
-    primaryDark: AppColors.deepForest,
+    primary: AppColors.bitcoinOrange,
+    primaryDark: AppColors.orangeDeep,
     gold: AppColors.lightningGold,
     textPrimary: AppColors.lightTextPrimary,
     textSecondary: AppColors.lightTextSecondary,

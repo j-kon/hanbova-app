@@ -38,18 +38,21 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
   final List<Map<String, String>> _slides = [
     {
       'title': 'Send instantly.',
-      'body': 'Fast Bitcoin payments for everyday life.',
-      'image': 'assets/branding/onboarding/onboarding_01_instant.png',
+      'body': 'Fast everyday Bitcoin payments for people you trust.',
+      'image': 'assets/brand/v4/onboarding/onboarding_01_instant_1080x1920.png',
     },
     {
       'title': 'Send protected.',
-      'body': 'Add a protection window and stay in control.',
-      'image': 'assets/branding/onboarding/onboarding_02_protected.png',
+      'body':
+          'Use a protected Cashu payment when you want a sender refund path after a chosen locktime.',
+      'image':
+          'assets/brand/v4/onboarding/onboarding_02_protected_1080x1920.png',
     },
     {
-      'title': 'Built for Africa.',
-      'body': 'Private, modern money for everyday people.',
-      'image': 'assets/branding/onboarding/onboarding_03_africa.png',
+      'title': 'Built for everyday commerce.',
+      'body':
+          'A mobile-first experience designed around real person-to-person payment situations.',
+      'image': 'assets/brand/v4/onboarding/onboarding_03_africa_1080x1920.png',
     },
   ];
 
@@ -81,7 +84,6 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
   @override
   Widget build(BuildContext context) {
     final colors = context.colors;
-    final isDark = Theme.of(context).brightness == Brightness.dark;
 
     return Scaffold(
       backgroundColor: colors.background,
@@ -142,7 +144,7 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
                       Row(
                         children: [
                           Image.asset(
-                            'assets/branding/hanbova_icon_EXACT_MASTER.png',
+                            'assets/brand/v4/logo/hanbova_icon_v4_EXACT_MASTER_TRANSPARENT.png',
                             width: 34,
                             height: 34,
                             errorBuilder: (_, __, ___) => Icon(
@@ -164,9 +166,7 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
                               Text(
                                 'Send protected.',
                                 style: AppTypography.caption.copyWith(
-                                  color: isDark
-                                      ? AppColors.leafGreen
-                                      : AppColors.forestGreen,
+                                  color: colors.primary,
                                   fontWeight: FontWeight.w600,
                                   fontSize: 10,
                                 ),
@@ -269,8 +269,7 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
                             : _next,
                         style: ElevatedButton.styleFrom(
                           backgroundColor: colors.primary,
-                          foregroundColor:
-                              isDark ? AppColors.deepForest : Colors.white,
+                          foregroundColor: AppColors.charcoal,
                           padding: const EdgeInsets.symmetric(vertical: 16),
                           shape: const RoundedRectangleBorder(
                               borderRadius: AppRadius.mdRadius),
@@ -281,7 +280,7 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
                               : 'Next',
                           style: AppTypography.titleSmall.copyWith(
                             fontWeight: FontWeight.w700,
-                            color: isDark ? AppColors.deepForest : Colors.white,
+                            color: AppColors.charcoal,
                           ),
                         ),
                       ),

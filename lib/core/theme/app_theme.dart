@@ -11,8 +11,8 @@ class AppTheme {
       brightness: Brightness.dark,
       scaffoldBackgroundColor: AppColors.darkBackground,
       colorScheme: const ColorScheme.dark(
-        primary: AppColors.leafGreen,
-        onPrimary: AppColors.deepForest,
+        primary: AppColors.bitcoinOrange,
+        onPrimary: AppColors.charcoal,
         secondary: AppColors.lightningGold,
         surface: AppColors.darkSurface,
         onSurface: AppColors.darkTextPrimary,
@@ -47,7 +47,7 @@ class AppTheme {
       bottomNavigationBarTheme: const BottomNavigationBarThemeData(
         backgroundColor: Colors.transparent,
         elevation: 0,
-        selectedItemColor: AppColors.leafGreen,
+        selectedItemColor: AppColors.bitcoinOrange,
         unselectedItemColor: AppColors.darkTextTertiary,
         type: BottomNavigationBarType.fixed,
       ),
@@ -58,8 +58,8 @@ class AppTheme {
       ),
       elevatedButtonTheme: ElevatedButtonThemeData(
         style: ElevatedButton.styleFrom(
-          backgroundColor: AppColors.leafGreen,
-          foregroundColor: AppColors.deepForest,
+          backgroundColor: AppColors.bitcoinOrange,
+          foregroundColor: AppColors.charcoal,
           elevation: 0,
           minimumSize: const Size(double.infinity, 52),
           shape: const RoundedRectangleBorder(borderRadius: AppRadius.mdRadius),
@@ -79,7 +79,7 @@ class AppTheme {
       ),
       textButtonTheme: TextButtonThemeData(
         style: TextButton.styleFrom(
-          foregroundColor: AppColors.leafGreen,
+          foregroundColor: AppColors.bitcoinOrange,
           textStyle: AppTypography.titleSmall,
         ),
       ),
@@ -98,7 +98,7 @@ class AppTheme {
         ),
         focusedBorder: const OutlineInputBorder(
           borderRadius: AppRadius.mdRadius,
-          borderSide: BorderSide(color: AppColors.leafGreen, width: 1.5),
+          borderSide: BorderSide(color: AppColors.bitcoinOrange, width: 1.5),
         ),
         errorBorder: const OutlineInputBorder(
           borderRadius: AppRadius.mdRadius,
@@ -118,8 +118,8 @@ class AppTheme {
       brightness: Brightness.light,
       scaffoldBackgroundColor: AppColors.lightBackground,
       colorScheme: const ColorScheme.light(
-        primary: AppColors.forestGreen,
-        onPrimary: Colors.white,
+        primary: AppColors.bitcoinOrange,
+        onPrimary: AppColors.pureWhite,
         secondary: AppColors.lightningGold,
         surface: AppColors.lightSurface,
         onSurface: AppColors.lightTextPrimary,
@@ -154,7 +154,7 @@ class AppTheme {
       bottomNavigationBarTheme: const BottomNavigationBarThemeData(
         backgroundColor: Colors.transparent,
         elevation: 0,
-        selectedItemColor: AppColors.forestGreen,
+        selectedItemColor: AppColors.bitcoinOrange,
         unselectedItemColor: AppColors.lightTextTertiary,
         type: BottomNavigationBarType.fixed,
       ),
@@ -165,8 +165,8 @@ class AppTheme {
       ),
       elevatedButtonTheme: ElevatedButtonThemeData(
         style: ElevatedButton.styleFrom(
-          backgroundColor: AppColors.forestGreen,
-          foregroundColor: Colors.white,
+          backgroundColor: AppColors.bitcoinOrange,
+          foregroundColor: AppColors.charcoal,
           elevation: 0,
           minimumSize: const Size(double.infinity, 52),
           shape: const RoundedRectangleBorder(borderRadius: AppRadius.mdRadius),
@@ -186,7 +186,7 @@ class AppTheme {
       ),
       textButtonTheme: TextButtonThemeData(
         style: TextButton.styleFrom(
-          foregroundColor: AppColors.forestGreen,
+          foregroundColor: AppColors.bitcoinOrange,
           textStyle: AppTypography.titleSmall,
         ),
       ),
@@ -205,7 +205,7 @@ class AppTheme {
         ),
         focusedBorder: const OutlineInputBorder(
           borderRadius: AppRadius.mdRadius,
-          borderSide: BorderSide(color: AppColors.forestGreen, width: 1.5),
+          borderSide: BorderSide(color: AppColors.bitcoinOrange, width: 1.5),
         ),
         errorBorder: const OutlineInputBorder(
           borderRadius: AppRadius.mdRadius,

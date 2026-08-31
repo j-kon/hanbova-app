@@ -229,6 +229,8 @@ class MockSuccessMessageService extends ProtectedMessageService {
   String? lastEncryptedPayload;
   final List<RemoteProtectedMessage> inboxMessages = [];
 
+  final Map<String, String> keyOverrides = {};
+
   MockSuccessMessageService({this.deliveryFailed = false})
       : super(
             ApiClient(baseUrl: 'http://localhost', httpClient: http.Client()));
@@ -239,6 +241,16 @@ class MockSuccessMessageService extends ProtectedMessageService {
     String? environment,
   }) async {
     final clean = username.trim().replaceAll('@', '').toLowerCase();
+    if (keyOverrides.containsKey(clean)) {
+      return UserPaymentProfile(
+        username: clean,
+        handle: '@$clean',
+        walletEnvironment: environment ?? 'wallet_local',
+        protectedPaymentPubkey: keyOverrides[clean]!,
+        transportEncryptionPubkey:
+            '6d9b4b9b9c9f0b83e3c09f8e434f0e9d6d9b4b9b9c9f0b83e3c09f8e434f0e9d',
+      );
+    }
     if (clean == 'carol') {
       return const UserPaymentProfile(
         username: 'carol',
@@ -688,8 +700,7 @@ void main() {
       expect(success, isFalse);
       final state = container.read(protectedSendProvider);
       expect(state.createdIntent, isNull);
-      expect(
-          state.errorMessage, contains('Insufficient funds or mint offline'));
+      expect(state.errorMessage, contains('Insufficient spendable balance'));
 
       final transactions = container.read(transactionsProvider);
       expect(transactions.length, equals(initialTxCount));
@@ -729,7 +740,7 @@ void main() {
       expect(success, isFalse);
       final state = container.read(protectedSendProvider);
       expect(state.createdIntent, isNull);
-      expect(state.errorMessage, contains('Failed to relay encrypted message'));
+      expect(state.errorMessage, contains('Delivery pending'));
 
       // BUT CDK escrow is preserved
       expect(mockWallet.recordedEscrows.length, equals(1));
@@ -1565,6 +1576,62 @@ void main() {
       // 4. Verify that cached Cashu Test profile was NOT reused for the message envelope
       final lastMsg = mockMessageService.inboxMessages.last;
       expect(lastMsg.walletEnvironment, equals('wallet_mainnet_pilot'));
+    });
+
+    test(
+        'retryDelivery rejects rotated recipient keys, relays no message, mints no token, and preserves escrow',
+        () async {
+      final mockWallet = MockSuccessfulCashuWalletService();
+      final mockMessageService =
+          MockSuccessMessageService(deliveryFailed: true);
+      final mockRepo = MockPaymentIntentRepository();
+
+      final container = ProviderContainer(
+        overrides: [
+          authProvider.overrideWith((ref) =>
+              MockAuthNotifier(AuthState.authenticated(testUser, 'jwt'))),
+          secureStorageServiceProvider
+              .overrideWithValue(InMemorySecureStorageService()),
+          paymentIntentRepositoryProvider.overrideWithValue(mockRepo),
+          protectedMessageServiceProvider.overrideWithValue(mockMessageService),
+          cashuWalletServiceProvider.overrideWithValue(mockWallet),
+        ],
+      );
+      addTearDown(container.dispose);
+
+      final notifier = container.read(protectedSendProvider.notifier);
+
+      // 1. Initial send fails delivery with Bob's original P2PK key
+      final sendSuccess = await notifier.createProtectedPayment(
+        amountSats: 5000,
+        recipientIdentifier: '@valid_bob',
+        description: 'Key rotation test',
+        expirationSeconds: 3600,
+      );
+      expect(sendSuccess, isFalse);
+      expect(mockWallet.recordedEscrows.length, equals(1));
+      final paymentId = mockWallet.recordedEscrows.keys.first;
+
+      // 2. Bob rotates his key on backend
+      mockMessageService.keyOverrides['valid_bob'] =
+          '03ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff';
+
+      final initialMsgCount = mockMessageService.inboxMessages.length;
+      final initialEscrowCount = mockWallet.recordedEscrows.length;
+
+      // 3. Retry delivery must reject due to key rotation
+      final retrySuccess = await notifier.retryDelivery(paymentId);
+      expect(retrySuccess, isFalse);
+
+      final state = container.read(protectedSendProvider);
+      expect(
+          state.errorMessage,
+          contains(
+              'Recipient wallet identity changed. This protected payment remains bound'));
+
+      // 4. No new relay message sent, no new CDK token created, escrow intact
+      expect(mockMessageService.inboxMessages.length, equals(initialMsgCount));
+      expect(mockWallet.recordedEscrows.length, equals(initialEscrowCount));
     });
   });
 }
