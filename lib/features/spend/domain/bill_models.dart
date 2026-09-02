@@ -39,6 +39,8 @@ class Biller {
     this.isActive = true,
   });
 
+  String get countryCode => country;
+
   factory Biller.fromJson(Map<String, dynamic> json) {
     return Biller(
       id: json['id'] as String,
@@ -144,6 +146,8 @@ class BillQuote {
     required this.customerAccount,
     required this.expiresAt,
   });
+
+  String get currency => 'KES';
 
   factory BillQuote.fromJson(Map<String, dynamic> json) {
     return BillQuote(

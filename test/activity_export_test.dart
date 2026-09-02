@@ -11,7 +11,7 @@ void main() {
           id: 'tx_001',
           recipientOrSender: 'Amara (@amara)',
           amountSats: 25000,
-          type: TransactionType.instantSend,
+          type: TransactionType.bitcoinSent,
           status: TransactionStatus.completed,
           createdAt: DateTime.utc(2026, 8, 23, 12, 0, 0),
           description: 'Payment for groceries',
@@ -20,10 +20,10 @@ void main() {
           id: 'tx_002',
           recipientOrSender: 'Kwame (@kwame)',
           amountSats: 50000,
-          type: TransactionType.protectedSend,
-          status: TransactionStatus.pending,
+          type: TransactionType.protectedPayment,
+          status: TransactionStatus.waitingForRecipient,
           createdAt: DateTime.utc(2026, 8, 23, 14, 30, 0),
-          description: 'Escrow for Laptop, Lagos delivery',
+          description: 'Payment for Laptop, Lagos delivery',
           claimReference: 'claim_ref_123',
         ),
       ];
@@ -33,13 +33,13 @@ void main() {
 
       expect(lines.length, 3);
       expect(lines[0],
-          'Transaction ID,Date (UTC),Type,Counterparty,Amount (sats),Status,Description,Reference');
+          'Transaction ID,Date (UTC),Type,Counterparty,Amount (sats),Fiat Amount,Currency,Status,Description,Reference');
       expect(lines[1], contains('tx_001'));
-      expect(lines[1], contains('Instant Send (Lightning)'));
+      expect(lines[1], contains('Bitcoin Sent'));
       expect(lines[1], contains('25000'));
       expect(lines[2], contains('tx_002'));
-      expect(lines[2], contains('Protected Send (Cashu P2PK)'));
-      expect(lines[2], contains('"Escrow for Laptop, Lagos delivery"'));
+      expect(lines[2], contains('Protected Payment'));
+      expect(lines[2], contains('"Payment for Laptop, Lagos delivery"'));
       expect(lines[2], contains('claim_ref_123'));
     });
   });

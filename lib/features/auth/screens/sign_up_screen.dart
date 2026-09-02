@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import '../../../core/market/country_model.dart';
+import '../../../core/market/market_provider.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_spacing.dart';
 import '../../../core/theme/app_typography.dart';
@@ -23,10 +25,18 @@ class _SignUpScreenState extends ConsumerState<SignUpScreen> {
   final _passwordController = TextEditingController();
   final _confirmPasswordController = TextEditingController();
 
+  late String _selectedResidenceCountry;
   bool _obscurePassword = true;
   bool _obscureConfirmPassword = true;
   bool _isLoading = false;
   String? _errorMessage;
+
+  @override
+  void initState() {
+    super.initState();
+    final market = ref.read(marketProvider);
+    _selectedResidenceCountry = market.identityCountry;
+  }
 
   @override
   void dispose() {
@@ -47,6 +57,11 @@ class _SignUpScreenState extends ConsumerState<SignUpScreen> {
       _isLoading = true;
       _errorMessage = null;
     });
+
+    // Save selected country of residence
+    await ref
+        .read(marketProvider.notifier)
+        .setIdentityCountry(_selectedResidenceCountry);
 
     final success = await ref.read(authProvider.notifier).register(
           username: _usernameController.text.trim(),
@@ -146,6 +161,57 @@ class _SignUpScreenState extends ConsumerState<SignUpScreen> {
                   const SizedBox(height: AppSpacing.md),
                 ],
 
+                // Country of Residence Picker
+                Container(
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+                  decoration: BoxDecoration(
+                    color: AppColors.darkSurfaceCard,
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(color: AppColors.darkBorder),
+                  ),
+                  child: DropdownButtonHideUnderline(
+                    child: DropdownButton<String>(
+                      value: _selectedResidenceCountry,
+                      isExpanded: true,
+                      dropdownColor: AppColors.darkSurfaceCard,
+                      icon: const Icon(Icons.arrow_drop_down,
+                          color: AppColors.primary),
+                      items: CountryInfo.supportedCountries.map((c) {
+                        return DropdownMenuItem<String>(
+                          value: c.code,
+                          child: Row(
+                            children: [
+                              Text(c.flagEmoji,
+                                  style: const TextStyle(fontSize: 20)),
+                              const SizedBox(width: 10),
+                              Text(
+                                '${c.name} (${c.code})',
+                                style: const TextStyle(
+                                    color: Colors.white, fontSize: 14),
+                              ),
+                            ],
+                          ),
+                        );
+                      }).toList(),
+                      onChanged: (val) {
+                        if (val != null) {
+                          setState(() => _selectedResidenceCountry = val);
+                        }
+                      },
+                    ),
+                  ),
+                ),
+                const Padding(
+                  padding:
+                      EdgeInsets.only(left: 4, top: 4, bottom: AppSpacing.md),
+                  child: Text(
+                    'Primary country of residence / compliance jurisdiction',
+                    style: TextStyle(
+                        color: AppColors.darkTextSecondary, fontSize: 11),
+                  ),
+                ),
+
                 // Name Row
                 Row(
                   children: [
@@ -237,15 +303,16 @@ class _SignUpScreenState extends ConsumerState<SignUpScreen> {
                   obscureText: _obscurePassword,
                   decoration: InputDecoration(
                     labelText: 'Password',
+                    hintText: 'At least 8 characters',
                     suffixIcon: IconButton(
                       icon: Icon(
                         _obscurePassword
-                            ? Icons.visibility_off
-                            : Icons.visibility,
-                        color: colors.textTertiary,
+                            ? Icons.visibility_outlined
+                            : Icons.visibility_off_outlined,
                       ),
-                      onPressed: () =>
-                          setState(() => _obscurePassword = !_obscurePassword),
+                      onPressed: () {
+                        setState(() => _obscurePassword = !_obscurePassword);
+                      },
                     ),
                   ),
                   validator: (v) {
@@ -253,7 +320,7 @@ class _SignUpScreenState extends ConsumerState<SignUpScreen> {
                       return 'Password is required';
                     }
                     if (v.length < 8) {
-                      return 'Password must be at least 8 characters';
+                      return 'Must be at least 8 characters';
                     }
                     return null;
                   },
@@ -269,12 +336,13 @@ class _SignUpScreenState extends ConsumerState<SignUpScreen> {
                     suffixIcon: IconButton(
                       icon: Icon(
                         _obscureConfirmPassword
-                            ? Icons.visibility_off
-                            : Icons.visibility,
-                        color: colors.textTertiary,
+                            ? Icons.visibility_outlined
+                            : Icons.visibility_off_outlined,
                       ),
-                      onPressed: () => setState(() =>
-                          _obscureConfirmPassword = !_obscureConfirmPassword),
+                      onPressed: () {
+                        setState(() =>
+                            _obscureConfirmPassword = !_obscureConfirmPassword);
+                      },
                     ),
                   ),
                   validator: (v) {
@@ -286,36 +354,42 @@ class _SignUpScreenState extends ConsumerState<SignUpScreen> {
                 ),
                 const SizedBox(height: AppSpacing.xl),
 
+                // Sign Up Button
                 ElevatedButton(
                   onPressed: _isLoading ? null : _handleSignUp,
                   child: _isLoading
                       ? const SizedBox(
                           height: 20,
                           width: 20,
-                          child: CircularProgressIndicator(strokeWidth: 2),
+                          child: CircularProgressIndicator(
+                            strokeWidth: 2,
+                            color: Colors.white,
+                          ),
                         )
-                      : const Text('Create account'),
+                      : const Text('Create Account'),
                 ),
                 const SizedBox(height: AppSpacing.md),
 
+                // Sign in link
                 Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
                     Text(
                       'Already have an account? ',
-                      style: AppTypography.bodyMedium
+                      style: AppTypography.bodySmall
                           .copyWith(color: colors.textSecondary),
                     ),
                     GestureDetector(
-                      onTap: () => context.pushReplacement('/login'),
+                      onTap: () => context.push('/signin'),
                       child: Text(
                         'Sign in',
-                        style: AppTypography.titleSmall
+                        style: AppTypography.labelMedium
                             .copyWith(color: colors.primary),
                       ),
                     ),
                   ],
                 ),
+                const SizedBox(height: AppSpacing.lg),
               ],
             ),
           ),

@@ -1,22 +1,19 @@
 import 'dart:math';
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import '../../../core/networking/api_client.dart';
 import '../../../core/currency/currency_provider.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_radius.dart';
 import '../../../core/theme/app_spacing.dart';
-import '../../../core/theme/app_typography.dart';
 import '../../../core/utils/formatters.dart';
 import '../domain/transaction_model.dart';
 
 class TransactionDetailsScreen extends ConsumerStatefulWidget {
-  final TransactionModel tx;
+  final TransactionModel transaction;
 
-  const TransactionDetailsScreen({super.key, required this.tx});
+  const TransactionDetailsScreen({super.key, required this.transaction});
 
   @override
   ConsumerState<TransactionDetailsScreen> createState() =>
@@ -25,7 +22,6 @@ class TransactionDetailsScreen extends ConsumerStatefulWidget {
 
 class _TransactionDetailsScreenState
     extends ConsumerState<TransactionDetailsScreen> {
-  bool _showDevDetails = false;
   bool _revealClaimCode = false;
 
   void _copy(String label, String value) {
@@ -33,21 +29,6 @@ class _TransactionDetailsScreenState
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(content: Text('$label copied to clipboard')),
     );
-  }
-
-  String _formatPaymentType(TransactionType type) {
-    switch (type) {
-      case TransactionType.protectedSend:
-        return 'Protected Send';
-      case TransactionType.protectedClaim:
-        return 'Protected Claim';
-      case TransactionType.protectedRefund:
-        return 'Protected Refund';
-      case TransactionType.instantSend:
-        return 'Instant Send';
-      case TransactionType.instantReceive:
-        return 'Instant Receive';
-    }
   }
 
   String _maskClaimCode(String code) {
@@ -63,44 +44,38 @@ class _TransactionDetailsScreenState
   Widget build(BuildContext context) {
     final colors = context.colors;
     final currency = ref.watch(currencyProvider);
-    final isDev = ref.watch(appConfigProvider).isDevelopment;
-    final tx = widget.tx;
+    final tx = widget.transaction;
 
     Color statusColor;
-    String statusText;
-
     switch (tx.status) {
       case TransactionStatus.completed:
-        statusColor = colors.success;
-        statusText =
-            tx.type == TransactionType.protectedSend ? 'Claimed' : 'Completed';
+      case TransactionStatus.claimed:
+        statusColor = AppColors.success;
         break;
+      case TransactionStatus.waitingForRecipient:
       case TransactionStatus.claimable:
-        statusColor = colors.protected;
-        statusText = tx.isOutgoing ? 'Awaiting claim' : 'Claim available';
+        statusColor = AppColors.primary;
         break;
       case TransactionStatus.pending:
-        statusColor = colors.warning;
-        statusText = 'Pending';
+      case TransactionStatus.processing:
+      case TransactionStatus.refunding:
+        statusColor = AppColors.warning;
         break;
-      case TransactionStatus.refunded:
-        statusColor = colors.primary;
-        statusText = 'Refunded';
-        break;
+      case TransactionStatus.refundAvailable:
       case TransactionStatus.expired:
-        statusColor = colors.textTertiary;
-        statusText = tx.isOutgoing ? 'Refund available' : 'Expired';
+      case TransactionStatus.refunded:
+        statusColor = AppColors.primary;
         break;
       case TransactionStatus.failed:
-        statusColor = colors.error;
-        statusText = 'Failed';
+      case TransactionStatus.cancelled:
+        statusColor = AppColors.danger;
         break;
     }
 
     return Scaffold(
       backgroundColor: colors.background,
       appBar: AppBar(
-        title: const Text('Payment Receipt'),
+        title: const Text('Transaction Details'),
         leading: IconButton(
           icon: const Icon(Icons.arrow_back),
           onPressed: () => context.pop(),
@@ -112,114 +87,141 @@ class _TransactionDetailsScreenState
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              // Receipt Card
+              // 1. Primary Receipt Header Card
               Container(
                 padding: const EdgeInsets.all(AppSpacing.xl),
                 decoration: BoxDecoration(
                   color: colors.surfaceCard,
                   borderRadius: AppRadius.lgRadius,
                   border: Border.all(color: colors.border, width: 1),
-                  boxShadow: [
-                    BoxShadow(
-                      color: Theme.of(context).brightness == Brightness.dark
-                          ? Colors.black.withValues(alpha: 0.22)
-                          : AppColors.charcoal.withValues(alpha: 0.04),
-                      blurRadius: 10,
-                      offset: const Offset(0, 3),
-                    ),
-                  ],
                 ),
                 child: Column(
                   children: [
-                    // Amount header
                     Text(
-                      Formatters.formatSats(tx.amountSats),
-                      style: AppTypography.display.copyWith(
-                        color: colors.textPrimary,
+                      '${tx.isOutgoing ? '-' : '+'}${Formatters.formatSats(tx.amountSats)}',
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 28,
                         fontWeight: FontWeight.w800,
                       ),
                     ),
-                    const SizedBox(height: 2),
+                    const SizedBox(height: 4),
                     Text(
-                      currency.format(tx.amountSats),
-                      style: AppTypography.titleSmall
-                          .copyWith(color: colors.textSecondary),
+                      tx.fiatAmount != null && tx.fiatCurrency != null
+                          ? '${tx.fiatCurrency} ${tx.fiatAmount!.toStringAsFixed(2)}'
+                          : currency.format(tx.amountSats),
+                      style: const TextStyle(
+                        color: AppColors.darkTextSecondary,
+                        fontSize: 14,
+                        fontWeight: FontWeight.w500,
+                      ),
                     ),
-                    const SizedBox(height: AppSpacing.md),
+                    const SizedBox(height: 16),
 
-                    // Status Badge
+                    // Status Pill
                     Container(
                       padding: const EdgeInsets.symmetric(
-                          horizontal: 12, vertical: 6),
+                          horizontal: 14, vertical: 6),
                       decoration: BoxDecoration(
                         color: statusColor.withValues(alpha: 0.15),
-                        borderRadius: AppRadius.fullRadius,
+                        borderRadius: BorderRadius.circular(20),
+                        border: Border.all(
+                            color: statusColor.withValues(alpha: 0.3)),
                       ),
                       child: Text(
-                        statusText,
-                        style: AppTypography.labelMedium.copyWith(
+                        tx.displayStatus,
+                        style: TextStyle(
                           color: statusColor,
-                          fontWeight: FontWeight.w600,
+                          fontSize: 12,
+                          fontWeight: FontWeight.bold,
                         ),
                       ),
                     ),
-                    const SizedBox(height: AppSpacing.xl),
-
+                    const SizedBox(height: 24),
                     Divider(color: colors.divider),
-                    const SizedBox(height: AppSpacing.md),
+                    const SizedBox(height: 16),
 
-                    // Row details
-                    _DetailRow(
-                      label: tx.isOutgoing ? 'Recipient' : 'Sender',
+                    // Adaptive Detail Rows
+                    _buildDetailRow(
+                      label: tx.isOutgoing ? 'Recipient / Merchant' : 'Sender',
                       value: tx.recipientOrSender,
                     ),
-                    const SizedBox(height: AppSpacing.sm),
+                    const SizedBox(height: 12),
 
-                    _DetailRow(
-                      label: 'Payment Type',
-                      value: _formatPaymentType(tx.type),
+                    _buildDetailRow(
+                      label: 'Payment Category',
+                      value: tx.displayTitle,
                     ),
-                    const SizedBox(height: AppSpacing.sm),
+                    const SizedBox(height: 12),
 
-                    if (tx.type == TransactionType.protectedSend ||
-                        tx.type == TransactionType.protectedClaim ||
-                        tx.type == TransactionType.protectedRefund) ...[
-                      _DetailRow(
-                        label: 'Financial State',
-                        value: tx.status == TransactionStatus.refunded
-                            ? 'Refunded to Spendable Balance'
-                            : (tx.status == TransactionStatus.completed
-                                ? 'Claimed & Settled'
-                                : 'Locked in Escrow'),
+                    if (tx.billerName != null) ...[
+                      _buildDetailRow(
+                        label: 'Biller / Provider',
+                        value: tx.billerName!,
                       ),
-                      const SizedBox(height: AppSpacing.sm),
+                      const SizedBox(height: 12),
                     ],
 
-                    if (tx.coordinationSyncPending) ...[
-                      _DetailRow(
-                        label: 'Coordination State',
-                        value:
-                            'Sync Pending (${tx.syncPendingStatus ?? "pending"})',
+                    if (tx.accountReference != null) ...[
+                      _buildDetailRow(
+                        label: 'Account Reference',
+                        value: tx.accountReference!,
+                        onCopy: () =>
+                            _copy('Account Reference', tx.accountReference!),
                       ),
-                      const SizedBox(height: AppSpacing.sm),
+                      const SizedBox(height: 12),
                     ],
 
-                    _DetailRow(
-                      label: 'Date & Time',
+                    if (tx.spendCountry != null) ...[
+                      _buildDetailRow(
+                        label: 'Country Rail',
+                        value: tx.spendCountry!,
+                      ),
+                      const SizedBox(height: 12),
+                    ],
+
+                    if (tx.paymentMethod != null) ...[
+                      _buildDetailRow(
+                        label: 'Payment Method',
+                        value: tx.paymentMethod!,
+                      ),
+                      const SizedBox(height: 12),
+                    ],
+
+                    if (tx.feeSats != null && tx.feeSats! > 0) ...[
+                      _buildDetailRow(
+                        label: 'Network Fee',
+                        value: '${tx.feeSats} sats',
+                      ),
+                      const SizedBox(height: 12),
+                    ],
+
+                    _buildDetailRow(
+                      label: 'Timestamp',
                       value: Formatters.formatDate(tx.createdAt),
                     ),
 
                     if (tx.expiresAt != null) ...[
-                      const SizedBox(height: AppSpacing.sm),
-                      _DetailRow(
+                      const SizedBox(height: 12),
+                      _buildDetailRow(
                         label: 'Locktime Expiry',
                         value: Formatters.formatDate(tx.expiresAt!),
                       ),
                     ],
 
+                    if (tx.receiptReference != null) ...[
+                      const SizedBox(height: 12),
+                      _buildDetailRow(
+                        label: 'Receipt Reference',
+                        value: tx.receiptReference!,
+                        onCopy: () =>
+                            _copy('Receipt Reference', tx.receiptReference!),
+                      ),
+                    ],
+
                     if (tx.claimReference != null) ...[
-                      const SizedBox(height: AppSpacing.sm),
-                      _MaskedDetailRow(
+                      const SizedBox(height: 12),
+                      _buildMaskedDetailRow(
                         label: 'Claim Code',
                         maskedValue: _maskClaimCode(tx.claimReference!),
                         fullValue: tx.claimReference!,
@@ -229,116 +231,138 @@ class _TransactionDetailsScreenState
                         onCopy: () => _copy('Claim Code', tx.claimReference!),
                       ),
                     ],
-
-                    const SizedBox(height: AppSpacing.sm),
-                    _DetailRow(
-                      label: 'Transaction ID',
-                      value: tx.id,
-                      onCopy: () => _copy('Transaction ID', tx.id),
-                    ),
                   ],
                 ),
               ),
-              const SizedBox(height: AppSpacing.md),
 
-              // Developer Technical Details (Available only in debug / dev mode)
-              if (kDebugMode && isDev) ...[
-                Material(
-                  color: colors.surfaceElevated,
-                  borderRadius: AppRadius.mdRadius,
-                  child: InkWell(
-                    onTap: () =>
-                        setState(() => _showDevDetails = !_showDevDetails),
-                    borderRadius: AppRadius.mdRadius,
-                    child: Padding(
-                      padding: const EdgeInsets.all(AppSpacing.md),
-                      child: Row(
+              // 2. Electricity / Meter Token Card (if available)
+              if (tx.tokenOrPin != null && tx.tokenOrPin!.isNotEmpty) ...[
+                const SizedBox(height: 16),
+                Container(
+                  padding: const EdgeInsets.all(18),
+                  decoration: BoxDecoration(
+                    color: Colors.amber.withValues(alpha: 0.1),
+                    borderRadius: BorderRadius.circular(16),
+                    border:
+                        Border.all(color: Colors.amber.withValues(alpha: 0.4)),
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const Row(
                         children: [
-                          Icon(Icons.code, color: colors.primary, size: 20),
-                          const SizedBox(width: AppSpacing.sm),
-                          Expanded(
-                            child: Text(
-                              'Developer Technical Details',
-                              style: AppTypography.titleSmall
-                                  .copyWith(color: colors.textPrimary),
+                          Icon(Icons.bolt, color: Colors.amberAccent, size: 20),
+                          SizedBox(width: 8),
+                          Text(
+                            'Prepaid Meter Token',
+                            style: TextStyle(
+                              color: Colors.white,
+                              fontSize: 14,
+                              fontWeight: FontWeight.bold,
                             ),
-                          ),
-                          Icon(
-                            _showDevDetails
-                                ? Icons.keyboard_arrow_up
-                                : Icons.keyboard_arrow_down,
-                            color: colors.textSecondary,
                           ),
                         ],
                       ),
-                    ),
+                      const SizedBox(height: 10),
+                      Text(
+                        tx.tokenOrPin!,
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontSize: 20,
+                          fontWeight: FontWeight.bold,
+                          letterSpacing: 1.5,
+                          fontFamily: 'monospace',
+                        ),
+                      ),
+                      const SizedBox(height: 12),
+                      OutlinedButton.icon(
+                        style: OutlinedButton.styleFrom(
+                          foregroundColor: Colors.amberAccent,
+                          side: const BorderSide(color: Colors.amberAccent),
+                          shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(10)),
+                        ),
+                        icon: const Icon(Icons.copy, size: 16),
+                        label: const Text('Copy Token for Meter'),
+                        onPressed: () => _copy('Meter Token', tx.tokenOrPin!),
+                      ),
+                    ],
                   ),
                 ),
-                if (_showDevDetails) ...[
-                  const SizedBox(height: AppSpacing.xs),
-                  Container(
-                    padding: const EdgeInsets.all(AppSpacing.md),
-                    decoration: BoxDecoration(
-                      color: colors.surfaceCard,
-                      borderRadius: AppRadius.mdRadius,
-                      border: Border.all(color: colors.border, width: 1),
-                    ),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        _DevRow(
-                            label: 'Protocol Specs',
-                            value: 'Cashu NUT-10 (Conditions) / NUT-11 (P2PK)'),
-                        _DevRow(
-                            label: 'Token State Check',
-                            value: 'NUT-07 Mint Verify'),
-                        _DevRow(
-                            label: 'Mint Endpoint',
-                            value: 'http://127.0.0.1:3338'),
-                        _DevRow(
-                            label: 'Spending Path',
-                            value:
-                                'Recipient PubKey | Locktime -> Sender Refund'),
-                        _DevRow(
-                            label: 'Double Spend Rule',
-                            value: 'First valid spend confirmed at mint wins'),
-                      ],
-                    ),
-                  ),
-                ],
               ],
+
+              // 3. Protected Send Info Card
+              if (tx.type == TransactionType.protectedPayment ||
+                  tx.type == TransactionType.protectedSend ||
+                  tx.type == TransactionType.protectedClaim ||
+                  tx.type == TransactionType.protectedRefund) ...[
+                const SizedBox(height: 16),
+                Container(
+                  padding: const EdgeInsets.all(16),
+                  decoration: BoxDecoration(
+                    color: AppColors.primary.withValues(alpha: 0.08),
+                    borderRadius: BorderRadius.circular(16),
+                    border: Border.all(
+                        color: AppColors.primary.withValues(alpha: 0.25)),
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const Row(
+                        children: [
+                          Icon(Icons.shield_outlined,
+                              color: AppColors.primary, size: 18),
+                          SizedBox(width: 8),
+                          Text(
+                            'Protected Payment Protection',
+                            style: TextStyle(
+                                color: Colors.white,
+                                fontSize: 13,
+                                fontWeight: FontWeight.bold),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 8),
+                      Text(
+                        tx.status == TransactionStatus.refundAvailable ||
+                                tx.status == TransactionStatus.expired
+                            ? 'The locktime has passed and the payment was not claimed. You can claim your refund to return the funds to your spendable balance.'
+                            : (tx.status == TransactionStatus.claimed
+                                ? 'The recipient has claimed this payment. It is now completed and settled.'
+                                : 'Funds are held with claim and refund safeguards. If the recipient does not claim before the locktime expires, you gain a refund path.'),
+                        style: const TextStyle(
+                            color: AppColors.darkTextSecondary,
+                            fontSize: 12,
+                            height: 1.4),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+
+              const SizedBox(height: 24),
             ],
           ),
         ),
       ),
     );
   }
-}
 
-class _DetailRow extends StatelessWidget {
-  final String label;
-  final String value;
-  final VoidCallback? onCopy;
-
-  const _DetailRow({
-    required this.label,
-    required this.value,
-    this.onCopy,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    final colors = context.colors;
-
+  Widget _buildDetailRow({
+    required String label,
+    required String value,
+    VoidCallback? onCopy,
+  }) {
     return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
         Text(
           label,
-          style: AppTypography.bodySmall.copyWith(color: colors.textSecondary),
+          style:
+              const TextStyle(color: AppColors.darkTextSecondary, fontSize: 13),
         ),
-        const SizedBox(width: AppSpacing.md),
+        const SizedBox(width: 16),
         Flexible(
           child: Row(
             mainAxisSize: MainAxisSize.min,
@@ -346,8 +370,9 @@ class _DetailRow extends StatelessWidget {
               Flexible(
                 child: Text(
                   value,
-                  style: AppTypography.bodySmall.copyWith(
-                    color: colors.textPrimary,
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontSize: 13,
                     fontWeight: FontWeight.w600,
                   ),
                   textAlign: TextAlign.end,
@@ -356,10 +381,11 @@ class _DetailRow extends StatelessWidget {
                 ),
               ),
               if (onCopy != null) ...[
-                const SizedBox(width: 4),
+                const SizedBox(width: 6),
                 GestureDetector(
                   onTap: onCopy,
-                  child: Icon(Icons.copy, size: 14, color: colors.textTertiary),
+                  child: const Icon(Icons.copy,
+                      size: 14, color: AppColors.darkTextSecondary),
                 ),
               ],
             ],
@@ -368,38 +394,25 @@ class _DetailRow extends StatelessWidget {
       ],
     );
   }
-}
 
-class _MaskedDetailRow extends StatelessWidget {
-  final String label;
-  final String maskedValue;
-  final String fullValue;
-  final bool isRevealed;
-  final VoidCallback onToggleReveal;
-  final VoidCallback onCopy;
-
-  const _MaskedDetailRow({
-    required this.label,
-    required this.maskedValue,
-    required this.fullValue,
-    required this.isRevealed,
-    required this.onToggleReveal,
-    required this.onCopy,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    final colors = context.colors;
-
+  Widget _buildMaskedDetailRow({
+    required String label,
+    required String maskedValue,
+    required String fullValue,
+    required bool isRevealed,
+    required VoidCallback onToggleReveal,
+    required VoidCallback onCopy,
+  }) {
     return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
         Text(
           label,
-          style: AppTypography.bodySmall.copyWith(color: colors.textSecondary),
+          style:
+              const TextStyle(color: AppColors.darkTextSecondary, fontSize: 13),
         ),
-        const SizedBox(width: AppSpacing.md),
+        const SizedBox(width: 16),
         Flexible(
           child: Row(
             mainAxisSize: MainAxisSize.min,
@@ -407,10 +420,11 @@ class _MaskedDetailRow extends StatelessWidget {
               Flexible(
                 child: Text(
                   isRevealed ? fullValue : maskedValue,
-                  style: AppTypography.bodySmall.copyWith(
-                    color: colors.textPrimary,
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontSize: 13,
                     fontWeight: FontWeight.w600,
-                    fontFamily: isRevealed ? null : 'Courier',
+                    fontFamily: isRevealed ? null : 'monospace',
                   ),
                   textAlign: TextAlign.end,
                   maxLines: 2,
@@ -425,52 +439,19 @@ class _MaskedDetailRow extends StatelessWidget {
                       ? Icons.visibility_off_outlined
                       : Icons.visibility_outlined,
                   size: 16,
-                  color: colors.primary,
+                  color: AppColors.primary,
                 ),
               ),
               const SizedBox(width: 6),
               GestureDetector(
                 onTap: onCopy,
-                child: Icon(Icons.copy, size: 14, color: colors.textTertiary),
+                child: const Icon(Icons.copy,
+                    size: 14, color: AppColors.darkTextSecondary),
               ),
             ],
           ),
         ),
       ],
-    );
-  }
-}
-
-class _DevRow extends StatelessWidget {
-  final String label;
-  final String value;
-
-  const _DevRow({required this.label, required this.value});
-
-  @override
-  Widget build(BuildContext context) {
-    final colors = context.colors;
-
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 4),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          Text(label,
-              style:
-                  AppTypography.caption.copyWith(color: colors.textTertiary)),
-          const SizedBox(width: AppSpacing.md),
-          Flexible(
-            child: Text(
-              value,
-              style: AppTypography.caption.copyWith(
-                  color: colors.textPrimary, fontWeight: FontWeight.w600),
-              textAlign: TextAlign.end,
-            ),
-          ),
-        ],
-      ),
     );
   }
 }

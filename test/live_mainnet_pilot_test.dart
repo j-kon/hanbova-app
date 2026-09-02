@@ -353,7 +353,7 @@ void main() {
         // Poll for quote payment
         int elapsed = 0;
         bool paid = false;
-        while (true) {
+        while (!paid) {
           try {
             final status =
                 await aliceWallet.checkMintQuoteStatus(quote.quoteId);
