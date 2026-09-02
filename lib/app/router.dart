@@ -25,6 +25,9 @@ import '../features/send/presentation/send_screen.dart';
 import '../features/transactions/domain/transaction_model.dart';
 import '../features/transactions/presentation/transaction_details_screen.dart';
 import '../features/transactions/presentation/transactions_screen.dart';
+import '../features/spend/presentation/spend_screen.dart';
+import '../features/travel/presentation/esim_screen.dart';
+import '../features/travel/presentation/travel_screen.dart';
 import 'shell/app_shell.dart';
 
 final GlobalKey<NavigatorState> _rootNavigatorKey = GlobalKey<NavigatorState>();
@@ -232,6 +235,21 @@ final appRouterProvider = Provider<GoRouter>((ref) {
         path: '/mints',
         parentNavigatorKey: _rootNavigatorKey,
         builder: (context, state) => const MintsScreen(),
+      ),
+      GoRoute(
+        path: '/travel',
+        parentNavigatorKey: _rootNavigatorKey,
+        builder: (context, state) => const TravelScreen(),
+      ),
+      GoRoute(
+        path: '/esim',
+        parentNavigatorKey: _rootNavigatorKey,
+        builder: (context, state) => const EsimScreen(),
+      ),
+      GoRoute(
+        path: '/spend',
+        parentNavigatorKey: _rootNavigatorKey,
+        builder: (context, state) => const SpendScreen(),
       ),
     ],
   );
