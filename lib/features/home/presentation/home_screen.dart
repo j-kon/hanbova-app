@@ -515,6 +515,114 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                 ),
                 const SizedBox(height: AppSpacing.md),
 
+                // 3.5 Spend & Travel Quick Actions
+                Row(
+                  children: [
+                    Expanded(
+                      child: InkWell(
+                        onTap: () => context.push('/spend'),
+                        borderRadius: AppRadius.mdRadius,
+                        child: Container(
+                          padding: const EdgeInsets.all(AppSpacing.md),
+                          decoration: BoxDecoration(
+                            color: colors.surfaceCard,
+                            borderRadius: AppRadius.mdRadius,
+                            border: Border.all(color: colors.border),
+                          ),
+                          child: Row(
+                            children: [
+                              Container(
+                                padding: const EdgeInsets.all(8),
+                                decoration: BoxDecoration(
+                                  color: Colors.amber.withValues(alpha: 0.15),
+                                  borderRadius: AppRadius.smRadius,
+                                ),
+                                child: const Icon(Icons.bolt,
+                                    color: Colors.amberAccent, size: 20),
+                              ),
+                              const SizedBox(width: AppSpacing.sm),
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(
+                                      'Spend & Bills',
+                                      style: AppTypography.titleSmall.copyWith(
+                                        color: colors.textPrimary,
+                                        fontWeight: FontWeight.w700,
+                                        fontSize: 13,
+                                      ),
+                                    ),
+                                    Text(
+                                      'Airtime & Utilities',
+                                      style: AppTypography.caption.copyWith(
+                                        color: colors.textSecondary,
+                                        fontSize: 11,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: AppSpacing.sm),
+                    Expanded(
+                      child: InkWell(
+                        onTap: () => context.push('/travel'),
+                        borderRadius: AppRadius.mdRadius,
+                        child: Container(
+                          padding: const EdgeInsets.all(AppSpacing.md),
+                          decoration: BoxDecoration(
+                            color: colors.surfaceCard,
+                            borderRadius: AppRadius.mdRadius,
+                            border: Border.all(color: colors.border),
+                          ),
+                          child: Row(
+                            children: [
+                              Container(
+                                padding: const EdgeInsets.all(8),
+                                decoration: BoxDecoration(
+                                  color: Colors.purple.withValues(alpha: 0.15),
+                                  borderRadius: AppRadius.smRadius,
+                                ),
+                                child: const Icon(Icons.flight_takeoff,
+                                    color: Colors.purpleAccent, size: 20),
+                              ),
+                              const SizedBox(width: AppSpacing.sm),
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(
+                                      'Travel Hub',
+                                      style: AppTypography.titleSmall.copyWith(
+                                        color: colors.textPrimary,
+                                        fontWeight: FontWeight.w700,
+                                        fontSize: 13,
+                                      ),
+                                    ),
+                                    Text(
+                                      'eSIM & Corridors',
+                                      style: AppTypography.caption.copyWith(
+                                        color: colors.textSecondary,
+                                        fontSize: 11,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: AppSpacing.md),
+
                 // 4. Protected Summary Card
                 Container(
                   padding: const EdgeInsets.all(AppSpacing.md),
