@@ -283,12 +283,10 @@ void main() {
     const fundingAmount = 250;
     final envQuoteId = Platform.environment['PILOT_QUOTE_ID'];
     final quote = (envQuoteId != null && envQuoteId.isNotEmpty)
-        ? CashuMintQuote(
+        ? MintQuoteResult(
             quoteId: envQuoteId,
             bolt11Invoice: '',
             amountSats: fundingAmount,
-            state: 'UNPAID',
-            expiry: 0,
           )
         : await aliceWallet.createMintQuote(fundingAmount);
     print('Generated Minibits Mint Quote ID: ${quote.quoteId}');
