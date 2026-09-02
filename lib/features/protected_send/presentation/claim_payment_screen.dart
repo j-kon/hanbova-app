@@ -126,7 +126,7 @@ class _ClaimPaymentScreenState extends ConsumerState<ClaimPaymentScreen> {
       );
 
       final cryptoService = ref.read(cryptoIdentityProvider.notifier);
-      final identity = await cryptoService.requireIdentity();
+      final identity = await cryptoService.getOrCreateIdentity();
 
       // Pre-decryption fingerprint check:
       final currentFingerprint = identity.transportKeyFingerprint;

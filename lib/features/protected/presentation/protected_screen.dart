@@ -948,12 +948,8 @@ class _ClaimActionButtonState extends ConsumerState<_ClaimActionButton> {
     setState(() => _isLoading = true);
 
     final messenger = ScaffoldMessenger.of(context);
-    final cashuWallet = ref.read(cashuWalletServiceProvider);
 
     try {
-      if (cashuWallet == null) {
-        throw StateError('Cashu wallet not initialized');
-      }
       final authState = ref.read(authProvider);
       if (authState.user == null) {
         throw StateError(
@@ -969,9 +965,9 @@ class _ClaimActionButtonState extends ConsumerState<_ClaimActionButton> {
             'No encrypted envelope found in inbox for payment ${widget.tx.id}'),
       );
 
-      // 2. Pre-decryption fingerprint check
+      // 2. Pre-decryption fingerprint check and ensure identity is loaded
       final cryptoService = ref.read(cryptoIdentityProvider.notifier);
-      final identity = await cryptoService.requireIdentity();
+      final identity = await cryptoService.getOrCreateIdentity();
 
       final currentFingerprint = identity.transportKeyFingerprint;
       final recordedFingerprint = matchingMsg.recipientTransportKeyFingerprint;
@@ -991,6 +987,11 @@ class _ClaimActionButtonState extends ConsumerState<_ClaimActionButton> {
         ciphertextString: matchingMsg.encryptedPayload,
         recipientKeyPair: identity.transportKeyPair,
       );
+
+      final cashuWallet = ref.read(cashuWalletServiceProvider);
+      if (cashuWallet == null) {
+        throw StateError('Cashu wallet not initialized');
+      }
 
       // 3. Claim protected payment with CDK & Mint witness
       await cashuWallet.claimProtectedPayment(
