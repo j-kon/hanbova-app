@@ -56,8 +56,8 @@ void main() {
     // Switch to Activity Tab
     await tester.tap(find.text('Activity'));
     await tester.pumpAndSettle();
-    expect(find.textContaining('Sent'), findsOneWidget);
-    expect(find.textContaining('Received'), findsOneWidget);
+    expect(find.text('Money In'), findsOneWidget);
+    expect(find.text('Money Out'), findsOneWidget);
 
     // Switch to Protected Tab via Bottom Navigation icon
     await tester.tap(find.byIcon(Icons.shield_outlined).last);
@@ -69,7 +69,7 @@ void main() {
     // Switch to Me Tab
     await tester.tap(find.text('Me'));
     await tester.pumpAndSettle();
-    expect(find.text('Wallet Security'), findsOneWidget);
+    expect(find.text('Recovery Phrase Backup'), findsOneWidget);
     expect(find.text('Appearance'), findsOneWidget);
     expect(find.text('Display Currency'), findsOneWidget);
     expect(find.text('Sign out'), findsOneWidget);

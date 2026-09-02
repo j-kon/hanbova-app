@@ -6,38 +6,25 @@ class ActivityExportService {
     final buffer = StringBuffer();
     // CSV Header
     buffer.writeln(
-        'Transaction ID,Date (UTC),Type,Counterparty,Amount (sats),Status,Description,Reference');
+        'Transaction ID,Date (UTC),Type,Counterparty,Amount (sats),Fiat Amount,Currency,Status,Description,Reference');
 
     for (final tx in transactions) {
       final id = _escapeCsv(tx.id);
       final date = tx.createdAt.toUtc().toIso8601String();
-      final type = _formatType(tx.type);
+      final type = _escapeCsv(tx.displayTitle);
       final counterparty = _escapeCsv(tx.recipientOrSender);
       final amount = tx.amountSats.toString();
-      final status = tx.status.name.toUpperCase();
+      final fiat = tx.fiatAmount?.toStringAsFixed(2) ?? '';
+      final curr = tx.fiatCurrency ?? '';
+      final status = tx.displayStatus.toUpperCase();
       final desc = _escapeCsv(tx.description ?? '');
-      final ref = _escapeCsv(tx.claimReference ?? '');
+      final ref = _escapeCsv(tx.receiptReference ?? tx.claimReference ?? '');
 
-      buffer
-          .writeln('$id,$date,$type,$counterparty,$amount,$status,$desc,$ref');
+      buffer.writeln(
+          '$id,$date,$type,$counterparty,$amount,$fiat,$curr,$status,$desc,$ref');
     }
 
     return buffer.toString();
-  }
-
-  static String _formatType(TransactionType type) {
-    switch (type) {
-      case TransactionType.instantSend:
-        return 'Instant Send (Lightning)';
-      case TransactionType.instantReceive:
-        return 'Instant Receive (Lightning)';
-      case TransactionType.protectedSend:
-        return 'Protected Send (Cashu P2PK)';
-      case TransactionType.protectedClaim:
-        return 'Protected Claim';
-      case TransactionType.protectedRefund:
-        return 'Protected Refund';
-    }
   }
 
   static String _escapeCsv(String field) {

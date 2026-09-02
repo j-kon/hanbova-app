@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../../core/networking/api_client.dart';
 import '../../../core/currency/currency_provider.dart';
+import '../../../core/market/market_provider.dart';
 import '../../../core/security/wallet_backup_store.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_radius.dart';
@@ -170,6 +171,57 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
     );
   }
 
+  void _showSupportDialog(BuildContext context) {
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        backgroundColor: AppColors.darkSurfaceCard,
+        title: const Text('Hanbova Support & Help',
+            style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+        content: const Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              'Need assistance with your wallet, payments, or travel roaming?',
+              style:
+                  TextStyle(color: AppColors.darkTextSecondary, fontSize: 13),
+            ),
+            SizedBox(height: 16),
+            Row(
+              children: [
+                Icon(Icons.email_outlined, color: AppColors.primary, size: 18),
+                SizedBox(width: 8),
+                Text('support@hanbova.com',
+                    style: TextStyle(
+                        color: Colors.white,
+                        fontSize: 13,
+                        fontWeight: FontWeight.bold)),
+              ],
+            ),
+            SizedBox(height: 8),
+            Row(
+              children: [
+                Icon(Icons.chat_bubble_outline,
+                    color: AppColors.primary, size: 18),
+                SizedBox(width: 8),
+                Text('Community: @hanbova_help',
+                    style: TextStyle(color: Colors.white, fontSize: 13)),
+              ],
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child:
+                const Text('Close', style: TextStyle(color: AppColors.primary)),
+          ),
+        ],
+      ),
+    );
+  }
+
   void _handleSignOut() {
     showDialog(
       context: context,
@@ -205,6 +257,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
     final isDev = ref.watch(appConfigProvider).isDevelopment;
     final currentTheme = ref.watch(themeControllerProvider);
     final currentCurrency = ref.watch(currencyProvider);
+    final market = ref.watch(marketProvider);
     final isBackedUp =
         ref.watch(walletBackupStatusProvider).valueOrNull ?? false;
 
@@ -230,7 +283,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
     return Scaffold(
       backgroundColor: colors.background,
       appBar: AppBar(
-        title: const Text('Me'),
+        title: const Text('Me & Profile'),
         automaticallyImplyLeading: false,
       ),
       body: SafeArea(
@@ -290,7 +343,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
             ),
             const SizedBox(height: AppSpacing.md),
 
-            // Account vs Wallet Security Advisory Banner
+            // Residence vs Travel Market Indicator
             Container(
               padding: const EdgeInsets.all(AppSpacing.md),
               decoration: BoxDecoration(
@@ -299,24 +352,25 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                 border: Border.all(color: colors.border),
               ),
               child: Row(
-                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Icon(Icons.security, color: colors.primary, size: 20),
+                  Text(market.identityCountryInfo.flagEmoji,
+                      style: const TextStyle(fontSize: 22)),
                   const SizedBox(width: AppSpacing.sm),
                   Expanded(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          'Wallet Security',
-                          style: AppTypography.titleSmall.copyWith(
-                              color: colors.textPrimary, fontSize: 13),
+                          'Residence: ${market.identityCountryInfo.name} (${market.identityCountry})',
+                          style: const TextStyle(
+                              color: Colors.white,
+                              fontSize: 13,
+                              fontWeight: FontWeight.bold),
                         ),
-                        const SizedBox(height: 2),
                         Text(
-                          'Your wallet keys stay on your device.',
-                          style: AppTypography.bodySmall.copyWith(
-                              color: colors.textSecondary, fontSize: 12),
+                          'Active Travel Spend: ${market.spendCountryInfo.name} (${market.spendCountry})',
+                          style: const TextStyle(
+                              color: AppColors.darkTextSecondary, fontSize: 11),
                         ),
                       ],
                     ),
@@ -331,7 +385,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
             _SettingTile(
               icon: Icons.key_rounded,
               title: 'Recovery Phrase Backup',
-              subtitle: '12-word recovery phrase for test-build backup',
+              subtitle: '12-word recovery phrase for client-side wallet',
               trailing: isBackedUp
                   ? Container(
                       padding: const EdgeInsets.symmetric(
@@ -368,8 +422,8 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
             ),
             _SettingTile(
               icon: Icons.account_balance_rounded,
-              title: 'Connected Cashu Mints',
-              subtitle: 'Multi-mint management & live NUT-11 validation',
+              title: 'Connected Ecash Mints',
+              subtitle: 'Multi-mint liquidity & settlement connections',
               trailing: Icon(Icons.chevron_right, color: colors.textTertiary),
               onTap: () => context.push('/mints'),
             ),
@@ -394,21 +448,20 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
               onTap: () => _showCurrencySheet(context),
             ),
             _SettingTile(
-              icon: Icons.notifications_outlined,
-              title: 'Notifications',
-              trailing: Text('Enabled',
-                  style: AppTypography.bodySmall
-                      .copyWith(color: colors.textSecondary)),
+              icon: Icons.help_outline,
+              title: 'Support & Help Center',
+              trailing: Icon(Icons.chevron_right, color: colors.textTertiary),
+              onTap: () => _showSupportDialog(context),
             ),
             const SizedBox(height: AppSpacing.md),
 
             // Developer Section (Hidden in Production, visible only in debug/development mode)
             if (kDebugMode && isDev) ...[
-              _SectionTitle(title: 'Developer'),
+              _SectionTitle(title: 'Developer Diagnostics'),
               _SettingTile(
                 icon: Icons.developer_mode,
                 title: 'Developer Options',
-                subtitle: 'Cashu NUTs, Mint URLs, Debug Diagnostics',
+                subtitle: 'Cashu Mint URLs, Keys, Diagnostics',
                 trailing: Icon(Icons.chevron_right, color: colors.textTertiary),
                 onTap: () => context.push('/developer-options'),
               ),

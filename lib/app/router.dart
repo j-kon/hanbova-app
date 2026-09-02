@@ -175,7 +175,7 @@ final appRouterProvider = Provider<GoRouter>((ref) {
         parentNavigatorKey: _rootNavigatorKey,
         builder: (context, state) {
           final tx = state.extra as TransactionModel;
-          return TransactionDetailsScreen(tx: tx);
+          return TransactionDetailsScreen(transaction: tx);
         },
       ),
       GoRoute(

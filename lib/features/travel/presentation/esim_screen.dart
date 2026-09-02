@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:hanbova_app/core/market/market_provider.dart';
 import 'package:hanbova_app/core/theme/app_colors.dart';
+import 'package:hanbova_app/features/transactions/presentation/transactions_provider.dart';
 import 'package:hanbova_app/features/travel/data/esim_service.dart';
 import 'package:hanbova_app/features/travel/domain/esim_models.dart';
 
@@ -61,7 +62,7 @@ class _EsimScreenState extends ConsumerState<EsimScreen>
         backgroundColor: AppColors.darkBackground,
         elevation: 0,
         title: const Text(
-          'Connectivity (eSIM)',
+          'Travel Connectivity (eSIM)',
           style: TextStyle(
             color: Colors.white,
             fontSize: 20,
@@ -97,21 +98,22 @@ class _EsimScreenState extends ConsumerState<EsimScreen>
     return ListView(
       padding: const EdgeInsets.all(20),
       children: [
-        // Sandbox Notice
+        // Simulation Environment Notice
         Container(
           padding: const EdgeInsets.all(12),
           decoration: BoxDecoration(
-            color: Colors.purple.withValues(alpha: 0.15),
+            color: AppColors.primary.withValues(alpha: 0.1),
             borderRadius: BorderRadius.circular(12),
-            border: Border.all(color: Colors.purple.withValues(alpha: 0.3)),
+            border:
+                Border.all(color: AppColors.primary.withValues(alpha: 0.25)),
           ),
           child: const Row(
             children: [
-              Icon(Icons.science, color: Colors.purpleAccent, size: 18),
+              Icon(Icons.shield_outlined, color: AppColors.primary, size: 18),
               SizedBox(width: 8),
               Expanded(
                 child: Text(
-                  'SANDBOX MODE: eSIM profiles are generated via DT One sandbox adapter. Instant activation with zero real network charge.',
+                  'SIMULATION ENVIRONMENT: Travel data plans and QR provisioning operate in safe pilot mode.',
                   style: TextStyle(
                     color: Colors.white70,
                     fontSize: 11,
@@ -252,9 +254,9 @@ class _EsimScreenState extends ConsumerState<EsimScreen>
           Text(
             text,
             style: const TextStyle(
-              color: Colors.white,
+              color: Colors.white70,
               fontSize: 11,
-              fontWeight: FontWeight.w500,
+              fontWeight: FontWeight.w600,
             ),
           ),
         ],
@@ -264,39 +266,32 @@ class _EsimScreenState extends ConsumerState<EsimScreen>
 
   Widget _buildMyEsimsTab() {
     if (_myProfiles.isEmpty) {
-      return Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            const Icon(Icons.sim_card_outlined, color: Colors.grey, size: 54),
-            const SizedBox(height: 16),
-            const Text(
-              'No active eSIM profiles',
-              style: TextStyle(
+      return const Center(
+        child: Padding(
+          padding: EdgeInsets.all(32),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(Icons.sim_card_outlined,
+                  size: 54, color: AppColors.darkTextSecondary),
+              SizedBox(height: 16),
+              Text(
+                'No Active eSIMs',
+                style: TextStyle(
                   color: Colors.white,
-                  fontSize: 16,
-                  fontWeight: FontWeight.bold),
-            ),
-            const SizedBox(height: 6),
-            const Text(
-              'Browse available plans to install your first eSIM.',
-              style:
-                  TextStyle(color: AppColors.darkTextSecondary, fontSize: 13),
-            ),
-            const SizedBox(height: 18),
-            ElevatedButton(
-              style: ElevatedButton.styleFrom(
-                backgroundColor: AppColors.primary,
-                foregroundColor: Colors.black,
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(12),
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold,
                 ),
               ),
-              onPressed: () => _tabController.animateTo(0),
-              child: const Text('Browse Plans',
-                  style: TextStyle(fontWeight: FontWeight.bold)),
-            ),
-          ],
+              SizedBox(height: 8),
+              Text(
+                'Browse available plans to activate high-speed travel roaming with Bitcoin.',
+                textAlign: TextAlign.center,
+                style:
+                    TextStyle(color: AppColors.darkTextSecondary, fontSize: 13),
+              ),
+            ],
+          ),
         ),
       );
     }
@@ -423,7 +418,7 @@ class _EsimScreenState extends ConsumerState<EsimScreen>
 
           const SizedBox(height: 14),
 
-          // Actions: Installation Instructions & QR
+          // Actions: Installation Instructions & Top-Up
           Row(
             children: [
               Expanded(
@@ -440,6 +435,19 @@ class _EsimScreenState extends ConsumerState<EsimScreen>
                   label: const Text('Setup QR / Code'),
                 ),
               ),
+              const SizedBox(width: 10),
+              ElevatedButton.icon(
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: AppColors.primary,
+                  foregroundColor: Colors.black,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                ),
+                onPressed: () => _showTopupDialog(prof),
+                icon: const Icon(Icons.add, size: 18),
+                label: const Text('Top Up'),
+              ),
             ],
           ),
         ],
@@ -448,6 +456,7 @@ class _EsimScreenState extends ConsumerState<EsimScreen>
   }
 
   void _showPurchaseDialog(EsimPackage pkg) {
+    final market = ref.read(marketProvider);
     showDialog(
       context: context,
       builder: (ctx) {
@@ -492,11 +501,6 @@ class _EsimScreenState extends ConsumerState<EsimScreen>
                   ],
                 ),
               ),
-              const SizedBox(height: 12),
-              const Text(
-                '🧪 Sandbox Mode: Simulated purchase with instant profile generation.',
-                style: TextStyle(color: Colors.purpleAccent, fontSize: 11),
-              ),
             ],
           ),
           actions: [
@@ -519,6 +523,19 @@ class _EsimScreenState extends ConsumerState<EsimScreen>
                   setState(() {
                     _myProfiles.insert(0, profile);
                   });
+
+                  // Log to activity
+                  ref.read(transactionsProvider.notifier).recordEsimPurchase(
+                        id: profile.iccid,
+                        planName: pkg.name,
+                        amountSats: pkg.priceSats,
+                        fiatAmount: pkg.priceFiat,
+                        fiatCurrency: pkg.currency,
+                        iccid: profile.iccid,
+                        qrCode: profile.qrCodeData,
+                        spendCountry: market.spendCountry,
+                      );
+
                   _tabController.animateTo(1);
                   if (mounted) {
                     ScaffoldMessenger.of(context).showSnackBar(
@@ -536,6 +553,91 @@ class _EsimScreenState extends ConsumerState<EsimScreen>
                 }
               },
               child: const Text('Confirm & Pay',
+                  style: TextStyle(fontWeight: FontWeight.bold)),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  void _showTopupDialog(EsimProfile prof) {
+    final market = ref.read(marketProvider);
+    showDialog(
+      context: context,
+      builder: (ctx) {
+        return AlertDialog(
+          backgroundColor: AppColors.darkSurface,
+          shape:
+              RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+          title: const Text('Top Up eSIM Data',
+              style:
+                  TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text('Profile: ${prof.packageName}',
+                  style: const TextStyle(color: Colors.white70)),
+              const SizedBox(height: 6),
+              Text('ICCID: ${prof.iccid}',
+                  style: const TextStyle(
+                      color: Colors.white54,
+                      fontFamily: 'monospace',
+                      fontSize: 12)),
+              const SizedBox(height: 12),
+              const Text('Add 3 GB High-Speed Roaming Data',
+                  style: TextStyle(
+                      color: Colors.white, fontWeight: FontWeight.w600)),
+              const SizedBox(height: 6),
+              Container(
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: AppColors.darkSurfaceCard,
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: const Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text('Price:', style: TextStyle(color: Colors.white70)),
+                    Text('15,000 sats',
+                        style: TextStyle(
+                            color: AppColors.primary,
+                            fontWeight: FontWeight.bold,
+                            fontSize: 16)),
+                  ],
+                ),
+              ),
+            ],
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(ctx).pop(),
+              child: const Text('Cancel', style: TextStyle(color: Colors.grey)),
+            ),
+            ElevatedButton(
+              style: ElevatedButton.styleFrom(
+                backgroundColor: AppColors.primary,
+                foregroundColor: Colors.black,
+              ),
+              onPressed: () {
+                Navigator.of(ctx).pop();
+                ref.read(transactionsProvider.notifier).recordEsimPurchase(
+                      id: 'topup-${DateTime.now().millisecondsSinceEpoch}',
+                      planName: '${prof.packageName} (+3 GB)',
+                      amountSats: 15000,
+                      fiatAmount: 9.00,
+                      fiatCurrency: 'USD',
+                      iccid: prof.iccid,
+                      spendCountry: market.spendCountry,
+                      isTopup: true,
+                    );
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(
+                      content: Text('eSIM Top-up confirmed and active!')),
+                );
+              },
+              child: const Text('Confirm Top-Up',
                   style: TextStyle(fontWeight: FontWeight.bold)),
             ),
           ],
@@ -619,7 +721,7 @@ class _EsimScreenState extends ConsumerState<EsimScreen>
                             fontSize: 13,
                             fontFamily: 'monospace')),
                     const SizedBox(height: 8),
-                    const Text('Activation Code',
+                    const Text('Activation Code (LPA String)',
                         style: TextStyle(
                             color: AppColors.darkTextSecondary, fontSize: 11)),
                     Row(

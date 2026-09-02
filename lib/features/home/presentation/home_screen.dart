@@ -819,6 +819,11 @@ class _TransactionCard extends ConsumerWidget {
         iconColor = colors.success;
         prefix = '+';
         break;
+      default:
+        icon = tx.isOutgoing ? Icons.arrow_upward : Icons.arrow_downward;
+        iconColor = tx.isOutgoing ? colors.outgoing : colors.incoming;
+        prefix = tx.isOutgoing ? '-' : '+';
+        break;
     }
 
     return Material(

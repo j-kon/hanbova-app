@@ -59,6 +59,104 @@ class TransactionsNotifier extends StateNotifier<List<TransactionModel>> {
     }).toList();
   }
 
+  void recordBillPayment({
+    required String id,
+    required TransactionType type,
+    required String billerName,
+    required String accountReference,
+    required int amountSats,
+    required double fiatAmount,
+    required String fiatCurrency,
+    required int feeSats,
+    String? tokenOrPin,
+    String? receiptReference,
+    String? spendCountry,
+    TransactionStatus status = TransactionStatus.completed,
+  }) {
+    final tx = TransactionModel(
+      id: id,
+      type: type,
+      status: status,
+      amountSats: amountSats,
+      recipientOrSender: billerName,
+      billerName: billerName,
+      accountReference: accountReference,
+      fiatAmount: fiatAmount,
+      fiatCurrency: fiatCurrency,
+      feeSats: feeSats,
+      tokenOrPin: tokenOrPin,
+      receiptReference: receiptReference,
+      spendCountry: spendCountry,
+      paymentMethod: 'Bitcoin Balance',
+      createdAt: DateTime.now(),
+      description:
+          'Paid $fiatCurrency $fiatAmount to $billerName ($accountReference)',
+    );
+    addTransaction(tx);
+  }
+
+  void recordEsimPurchase({
+    required String id,
+    required String planName,
+    required int amountSats,
+    required double fiatAmount,
+    required String fiatCurrency,
+    String? iccid,
+    String? qrCode,
+    String? spendCountry,
+    bool isTopup = false,
+  }) {
+    final tx = TransactionModel(
+      id: id,
+      type: isTopup ? TransactionType.esimTopup : TransactionType.esimPurchase,
+      status: TransactionStatus.completed,
+      amountSats: amountSats,
+      recipientOrSender: 'Hanbova Roaming eSIM',
+      planName: planName,
+      fiatAmount: fiatAmount,
+      fiatCurrency: fiatCurrency,
+      spendCountry: spendCountry,
+      receiptReference: iccid,
+      paymentMethod: 'Bitcoin Balance',
+      createdAt: DateTime.now(),
+      description:
+          isTopup ? 'Top-up for $planName' : 'Purchased $planName plan',
+      metadata: {
+        if (iccid != null) 'iccid': iccid,
+        if (qrCode != null) 'qr_code': qrCode,
+      },
+    );
+    addTransaction(tx);
+  }
+
+  void recordPayout({
+    required String id,
+    required String destination,
+    required String corridorName,
+    required int amountSats,
+    required double fiatAmount,
+    required String fiatCurrency,
+    required int feeSats,
+    bool isMobileMoney = true,
+  }) {
+    final tx = TransactionModel(
+      id: id,
+      type: isMobileMoney
+          ? TransactionType.mobileMoneyPayout
+          : TransactionType.bankPayout,
+      status: TransactionStatus.completed,
+      amountSats: amountSats,
+      recipientOrSender: destination,
+      fiatAmount: fiatAmount,
+      fiatCurrency: fiatCurrency,
+      feeSats: feeSats,
+      paymentMethod: isMobileMoney ? 'M-Pesa / Mobile Money' : 'Bank Transfer',
+      createdAt: DateTime.now(),
+      description: 'Cash payout of $fiatCurrency $fiatAmount to $destination',
+    );
+    addTransaction(tx);
+  }
+
   Future<List<TransactionModel>> syncIncomingMessages({
     required List<dynamic> inbox,
     Future<dynamic> Function(String intentId)? getIntentDetails,
@@ -73,14 +171,18 @@ class TransactionsNotifier extends StateNotifier<List<TransactionModel>> {
 
       if (status == 'claimed') {
         final idx = state.indexWhere((t) => t.id == paymentIntentId);
-        if (idx >= 0 && state[idx].status == TransactionStatus.claimable) {
+        if (idx >= 0 &&
+            (state[idx].status == TransactionStatus.waitingForRecipient ||
+                state[idx].status == TransactionStatus.claimable)) {
           updateTransactionStatus(paymentIntentId, TransactionStatus.completed);
         }
         continue;
       }
       if (status == 'refunded') {
         final idx = state.indexWhere((t) => t.id == paymentIntentId);
-        if (idx >= 0 && state[idx].status == TransactionStatus.claimable) {
+        if (idx >= 0 &&
+            (state[idx].status == TransactionStatus.waitingForRecipient ||
+                state[idx].status == TransactionStatus.claimable)) {
           updateTransactionStatus(paymentIntentId, TransactionStatus.refunded);
         }
         continue;
@@ -89,7 +191,8 @@ class TransactionsNotifier extends StateNotifier<List<TransactionModel>> {
       final existingIndex = state.indexWhere((t) => t.id == paymentIntentId);
       if (existingIndex >= 0) {
         final existing = state[existingIndex];
-        if (existing.status == TransactionStatus.completed ||
+        if (existing.status == TransactionStatus.claimed ||
+            existing.status == TransactionStatus.completed ||
             existing.status == TransactionStatus.refunded) {
           continue;
         }
@@ -121,7 +224,7 @@ class TransactionsNotifier extends StateNotifier<List<TransactionModel>> {
       final incomingTx = TransactionModel(
         id: paymentIntentId,
         type: TransactionType.protectedClaim,
-        status: TransactionStatus.claimable,
+        status: TransactionStatus.waitingForRecipient,
         amountSats: amountSats,
         recipientOrSender: '@$senderUsername',
         description: description ?? 'Incoming Protected Payment',
@@ -163,7 +266,7 @@ class TransactionsNotifier extends StateNotifier<List<TransactionModel>> {
       final String counterparty;
 
       if (isSender) {
-        txType = TransactionType.protectedSend;
+        txType = TransactionType.protectedPayment;
         counterparty = intent.recipientIdentifier.startsWith('@')
             ? intent.recipientIdentifier
             : '@${intent.recipientIdentifier}';
@@ -176,21 +279,25 @@ class TransactionsNotifier extends StateNotifier<List<TransactionModel>> {
             : 'Sender';
       }
 
+      final isExpired =
+          intent.expiresAt != null && DateTime.now().isAfter(intent.expiresAt!);
       final TransactionStatus txStatus;
       switch (intent.status.toLowerCase()) {
         case 'claimed':
-          txStatus = TransactionStatus.completed;
+          txStatus = TransactionStatus.claimed;
           break;
         case 'refunded':
           txStatus = TransactionStatus.refunded;
           break;
         case 'expired':
-          txStatus = TransactionStatus.expired;
+          txStatus = TransactionStatus.refundAvailable;
           break;
         case 'claimable':
         case 'protected':
         default:
-          txStatus = TransactionStatus.claimable;
+          txStatus = isExpired
+              ? TransactionStatus.refundAvailable
+              : TransactionStatus.waitingForRecipient;
           break;
       }
 
@@ -212,8 +319,8 @@ class TransactionsNotifier extends StateNotifier<List<TransactionModel>> {
       final idx = updatedList.indexWhere((t) => t.id == intent.id);
       if (idx >= 0) {
         final local = updatedList[idx];
-        // If local transaction is already financially settled, preserve client authority
-        final finalStatus = (local.status == TransactionStatus.completed ||
+        final finalStatus = (local.status == TransactionStatus.claimed ||
+                local.status == TransactionStatus.completed ||
                 local.status == TransactionStatus.refunded)
             ? local.status
             : txStatus;

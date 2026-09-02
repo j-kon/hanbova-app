@@ -128,7 +128,7 @@ void main() {
       expect(find.text('Username'), findsOneWidget);
       expect(find.text('Email address'), findsOneWidget);
 
-      final button = find.widgetWithText(ElevatedButton, 'Create account');
+      final button = find.widgetWithText(ElevatedButton, 'Create Account');
       await tester.ensureVisible(button);
       await tester.tap(button);
       await tester.pumpAndSettle();

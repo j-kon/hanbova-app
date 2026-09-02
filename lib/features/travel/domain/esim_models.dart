@@ -146,6 +146,13 @@ class PayoutCorridor {
     required this.estimatedFeeSats,
   });
 
+  bool get isMobileMoney =>
+      channel.toLowerCase().contains('mobile') ||
+      channel.toLowerCase().contains('momo') ||
+      channel.toLowerCase().contains('mpesa');
+
+  String get type => channel;
+
   factory PayoutCorridor.fromJson(Map<String, dynamic> json) {
     return PayoutCorridor(
       id: json['id'] as String,

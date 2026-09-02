@@ -481,11 +481,21 @@ class TravelScreen extends ConsumerWidget {
                 ),
               ),
               const SizedBox(height: 6),
-              const Text(
-                'Available services and payment corridors adapt automatically.',
-                style: TextStyle(
-                  color: AppColors.darkTextSecondary,
-                  fontSize: 13,
+              Container(
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                decoration: BoxDecoration(
+                  color: AppColors.primary.withValues(alpha: 0.12),
+                  borderRadius: BorderRadius.circular(8),
+                  border: Border.all(
+                      color: AppColors.primary.withValues(alpha: 0.25)),
+                ),
+                child: const Text(
+                  'Notice: Your country of residence will not change. Only the destination utilities, local eSIM packages, and spend corridors adapt.',
+                  style: TextStyle(
+                    color: Colors.white70,
+                    fontSize: 12,
+                  ),
                 ),
               ),
               const SizedBox(height: 16),

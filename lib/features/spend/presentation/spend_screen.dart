@@ -5,6 +5,26 @@ import 'package:hanbova_app/core/market/market_provider.dart';
 import 'package:hanbova_app/core/theme/app_colors.dart';
 import 'package:hanbova_app/features/spend/data/bills_service.dart';
 import 'package:hanbova_app/features/spend/domain/bill_models.dart';
+import 'package:hanbova_app/features/transactions/domain/transaction_model.dart';
+import 'package:hanbova_app/features/transactions/presentation/transactions_provider.dart';
+
+class SavedBillerItem {
+  final String id;
+  final String billerId;
+  final String billerName;
+  final String accountReference;
+  final BillServiceType serviceType;
+  final String countryCode;
+
+  const SavedBillerItem({
+    required this.id,
+    required this.billerId,
+    required this.billerName,
+    required this.accountReference,
+    required this.serviceType,
+    required this.countryCode,
+  });
+}
 
 class SpendScreen extends ConsumerStatefulWidget {
   const SpendScreen({super.key});
@@ -15,6 +35,34 @@ class SpendScreen extends ConsumerStatefulWidget {
 
 class _SpendScreenState extends ConsumerState<SpendScreen> {
   bool _isLoadingBillers = false;
+
+  // Local state for Saved Billers / Pay Again
+  final List<SavedBillerItem> _savedBillers = [
+    const SavedBillerItem(
+      id: 'sb-1',
+      billerId: 'ke-kplc-prepaid',
+      billerName: 'Kenya Power (KPLC Prepaid)',
+      accountReference: '37189201948',
+      serviceType: BillServiceType.electricity,
+      countryCode: 'KE',
+    ),
+    const SavedBillerItem(
+      id: 'sb-2',
+      billerId: 'ke-safaricom-airtime',
+      billerName: 'Safaricom Airtime',
+      accountReference: '+254 712 345 678',
+      serviceType: BillServiceType.airtime,
+      countryCode: 'KE',
+    ),
+    const SavedBillerItem(
+      id: 'sb-3',
+      billerId: 'ng-mtn-data',
+      billerName: 'MTN Data Bundles',
+      accountReference: '+234 803 123 4567',
+      serviceType: BillServiceType.data,
+      countryCode: 'NG',
+    ),
+  ];
 
   @override
   Widget build(BuildContext context) {
@@ -30,6 +78,11 @@ class _SpendScreenState extends ConsumerState<SpendScreen> {
       if (caps.tv) BillServiceType.tv,
       if (caps.internet) BillServiceType.internet,
     ];
+
+    final relevantSavedBillers = _savedBillers
+        .where((b) =>
+            b.countryCode.toUpperCase() == spendCountry.code.toUpperCase())
+        .toList();
 
     return Scaffold(
       backgroundColor: AppColors.darkBackground,
@@ -68,22 +121,23 @@ class _SpendScreenState extends ConsumerState<SpendScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Sandbox Info Banner
+            // Safe Simulation Environment Banner
             Container(
               padding: const EdgeInsets.all(12),
               decoration: BoxDecoration(
-                color: Colors.amber.withValues(alpha: 0.15),
+                color: AppColors.primary.withValues(alpha: 0.1),
                 borderRadius: BorderRadius.circular(12),
-                border: Border.all(color: Colors.amber.withValues(alpha: 0.3)),
+                border: Border.all(
+                    color: AppColors.primary.withValues(alpha: 0.25)),
               ),
               child: const Row(
                 children: [
-                  Icon(Icons.science_outlined,
-                      color: Colors.amberAccent, size: 18),
+                  Icon(Icons.shield_outlined,
+                      color: AppColors.primary, size: 18),
                   SizedBox(width: 8),
                   Expanded(
                     child: Text(
-                      'SANDBOX UTILITIES: Real biller validation and quotes powered by DT One backend adapter.',
+                      'SIMULATION ENVIRONMENT: Everyday utility bill payments and top-ups operate in safe pilot mode.',
                       style: TextStyle(color: Colors.white70, fontSize: 11),
                     ),
                   ),
@@ -91,6 +145,89 @@ class _SpendScreenState extends ConsumerState<SpendScreen> {
               ),
             ),
             const SizedBox(height: 20),
+
+            // Recent Billers / Pay Again (if any)
+            if (relevantSavedBillers.isNotEmpty) ...[
+              const Text(
+                'Recent & Saved Billers',
+                style: TextStyle(
+                  color: Colors.white,
+                  fontSize: 16,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              const SizedBox(height: 10),
+              SizedBox(
+                height: 90,
+                child: ListView.separated(
+                  scrollDirection: Axis.horizontal,
+                  itemCount: relevantSavedBillers.length,
+                  separatorBuilder: (_, __) => const SizedBox(width: 12),
+                  itemBuilder: (context, idx) {
+                    final sb = relevantSavedBillers[idx];
+                    return InkWell(
+                      onTap: () => _onSavedBillerTapped(sb),
+                      borderRadius: BorderRadius.circular(14),
+                      child: Container(
+                        width: 200,
+                        padding: const EdgeInsets.all(12),
+                        decoration: BoxDecoration(
+                          color: AppColors.darkSurfaceCard,
+                          borderRadius: BorderRadius.circular(14),
+                          border: Border.all(color: AppColors.darkBorder),
+                        ),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Row(
+                              children: [
+                                Text(sb.serviceType.icon,
+                                    style: const TextStyle(fontSize: 16)),
+                                const SizedBox(width: 6),
+                                Expanded(
+                                  child: Text(
+                                    sb.billerName,
+                                    style: const TextStyle(
+                                      color: Colors.white,
+                                      fontSize: 13,
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
+                                  ),
+                                ),
+                              ],
+                            ),
+                            const SizedBox(height: 4),
+                            Text(
+                              sb.accountReference,
+                              style: const TextStyle(
+                                color: AppColors.darkTextSecondary,
+                                fontSize: 11,
+                                fontFamily: 'monospace',
+                              ),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                            const SizedBox(height: 4),
+                            const Text(
+                              'Tap to Pay Again',
+                              style: TextStyle(
+                                color: AppColors.primary,
+                                fontSize: 10,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    );
+                  },
+                ),
+              ),
+              const SizedBox(height: 24),
+            ],
 
             Text(
               'Pay Bills in ${spendCountry.name}',
@@ -101,10 +238,10 @@ class _SpendScreenState extends ConsumerState<SpendScreen> {
               ),
             ),
             const SizedBox(height: 6),
-            Text(
+            const Text(
               'Select a utility or digital service to pay with Bitcoin.',
-              style: const TextStyle(
-                  color: AppColors.darkTextSecondary, fontSize: 13),
+              style:
+                  TextStyle(color: AppColors.darkTextSecondary, fontSize: 13),
             ),
             const SizedBox(height: 18),
 
@@ -162,6 +299,29 @@ class _SpendScreenState extends ConsumerState<SpendScreen> {
         ),
       ),
     );
+  }
+
+  Future<void> _onSavedBillerTapped(SavedBillerItem sb) async {
+    setState(() => _isLoadingBillers = true);
+    final market = ref.read(marketProvider);
+    final serviceApi = ref.read(billsServiceProvider);
+    final billers = await serviceApi.getBillers(market.spendCountry,
+        service: sb.serviceType);
+    if (mounted) {
+      setState(() => _isLoadingBillers = false);
+      final found = billers.firstWhere(
+        (b) => b.id == sb.billerId || b.name == sb.billerName,
+        orElse: () => Biller(
+          id: sb.billerId,
+          name: sb.billerName,
+          serviceType: sb.serviceType,
+          country: sb.countryCode,
+          accountReferenceLabel: 'Account Number',
+          accountReferenceExample: sb.accountReference,
+        ),
+      );
+      _showPaymentFormSheet(found, initialAccount: sb.accountReference);
+    }
   }
 
   Future<void> _onServiceSelected(BillServiceType service) async {
@@ -267,14 +427,16 @@ class _SpendScreenState extends ConsumerState<SpendScreen> {
     );
   }
 
-  void _showPaymentFormSheet(Biller biller) {
-    final accountController =
-        TextEditingController(text: biller.accountReferenceExample);
+  void _showPaymentFormSheet(Biller biller, {String? initialAccount}) {
+    final accountController = TextEditingController(
+      text: initialAccount ?? biller.accountReferenceExample,
+    );
     final amountController = TextEditingController(text: '500');
     bool isValidating = false;
     CustomerValidation? validation;
     BillQuote? quote;
     bool isQuoting = false;
+    bool saveBillerForFuture = true;
 
     showModalBottomSheet(
       context: context,
@@ -412,25 +574,62 @@ class _SpendScreenState extends ConsumerState<SpendScreen> {
                       decoration: BoxDecoration(
                         color: AppColors.darkSurfaceCard,
                         borderRadius: BorderRadius.circular(12),
+                        border: Border.all(
+                            color: AppColors.primary.withValues(alpha: 0.3)),
                       ),
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      child: Column(
                         children: [
-                          const Text('Estimated Sats:',
-                              style: TextStyle(
-                                  color: Colors.white70, fontSize: 13)),
-                          Text(
-                            '${quote!.amountSats} sats',
-                            style: const TextStyle(
-                              color: AppColors.primary,
-                              fontWeight: FontWeight.bold,
-                              fontSize: 15,
-                            ),
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              const Text('Estimated Bitcoin Sats:',
+                                  style: TextStyle(
+                                      color: Colors.white70, fontSize: 13)),
+                              Text(
+                                '${quote!.amountSats} sats',
+                                style: const TextStyle(
+                                  color: AppColors.primary,
+                                  fontWeight: FontWeight.bold,
+                                  fontSize: 15,
+                                ),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 4),
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              const Text('Network / Settlement Fee:',
+                                  style: TextStyle(
+                                      color: Colors.white54, fontSize: 12)),
+                              Text(
+                                '${quote!.feeSats} sats',
+                                style: const TextStyle(
+                                    color: Colors.white70, fontSize: 12),
+                              ),
+                            ],
                           ),
                         ],
                       ),
                     ),
-                    const SizedBox(height: 16),
+                    const SizedBox(height: 12),
+
+                    // Save Biller Checkbox
+                    Row(
+                      children: [
+                        Checkbox(
+                          value: saveBillerForFuture,
+                          activeColor: AppColors.primary,
+                          onChanged: (v) => setModalState(
+                              () => saveBillerForFuture = v ?? true),
+                        ),
+                        const Text(
+                          'Save biller for quick payments',
+                          style: TextStyle(color: Colors.white70, fontSize: 13),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 12),
                   ],
 
                   // Action Buttons
@@ -493,26 +692,12 @@ class _SpendScreenState extends ConsumerState<SpendScreen> {
                                   borderRadius: BorderRadius.circular(12)),
                               padding: const EdgeInsets.symmetric(vertical: 14),
                             ),
-                            onPressed: () async {
-                              final messenger = ScaffoldMessenger.of(context);
-                              Navigator.of(ctx).pop();
-                              try {
-                                final serviceApi =
-                                    ref.read(billsServiceProvider);
-                                final tx = await serviceApi.payBill(
-                                  quoteId: quote!.quoteId,
-                                  customerAccount: quote!.customerAccount,
-                                );
-                                if (mounted) {
-                                  _showReceiptDialog(tx);
-                                }
-                              } catch (e) {
-                                messenger.showSnackBar(
-                                  SnackBar(content: Text('Payment error: $e')),
-                                );
-                              }
-                            },
-                            child: const Text('Pay with Bitcoin',
+                            onPressed: () => _executePaymentFlow(
+                              biller: biller,
+                              quote: quote!,
+                              saveBiller: saveBillerForFuture,
+                            ),
+                            child: const Text('Confirm & Pay with Bitcoin',
                                 style: TextStyle(fontWeight: FontWeight.bold)),
                           ),
                         ),
@@ -527,7 +712,185 @@ class _SpendScreenState extends ConsumerState<SpendScreen> {
     );
   }
 
-  void _showReceiptDialog(BillTransaction tx) {
+  Future<void> _executePaymentFlow({
+    required Biller biller,
+    required BillQuote quote,
+    required bool saveBiller,
+  }) async {
+    Navigator.of(context).pop(); // Close form sheet
+
+    // Show processing / uncertain modal
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (ctx) {
+        return AlertDialog(
+          backgroundColor: AppColors.darkSurfaceCard,
+          shape:
+              RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+          content: const Padding(
+            padding: EdgeInsets.symmetric(vertical: 20),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                CircularProgressIndicator(color: AppColors.primary),
+                SizedBox(height: 20),
+                Text(
+                  'Processing Utility Settlement',
+                  style: TextStyle(
+                      color: Colors.white,
+                      fontSize: 16,
+                      fontWeight: FontWeight.bold),
+                ),
+                SizedBox(height: 8),
+                Text(
+                  'Checking payment status — please do not attempt duplicate payment.',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                      color: AppColors.darkTextSecondary, fontSize: 12),
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+
+    try {
+      final serviceApi = ref.read(billsServiceProvider);
+      final tx = await serviceApi.payBill(
+        quoteId: quote.quoteId,
+        customerAccount: quote.customerAccount,
+      );
+
+      // Record to unified activity timeline
+      TransactionType txType;
+      switch (biller.serviceType) {
+        case BillServiceType.airtime:
+          txType = TransactionType.airtime;
+          break;
+        case BillServiceType.data:
+          txType = TransactionType.data;
+          break;
+        case BillServiceType.electricity:
+          txType = TransactionType.electricity;
+          break;
+        case BillServiceType.water:
+          txType = TransactionType.water;
+          break;
+        case BillServiceType.tv:
+          txType = TransactionType.tv;
+          break;
+        case BillServiceType.internet:
+          txType = TransactionType.internet;
+          break;
+      }
+
+      ref.read(transactionsProvider.notifier).recordBillPayment(
+            id: tx.id,
+            type: txType,
+            billerName: biller.name,
+            accountReference: tx.customerAccount,
+            amountSats: tx.amountSats,
+            fiatAmount: quote.amountFiat,
+            fiatCurrency: quote.currency,
+            feeSats: quote.feeSats,
+            tokenOrPin: tx.tokenCode,
+            receiptReference: tx.receiptNumber,
+            spendCountry: biller.countryCode,
+          );
+
+      if (saveBiller) {
+        setState(() {
+          final alreadySaved = _savedBillers.any((s) =>
+              s.billerId == biller.id &&
+              s.accountReference == tx.customerAccount);
+          if (!alreadySaved) {
+            _savedBillers.insert(
+              0,
+              SavedBillerItem(
+                id: 'sb-${DateTime.now().millisecondsSinceEpoch}',
+                billerId: biller.id,
+                billerName: biller.name,
+                accountReference: tx.customerAccount,
+                serviceType: biller.serviceType,
+                countryCode: biller.countryCode,
+              ),
+            );
+          }
+        });
+      }
+
+      if (mounted) {
+        Navigator.of(context).pop(); // Close processing modal
+        _showReceiptDialog(tx, biller);
+      }
+    } catch (e) {
+      if (mounted) {
+        Navigator.of(context).pop(); // Close processing modal
+        _showUncertainOrErrorState(e.toString());
+      }
+    }
+  }
+
+  void _showUncertainOrErrorState(String error) {
+    showDialog(
+      context: context,
+      builder: (ctx) {
+        return AlertDialog(
+          backgroundColor: AppColors.darkSurfaceCard,
+          shape:
+              RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+          title: const Row(
+            children: [
+              Icon(Icons.warning_amber_rounded,
+                  color: AppColors.warning, size: 24),
+              SizedBox(width: 8),
+              Text(
+                'Checking Payment Status',
+                style: TextStyle(
+                    color: Colors.white,
+                    fontWeight: FontWeight.bold,
+                    fontSize: 16),
+              ),
+            ],
+          ),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Text(
+                'Checking payment status — please do not attempt duplicate payment.',
+                style: TextStyle(
+                    color: Colors.white,
+                    fontWeight: FontWeight.w600,
+                    fontSize: 14),
+              ),
+              const SizedBox(height: 8),
+              Text(
+                'Your payment is being verified with the network operator. You can monitor the transaction timeline in your Activity tab.',
+                style: TextStyle(
+                    color: Colors.white.withValues(alpha: 0.7), fontSize: 12),
+              ),
+            ],
+          ),
+          actions: [
+            ElevatedButton(
+              style: ElevatedButton.styleFrom(
+                backgroundColor: AppColors.primary,
+                foregroundColor: Colors.black,
+              ),
+              onPressed: () => Navigator.of(ctx).pop(),
+              child: const Text('Understood',
+                  style: TextStyle(fontWeight: FontWeight.bold)),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  void _showReceiptDialog(BillTransaction tx, Biller biller) {
     showDialog(
       context: context,
       builder: (ctx) {
@@ -554,7 +917,10 @@ class _SpendScreenState extends ConsumerState<SpendScreen> {
                   style: const TextStyle(
                       color: AppColors.success, fontWeight: FontWeight.bold)),
               const SizedBox(height: 8),
-              Text('Receipt #: ${tx.receiptNumber ?? "N/A"}',
+              Text('Biller: ${biller.name}',
+                  style: const TextStyle(color: Colors.white70)),
+              Text(
+                  'Receipt #: ${tx.receiptNumber ?? "REC-${tx.id.substring(0, 8)}"}',
                   style: const TextStyle(color: Colors.white70)),
               Text('Account: ${tx.customerAccount}',
                   style: const TextStyle(color: Colors.white70)),

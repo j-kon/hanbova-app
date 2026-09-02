@@ -29,22 +29,26 @@ class MarketNotifier extends StateNotifier<UserCountryContext> {
 
   Future<void> _loadPersisted() async {
     try {
-      final identity = await _storage.read(key: _identityKey) ?? 'KE';
-      final spend = await _storage.read(key: _spendKey) ?? 'KE';
-      final currencyStr = await _storage.read(key: _currencyKey) ?? 'KES';
+      final identity = await _storage.read(key: _identityKey);
+      final spend = await _storage.read(key: _spendKey);
+      final currencyStr = await _storage.read(key: _currencyKey);
 
-      final currency = FiatCurrency.values.firstWhere(
-        (c) => c.code == currencyStr,
-        orElse: () => CountryInfo.findByCode(spend).defaultCurrency,
-      );
+      final newIdentity = identity ?? state.identityCountry;
+      final newSpend = spend ?? state.spendCountry;
+      final currency = currencyStr != null
+          ? FiatCurrency.values.firstWhere(
+              (c) => c.code == currencyStr,
+              orElse: () => CountryInfo.findByCode(newSpend).defaultCurrency,
+            )
+          : state.displayCurrency;
 
       state = state.copyWith(
-        identityCountry: identity,
-        spendCountry: spend,
+        identityCountry: newIdentity,
+        spendCountry: newSpend,
         displayCurrency: currency,
       );
 
-      await fetchCapabilities(spend);
+      await fetchCapabilities(newSpend);
     } catch (_) {}
   }
 
