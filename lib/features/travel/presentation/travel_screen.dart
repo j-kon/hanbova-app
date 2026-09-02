@@ -264,8 +264,8 @@ class TravelScreen extends ConsumerWidget {
               iconColor: Colors.amberAccent,
               title: 'Everyday Spend & Bills',
               subtitle: 'Pay airtime, electricity tokens, water, TV & internet',
-              badge: 'Active in ${spendCountry.code}',
-              badgeColor: AppColors.primary,
+              badge: caps.airtime ? 'Available' : 'Unavailable',
+              badgeColor: caps.airtime ? AppColors.success : Colors.grey,
               onTap: () {
                 Navigator.of(context).push(
                   MaterialPageRoute(builder: (_) => const SpendScreen()),
@@ -364,15 +364,19 @@ class TravelScreen extends ConsumerWidget {
                 children: [
                   Row(
                     children: [
-                      Text(
-                        title,
-                        style: const TextStyle(
-                          color: Colors.white,
-                          fontSize: 16,
-                          fontWeight: FontWeight.bold,
+                      Expanded(
+                        child: Text(
+                          title,
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontSize: 15,
+                            fontWeight: FontWeight.bold,
+                          ),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
                         ),
                       ),
-                      const Spacer(),
+                      const SizedBox(width: 8),
                       Container(
                         padding: const EdgeInsets.symmetric(
                             horizontal: 8, vertical: 3),
