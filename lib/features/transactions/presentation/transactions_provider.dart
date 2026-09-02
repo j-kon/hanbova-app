@@ -9,7 +9,7 @@ final transactionsProvider =
 
 class TransactionsNotifier extends StateNotifier<List<TransactionModel>> {
   TransactionsNotifier([List<TransactionModel>? initial])
-      : super(initial ?? defaultSampleActivity());
+      : super(initial ?? const []);
 
   static List<TransactionModel> defaultSampleActivity() {
     final now = DateTime.now();

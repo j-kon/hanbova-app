@@ -744,7 +744,7 @@ class _SpendScreenState extends ConsumerState<SpendScreen> {
                 ),
                 SizedBox(height: 8),
                 Text(
-                  'Checking payment status — please do not attempt duplicate payment.',
+                  'Checking payment status. Please don\'t pay again yet.',
                   textAlign: TextAlign.center,
                   style: TextStyle(
                       color: AppColors.darkTextSecondary, fontSize: 12),
