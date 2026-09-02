@@ -131,7 +131,9 @@ class NetworkEnvironmentNotifier extends StateNotifier<HanbovaNetwork> {
 
   NetworkEnvironmentNotifier({FlutterSecureStorage? storage})
       : _storage = storage ?? const FlutterSecureStorage(),
-        super(HanbovaNetwork.local) {
+        super(NetworkConfig.isMainnetPilotBuild
+            ? HanbovaNetwork.mainnet
+            : HanbovaNetwork.local) {
     _loadNetwork();
   }
 
@@ -152,9 +154,13 @@ class NetworkEnvironmentNotifier extends StateNotifier<HanbovaNetwork> {
             break;
           case 'local':
           default:
-            state = HanbovaNetwork.local;
+            state = NetworkConfig.isMainnetPilotBuild
+                ? HanbovaNetwork.mainnet
+                : HanbovaNetwork.local;
             break;
         }
+      } else if (NetworkConfig.isMainnetPilotBuild) {
+        state = HanbovaNetwork.mainnet;
       }
     } catch (_) {}
   }
