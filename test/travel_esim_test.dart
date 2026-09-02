@@ -36,14 +36,17 @@ void main() {
         'matching_id': 'MATCH-1234',
         'smdp_address': 'rsp.dtone.com',
         'qr_code_data': 'LPA:1\$rsp.dtone.com\$MATCH-1234',
-        'ios_installation_url': 'https://esimsetup.apple.com/esim_qrcode_provisioning?carddata=LPA:1\$rsp.dtone.com\$MATCH-1234',
-        'android_installation_url': 'intent:#Intent;action=android.telephony.euicc.action.DOWNLOAD_SUBSCRIPTION;S.activation_code=LPA:1\$rsp.dtone.com\$MATCH-1234;end',
+        'ios_installation_url':
+            'https://esimsetup.apple.com/esim_qrcode_provisioning?carddata=LPA:1\$rsp.dtone.com\$MATCH-1234',
+        'android_installation_url':
+            'intent:#Intent;action=android.telephony.euicc.action.DOWNLOAD_SUBSCRIPTION;S.activation_code=LPA:1\$rsp.dtone.com\$MATCH-1234;end',
         'data_allowance_mb': 3072,
         'remaining_data_mb': 1536,
         'status': 'active',
         'top_up_supported': true,
         'created_at': DateTime.now().toIso8601String(),
-        'expires_at': DateTime.now().add(const Duration(days: 15)).toIso8601String(),
+        'expires_at':
+            DateTime.now().add(const Duration(days: 15)).toIso8601String(),
       };
 
       final prof = EsimProfile.fromJson(profJson);

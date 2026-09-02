@@ -35,7 +35,8 @@ class _PayoutsModalContent extends ConsumerStatefulWidget {
   const _PayoutsModalContent({required this.country});
 
   @override
-  ConsumerState<_PayoutsModalContent> createState() => _PayoutsModalContentState();
+  ConsumerState<_PayoutsModalContent> createState() =>
+      _PayoutsModalContentState();
 }
 
 class _PayoutsModalContentState extends ConsumerState<_PayoutsModalContent> {
@@ -112,7 +113,8 @@ class _PayoutsModalContentState extends ConsumerState<_PayoutsModalContent> {
             ),
             child: const Row(
               children: [
-                Icon(Icons.shield_outlined, color: Colors.greenAccent, size: 16),
+                Icon(Icons.shield_outlined,
+                    color: Colors.greenAccent, size: 16),
                 SizedBox(width: 8),
                 Expanded(
                   child: Text(
@@ -270,7 +272,6 @@ class _CardsModalContentState extends ConsumerState<_CardsModalContent> {
             style: TextStyle(color: AppColors.darkTextSecondary, fontSize: 13),
           ),
           const SizedBox(height: 20),
-
           if (_isLoading)
             const Center(
               child: Padding(
@@ -375,8 +376,10 @@ class _CardsModalContentState extends ConsumerState<_CardsModalContent> {
                     child: Text(
                       _eligibility?.isEligible == true
                           ? 'Available for issuance in ${widget.country}. Minimum initial funding: ${_eligibility?.minFundingSats} sats.'
-                          : _eligibility?.reason ?? 'Issuing restricted in this region.',
-                      style: const TextStyle(color: Colors.white70, fontSize: 12),
+                          : _eligibility?.reason ??
+                              'Issuing restricted in this region.',
+                      style:
+                          const TextStyle(color: Colors.white70, fontSize: 12),
                     ),
                   ),
                 ],

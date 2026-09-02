@@ -6,7 +6,8 @@ void main() {
     test('BillServiceType key parsing', () {
       expect(BillServiceType.fromKey('airtime'), BillServiceType.airtime);
       expect(BillServiceType.fromKey('data'), BillServiceType.data);
-      expect(BillServiceType.fromKey('electricity'), BillServiceType.electricity);
+      expect(
+          BillServiceType.fromKey('electricity'), BillServiceType.electricity);
       expect(BillServiceType.fromKey('water'), BillServiceType.water);
       expect(BillServiceType.fromKey('tv'), BillServiceType.tv);
       expect(BillServiceType.fromKey('internet'), BillServiceType.internet);

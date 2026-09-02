@@ -12,11 +12,13 @@ class BillsService {
 
   BillsService(this._apiClient);
 
-  Future<List<Biller>> getBillers(String country, {BillServiceType? service}) async {
+  Future<List<Biller>> getBillers(String country,
+      {BillServiceType? service}) async {
     final countryUpper = country.trim().toUpperCase();
     final serviceParam = service != null ? '&service=${service.key}' : '';
     try {
-      final data = await _apiClient.get('/bills/billers?country=$countryUpper$serviceParam');
+      final data = await _apiClient
+          .get('/bills/billers?country=$countryUpper$serviceParam');
       final list = (data['billers'] as List<dynamic>? ?? [])
           .map((e) => Biller.fromJson(e as Map<String, dynamic>))
           .toList();
@@ -28,7 +30,8 @@ class BillsService {
   Future<List<BillProduct>> getProducts(String country, String billerId) async {
     final countryUpper = country.trim().toUpperCase();
     try {
-      final data = await _apiClient.get('/bills/products?country=$countryUpper&biller_id=$billerId');
+      final data = await _apiClient
+          .get('/bills/products?country=$countryUpper&biller_id=$billerId');
       final list = (data['products'] as List<dynamic>? ?? [])
           .map((e) => BillProduct.fromJson(e as Map<String, dynamic>))
           .toList();
@@ -37,7 +40,8 @@ class BillsService {
     return [];
   }
 
-  Future<CustomerValidation> validateCustomer(String billerId, String accountReference) async {
+  Future<CustomerValidation> validateCustomer(
+      String billerId, String accountReference) async {
     try {
       final data = await _apiClient.post(
         '/bills/validate',

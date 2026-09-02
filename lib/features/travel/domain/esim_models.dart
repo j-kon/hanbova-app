@@ -117,7 +117,8 @@ class EsimProfile {
       remainingDataMb: json['remaining_data_mb'] as int? ?? 1024,
       status: json['status'] as String? ?? 'active',
       topUpSupported: json['top_up_supported'] as bool? ?? true,
-      createdAt: DateTime.tryParse(json['created_at'] as String? ?? '') ?? DateTime.now(),
+      createdAt: DateTime.tryParse(json['created_at'] as String? ?? '') ??
+          DateTime.now(),
       expiresAt: DateTime.tryParse(json['expires_at'] as String? ?? '') ??
           DateTime.now().add(const Duration(days: 15)),
     );

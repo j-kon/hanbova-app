@@ -537,7 +537,8 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                                   color: Colors.amber.withValues(alpha: 0.15),
                                   borderRadius: AppRadius.smRadius,
                                 ),
-                                child: const Icon(Icons.bolt, color: Colors.amberAccent, size: 20),
+                                child: const Icon(Icons.bolt,
+                                    color: Colors.amberAccent, size: 20),
                               ),
                               const SizedBox(width: AppSpacing.sm),
                               Expanded(
@@ -587,7 +588,8 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                                   color: Colors.purple.withValues(alpha: 0.15),
                                   borderRadius: AppRadius.smRadius,
                                 ),
-                                child: const Icon(Icons.flight_takeoff, color: Colors.purpleAccent, size: 20),
+                                child: const Icon(Icons.flight_takeoff,
+                                    color: Colors.purpleAccent, size: 20),
                               ),
                               const SizedBox(width: AppSpacing.sm),
                               Expanded(

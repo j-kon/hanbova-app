@@ -78,7 +78,8 @@ class _SpendScreenState extends ConsumerState<SpendScreen> {
               ),
               child: const Row(
                 children: [
-                  Icon(Icons.science_outlined, color: Colors.amberAccent, size: 18),
+                  Icon(Icons.science_outlined,
+                      color: Colors.amberAccent, size: 18),
                   SizedBox(width: 8),
                   Expanded(
                     child: Text(
@@ -102,7 +103,8 @@ class _SpendScreenState extends ConsumerState<SpendScreen> {
             const SizedBox(height: 6),
             Text(
               'Select a utility or digital service to pay with Bitcoin.',
-              style: const TextStyle(color: AppColors.darkTextSecondary, fontSize: 13),
+              style: const TextStyle(
+                  color: AppColors.darkTextSecondary, fontSize: 13),
             ),
             const SizedBox(height: 18),
 
@@ -133,7 +135,8 @@ class _SpendScreenState extends ConsumerState<SpendScreen> {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        Text(service.icon, style: const TextStyle(fontSize: 28)),
+                        Text(service.icon,
+                            style: const TextStyle(fontSize: 28)),
                         const SizedBox(height: 10),
                         Text(
                           service.title,
@@ -152,7 +155,8 @@ class _SpendScreenState extends ConsumerState<SpendScreen> {
 
             if (_isLoadingBillers) ...[
               const SizedBox(height: 30),
-              const Center(child: CircularProgressIndicator(color: AppColors.primary)),
+              const Center(
+                  child: CircularProgressIndicator(color: AppColors.primary)),
             ],
           ],
         ),
@@ -167,7 +171,8 @@ class _SpendScreenState extends ConsumerState<SpendScreen> {
 
     final market = ref.read(marketProvider);
     final serviceApi = ref.read(billsServiceProvider);
-    final billers = await serviceApi.getBillers(market.spendCountry, service: service);
+    final billers =
+        await serviceApi.getBillers(market.spendCountry, service: service);
 
     if (mounted) {
       setState(() {
@@ -319,7 +324,8 @@ class _SpendScreenState extends ConsumerState<SpendScreen> {
                       hintStyle: const TextStyle(color: Colors.white30),
                       border: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(12),
-                        borderSide: const BorderSide(color: AppColors.darkBorder),
+                        borderSide:
+                            const BorderSide(color: AppColors.darkBorder),
                       ),
                       suffixIcon: IconButton(
                         icon: isValidating
@@ -351,15 +357,21 @@ class _SpendScreenState extends ConsumerState<SpendScreen> {
                     Row(
                       children: [
                         Icon(
-                          validation!.isValid ? Icons.check_circle : Icons.error,
-                          color: validation!.isValid ? AppColors.success : Colors.red,
+                          validation!.isValid
+                              ? Icons.check_circle
+                              : Icons.error,
+                          color: validation!.isValid
+                              ? AppColors.success
+                              : Colors.red,
                           size: 14,
                         ),
                         const SizedBox(width: 6),
                         Text(
                           validation!.customerName ?? 'Validated',
                           style: TextStyle(
-                            color: validation!.isValid ? AppColors.success : Colors.red,
+                            color: validation!.isValid
+                                ? AppColors.success
+                                : Colors.red,
                             fontSize: 12,
                           ),
                         ),
@@ -385,7 +397,8 @@ class _SpendScreenState extends ConsumerState<SpendScreen> {
                       hintText: '500',
                       border: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(12),
-                        borderSide: const BorderSide(color: AppColors.darkBorder),
+                        borderSide:
+                            const BorderSide(color: AppColors.darkBorder),
                       ),
                     ),
                   ),
@@ -404,7 +417,8 @@ class _SpendScreenState extends ConsumerState<SpendScreen> {
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
                           const Text('Estimated Sats:',
-                              style: TextStyle(color: Colors.white70, fontSize: 13)),
+                              style: TextStyle(
+                                  color: Colors.white70, fontSize: 13)),
                           Text(
                             '${quote!.amountSats} sats',
                             style: const TextStyle(
@@ -465,7 +479,8 @@ class _SpendScreenState extends ConsumerState<SpendScreen> {
                                     ),
                                   )
                                 : const Text('Get Quote',
-                                    style: TextStyle(fontWeight: FontWeight.bold)),
+                                    style:
+                                        TextStyle(fontWeight: FontWeight.bold)),
                           ),
                         )
                       else
@@ -518,14 +533,16 @@ class _SpendScreenState extends ConsumerState<SpendScreen> {
       builder: (ctx) {
         return AlertDialog(
           backgroundColor: AppColors.darkSurface,
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+          shape:
+              RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
           title: const Row(
             children: [
               Icon(Icons.check_circle, color: AppColors.success, size: 24),
               SizedBox(width: 8),
               Text(
                 'Payment Receipt',
-                style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+                style:
+                    TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
               ),
             ],
           ),
@@ -534,14 +551,16 @@ class _SpendScreenState extends ConsumerState<SpendScreen> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text('Status: ${tx.status.toUpperCase()}',
-                  style: const TextStyle(color: AppColors.success, fontWeight: FontWeight.bold)),
+                  style: const TextStyle(
+                      color: AppColors.success, fontWeight: FontWeight.bold)),
               const SizedBox(height: 8),
               Text('Receipt #: ${tx.receiptNumber ?? "N/A"}',
                   style: const TextStyle(color: Colors.white70)),
               Text('Account: ${tx.customerAccount}',
                   style: const TextStyle(color: Colors.white70)),
               Text('Paid: ${tx.amountSats} sats',
-                  style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+                  style: const TextStyle(
+                      color: Colors.white, fontWeight: FontWeight.bold)),
               if (tx.tokenCode != null) ...[
                 const SizedBox(height: 12),
                 Container(
@@ -549,7 +568,8 @@ class _SpendScreenState extends ConsumerState<SpendScreen> {
                   decoration: BoxDecoration(
                     color: Colors.amber.withValues(alpha: 0.15),
                     borderRadius: BorderRadius.circular(12),
-                    border: Border.all(color: Colors.amber.withValues(alpha: 0.3)),
+                    border:
+                        Border.all(color: Colors.amber.withValues(alpha: 0.3)),
                   ),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
@@ -577,11 +597,14 @@ class _SpendScreenState extends ConsumerState<SpendScreen> {
                             ),
                           ),
                           IconButton(
-                            icon: const Icon(Icons.copy, color: AppColors.primary, size: 18),
+                            icon: const Icon(Icons.copy,
+                                color: AppColors.primary, size: 18),
                             onPressed: () {
-                              Clipboard.setData(ClipboardData(text: tx.tokenCode!));
+                              Clipboard.setData(
+                                  ClipboardData(text: tx.tokenCode!));
                               ScaffoldMessenger.of(context).showSnackBar(
-                                const SnackBar(content: Text('Token copied to clipboard')),
+                                const SnackBar(
+                                    content: Text('Token copied to clipboard')),
                               );
                             },
                           ),
@@ -600,7 +623,8 @@ class _SpendScreenState extends ConsumerState<SpendScreen> {
                 foregroundColor: Colors.black,
               ),
               onPressed: () => Navigator.of(ctx).pop(),
-              child: const Text('Done', style: TextStyle(fontWeight: FontWeight.bold)),
+              child: const Text('Done',
+                  style: TextStyle(fontWeight: FontWeight.bold)),
             ),
           ],
         );

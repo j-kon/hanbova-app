@@ -153,14 +153,14 @@ class _RealHttpOverrides extends HttpOverrides {
 void main() {
   HttpOverrides.global = _RealHttpOverrides();
 
-  final runPilot =
-      Platform.environment['HANBOVA_RUN_MAINNET_PILOT'] == 'true';
+  final runPilot = Platform.environment['HANBOVA_RUN_MAINNET_PILOT'] == 'true';
 
   test(
     'Mainnet Pilot Live Integration: Minibits Genuine Ecash Flow',
     () async {
       if (!runPilot) {
-        print('Skipping live Mainnet Pilot test. Set HANBOVA_RUN_MAINNET_PILOT=true.');
+        print(
+            'Skipping live Mainnet Pilot test. Set HANBOVA_RUN_MAINNET_PILOT=true.');
         return;
       }
 
@@ -192,10 +192,12 @@ void main() {
       print('==================================================');
       print('2. INITIALIZING STORAGE & KEYPAIRS');
       print('==================================================');
-      final baseDir = Directory('${Directory.current.path}/.dart_tool/hanbova_pilot');
+      final baseDir =
+          Directory('${Directory.current.path}/.dart_tool/hanbova_pilot');
       baseDir.createSync(recursive: true);
 
-      final storage = LocalJsonWalletStorage(File('${baseDir.path}/storage.json'));
+      final storage =
+          LocalJsonWalletStorage(File('${baseDir.path}/storage.json'));
       final x25519 = X25519();
       final envelopeService = EncryptedEnvelopeService();
 
@@ -222,23 +224,27 @@ void main() {
 
       // Alice keys
       final aliceP2pkPriv =
-          await CryptoIdentityNotifier.deriveProtectedPaymentPrivHex(aliceSeedHex);
+          await CryptoIdentityNotifier.deriveProtectedPaymentPrivHex(
+              aliceSeedHex);
       final aliceP2pkPub =
           Secp256k1Service.getCompressedPublicKeyHex(aliceP2pkPriv);
       final aliceTransportKeyPair =
-          await CryptoIdentityNotifier.deriveTransportKeyPair(aliceSeedHex, x25519);
-      final aliceTransportPub =
-          Secp256k1Service.bytesToHex((await aliceTransportKeyPair.extractPublicKey()).bytes);
+          await CryptoIdentityNotifier.deriveTransportKeyPair(
+              aliceSeedHex, x25519);
+      final aliceTransportPub = Secp256k1Service.bytesToHex(
+          (await aliceTransportKeyPair.extractPublicKey()).bytes);
 
       // Bob keys
       final bobP2pkPriv =
-          await CryptoIdentityNotifier.deriveProtectedPaymentPrivHex(bobSeedHex);
+          await CryptoIdentityNotifier.deriveProtectedPaymentPrivHex(
+              bobSeedHex);
       final bobP2pkPub =
           Secp256k1Service.getCompressedPublicKeyHex(bobP2pkPriv);
       final bobTransportKeyPair =
-          await CryptoIdentityNotifier.deriveTransportKeyPair(bobSeedHex, x25519);
-      final bobTransportPub =
-          Secp256k1Service.bytesToHex((await bobTransportKeyPair.extractPublicKey()).bytes);
+          await CryptoIdentityNotifier.deriveTransportKeyPair(
+              bobSeedHex, x25519);
+      final bobTransportPub = Secp256k1Service.bytesToHex(
+          (await bobTransportKeyPair.extractPublicKey()).bytes);
 
       const aliceUsername = 'alice_mainnet_pilot';
       const bobUsername = 'bob_mainnet_pilot';
@@ -349,7 +355,8 @@ void main() {
         bool paid = false;
         while (true) {
           try {
-            final status = await aliceWallet.checkMintQuoteStatus(quote.quoteId);
+            final status =
+                await aliceWallet.checkMintQuoteStatus(quote.quoteId);
             if (status.state == 'PAID' || status.state == 'ISSUED') {
               paid = true;
               print('\n[✓] Invoice paid at Minibits mint!');
@@ -374,7 +381,8 @@ void main() {
         aliceBal = await aliceWallet.getBalance();
       }
 
-      print('Alice Authoritative Mainnet CDK Balance: ${aliceBal.spendableSats} sats');
+      print(
+          'Alice Authoritative Mainnet CDK Balance: ${aliceBal.spendableSats} sats');
       expect(aliceBal.spendableSats, greaterThanOrEqualTo(250));
 
       print('==================================================');
@@ -401,7 +409,8 @@ void main() {
         locktime: locktimeA,
         paymentId: paymentIdA,
       );
-      print('Created Real-Sat NUT-11 Protected Token: ${tokenA.substring(0, 30)}...');
+      print(
+          'Created Real-Sat NUT-11 Protected Token: ${tokenA.substring(0, 30)}...');
 
       final envelopeA = ProtectedPaymentEnvelope(
         paymentId: paymentIdA,
@@ -433,8 +442,9 @@ void main() {
         '$apiBaseUrl/protected-messages/inbox',
         token: bobToken,
       ) as List<dynamic>;
-      final msgA = bobInbox.firstWhere((m) => m['payment_intent_id'] == paymentIdA)
-          as Map<String, dynamic>;
+      final msgA =
+          bobInbox.firstWhere((m) => m['payment_intent_id'] == paymentIdA)
+              as Map<String, dynamic>;
 
       final decEnvelopeA = await envelopeService.decryptEnvelope(
         ciphertextString: msgA['encrypted_payload'] as String,
@@ -453,7 +463,8 @@ void main() {
       expect(bobBal.spendableSats, equals(100));
 
       final aliceBalAfterA = await aliceWallet.getBalance();
-      print('Alice Spendable Real-Sat Balance: ${aliceBalAfterA.spendableSats} sats');
+      print(
+          'Alice Spendable Real-Sat Balance: ${aliceBalAfterA.spendableSats} sats');
       expect(aliceBalAfterA.spendableSats, equals(150));
 
       print('==================================================');
@@ -499,7 +510,8 @@ void main() {
       print('Refunded 100 sats back to Alice spendable balance!');
 
       final aliceBalAfterRefund = await aliceWallet.getBalance();
-      print('Alice Balance after Refund: ${aliceBalAfterRefund.spendableSats} sats');
+      print(
+          'Alice Balance after Refund: ${aliceBalAfterRefund.spendableSats} sats');
       expect(aliceBalAfterRefund.spendableSats, equals(150));
 
       // Bob late claim must be rejected

@@ -43,10 +43,13 @@ class Biller {
     return Biller(
       id: json['id'] as String,
       country: json['country'] as String,
-      serviceType: BillServiceType.fromKey(json['service_type'] as String? ?? 'airtime'),
+      serviceType:
+          BillServiceType.fromKey(json['service_type'] as String? ?? 'airtime'),
       name: json['name'] as String,
-      accountReferenceLabel: json['account_reference_label'] as String? ?? 'Account Reference',
-      accountReferenceExample: json['account_reference_example'] as String? ?? '',
+      accountReferenceLabel:
+          json['account_reference_label'] as String? ?? 'Account Reference',
+      accountReferenceExample:
+          json['account_reference_example'] as String? ?? '',
       isActive: json['is_active'] as bool? ?? true,
     );
   }
@@ -110,7 +113,8 @@ class CustomerValidation {
       billerId: json['biller_id'] as String? ?? '',
       customerAccount: json['customer_account'] as String? ?? '',
       customerName: json['customer_name'] as String?,
-      outstandingAmountFiat: (json['outstanding_amount_fiat'] as num?)?.toDouble(),
+      outstandingAmountFiat:
+          (json['outstanding_amount_fiat'] as num?)?.toDouble(),
       message: json['message'] as String?,
     );
   }
@@ -146,7 +150,8 @@ class BillQuote {
       quoteId: json['quote_id'] as String,
       billerId: json['biller_id'] as String,
       productId: json['product_id'] as String?,
-      serviceType: BillServiceType.fromKey(json['service_type'] as String? ?? 'airtime'),
+      serviceType:
+          BillServiceType.fromKey(json['service_type'] as String? ?? 'airtime'),
       amountSats: json['amount_sats'] as int? ?? 0,
       amountFiat: (json['amount_fiat'] as num?)?.toDouble() ?? 0.0,
       feeSats: json['fee_sats'] as int? ?? 0,
@@ -197,7 +202,8 @@ class BillTransaction {
       quoteId: json['quote_id'] as String? ?? '',
       billerId: json['biller_id'] as String? ?? '',
       billerName: json['biller_name'] as String? ?? 'Biller',
-      serviceType: BillServiceType.fromKey(json['service_type'] as String? ?? 'airtime'),
+      serviceType:
+          BillServiceType.fromKey(json['service_type'] as String? ?? 'airtime'),
       customerAccount: json['customer_account'] as String? ?? '',
       amountSats: json['amount_sats'] as int? ?? 0,
       amountFiat: (json['amount_fiat'] as num?)?.toDouble() ?? 0.0,
@@ -206,7 +212,8 @@ class BillTransaction {
       receiptNumber: json['receipt_number'] as String?,
       tokenCode: json['token_code'] as String?,
       provider: json['provider'] as String? ?? 'dtone',
-      createdAt: DateTime.tryParse(json['created_at'] as String? ?? '') ?? DateTime.now(),
+      createdAt: DateTime.tryParse(json['created_at'] as String? ?? '') ??
+          DateTime.now(),
     );
   }
 }

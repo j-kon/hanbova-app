@@ -163,7 +163,8 @@ class UserCountryContext {
     ),
   });
 
-  CountryInfo get identityCountryInfo => CountryInfo.findByCode(identityCountry);
+  CountryInfo get identityCountryInfo =>
+      CountryInfo.findByCode(identityCountry);
   CountryInfo get spendCountryInfo => CountryInfo.findByCode(spendCountry);
 
   UserCountryContext copyWith({

@@ -37,7 +37,8 @@ class TravelScreen extends ConsumerWidget {
             decoration: BoxDecoration(
               color: AppColors.primary.withValues(alpha: 0.15),
               borderRadius: BorderRadius.circular(16),
-              border: Border.all(color: AppColors.primary.withValues(alpha: 0.3)),
+              border:
+                  Border.all(color: AppColors.primary.withValues(alpha: 0.3)),
             ),
             child: Row(
               mainAxisSize: MainAxisSize.min,
@@ -166,7 +167,8 @@ class TravelScreen extends ConsumerWidget {
                       decoration: BoxDecoration(
                         color: Colors.blueAccent.withValues(alpha: 0.1),
                         borderRadius: BorderRadius.circular(10),
-                        border: Border.all(color: Colors.blueAccent.withValues(alpha: 0.2)),
+                        border: Border.all(
+                            color: Colors.blueAccent.withValues(alpha: 0.2)),
                       ),
                       child: Row(
                         children: [
@@ -229,7 +231,8 @@ class TravelScreen extends ConsumerWidget {
               iconBg: Colors.green.withValues(alpha: 0.2),
               iconColor: Colors.greenAccent,
               title: 'Local Cash Payouts',
-              subtitle: 'Send sats directly to local M-Pesa, Mobile Money & Banks',
+              subtitle:
+                  'Send sats directly to local M-Pesa, Mobile Money & Banks',
               badge: caps.payouts ? 'Available' : 'Corridor Closed',
               badgeColor: caps.payouts ? AppColors.success : Colors.grey,
               onTap: () {
@@ -288,7 +291,8 @@ class TravelScreen extends ConsumerWidget {
                 children: [
                   Row(
                     children: [
-                      const Icon(Icons.radar, color: AppColors.primary, size: 16),
+                      const Icon(Icons.radar,
+                          color: AppColors.primary, size: 16),
                       const SizedBox(width: 8),
                       Text(
                         'Market Rails in ${spendCountry.name} (${spendCountry.code})',
@@ -520,7 +524,9 @@ class TravelScreen extends ConsumerWidget {
                         color: AppColors.darkTextSecondary,
                       ),
                       onTap: () {
-                        ref.read(marketProvider.notifier).setSpendCountry(c.code);
+                        ref
+                            .read(marketProvider.notifier)
+                            .setSpendCountry(c.code);
                         Navigator.of(ctx).pop();
                       },
                     );

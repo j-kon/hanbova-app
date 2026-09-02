@@ -54,7 +54,8 @@ class MarketNotifier extends StateNotifier<UserCountryContext> {
     state = state.copyWith(identityCountry: clean);
   }
 
-  Future<void> setSpendCountry(String countryCode, {bool syncDisplayCurrency = true}) async {
+  Future<void> setSpendCountry(String countryCode,
+      {bool syncDisplayCurrency = true}) async {
     final clean = countryCode.trim().toUpperCase();
     await _storage.write(key: _spendKey, value: clean);
 
@@ -96,7 +97,8 @@ class MarketNotifier extends StateNotifier<UserCountryContext> {
           airtime: true,
           data: true,
           electricity: true,
-          water: clean == 'KE' || clean == 'GH' || clean == 'UG' || clean == 'RW',
+          water:
+              clean == 'KE' || clean == 'GH' || clean == 'UG' || clean == 'RW',
           tv: true,
           internet: clean == 'KE' || clean == 'NG' || clean == 'ZA',
           esim: true,
