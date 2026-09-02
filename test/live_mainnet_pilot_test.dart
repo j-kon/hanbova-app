@@ -281,9 +281,20 @@ void main() {
     print('3. NUT-04 REAL SAT FUNDING (250 SATS)');
     print('==================================================');
     const fundingAmount = 250;
-    final quote = await aliceWallet.createMintQuote(fundingAmount);
+    final envQuoteId = Platform.environment['PILOT_QUOTE_ID'];
+    final quote = (envQuoteId != null && envQuoteId.isNotEmpty)
+        ? CashuMintQuote(
+            quoteId: envQuoteId,
+            bolt11Invoice: '',
+            amountSats: fundingAmount,
+            state: 'UNPAID',
+            expiry: 0,
+          )
+        : await aliceWallet.createMintQuote(fundingAmount);
     print('Generated Minibits Mint Quote ID: ${quote.quoteId}');
-    print('BOLT11 Invoice:\n${quote.bolt11Invoice}');
+    if (quote.bolt11Invoice.isNotEmpty) {
+      print('BOLT11 Invoice:\n${quote.bolt11Invoice}');
+    }
     print('\n>>> WAITING FOR INVOICE PAYMENT (250 SATS) <<<');
 
     // Poll for quote payment
@@ -464,5 +475,5 @@ void main() {
     print('Alice Remaining: ${aliceBalAfterRefund.spendableSats} sats');
     print('Bob Remaining: ${bobBal.spendableSats} sats');
     print('==================================================');
-  }, timeout: const Timeout(Duration(minutes: 15)));
+  }, timeout: Timeout.none);
 }
