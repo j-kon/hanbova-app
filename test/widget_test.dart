@@ -57,6 +57,7 @@ void main() {
     expect(find.text('Send Money'), findsOneWidget);
     expect(find.text('Recent'), findsOneWidget);
     expect(find.text('Everyday'), findsOneWidget);
+    expect(find.text('Airtime'), findsOneWidget);
 
     // Switch to Activity Tab
     await tester.tap(find.byIcon(Icons.receipt_long_outlined));
@@ -72,10 +73,7 @@ void main() {
     // Switch to Me Tab
     await tester.tap(find.byIcon(Icons.person_outline_rounded));
     await tester.pumpAndSettle();
-    expect(find.text('Recovery Phrase Backup'), findsOneWidget);
-    expect(find.text('Appearance'), findsOneWidget);
-    expect(find.text('Display Currency'), findsOneWidget);
-    expect(find.text('Sign out'), findsOneWidget);
+    expect(find.text('Edit Profile'), findsOneWidget);
   });
 
   testWidgets('Pay Tab displays Pay Again carousel and Everyday services', (

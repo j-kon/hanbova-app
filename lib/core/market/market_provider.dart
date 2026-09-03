@@ -17,12 +17,14 @@ class MarketNotifier extends StateNotifier<UserCountryContext> {
   static const _identityKey = 'hanbova_identity_country';
   static const _spendKey = 'hanbova_spend_country';
   static const _currencyKey = 'hanbova_display_currency';
+  static const _roamEnabledKey = 'hanbova_roam_enabled';
 
   MarketNotifier(this._apiClient)
       : super(const UserCountryContext(
-          identityCountry: 'KE',
-          spendCountry: 'KE',
-          displayCurrency: FiatCurrency.kes,
+          identityCountry: 'NG',
+          spendCountry: 'NG',
+          displayCurrency: FiatCurrency.ngn,
+          roamEnabled: false,
         )) {
     _loadPersisted();
   }
@@ -32,9 +34,11 @@ class MarketNotifier extends StateNotifier<UserCountryContext> {
       final identity = await _storage.read(key: _identityKey);
       final spend = await _storage.read(key: _spendKey);
       final currencyStr = await _storage.read(key: _currencyKey);
+      final roamStr = await _storage.read(key: _roamEnabledKey);
 
       final newIdentity = identity ?? state.identityCountry;
       final newSpend = spend ?? state.spendCountry;
+      final isRoam = roamStr == 'true';
       final currency = currencyStr != null
           ? FiatCurrency.values.firstWhere(
               (c) => c.code == currencyStr,
@@ -46,6 +50,7 @@ class MarketNotifier extends StateNotifier<UserCountryContext> {
         identityCountry: newIdentity,
         spendCountry: newSpend,
         displayCurrency: currency,
+        roamEnabled: isRoam,
       );
 
       await fetchCapabilities(newSpend);
@@ -56,6 +61,9 @@ class MarketNotifier extends StateNotifier<UserCountryContext> {
     final clean = countryCode.trim().toUpperCase();
     await _storage.write(key: _identityKey, value: clean);
     state = state.copyWith(identityCountry: clean);
+    if (!state.roamEnabled) {
+      await setSpendCountry(clean, syncDisplayCurrency: true);
+    }
   }
 
   Future<void> setSpendCountry(String countryCode,
@@ -75,6 +83,42 @@ class MarketNotifier extends StateNotifier<UserCountryContext> {
     );
 
     await fetchCapabilities(clean);
+  }
+
+  /// Explicitly activates Roam mode for a target destination country.
+  Future<void> activateRoam(String countryCode) async {
+    final clean = countryCode.trim().toUpperCase();
+    final newCurrency = CountryInfo.findByCode(clean).defaultCurrency;
+
+    await _storage.write(key: _roamEnabledKey, value: 'true');
+    await _storage.write(key: _spendKey, value: clean);
+    await _storage.write(key: _currencyKey, value: newCurrency.code);
+
+    state = state.copyWith(
+      roamEnabled: true,
+      spendCountry: clean,
+      displayCurrency: newCurrency,
+    );
+
+    await fetchCapabilities(clean);
+  }
+
+  /// Explicitly turns off Roam mode, restoring spend country and currency to residence country.
+  Future<void> deactivateRoam() async {
+    final residence = state.identityCountry;
+    final residenceCurrency = CountryInfo.findByCode(residence).defaultCurrency;
+
+    await _storage.write(key: _roamEnabledKey, value: 'false');
+    await _storage.write(key: _spendKey, value: residence);
+    await _storage.write(key: _currencyKey, value: residenceCurrency.code);
+
+    state = state.copyWith(
+      roamEnabled: false,
+      spendCountry: residence,
+      displayCurrency: residenceCurrency,
+    );
+
+    await fetchCapabilities(residence);
   }
 
   Future<void> setDisplayCurrency(FiatCurrency currency) async {

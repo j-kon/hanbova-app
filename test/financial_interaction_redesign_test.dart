@@ -12,6 +12,7 @@ import 'package:hanbova_app/features/spend/presentation/payment_confirmation_she
 import 'package:hanbova_app/features/spend/presentation/payment_result_sheets.dart';
 import 'package:hanbova_app/features/spend/presentation/tv_subscription_flow_screen.dart';
 import 'package:hanbova_app/features/travel/presentation/travel_screen.dart';
+import 'package:hanbova_app/features/profile/screens/profile_screen.dart';
 import 'package:hanbova_app/features/transactions/domain/transaction_model.dart';
 
 void main() {
@@ -51,7 +52,8 @@ void main() {
       // Switch to Me (Tab 4)
       await tester.tap(find.byIcon(Icons.person_outline_rounded));
       await tester.pumpAndSettle();
-      expect(find.text('Recovery Phrase Backup'), findsOneWidget);
+      expect(find.byType(ProfileScreen), findsOneWidget);
+      expect(find.text('Edit Profile'), findsOneWidget);
 
       // Return to Home (Tab 0)
       await tester.tap(find.byIcon(Icons.home_outlined));

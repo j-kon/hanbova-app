@@ -17,7 +17,9 @@ import '../features/money/presentation/money_screen.dart';
 import '../features/notifications/presentation/notifications_screen.dart';
 import '../features/pending/presentation/pending_centre_screen.dart';
 import '../features/profile/screens/developer_options_screen.dart';
+import '../features/profile/screens/edit_profile_screen.dart';
 import '../features/profile/screens/profile_screen.dart';
+import '../features/profile/screens/settings_screen.dart';
 import '../features/protected/presentation/protected_screen.dart';
 import '../features/protected_send/presentation/claim_payment_screen.dart';
 import '../features/protected_send/presentation/protected_send_screen.dart';
@@ -322,6 +324,21 @@ final appRouterProvider = Provider<GoRouter>((ref) {
         path: '/developer-options',
         parentNavigatorKey: _rootNavigatorKey,
         builder: (context, state) => const DeveloperOptionsScreen(),
+      ),
+      GoRoute(
+        path: '/edit-profile',
+        parentNavigatorKey: _rootNavigatorKey,
+        builder: (context, state) => const EditProfileScreen(),
+      ),
+      GoRoute(
+        path: '/settings',
+        parentNavigatorKey: _rootNavigatorKey,
+        builder: (context, state) => const SettingsScreen(),
+      ),
+      GoRoute(
+        path: '/roam',
+        parentNavigatorKey: _rootNavigatorKey,
+        builder: (context, state) => const TravelScreen(),
       ),
       GoRoute(
         path: '/backup-seed',

@@ -13,14 +13,14 @@ void main() {
 
   group('Onboarding & Market Context Journeys', () {
     test(
-        'Initial user country context defaults to Kenya (KE) or country of residence',
+        'Initial user country context defaults to Nigeria (NG) or country of residence',
         () {
       final container = ProviderContainer();
       addTearDown(container.dispose);
 
       final market = container.read(marketProvider);
-      expect(market.identityCountry, equals('KE'));
-      expect(market.spendCountry, equals('KE'));
+      expect(market.identityCountry, equals('NG'));
+      expect(market.spendCountry, equals('NG'));
       expect(market.capabilities.electricity, isTrue);
       expect(market.capabilities.payouts, isTrue);
     });

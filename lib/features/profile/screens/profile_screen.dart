@@ -1,653 +1,354 @@
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import '../../../core/networking/api_client.dart';
-import '../../../core/currency/currency_provider.dart';
 import '../../../core/market/market_provider.dart';
-import '../../../core/security/privacy_provider.dart';
-import '../../../core/security/wallet_backup_store.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_radius.dart';
 import '../../../core/theme/app_spacing.dart';
 import '../../../core/theme/app_typography.dart';
-import '../../../core/theme/theme_controller.dart';
-import '../../auth/providers/auth_provider.dart';
+import '../providers/profile_provider.dart';
 
-class ProfileScreen extends ConsumerStatefulWidget {
+class ProfileScreen extends ConsumerWidget {
   const ProfileScreen({super.key});
 
   @override
-  ConsumerState<ProfileScreen> createState() => _ProfileScreenState();
-}
-
-class _ProfileScreenState extends ConsumerState<ProfileScreen> {
-  void _showAppearanceSheet(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final colors = context.colors;
-    final currentTheme = ref.read(themeControllerProvider);
-
-    showModalBottomSheet(
-      context: context,
-      backgroundColor: colors.surfaceCard,
-      isScrollControlled: true,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(AppRadius.lg)),
-      ),
-      builder: (context) {
-        return SafeArea(
-          child: Padding(
-            padding: const EdgeInsets.fromLTRB(
-                AppSpacing.lg, AppSpacing.sm, AppSpacing.lg, AppSpacing.lg),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                Center(
-                  child: Container(
-                    width: 36,
-                    height: 4,
-                    decoration: BoxDecoration(
-                      color: colors.textTertiary.withValues(alpha: 0.3),
-                      borderRadius: BorderRadius.circular(2),
-                    ),
-                  ),
-                ),
-                const SizedBox(height: AppSpacing.md),
-                Text('Appearance',
-                    style: AppTypography.titleMedium
-                        .copyWith(color: colors.textPrimary)),
-                const SizedBox(height: AppSpacing.sm),
-                ListTile(
-                  title: const Text('System default'),
-                  leading: const Icon(Icons.settings_suggest_outlined),
-                  trailing: currentTheme == ThemeMode.system
-                      ? Icon(Icons.check, color: colors.primary)
-                      : null,
-                  onTap: () {
-                    ref
-                        .read(themeControllerProvider.notifier)
-                        .setThemeMode(ThemeMode.system);
-                    Navigator.pop(context);
-                  },
-                ),
-                ListTile(
-                  title: const Text('Dark mode'),
-                  leading: const Icon(Icons.dark_mode_outlined),
-                  trailing: currentTheme == ThemeMode.dark
-                      ? Icon(Icons.check, color: colors.primary)
-                      : null,
-                  onTap: () {
-                    ref
-                        .read(themeControllerProvider.notifier)
-                        .setThemeMode(ThemeMode.dark);
-                    Navigator.pop(context);
-                  },
-                ),
-                ListTile(
-                  title: const Text('Light mode'),
-                  leading: const Icon(Icons.light_mode_outlined),
-                  trailing: currentTheme == ThemeMode.light
-                      ? Icon(Icons.check, color: colors.primary)
-                      : null,
-                  onTap: () {
-                    ref
-                        .read(themeControllerProvider.notifier)
-                        .setThemeMode(ThemeMode.light);
-                    Navigator.pop(context);
-                  },
-                ),
-              ],
-            ),
-          ),
-        );
-      },
-    );
-  }
-
-  void _showCurrencySheet(BuildContext context) {
-    final colors = context.colors;
-    final currentCurrency = ref.read(currencyProvider);
-
-    showModalBottomSheet(
-      context: context,
-      backgroundColor: colors.surfaceCard,
-      isScrollControlled: true,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(AppRadius.lg)),
-      ),
-      builder: (context) {
-        return SafeArea(
-          child: ConstrainedBox(
-            constraints: BoxConstraints(
-              maxHeight: MediaQuery.of(context).size.height * 0.7,
-            ),
-            child: Padding(
-              padding: const EdgeInsets.fromLTRB(
-                  AppSpacing.lg, AppSpacing.sm, AppSpacing.lg, AppSpacing.lg),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  Center(
-                    child: Container(
-                      width: 36,
-                      height: 4,
-                      decoration: BoxDecoration(
-                        color: colors.textTertiary.withValues(alpha: 0.3),
-                        borderRadius: BorderRadius.circular(2),
-                      ),
-                    ),
-                  ),
-                  const SizedBox(height: AppSpacing.md),
-                  Text('Display Currency',
-                      style: AppTypography.titleMedium
-                          .copyWith(color: colors.textPrimary)),
-                  const SizedBox(height: AppSpacing.xs),
-                  Flexible(
-                    child: ListView(
-                      shrinkWrap: true,
-                      children: FiatCurrency.values.map((c) {
-                        final isSelected = c == currentCurrency;
-                        return ListTile(
-                          title: Text('${c.code} (${c.symbol})'),
-                          trailing: isSelected
-                              ? Icon(Icons.check, color: colors.primary)
-                              : null,
-                          onTap: () {
-                            ref.read(currencyProvider.notifier).setCurrency(c);
-                            Navigator.pop(context);
-                          },
-                        );
-                      }).toList(),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ),
-        );
-      },
-    );
-  }
-
-  void _showSupportDialog(BuildContext context) {
-    showDialog(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        backgroundColor: AppColors.darkSurfaceCard,
-        title: const Text('Hanbova Support & Help',
-            style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
-        content: const Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              'Need assistance with your wallet, payments, or travel roaming?',
-              style:
-                  TextStyle(color: AppColors.darkTextSecondary, fontSize: 13),
-            ),
-            SizedBox(height: 16),
-            Row(
-              children: [
-                Icon(Icons.email_outlined, color: AppColors.primary, size: 18),
-                SizedBox(width: 8),
-                Text('support@hanbova.com',
-                    style: TextStyle(
-                        color: Colors.white,
-                        fontSize: 13,
-                        fontWeight: FontWeight.bold)),
-              ],
-            ),
-            SizedBox(height: 8),
-            Row(
-              children: [
-                Icon(Icons.chat_bubble_outline,
-                    color: AppColors.primary, size: 18),
-                SizedBox(width: 8),
-                Text('Community: @hanbova_help',
-                    style: TextStyle(color: Colors.white, fontSize: 13)),
-              ],
-            ),
-          ],
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(ctx),
-            child:
-                const Text('Close', style: TextStyle(color: AppColors.primary)),
-          ),
-        ],
-      ),
-    );
-  }
-
-  void _handleSignOut() {
-    showDialog(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        title: const Text('Sign out?'),
-        content: const Text(
-          'Your client-side wallet keys remain securely saved on this device. You will need to sign in again to access your account.',
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(ctx),
-            child: const Text('Cancel'),
-          ),
-          ElevatedButton(
-            onPressed: () async {
-              Navigator.pop(ctx);
-              await ref.read(authProvider.notifier).logout();
-              if (mounted) {
-                context.go('/welcome');
-              }
-            },
-            child: const Text('Sign out'),
-          ),
-        ],
-      ),
-    );
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final colors = context.colors;
-    final user = ref.watch(currentUserProvider);
-    final isDev = ref.watch(appConfigProvider).isDevelopment;
-    final currentTheme = ref.watch(themeControllerProvider);
-    final currentCurrency = ref.watch(currencyProvider);
+    final profile = ref.watch(profileProvider);
     final market = ref.watch(marketProvider);
-    final isBackedUp =
-        ref.watch(walletBackupStatusProvider).valueOrNull ?? false;
-
-    final displayName =
-        user?.displayName.isNotEmpty == true ? user!.displayName : 'Jeremiah';
-    final handle = user?.handle.isNotEmpty == true ? user!.handle : '@jeremiah';
-    final email =
-        user?.email.isNotEmpty == true ? user!.email : 'jeremiah@example.com';
-
-    String themeLabel;
-    switch (currentTheme) {
-      case ThemeMode.system:
-        themeLabel = 'System';
-        break;
-      case ThemeMode.dark:
-        themeLabel = 'Dark';
-        break;
-      case ThemeMode.light:
-        themeLabel = 'Light';
-        break;
-    }
+    final residence = profile.residenceCountryInfo;
 
     return Scaffold(
       backgroundColor: colors.background,
       appBar: AppBar(
-        title: const Text('Me & Profile'),
-        automaticallyImplyLeading: false,
+        backgroundColor: colors.background,
+        elevation: 0,
+        title: Text(
+          'Profile',
+          style: AppTypography.titleMedium.copyWith(
+            color: colors.textPrimary,
+            fontWeight: FontWeight.bold,
+          ),
+        ),
+        actions: [
+          IconButton(
+            icon: Icon(Icons.settings_outlined, color: colors.textPrimary),
+            tooltip: 'Settings',
+            onPressed: () => context.push('/settings'),
+          ),
+        ],
       ),
-      body: SafeArea(
-        child: ListView(
-          padding: const EdgeInsets.symmetric(
-              horizontal: AppSpacing.md, vertical: AppSpacing.sm),
-          children: [
-            // User Profile Header
-            Container(
-              padding: const EdgeInsets.all(AppSpacing.md),
-              decoration: BoxDecoration(
-                color: colors.surfaceCard,
-                borderRadius: AppRadius.mdRadius,
-                border: Border.all(color: colors.border),
-              ),
-              child: Row(
-                children: [
-                  CircleAvatar(
-                    radius: 28,
-                    backgroundColor: colors.primary.withValues(alpha: 0.15),
-                    child: Text(
-                      displayName.isNotEmpty
-                          ? displayName[0].toUpperCase()
-                          : 'J',
-                      style: AppTypography.headline
-                          .copyWith(color: colors.primary),
-                    ),
-                  ),
-                  const SizedBox(width: AppSpacing.md),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Row(
-                          children: [
-                            Text(
-                              displayName,
-                              style: AppTypography.titleMedium
-                                  .copyWith(color: colors.textPrimary),
-                            ),
-                            const SizedBox(width: 4),
-                            Icon(Icons.verified,
-                                color: colors.primary, size: 16),
-                          ],
-                        ),
-                        Text(handle,
-                            style: AppTypography.bodySmall
-                                .copyWith(color: colors.primary)),
-                        Text(email,
-                            style: AppTypography.bodySmall.copyWith(
-                                color: colors.textTertiary, fontSize: 11)),
-                      ],
-                    ),
-                  ),
+      body: ListView(
+        padding: const EdgeInsets.symmetric(
+            horizontal: AppSpacing.lg, vertical: AppSpacing.md),
+        children: [
+          // 1. Profile Header Card
+          Container(
+            padding: const EdgeInsets.all(AppSpacing.xl),
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                colors: [
+                  colors.surfaceCard,
+                  colors.surfaceCard.withValues(alpha: 0.85),
                 ],
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
               ),
+              borderRadius: AppRadius.lgRadius,
+              border: Border.all(color: colors.border),
             ),
-            const SizedBox(height: AppSpacing.md),
-
-            // Residence vs Travel Market Indicator
-            Container(
-              padding: const EdgeInsets.all(AppSpacing.md),
-              decoration: BoxDecoration(
-                color: colors.surfaceElevated,
-                borderRadius: AppRadius.mdRadius,
-                border: Border.all(color: colors.border),
-              ),
-              child: Row(
-                children: [
-                  Text(market.identityCountryInfo.flagEmoji,
-                      style: const TextStyle(fontSize: 22)),
-                  const SizedBox(width: AppSpacing.sm),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          'Residence: ${market.identityCountryInfo.name} (${market.identityCountry})',
-                          style: const TextStyle(
-                              color: Colors.white,
-                              fontSize: 13,
-                              fontWeight: FontWeight.bold),
-                        ),
-                        Text(
-                          'Active Travel Spend: ${market.spendCountryInfo.name} (${market.spendCountry})',
-                          style: const TextStyle(
-                              color: AppColors.darkTextSecondary, fontSize: 11),
-                        ),
-                      ],
+            child: Column(
+              children: [
+                // Avatar circle with initials or photo
+                CircleAvatar(
+                  radius: 44,
+                  backgroundColor: colors.primary.withValues(alpha: 0.15),
+                  child: Text(
+                    profile.initials,
+                    style: AppTypography.headline.copyWith(
+                      color: colors.primary,
+                      fontWeight: FontWeight.bold,
                     ),
                   ),
+                ),
+                const SizedBox(height: AppSpacing.md),
+                // Full name
+                Text(
+                  profile.fullName,
+                  style: AppTypography.titleMedium.copyWith(
+                    color: colors.textPrimary,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                const SizedBox(height: 2),
+                // Username handle
+                Text(
+                  profile.handle,
+                  style: AppTypography.caption.copyWith(
+                    color: colors.primary,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+                const SizedBox(height: 6),
+                // Residence origin
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Text(
+                      residence.flagEmoji,
+                      style: const TextStyle(fontSize: 16),
+                    ),
+                    const SizedBox(width: 6),
+                    Text(
+                      residence.name,
+                      style: AppTypography.caption.copyWith(
+                        color: colors.textSecondary,
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: AppSpacing.lg),
+                // Edit Profile Button
+                SizedBox(
+                  width: double.infinity,
+                  child: OutlinedButton(
+                    onPressed: () => context.push('/edit-profile'),
+                    style: OutlinedButton.styleFrom(
+                      foregroundColor: colors.textPrimary,
+                      side: BorderSide(color: colors.border),
+                      padding: const EdgeInsets.symmetric(vertical: 12),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: AppRadius.mdRadius,
+                      ),
+                    ),
+                    child: const Text(
+                      'Edit Profile',
+                      style: TextStyle(fontWeight: FontWeight.bold),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: AppSpacing.lg),
+
+          // 2. Roam Mode Highlight Tile
+          Container(
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                colors: [
+                  market.isRoamActive
+                      ? colors.primary.withValues(alpha: 0.15)
+                      : colors.surfaceCard,
+                  colors.surfaceCard,
                 ],
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+              ),
+              borderRadius: AppRadius.mdRadius,
+              border: Border.all(
+                color: market.isRoamActive
+                    ? colors.primary.withValues(alpha: 0.5)
+                    : colors.border,
               ),
             ),
-            const SizedBox(height: AppSpacing.md),
-
-            // Security & Privacy Section
-            _SectionTitle(title: 'Security & Privacy'),
-            _SettingTile(
-              icon: Icons.key_rounded,
-              title: 'Recovery Phrase Backup',
-              subtitle: '12-word recovery phrase for client-side wallet',
-              trailing: isBackedUp
-                  ? Container(
-                      padding: const EdgeInsets.symmetric(
-                          horizontal: 8, vertical: 3),
-                      decoration: BoxDecoration(
-                        color: colors.success.withValues(alpha: 0.15),
-                        borderRadius: BorderRadius.circular(4),
-                      ),
-                      child: Text('Backed up',
-                          style: AppTypography.labelSmall
-                              .copyWith(color: colors.success)),
-                    )
-                  : Container(
-                      padding: const EdgeInsets.symmetric(
-                          horizontal: 8, vertical: 3),
-                      decoration: BoxDecoration(
-                        color: Colors.amber.withValues(alpha: 0.15),
-                        borderRadius: BorderRadius.circular(4),
-                      ),
-                      child: Text('Needs Backup',
-                          style: AppTypography.labelSmall
-                              .copyWith(color: Colors.amber)),
-                    ),
-              onTap: () => context.push('/backup-seed'),
-            ),
-            _SettingTile(
-              icon: Icons.visibility_off_outlined,
-              title: 'Hide Balances in App',
-              subtitle: 'Mask all satoshi and fiat figures',
-              trailing: Switch.adaptive(
-                value: ref.watch(privacyProvider).isBalanceHidden,
-                activeTrackColor: colors.primary,
-                onChanged: (val) =>
-                    ref.read(privacyProvider.notifier).setBalanceHidden(val),
-              ),
-            ),
-            _SettingTile(
-              icon: Icons.security_rounded,
-              title: 'Hide in App Switcher',
-              subtitle: 'Obscure screen snapshot in multitasking',
-              trailing: Switch.adaptive(
-                value: ref.watch(privacyProvider).hideInAppSwitcher,
-                activeTrackColor: colors.primary,
-                onChanged: (val) => ref
-                    .read(privacyProvider.notifier)
-                    .setHideInAppSwitcher(val),
-              ),
-            ),
-            _SettingTile(
-              icon: Icons.notifications_paused_outlined,
-              title: 'Hide Notification Amounts',
-              subtitle: 'Omit financial totals from push/in-app alerts',
-              trailing: Switch.adaptive(
-                value: ref.watch(privacyProvider).hideNotificationAmounts,
-                activeTrackColor: colors.primary,
-                onChanged: (val) => ref
-                    .read(privacyProvider.notifier)
-                    .setHideNotificationAmounts(val),
-              ),
-            ),
-            _SettingTile(
-              icon: Icons.fingerprint,
-              title: 'Biometric Login & Re-auth',
-              subtitle: 'Require Face ID / Fingerprint for sensitive screens',
-              trailing: Switch.adaptive(
-                value: ref.watch(privacyProvider).requireBiometricForSensitive,
-                activeTrackColor: colors.primary,
-                onChanged: (val) => ref
-                    .read(privacyProvider.notifier)
-                    .setRequireBiometricForSensitive(val),
-              ),
-            ),
-            _SettingTile(
-              icon: Icons.account_balance_rounded,
-              title: 'Connected Ecash Mints',
-              subtitle: 'Multi-mint liquidity & settlement connections',
-              trailing: Icon(Icons.chevron_right, color: colors.textTertiary),
-              onTap: () => context.push('/mints'),
-            ),
-            const SizedBox(height: AppSpacing.md),
-
-            // Financial Management Section
-            _SectionTitle(title: 'Financial Management'),
-            _SettingTile(
-              icon: Icons.people_outline_rounded,
-              title: 'People & Beneficiaries',
-              subtitle: 'Saved Lightning, bank, and mobile-money contacts',
-              trailing: Icon(Icons.chevron_right, color: colors.textTertiary),
-              onTap: () => context.push('/beneficiaries'),
-            ),
-            _SettingTile(
-              icon: Icons.bookmark_border_rounded,
-              title: 'Saved Billers & Payments',
-              subtitle: 'Meters, utilities, and phone lines',
-              trailing: Icon(Icons.chevron_right, color: colors.textTertiary),
-              onTap: () => context.push('/saved-payments'),
-            ),
-            _SettingTile(
-              icon: Icons.description_outlined,
-              title: 'Account Statements',
-              subtitle: 'Monthly summaries and official CSV/PDF exports',
-              trailing: Icon(Icons.chevron_right, color: colors.textTertiary),
-              onTap: () => context.push('/statements'),
-            ),
-            _SettingTile(
-              icon: Icons.credit_card_outlined,
-              title: 'Virtual Cards (Sandbox)',
-              subtitle: 'USD Visa cards funded directly from Bitcoin sats',
-              trailing: Icon(Icons.chevron_right, color: colors.textTertiary),
-              onTap: () => context.push('/cards'),
-            ),
-            const SizedBox(height: AppSpacing.md),
-
-            // Preferences Section
-            _SectionTitle(title: 'Preferences'),
-            _SettingTile(
-              icon: Icons.palette_outlined,
-              title: 'Appearance',
-              trailing: Text(themeLabel,
-                  style:
-                      AppTypography.bodySmall.copyWith(color: colors.primary)),
-              onTap: () => _showAppearanceSheet(context),
-            ),
-            _SettingTile(
-              icon: Icons.currency_exchange,
-              title: 'Display Currency',
-              trailing: Text(currentCurrency.code,
-                  style:
-                      AppTypography.bodySmall.copyWith(color: colors.primary)),
-              onTap: () => _showCurrencySheet(context),
-            ),
-            _SettingTile(
-              icon: Icons.help_outline,
-              title: 'Support & Help Center',
-              trailing: Icon(Icons.chevron_right, color: colors.textTertiary),
-              onTap: () => _showSupportDialog(context),
-            ),
-            const SizedBox(height: AppSpacing.md),
-
-            // Developer Section (Hidden in Production, visible only in debug/development mode)
-            if (kDebugMode && isDev) ...[
-              _SectionTitle(title: 'Developer Diagnostics'),
-              _SettingTile(
-                icon: Icons.developer_mode,
-                title: 'Developer Options',
-                subtitle: 'Cashu Mint URLs, Keys, Diagnostics',
-                trailing: Icon(Icons.chevron_right, color: colors.textTertiary),
-                onTap: () => context.push('/developer-options'),
-              ),
-              const SizedBox(height: AppSpacing.md),
-            ],
-
-            // Sign out Button
-            OutlinedButton.icon(
-              onPressed: _handleSignOut,
-              icon: Icon(Icons.logout, color: colors.error, size: 18),
-              label: Text('Sign out', style: TextStyle(color: colors.error)),
-              style: OutlinedButton.styleFrom(
-                side: BorderSide(color: colors.error.withValues(alpha: 0.3)),
-              ),
-            ),
-            const SizedBox(height: AppSpacing.xl),
-
-            // Brand Footer
-            Center(
-              child: Column(
-                children: [
-                  Image.asset(
-                    'assets/brand/v4/logo/hanbova_icon_v4_EXACT_MASTER_TRANSPARENT.png',
-                    width: 32,
-                    height: 32,
-                    errorBuilder: (_, __, ___) => const SizedBox.shrink(),
+            child: Material(
+              color: Colors.transparent,
+              child: ListTile(
+                contentPadding: const EdgeInsets.symmetric(
+                    horizontal: AppSpacing.md, vertical: 4),
+                leading: Container(
+                  padding: const EdgeInsets.all(8),
+                  decoration: BoxDecoration(
+                    color: colors.primary.withValues(alpha: 0.12),
+                    shape: BoxShape.circle,
                   ),
-                  const SizedBox(height: 6),
-                  Text(
-                    'Hanbova',
-                    style: AppTypography.titleSmall.copyWith(
-                      color: colors.textSecondary,
-                      fontWeight: FontWeight.w600,
-                    ),
+                  child: Icon(
+                    Icons.travel_explore_rounded,
+                    color: colors.primary,
+                    size: 22,
                   ),
-                  const SizedBox(height: 2),
-                  Text(
-                    'Send protected. • v0.5.0-beta',
-                    style: AppTypography.caption.copyWith(
-                      color: colors.textTertiary,
+                ),
+                title: Text(
+                  'Roam Mode',
+                  style: AppTypography.bodyMedium.copyWith(
+                    color: colors.textPrimary,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                subtitle: Text(
+                  market.isRoamActive
+                      ? 'Active in ${market.spendCountryInfo.name} (${market.spendCountryInfo.flagEmoji})'
+                      : 'Disabled • Using residence (${market.identityCountryInfo.flagEmoji})',
+                  style: AppTypography.caption.copyWith(
+                    color: market.isRoamActive
+                        ? colors.primary
+                        : colors.textSecondary,
+                  ),
+                ),
+                trailing: Container(
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                  decoration: BoxDecoration(
+                    color: market.isRoamActive
+                        ? const Color(0xFF10B981).withValues(alpha: 0.15)
+                        : colors.surface,
+                    borderRadius: BorderRadius.circular(6),
+                  ),
+                  child: Text(
+                    market.isRoamActive ? 'ACTIVE' : 'OFF',
+                    style: TextStyle(
+                      color: market.isRoamActive
+                          ? const Color(0xFF10B981)
+                          : colors.textTertiary,
                       fontSize: 11,
+                      fontWeight: FontWeight.bold,
                     ),
                   ),
-                ],
+                ),
+                onTap: () => context.push('/roam'),
               ),
             ),
-            const SizedBox(height: 80),
-          ],
-        ),
+          ),
+          const SizedBox(height: AppSpacing.lg),
+
+          // 3. Management Shortcuts
+          Container(
+            decoration: BoxDecoration(
+              color: colors.surfaceCard,
+              borderRadius: AppRadius.mdRadius,
+              border: Border.all(color: colors.border),
+            ),
+            child: Column(
+              children: [
+                _buildTile(
+                  context,
+                  icon: Icons.bookmark_border_rounded,
+                  title: 'Saved Payments',
+                  subtitle: 'Meters, smartcards, internet accounts',
+                  onTap: () => context.push('/saved-payments'),
+                ),
+                Divider(height: 1, color: colors.divider),
+                _buildTile(
+                  context,
+                  icon: Icons.people_outline_rounded,
+                  title: 'Beneficiaries',
+                  subtitle: 'Recent & favorite contacts',
+                  onTap: () => context.push('/beneficiaries'),
+                ),
+                Divider(height: 1, color: colors.divider),
+                _buildTile(
+                  context,
+                  icon: Icons.credit_card_outlined,
+                  title: 'Virtual Cards',
+                  subtitle: 'Visa & Mastercard for online spend',
+                  onTap: () => context.push('/cards'),
+                ),
+                Divider(height: 1, color: colors.divider),
+                _buildTile(
+                  context,
+                  icon: Icons.shield_outlined,
+                  title: 'Wallet Backup & Seed',
+                  subtitle: 'Secure your recovery phrase',
+                  onTap: () => context.push('/backup-seed'),
+                ),
+                Divider(height: 1, color: colors.divider),
+                _buildTile(
+                  context,
+                  icon: Icons.settings_outlined,
+                  title: 'Settings',
+                  subtitle: 'Appearance, notifications, privacy',
+                  onTap: () => context.push('/settings'),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: AppSpacing.lg),
+
+          // 4. Sign Out Button
+          Container(
+            decoration: BoxDecoration(
+              color: colors.surfaceCard,
+              borderRadius: AppRadius.mdRadius,
+              border: Border.all(color: colors.border),
+            ),
+            child: Material(
+              color: Colors.transparent,
+              child: ListTile(
+                leading: Icon(Icons.logout_rounded, color: colors.error),
+                title: Text(
+                  'Sign Out',
+                  style: AppTypography.bodyMedium.copyWith(
+                    color: colors.error,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+                onTap: () {
+                  showDialog(
+                    context: context,
+                    builder: (dialogCtx) => AlertDialog(
+                      backgroundColor: colors.surfaceCard,
+                      title: const Text('Sign Out?'),
+                      content: const Text(
+                        'Make sure your wallet recovery seed is safely backed up before signing out.',
+                      ),
+                      actions: [
+                        TextButton(
+                          onPressed: () => Navigator.pop(dialogCtx),
+                          child: const Text('Cancel'),
+                        ),
+                        TextButton(
+                          onPressed: () {
+                            Navigator.pop(dialogCtx);
+                            context.go('/auth/welcome');
+                          },
+                          child: Text(
+                            'Sign Out',
+                            style: TextStyle(color: colors.error),
+                          ),
+                        ),
+                      ],
+                    ),
+                  );
+                },
+              ),
+            ),
+          ),
+          const SizedBox(height: AppSpacing.xxl),
+        ],
       ),
     );
   }
-}
 
-class _SectionTitle extends StatelessWidget {
-  final String title;
-
-  const _SectionTitle({required this.title});
-
-  @override
-  Widget build(BuildContext context) {
+  Widget _buildTile(
+    BuildContext context, {
+    required IconData icon,
+    required String title,
+    required String subtitle,
+    required VoidCallback onTap,
+  }) {
     final colors = context.colors;
-    return Padding(
-      padding: const EdgeInsets.only(bottom: AppSpacing.xs, left: 4),
-      child: Text(
-        title.toUpperCase(),
-        style: AppTypography.labelSmall
-            .copyWith(color: colors.textTertiary, letterSpacing: 0.8),
-      ),
-    );
-  }
-}
-
-class _SettingTile extends StatelessWidget {
-  final IconData icon;
-  final String title;
-  final String? subtitle;
-  final Widget? trailing;
-  final VoidCallback? onTap;
-
-  const _SettingTile({
-    required this.icon,
-    required this.title,
-    this.subtitle,
-    this.trailing,
-    this.onTap,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    final colors = context.colors;
-
-    return Container(
-      margin: const EdgeInsets.only(bottom: AppSpacing.xs),
-      decoration: BoxDecoration(
-        color: colors.surfaceCard,
-        borderRadius: AppRadius.smRadius,
-        border: Border.all(color: colors.border),
-      ),
-      child: Material(
-        color: Colors.transparent,
-        borderRadius: AppRadius.smRadius,
-        child: ListTile(
-          leading: Icon(icon, color: colors.textSecondary, size: 22),
-          title: Text(title,
-              style: AppTypography.titleSmall
-                  .copyWith(color: colors.textPrimary, fontSize: 14)),
-          subtitle: subtitle != null
-              ? Text(subtitle!,
-                  style: AppTypography.bodySmall
-                      .copyWith(color: colors.textTertiary, fontSize: 11))
-              : null,
-          trailing: trailing,
-          onTap: onTap,
-          contentPadding: const EdgeInsets.symmetric(
-              horizontal: AppSpacing.md, vertical: 2),
+    return Material(
+      color: Colors.transparent,
+      child: ListTile(
+        leading: Icon(icon, color: colors.textPrimary),
+        title: Text(
+          title,
+          style: AppTypography.bodyMedium.copyWith(
+            color: colors.textPrimary,
+            fontWeight: FontWeight.w600,
+          ),
         ),
+        subtitle: Text(
+          subtitle,
+          style: AppTypography.caption.copyWith(
+            color: colors.textTertiary,
+          ),
+        ),
+        trailing:
+            Icon(Icons.chevron_right, size: 18, color: colors.textTertiary),
+        onTap: onTap,
       ),
     );
   }

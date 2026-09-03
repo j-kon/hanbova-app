@@ -142,6 +142,9 @@ class UserCountryContext {
   /// The active currency shown in UI (e.g. "KES").
   final FiatCurrency displayCurrency;
 
+  /// Whether Roam mode is actively turned on by the user.
+  final bool roamEnabled;
+
   /// Active capabilities of the selected spend market.
   final MarketCapabilities capabilities;
 
@@ -149,6 +152,7 @@ class UserCountryContext {
     required this.identityCountry,
     required this.spendCountry,
     required this.displayCurrency,
+    this.roamEnabled = false,
     this.capabilities = const MarketCapabilities(
       payouts: true,
       mobileMoney: true,
@@ -167,16 +171,21 @@ class UserCountryContext {
       CountryInfo.findByCode(identityCountry);
   CountryInfo get spendCountryInfo => CountryInfo.findByCode(spendCountry);
 
+  /// Whether Roam mode is currently active (roam enabled and differing market/currency).
+  bool get isRoamActive => roamEnabled && spendCountry != identityCountry;
+
   UserCountryContext copyWith({
     String? identityCountry,
     String? spendCountry,
     FiatCurrency? displayCurrency,
+    bool? roamEnabled,
     MarketCapabilities? capabilities,
   }) {
     return UserCountryContext(
       identityCountry: identityCountry ?? this.identityCountry,
       spendCountry: spendCountry ?? this.spendCountry,
       displayCurrency: displayCurrency ?? this.displayCurrency,
+      roamEnabled: roamEnabled ?? this.roamEnabled,
       capabilities: capabilities ?? this.capabilities,
     );
   }
