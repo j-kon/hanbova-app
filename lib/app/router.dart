@@ -7,25 +7,33 @@ import '../features/auth/screens/reset_password_screen.dart';
 import '../features/auth/screens/sign_in_screen.dart';
 import '../features/auth/screens/sign_up_screen.dart';
 import '../features/auth/screens/wallet_setup_screen.dart';
-import '../features/splash/presentation/splash_screen.dart';
 import '../features/auth/screens/welcome_screen.dart';
+import '../features/beneficiaries/presentation/beneficiaries_screen.dart';
+import '../features/cards/presentation/cards_screen.dart';
 import '../features/home/presentation/home_screen.dart';
+import '../features/insights/presentation/insights_screen.dart';
 import '../features/mints/presentation/mints_screen.dart';
-import '../features/notifications/screens/notifications_screen.dart';
+import '../features/money/presentation/money_screen.dart';
+import '../features/notifications/presentation/notifications_screen.dart';
+import '../features/pending/presentation/pending_centre_screen.dart';
 import '../features/profile/screens/developer_options_screen.dart';
 import '../features/profile/screens/profile_screen.dart';
 import '../features/protected/presentation/protected_screen.dart';
 import '../features/protected_send/presentation/claim_payment_screen.dart';
 import '../features/protected_send/presentation/protected_send_screen.dart';
 import '../features/receive/presentation/receive_screen.dart';
+import '../features/request_money/presentation/request_money_screen.dart';
 import '../features/scan/screens/scan_screen.dart';
 import '../features/security/presentation/backup_seed_screen.dart';
 import '../features/security/presentation/restore_seed_screen.dart';
 import '../features/send/presentation/send_screen.dart';
+import '../features/spend/presentation/saved_payments_screen.dart';
+import '../features/spend/presentation/spend_screen.dart';
+import '../features/splash/presentation/splash_screen.dart';
+import '../features/statements/presentation/statements_screen.dart';
 import '../features/transactions/domain/transaction_model.dart';
 import '../features/transactions/presentation/transaction_details_screen.dart';
 import '../features/transactions/presentation/transactions_screen.dart';
-import '../features/spend/presentation/spend_screen.dart';
 import '../features/travel/presentation/esim_screen.dart';
 import '../features/travel/presentation/travel_screen.dart';
 import 'shell/app_shell.dart';
@@ -170,6 +178,46 @@ final appRouterProvider = Provider<GoRouter>((ref) {
       ),
 
       // Modal & Feature routes
+      GoRoute(
+        path: '/money',
+        parentNavigatorKey: _rootNavigatorKey,
+        builder: (context, state) => const MoneyScreen(),
+      ),
+      GoRoute(
+        path: '/insights',
+        parentNavigatorKey: _rootNavigatorKey,
+        builder: (context, state) => const InsightsScreen(),
+      ),
+      GoRoute(
+        path: '/pending',
+        parentNavigatorKey: _rootNavigatorKey,
+        builder: (context, state) => const PendingCentreScreen(),
+      ),
+      GoRoute(
+        path: '/statements',
+        parentNavigatorKey: _rootNavigatorKey,
+        builder: (context, state) => const StatementsScreen(),
+      ),
+      GoRoute(
+        path: '/beneficiaries',
+        parentNavigatorKey: _rootNavigatorKey,
+        builder: (context, state) => const BeneficiariesScreen(),
+      ),
+      GoRoute(
+        path: '/request-money',
+        parentNavigatorKey: _rootNavigatorKey,
+        builder: (context, state) => const RequestMoneyScreen(),
+      ),
+      GoRoute(
+        path: '/saved-payments',
+        parentNavigatorKey: _rootNavigatorKey,
+        builder: (context, state) => const SavedPaymentsScreen(),
+      ),
+      GoRoute(
+        path: '/cards',
+        parentNavigatorKey: _rootNavigatorKey,
+        builder: (context, state) => const CardsScreen(),
+      ),
       GoRoute(
         path: '/activity/details',
         parentNavigatorKey: _rootNavigatorKey,

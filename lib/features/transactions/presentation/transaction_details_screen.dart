@@ -59,6 +59,7 @@ class _TransactionDetailsScreenState
       case TransactionStatus.pending:
       case TransactionStatus.processing:
       case TransactionStatus.refunding:
+      case TransactionStatus.uncertain:
         statusColor = AppColors.warning;
         break;
       case TransactionStatus.refundAvailable:

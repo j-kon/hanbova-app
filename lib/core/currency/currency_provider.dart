@@ -29,6 +29,8 @@ class DevelopmentExchangeRateProvider implements ExchangeRateProvider {
         return 220000000.0; // 1 BTC = 220M UGX
       case FiatCurrency.rwf:
         return 80000000.0; // 1 BTC = 80M RWF
+      case FiatCurrency.tzs:
+        return 160000000.0; // 1 BTC = 160M TZS
       case FiatCurrency.usd:
         return 60000.0; // 1 BTC = $60k USD
     }
@@ -41,12 +43,13 @@ final exchangeRateProvider = Provider<ExchangeRateProvider>((ref) {
 
 enum FiatCurrency {
   ngn('NGN', '₦'),
+  usd('USD', r'$'),
   kes('KES', 'KSh '),
   ghs('GHS', 'GH₵ '),
-  zar('ZAR', 'R '),
-  ugx('UGX', 'USh '),
   rwf('RWF', 'FRw '),
-  usd('USD', r'$');
+  ugx('UGX', 'USh '),
+  tzs('TZS', 'TSh '),
+  zar('ZAR', 'R ');
 
   final String code;
   final String symbol;
@@ -74,7 +77,15 @@ enum FiatCurrency {
     final amount = satsToFiat(sats, rateProvider);
     final formatter = NumberFormat.currency(
       symbol: symbol,
-      decimalDigits: code == 'UGX' || code == 'RWF' ? 0 : 2,
+      decimalDigits: code == 'UGX' || code == 'RWF' || code == 'TZS' ? 0 : 2,
+    );
+    return formatter.format(amount);
+  }
+
+  String formatFiat(double amount) {
+    final formatter = NumberFormat.currency(
+      symbol: symbol,
+      decimalDigits: code == 'UGX' || code == 'RWF' || code == 'TZS' ? 0 : 2,
     );
     return formatter.format(amount);
   }

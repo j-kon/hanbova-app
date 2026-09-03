@@ -31,6 +31,7 @@ enum TransactionStatus {
   refunded,
   claimable,
   expired,
+  uncertain,
   // Protected-specific statuses
   waitingForRecipient,
   claimed,
@@ -226,6 +227,8 @@ class TransactionModel {
         return 'Refund available';
       case TransactionStatus.refunding:
         return 'Refunding';
+      case TransactionStatus.uncertain:
+        return 'Status Uncertain';
     }
   }
 

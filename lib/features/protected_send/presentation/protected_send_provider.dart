@@ -284,7 +284,7 @@ class ProtectedSendNotifier extends StateNotifier<ProtectedSendState> {
       _ref.read(inAppNotificationProvider.notifier).show(
             title: 'Protected Payment Sent',
             message:
-                'Locked ${Formatters.formatSats(amountSats)} in escrow for $recipientIdentifier',
+                'Sent ${Formatters.formatSats(amountSats)} Protected payment to $recipientIdentifier',
             icon: Icons.shield_outlined,
             type: InAppNotificationType.protected,
           );
