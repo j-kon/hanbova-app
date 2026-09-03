@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 import '../../../core/networking/api_client.dart';
 import '../../../core/currency/currency_provider.dart';
 import '../../../core/market/market_provider.dart';
+import '../../../core/security/privacy_provider.dart';
 import '../../../core/security/wallet_backup_store.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_radius.dart';
@@ -21,8 +22,6 @@ class ProfileScreen extends ConsumerStatefulWidget {
 }
 
 class _ProfileScreenState extends ConsumerState<ProfileScreen> {
-  bool _biometricsEnabled = true;
-
   void _showAppearanceSheet(BuildContext context) {
     final colors = context.colors;
     final currentTheme = ref.read(themeControllerProvider);
@@ -380,8 +379,8 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
             ),
             const SizedBox(height: AppSpacing.md),
 
-            // Security Section
-            _SectionTitle(title: 'Security & Backup'),
+            // Security & Privacy Section
+            _SectionTitle(title: 'Security & Privacy'),
             _SettingTile(
               icon: Icons.key_rounded,
               title: 'Recovery Phrase Backup',
@@ -412,12 +411,50 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
               onTap: () => context.push('/backup-seed'),
             ),
             _SettingTile(
-              icon: Icons.fingerprint,
-              title: 'Biometric Login / Face ID',
+              icon: Icons.visibility_off_outlined,
+              title: 'Hide Balances in App',
+              subtitle: 'Mask all satoshi and fiat figures',
               trailing: Switch.adaptive(
-                value: _biometricsEnabled,
+                value: ref.watch(privacyProvider).isBalanceHidden,
                 activeTrackColor: colors.primary,
-                onChanged: (val) => setState(() => _biometricsEnabled = val),
+                onChanged: (val) =>
+                    ref.read(privacyProvider.notifier).setBalanceHidden(val),
+              ),
+            ),
+            _SettingTile(
+              icon: Icons.security_rounded,
+              title: 'Hide in App Switcher',
+              subtitle: 'Obscure screen snapshot in multitasking',
+              trailing: Switch.adaptive(
+                value: ref.watch(privacyProvider).hideInAppSwitcher,
+                activeTrackColor: colors.primary,
+                onChanged: (val) => ref
+                    .read(privacyProvider.notifier)
+                    .setHideInAppSwitcher(val),
+              ),
+            ),
+            _SettingTile(
+              icon: Icons.notifications_paused_outlined,
+              title: 'Hide Notification Amounts',
+              subtitle: 'Omit financial totals from push/in-app alerts',
+              trailing: Switch.adaptive(
+                value: ref.watch(privacyProvider).hideNotificationAmounts,
+                activeTrackColor: colors.primary,
+                onChanged: (val) => ref
+                    .read(privacyProvider.notifier)
+                    .setHideNotificationAmounts(val),
+              ),
+            ),
+            _SettingTile(
+              icon: Icons.fingerprint,
+              title: 'Biometric Login & Re-auth',
+              subtitle: 'Require Face ID / Fingerprint for sensitive screens',
+              trailing: Switch.adaptive(
+                value: ref.watch(privacyProvider).requireBiometricForSensitive,
+                activeTrackColor: colors.primary,
+                onChanged: (val) => ref
+                    .read(privacyProvider.notifier)
+                    .setRequireBiometricForSensitive(val),
               ),
             ),
             _SettingTile(
@@ -426,6 +463,38 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
               subtitle: 'Multi-mint liquidity & settlement connections',
               trailing: Icon(Icons.chevron_right, color: colors.textTertiary),
               onTap: () => context.push('/mints'),
+            ),
+            const SizedBox(height: AppSpacing.md),
+
+            // Financial Management Section
+            _SectionTitle(title: 'Financial Management'),
+            _SettingTile(
+              icon: Icons.people_outline_rounded,
+              title: 'People & Beneficiaries',
+              subtitle: 'Saved Lightning, bank, and mobile-money contacts',
+              trailing: Icon(Icons.chevron_right, color: colors.textTertiary),
+              onTap: () => context.push('/beneficiaries'),
+            ),
+            _SettingTile(
+              icon: Icons.bookmark_border_rounded,
+              title: 'Saved Billers & Payments',
+              subtitle: 'Meters, utilities, and phone lines',
+              trailing: Icon(Icons.chevron_right, color: colors.textTertiary),
+              onTap: () => context.push('/saved-payments'),
+            ),
+            _SettingTile(
+              icon: Icons.description_outlined,
+              title: 'Account Statements',
+              subtitle: 'Monthly summaries and official CSV/PDF exports',
+              trailing: Icon(Icons.chevron_right, color: colors.textTertiary),
+              onTap: () => context.push('/statements'),
+            ),
+            _SettingTile(
+              icon: Icons.credit_card_outlined,
+              title: 'Virtual Cards (Sandbox)',
+              subtitle: 'USD Visa cards funded directly from Bitcoin sats',
+              trailing: Icon(Icons.chevron_right, color: colors.textTertiary),
+              onTap: () => context.push('/cards'),
             ),
             const SizedBox(height: AppSpacing.md),
 

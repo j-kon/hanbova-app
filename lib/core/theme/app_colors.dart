@@ -36,6 +36,7 @@ class AppColors {
   static const Color darkSurface = graphite;
   static const Color darkSurfaceElevated = Color(0xFF2D3B44);
   static const Color darkSurfaceCard = graphite;
+  static const Color darkCardBackground = graphite;
   static const Color darkTextPrimary = warmWhite;
   static const Color darkTextSecondary = Color(0xFF9AA6AC);
   static const Color darkTextTertiary = softGray;

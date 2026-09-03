@@ -314,26 +314,57 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                       ),
                       const SizedBox(height: AppSpacing.xs),
 
-                      // Fiat display
-                      Text(
-                        isBalanceVisible
-                            ? currency.format(totalBalanceSats)
-                            : '••••••••',
-                        style: AppTypography.display.copyWith(
-                          color: colors.textPrimary,
-                          fontWeight: FontWeight.w800,
-                        ),
-                      ),
-                      const SizedBox(height: 2),
+                      InkWell(
+                        onTap: () => context.push('/money'),
+                        borderRadius: AppRadius.smRadius,
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            // Fiat display
+                            Text(
+                              isBalanceVisible
+                                  ? currency.format(totalBalanceSats)
+                                  : '••••••••',
+                              style: AppTypography.display.copyWith(
+                                color: colors.textPrimary,
+                                fontWeight: FontWeight.w800,
+                              ),
+                            ),
+                            const SizedBox(height: 2),
 
-                      // Sats display
-                      Text(
-                        isBalanceVisible
-                            ? '${Formatters.formatSatsNumber(totalBalanceSats)} ${isMainnet ? "sats" : "test sats"}'
-                            : '•••• ${isMainnet ? "sats" : "test sats"}',
-                        style: AppTypography.titleSmall.copyWith(
-                          color: colors.primary,
-                          fontWeight: FontWeight.w600,
+                            // Sats display
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              children: [
+                                Text(
+                                  isBalanceVisible
+                                      ? '${Formatters.formatSatsNumber(totalBalanceSats)} ${isMainnet ? "sats" : "test sats"}'
+                                      : '•••• ${isMainnet ? "sats" : "test sats"}',
+                                  style: AppTypography.titleSmall.copyWith(
+                                    color: colors.primary,
+                                    fontWeight: FontWeight.w600,
+                                  ),
+                                ),
+                                Row(
+                                  children: [
+                                    Text(
+                                      'Balances Hub',
+                                      style: TextStyle(
+                                        color: colors.primary,
+                                        fontSize: 11,
+                                        fontWeight: FontWeight.bold,
+                                      ),
+                                    ),
+                                    Icon(
+                                      Icons.chevron_right,
+                                      size: 14,
+                                      color: colors.primary,
+                                    ),
+                                  ],
+                                ),
+                              ],
+                            ),
+                          ],
                         ),
                       ),
                       const SizedBox(height: AppSpacing.md),
@@ -621,6 +652,57 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                     ),
                   ],
                 ),
+                const SizedBox(height: AppSpacing.sm),
+
+                // 3.6 Financial Services Quick Hub Row
+                SingleChildScrollView(
+                  scrollDirection: Axis.horizontal,
+                  child: Row(
+                    children: [
+                      _buildQuickHubItem(
+                        icon: Icons.pie_chart_outline_rounded,
+                        label: 'Insights',
+                        color: const Color(0xFF38BDF8),
+                        onTap: () => context.push('/insights'),
+                      ),
+                      const SizedBox(width: 8),
+                      _buildQuickHubItem(
+                        icon: Icons.hourglass_top_rounded,
+                        label: 'Pending Hub',
+                        color: const Color(0xFFF59E0B),
+                        onTap: () => context.push('/pending'),
+                      ),
+                      const SizedBox(width: 8),
+                      _buildQuickHubItem(
+                        icon: Icons.request_quote_outlined,
+                        label: 'Request',
+                        color: const Color(0xFF10B981),
+                        onTap: () => context.push('/request-money'),
+                      ),
+                      const SizedBox(width: 8),
+                      _buildQuickHubItem(
+                        icon: Icons.credit_card_outlined,
+                        label: 'Cards',
+                        color: const Color(0xFFEC4899),
+                        onTap: () => context.push('/cards'),
+                      ),
+                      const SizedBox(width: 8),
+                      _buildQuickHubItem(
+                        icon: Icons.people_outline_rounded,
+                        label: 'People',
+                        color: const Color(0xFF8B5CF6),
+                        onTap: () => context.push('/beneficiaries'),
+                      ),
+                      const SizedBox(width: 8),
+                      _buildQuickHubItem(
+                        icon: Icons.description_outlined,
+                        label: 'Statements',
+                        color: AppColors.primary,
+                        onTap: () => context.push('/statements'),
+                      ),
+                    ],
+                  ),
+                ),
                 const SizedBox(height: AppSpacing.md),
 
                 // 4. Protected Summary Card
@@ -773,6 +855,41 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
               ],
             ),
           ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildQuickHubItem({
+    required IconData icon,
+    required String label,
+    required Color color,
+    required VoidCallback onTap,
+  }) {
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(12),
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+        decoration: BoxDecoration(
+          color: color.withValues(alpha: 0.1),
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: color.withValues(alpha: 0.3)),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(icon, color: color, size: 16),
+            const SizedBox(width: 6),
+            Text(
+              label,
+              style: const TextStyle(
+                color: Colors.white,
+                fontSize: 12,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+          ],
         ),
       ),
     );
