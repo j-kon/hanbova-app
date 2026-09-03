@@ -76,9 +76,9 @@ void main() {
       await tester.pumpAndSettle();
 
       // Authoritative Balance Card
-      expect(find.text('Total Balance'), findsOneWidget);
-      expect(find.text('Spendable'), findsOneWidget);
-      expect(find.text('Protected balance'), findsOneWidget);
+      expect(find.text('Bitcoin'), findsOneWidget);
+      expect(find.text('Available to spend'), findsOneWidget);
+      expect(find.text('Money in motion'), findsOneWidget);
 
       // Attention Hub Cards
       expect(find.text('Protected Refund Ready'), findsOneWidget);
@@ -88,7 +88,7 @@ void main() {
       // 4-Button Quick Action Grid
       expect(find.text('Send'), findsWidgets);
       expect(find.text('Receive'), findsWidgets);
-      expect(find.text('Pay'), findsWidgets);
+      expect(find.text('Protected'), findsWidgets);
       expect(find.text('Scan'), findsWidgets);
     });
 
@@ -110,12 +110,13 @@ void main() {
       );
       await tester.pumpAndSettle();
 
-      expect(find.text('Pay & Spend Hub'), findsOneWidget);
-      expect(find.text('Pay Again'), findsOneWidget);
+      expect(find.text('Pay'), findsWidgets);
+      expect(find.text('Send Money'), findsOneWidget);
+      expect(find.text('Recent'), findsOneWidget);
       expect(find.text('Mom\'s MTN'), findsOneWidget);
       expect(find.text('Home IKEDC'), findsOneWidget);
       expect(find.text('DStv Compact'), findsOneWidget);
-      expect(find.text('Everyday Bills & Utilities'), findsOneWidget);
+      expect(find.text('Everyday'), findsOneWidget);
       expect(find.text('Airtime'), findsOneWidget);
       expect(find.text('Data Bundles'), findsOneWidget);
       expect(find.text('Electricity'), findsOneWidget);
@@ -147,11 +148,11 @@ void main() {
       // Toggle to Someone Else
       await tester.tap(find.text('Someone Else'));
       await tester.pumpAndSettle();
-      expect(find.text('Enter phone number'), findsOneWidget);
+      expect(find.text('Phone Number'), findsOneWidget);
 
       // Presets exist
       expect(find.text('Select Amount'), findsOneWidget);
-      expect(find.text('Custom amount'), findsOneWidget);
+      expect(find.textContaining('Custom Amount'), findsOneWidget);
     });
 
     testWidgets('5. Data Bundle flow: Daily, Weekly, Monthly packages', (
@@ -272,7 +273,7 @@ void main() {
       expect(find.text('+234 803 123 4567'), findsOneWidget);
       expect(find.text('Bitcoin Wallet'), findsOneWidget);
       expect(find.text('50 sats'), findsOneWidget);
-      expect(find.text('1,102 sats'), findsOneWidget); // total
+      expect(find.text('1,102 sats'), findsWidgets); // breakdown and button
       expect(find.text('Pay 1,102 sats'), findsOneWidget);
     });
 
@@ -322,7 +323,7 @@ void main() {
       expect(find.text('ELECTRICITY RECHARGE TOKEN'), findsOneWidget);
       expect(find.text('4829-1039-5829-1029-4821'), findsOneWidget);
       expect(find.text('Copy Token'), findsOneWidget);
-      expect(find.text('View Official Receipt'), findsOneWidget);
+      expect(find.text('View receipt'), findsOneWidget);
       expect(find.text('Done'), findsOneWidget);
     });
 
@@ -333,14 +334,28 @@ void main() {
       tester.view.devicePixelRatio = 1.0;
       addTearDown(tester.view.resetPhysicalSize);
 
+      final sampleTx = TransactionModel(
+        id: 'tx-test-456',
+        type: TransactionType.instantSend,
+        status: TransactionStatus.pending,
+        amountSats: 15000,
+        recipientOrSender: 'Spectranet LTE Internet',
+        createdAt: DateTime.now(),
+        fiatAmount: 15000.0,
+        fiatCurrency: 'NGN',
+        billerName: 'Spectranet LTE Internet',
+        accountReference: 'SPEC-55443',
+      );
+
       await tester.pumpWidget(
         MaterialApp(
           home: Scaffold(
             body: PaymentUncertainSheet(
+              transaction: sampleTx,
               billerName: 'Spectranet LTE Internet',
-              accountReference: 'SPEC-55443',
+              fiatAmount: 15000.0,
+              fiatCurrency: 'NGN',
               amountSats: 15000,
-              onViewPending: () {},
               onDone: () {},
             ),
           ),
@@ -349,10 +364,9 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(find.text('Payment Processing'), findsOneWidget);
-      expect(find.textContaining('Checking payment status with biller'),
-          findsOneWidget);
-      expect(find.text('View in Pending Centre'), findsOneWidget);
-      expect(find.text('Return to Home'), findsOneWidget);
+      expect(find.text('Awaiting confirmation from provider'), findsOneWidget);
+      expect(find.text('Please Do Not Pay Again'), findsOneWidget);
+      expect(find.text('Track in Pending Centre'), findsOneWidget);
     });
 
     testWidgets('11. Demo Mode Persona: Nigeria residence and isolation', (

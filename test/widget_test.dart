@@ -22,14 +22,11 @@ void main() {
 
     // Verify header and balance card
     expect(find.byType(HomeScreen), findsOneWidget);
-    expect(find.text('Total Balance'), findsOneWidget);
+    expect(find.text('Bitcoin'), findsOneWidget);
     expect(find.text('Send'), findsWidgets);
     expect(find.text('Receive'), findsWidgets);
-
-    // Verify Quick Claim Banner & Protected Summary
-    expect(find.text('Protected Payments'), findsOneWidget);
-    expect(find.text('Have a claim code?'), findsOneWidget);
-    expect(find.text('Claim'), findsWidgets);
+    expect(find.text('Protected'), findsWidgets);
+    expect(find.text('Scan'), findsWidgets);
 
     // Verify 5 Bottom Navigation Items
     expect(find.text('Home'), findsOneWidget);
@@ -57,8 +54,9 @@ void main() {
     // Switch to Pay Tab via Bottom Navigation
     await tester.tap(find.byIcon(Icons.payments_outlined));
     await tester.pumpAndSettle();
-    expect(find.text('Pay & Spend Hub'), findsOneWidget);
-    expect(find.text('Everyday Bills & Utilities'), findsOneWidget);
+    expect(find.text('Send Money'), findsOneWidget);
+    expect(find.text('Recent'), findsOneWidget);
+    expect(find.text('Everyday'), findsOneWidget);
 
     // Switch to Activity Tab
     await tester.tap(find.byIcon(Icons.receipt_long_outlined));
@@ -99,8 +97,8 @@ void main() {
     await tester.pumpAndSettle();
 
     // Verify Pay Hub content
-    expect(find.text('Pay & Spend Hub'), findsOneWidget);
-    expect(find.text('Pay Again'), findsOneWidget);
+    expect(find.text('Pay'), findsWidgets);
+    expect(find.text('Recent'), findsOneWidget);
     expect(find.text('Airtime'), findsOneWidget);
     expect(find.text('Data Bundles'), findsOneWidget);
     expect(find.text('Electricity'), findsOneWidget);

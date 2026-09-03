@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 import '../../../core/currency/currency_provider.dart';
 import '../../../core/market/market_provider.dart';
@@ -205,6 +206,7 @@ class _DataBundleFlowScreenState extends ConsumerState<DataBundleFlowScreen>
         fiatAmount: pkg.fiatPrice,
         fiatCurrency: 'NGN',
         amountSats: amountSats,
+        serviceTitle: 'Data Bundle Activated',
         onDone: () => Navigator.of(context).pop(),
       );
     }
@@ -227,6 +229,22 @@ class _DataBundleFlowScreenState extends ConsumerState<DataBundleFlowScreen>
             fontWeight: FontWeight.bold,
           ),
         ),
+        actions: [
+          TextButton.icon(
+            onPressed: () => context.go('/activity?query=Data'),
+            icon: const Icon(Icons.history_rounded,
+                size: 18, color: AppColors.primary),
+            label: const Text(
+              'History',
+              style: TextStyle(
+                color: AppColors.primary,
+                fontSize: 13,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+          ),
+          const SizedBox(width: 8),
+        ],
       ),
       body: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -412,7 +430,7 @@ class _DataBundleFlowScreenState extends ConsumerState<DataBundleFlowScreen>
                   ),
                   const SizedBox(height: 2),
                   Text(
-                    '≈ ${Formatters.formatSats(sats)} sats',
+                    '≈ ${Formatters.formatSats(sats)}',
                     style: const TextStyle(
                       color: AppColors.primary,
                       fontSize: 11,

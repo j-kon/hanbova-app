@@ -125,11 +125,6 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     final cashuBalance = cashuBalanceAsync.value ??
         const CashuWalletBalance(spendableSats: 0, lockedEscrowSats: 0);
 
-    final protectedCount = transactions
-        .where((t) =>
-            t.type == TransactionType.protectedSend &&
-            t.status == TransactionStatus.claimable)
-        .length;
     final incomingClaimable = transactions
         .where((t) =>
             t.type == TransactionType.protectedClaim &&
@@ -137,7 +132,6 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
         .toList();
     final protectedSats = cashuBalance.lockedEscrowSats;
     final spendableSats = cashuBalance.spendableSats;
-    final totalBalanceSats = cashuBalance.totalSats;
 
     final greeting = _getGreeting();
     final firstName =
@@ -244,7 +238,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                     ),
                   ),
 
-                // 2. Balance Card
+                // 2. Balance Card (Authoritative Available Balance + Money in Motion)
                 Container(
                   padding: const EdgeInsets.all(AppSpacing.lg),
                   decoration: BoxDecoration(
@@ -324,10 +318,33 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                       Row(
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
-                          Text(
-                            'Total Balance',
-                            style: AppTypography.bodySmall
-                                .copyWith(color: colors.textSecondary),
+                          Row(
+                            children: [
+                              Text(
+                                'Bitcoin',
+                                style: AppTypography.titleSmall.copyWith(
+                                  color: colors.textPrimary,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                              const SizedBox(width: 6),
+                              Container(
+                                padding: const EdgeInsets.symmetric(
+                                    horizontal: 6, vertical: 2),
+                                decoration: BoxDecoration(
+                                  color: colors.primary.withValues(alpha: 0.12),
+                                  borderRadius: BorderRadius.circular(4),
+                                ),
+                                child: Text(
+                                  'Available to spend',
+                                  style: TextStyle(
+                                    color: colors.primary,
+                                    fontSize: 10,
+                                    fontWeight: FontWeight.w600,
+                                  ),
+                                ),
+                              ),
+                            ],
                           ),
                           IconButton(
                             icon: Icon(
@@ -353,10 +370,10 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            // Fiat display
+                            // Spendable Fiat display (Authoritative)
                             Text(
                               isBalanceVisible
-                                  ? currency.format(totalBalanceSats)
+                                  ? currency.format(spendableSats)
                                   : '••••••••',
                               style: AppTypography.display.copyWith(
                                 color: colors.textPrimary,
@@ -365,17 +382,17 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                             ),
                             const SizedBox(height: 2),
 
-                            // Sats display
+                            // Spendable Sats display (Authoritative)
                             Row(
                               mainAxisAlignment: MainAxisAlignment.spaceBetween,
                               children: [
                                 Text(
                                   isBalanceVisible
-                                      ? '${Formatters.formatSatsNumber(totalBalanceSats)} ${isMainnet ? "sats" : "test sats"}'
+                                      ? '${Formatters.formatSatsNumber(spendableSats)} ${isMainnet ? "sats" : "test sats"}'
                                       : '•••• ${isMainnet ? "sats" : "test sats"}',
                                   style: AppTypography.titleSmall.copyWith(
                                     color: colors.primary,
-                                    fontWeight: FontWeight.w600,
+                                    fontWeight: FontWeight.w700,
                                   ),
                                 ),
                                 Row(
@@ -402,57 +419,127 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                       ),
                       const SizedBox(height: AppSpacing.md),
 
-                      // Divider & Breakdown
+                      // Divider & Money in Motion Section
                       Divider(color: colors.divider),
-                      const SizedBox(height: AppSpacing.sm),
+                      const SizedBox(height: AppSpacing.xs),
+
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Text(
+                            'Money in motion',
+                            style: AppTypography.caption.copyWith(
+                              color: colors.textTertiary,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 6),
 
                       Row(
                         children: [
                           Expanded(
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text(
-                                  'Spendable',
-                                  style: AppTypography.caption
-                                      .copyWith(color: colors.textTertiary),
-                                ),
-                                const SizedBox(height: 2),
-                                Text(
-                                  isBalanceVisible
-                                      ? Formatters.formatSats(spendableSats)
-                                      : '••••',
-                                  style: AppTypography.titleSmall.copyWith(
-                                    color: colors.textPrimary,
-                                    fontWeight: FontWeight.w600,
+                            child: InkWell(
+                              onTap: () => context.push('/protected'),
+                              borderRadius: BorderRadius.circular(8),
+                              child: Container(
+                                padding: const EdgeInsets.symmetric(
+                                    horizontal: 10, vertical: 8),
+                                decoration: BoxDecoration(
+                                  color:
+                                      colors.protected.withValues(alpha: 0.08),
+                                  borderRadius: BorderRadius.circular(8),
+                                  border: Border.all(
+                                    color:
+                                        colors.protected.withValues(alpha: 0.2),
                                   ),
                                 ),
-                              ],
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Row(
+                                      children: [
+                                        Icon(Icons.shield_outlined,
+                                            size: 13, color: colors.protected),
+                                        const SizedBox(width: 4),
+                                        Text(
+                                          'Protected',
+                                          style: AppTypography.caption.copyWith(
+                                            color: colors.protected,
+                                            fontWeight: FontWeight.w600,
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                    const SizedBox(height: 3),
+                                    Text(
+                                      isBalanceVisible
+                                          ? Formatters.formatSats(protectedSats)
+                                          : '••••',
+                                      style: AppTypography.titleSmall.copyWith(
+                                        color: colors.textPrimary,
+                                        fontWeight: FontWeight.bold,
+                                        fontSize: 13,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
                             ),
                           ),
-                          Container(
-                              height: 28, width: 1, color: colors.divider),
-                          const SizedBox(width: AppSpacing.md),
+                          const SizedBox(width: 8),
                           Expanded(
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text(
-                                  'Protected balance',
-                                  style: AppTypography.caption
-                                      .copyWith(color: colors.textTertiary),
-                                ),
-                                const SizedBox(height: 2),
-                                Text(
-                                  isBalanceVisible
-                                      ? Formatters.formatSats(protectedSats)
-                                      : '••••',
-                                  style: AppTypography.titleSmall.copyWith(
-                                    color: colors.protected,
-                                    fontWeight: FontWeight.w600,
+                            child: InkWell(
+                              onTap: () => context.push('/pending'),
+                              borderRadius: BorderRadius.circular(8),
+                              child: Container(
+                                padding: const EdgeInsets.symmetric(
+                                    horizontal: 10, vertical: 8),
+                                decoration: BoxDecoration(
+                                  color:
+                                      AppColors.warning.withValues(alpha: 0.08),
+                                  borderRadius: BorderRadius.circular(8),
+                                  border: Border.all(
+                                    color: AppColors.warning
+                                        .withValues(alpha: 0.2),
                                   ),
                                 ),
-                              ],
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Row(
+                                      children: [
+                                        const Icon(Icons.hourglass_top_rounded,
+                                            size: 13, color: AppColors.warning),
+                                        const SizedBox(width: 4),
+                                        const Text(
+                                          'Pending',
+                                          style: TextStyle(
+                                            color: AppColors.warning,
+                                            fontSize: 11,
+                                            fontWeight: FontWeight.w600,
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                    const SizedBox(height: 3),
+                                    Text(
+                                      isBalanceVisible
+                                          ? Formatters.formatSats(
+                                              demoState.isEnabled
+                                                  ? demoState.pendingBalanceSats
+                                                  : 0)
+                                          : '••••',
+                                      style: AppTypography.titleSmall.copyWith(
+                                        color: colors.textPrimary,
+                                        fontWeight: FontWeight.bold,
+                                        fontSize: 13,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
                             ),
                           ),
                         ],
@@ -462,7 +549,116 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                 ),
                 const SizedBox(height: AppSpacing.md),
 
-                // 2.5 Attention Hub (High-priority actionable items only)
+                // 3. Primary Quick Action Grid (Send, Receive, Protected, Scan)
+                Row(
+                  children: [
+                    _buildActionButton(
+                      context,
+                      icon: Icons.arrow_upward_rounded,
+                      label: 'Send',
+                      color: colors.primary,
+                      onTap: () => context.push('/send'),
+                    ),
+                    const SizedBox(width: 8),
+                    _buildActionButton(
+                      context,
+                      icon: Icons.arrow_downward_rounded,
+                      label: 'Receive',
+                      color: const Color(0xFF10B981),
+                      onTap: () => UnifiedDepositSheet.show(context),
+                    ),
+                    const SizedBox(width: 8),
+                    _buildActionButton(
+                      context,
+                      icon: Icons.shield_outlined,
+                      label: 'Protected',
+                      color: colors.protected,
+                      onTap: () => context.push('/protected-send'),
+                    ),
+                    const SizedBox(width: 8),
+                    _buildActionButton(
+                      context,
+                      icon: Icons.qr_code_scanner_rounded,
+                      label: 'Scan',
+                      color: const Color(0xFF38BDF8),
+                      onTap: () => context.push('/scan'),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: AppSpacing.md),
+
+                // 3.5 Quick Pay Services (Airtime, Data, Electricity, TV)
+                Container(
+                  padding: const EdgeInsets.all(AppSpacing.md),
+                  decoration: BoxDecoration(
+                    color: colors.surfaceCard,
+                    borderRadius: AppRadius.mdRadius,
+                    border: Border.all(color: colors.border, width: 1),
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Text(
+                            'Quick Pay',
+                            style: AppTypography.titleSmall.copyWith(
+                              color: colors.textPrimary,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                          TextButton(
+                            onPressed: () => context.go('/pay'),
+                            style: TextButton.styleFrom(
+                              padding: EdgeInsets.zero,
+                              minimumSize: Size.zero,
+                              tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                            ),
+                            child: const Text('All Bills'),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 10),
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          _buildQuickPayIcon(
+                            context,
+                            icon: Icons.phone_android_rounded,
+                            label: 'Airtime',
+                            color: AppColors.primary,
+                            onTap: () => context.push('/pay/airtime'),
+                          ),
+                          _buildQuickPayIcon(
+                            context,
+                            icon: Icons.wifi_rounded,
+                            label: 'Data',
+                            color: const Color(0xFF38BDF8),
+                            onTap: () => context.push('/pay/data'),
+                          ),
+                          _buildQuickPayIcon(
+                            context,
+                            icon: Icons.electric_bolt_rounded,
+                            label: 'Electricity',
+                            color: const Color(0xFFFBBF24),
+                            onTap: () => context.push('/pay/electricity'),
+                          ),
+                          _buildQuickPayIcon(
+                            context,
+                            icon: Icons.tv_rounded,
+                            label: 'TV',
+                            color: const Color(0xFFA78BFA),
+                            onTap: () => context.push('/pay/tv'),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: AppSpacing.md),
+
+                // 4. Needs Attention Hub (High-priority actionable items only)
                 // Card 1: Refund Available
                 if (demoState.isEnabled &&
                     demoState.protectedRefundableSats > 0) ...[
@@ -503,7 +699,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                               ),
                               const SizedBox(height: 2),
                               Text(
-                                '${Formatters.formatSats(demoState.protectedRefundableSats)} sats expired locktime can be claimed back.',
+                                '${Formatters.formatSats(demoState.protectedRefundableSats)} expired locktime can be claimed back.',
                                 style: const TextStyle(
                                   color: AppColors.darkTextSecondary,
                                   fontSize: 11,
@@ -770,123 +966,24 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                   ),
                 ],
 
-                // 3. Primary Quick Action Grid (Send, Receive, Pay, Scan)
-                Row(
-                  children: [
-                    _buildActionButton(
-                      context,
-                      icon: Icons.arrow_upward_rounded,
-                      label: 'Send',
-                      color: colors.primary,
-                      onTap: () => context.push('/send'),
-                    ),
-                    const SizedBox(width: 8),
-                    _buildActionButton(
-                      context,
-                      icon: Icons.arrow_downward_rounded,
-                      label: 'Receive',
-                      color: const Color(0xFF10B981),
-                      onTap: () => UnifiedDepositSheet.show(context),
-                    ),
-                    const SizedBox(width: 8),
-                    _buildActionButton(
-                      context,
-                      icon: Icons.payments_rounded,
-                      label: 'Pay',
-                      color: const Color(0xFFF59E0B),
-                      onTap: () => context.go('/pay'),
-                    ),
-                    const SizedBox(width: 8),
-                    _buildActionButton(
-                      context,
-                      icon: Icons.qr_code_scanner_rounded,
-                      label: 'Scan',
-                      color: const Color(0xFF38BDF8),
-                      onTap: () => context.push('/scan'),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: AppSpacing.md),
-
-                // 3.6 Financial Services Quick Hub Row
-                SingleChildScrollView(
-                  scrollDirection: Axis.horizontal,
-                  child: Row(
-                    children: [
-                      _buildQuickHubItem(
-                        icon: Icons.account_balance_wallet_outlined,
-                        label: 'Money',
-                        color: AppColors.primary,
-                        onTap: () => context.push('/money'),
-                      ),
-                      const SizedBox(width: 8),
-                      _buildQuickHubItem(
-                        icon: Icons.pie_chart_outline_rounded,
-                        label: 'Insights',
-                        color: const Color(0xFF38BDF8),
-                        onTap: () => context.push('/insights'),
-                      ),
-                      const SizedBox(width: 8),
-                      _buildQuickHubItem(
-                        icon: Icons.hourglass_top_rounded,
-                        label: 'Pending Hub',
-                        color: const Color(0xFFF59E0B),
-                        onTap: () => context.push('/pending'),
-                      ),
-                      const SizedBox(width: 8),
-                      _buildQuickHubItem(
-                        icon: Icons.request_quote_outlined,
-                        label: 'Request',
-                        color: const Color(0xFF10B981),
-                        onTap: () => context.push('/request-money'),
-                      ),
-                      const SizedBox(width: 8),
-                      _buildQuickHubItem(
-                        icon: Icons.credit_card_outlined,
-                        label: 'Cards',
-                        color: const Color(0xFFEC4899),
-                        onTap: () => context.push('/cards'),
-                      ),
-                      const SizedBox(width: 8),
-                      _buildQuickHubItem(
-                        icon: Icons.people_outline_rounded,
-                        label: 'Beneficiaries',
-                        color: const Color(0xFF8B5CF6),
-                        onTap: () => context.push('/beneficiaries'),
-                      ),
-                      const SizedBox(width: 8),
-                      _buildQuickHubItem(
-                        icon: Icons.description_outlined,
-                        label: 'Statements',
-                        color: AppColors.primary,
-                        onTap: () => context.push('/statements'),
-                      ),
-                    ],
-                  ),
-                ),
-                const SizedBox(height: AppSpacing.md),
-
-                // 4. Protected Summary Card
+                // 5. Compact Financial Snapshot (Money & Insights shortcut)
                 Container(
                   padding: const EdgeInsets.all(AppSpacing.md),
                   decoration: BoxDecoration(
-                    color: colors.protected.withValues(alpha: 0.08),
+                    color: colors.surfaceCard,
                     borderRadius: AppRadius.mdRadius,
-                    border: Border.all(
-                        color: colors.protected.withValues(alpha: 0.25),
-                        width: 1),
+                    border: Border.all(color: colors.border, width: 1),
                   ),
                   child: Row(
                     children: [
                       Container(
-                        width: 38,
-                        height: 38,
+                        padding: const EdgeInsets.all(8),
                         decoration: BoxDecoration(
-                          color: colors.protected.withValues(alpha: 0.15),
+                          color: colors.primary.withValues(alpha: 0.12),
                           shape: BoxShape.circle,
                         ),
-                        child: Icon(Icons.shield_outlined,
-                            color: colors.protected, size: 20),
+                        child: Icon(Icons.pie_chart_outline_rounded,
+                            size: 18, color: colors.primary),
                       ),
                       const SizedBox(width: AppSpacing.sm),
                       Expanded(
@@ -894,66 +991,35 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Text(
-                              'Protected Payments',
-                              style: AppTypography.titleSmall
-                                  .copyWith(color: colors.textPrimary),
+                              'Financial Snapshot',
+                              style: AppTypography.titleSmall.copyWith(
+                                color: colors.textPrimary,
+                                fontWeight: FontWeight.bold,
+                              ),
                             ),
                             const SizedBox(height: 2),
                             Text(
-                              '$protectedCount active • ${Formatters.formatSats(protectedSats)} protected',
-                              style: AppTypography.bodySmall
-                                  .copyWith(color: colors.textSecondary),
+                              'Monthly spending & bitcoin insights',
+                              style: AppTypography.caption.copyWith(
+                                color: colors.textSecondary,
+                              ),
                             ),
                           ],
                         ),
                       ),
-                      TextButton(
-                        onPressed: () => context.push('/protected'),
-                        child: const Text('View'),
+                      OutlinedButton(
+                        onPressed: () => context.push('/insights'),
+                        style: OutlinedButton.styleFrom(
+                          side: BorderSide(color: colors.border),
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 10, vertical: 6),
+                          minimumSize: Size.zero,
+                          tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                        ),
+                        child: const Text('Insights',
+                            style: TextStyle(fontSize: 11)),
                       ),
                     ],
-                  ),
-                ),
-                const SizedBox(height: AppSpacing.md),
-
-                // 5. Quick Claim Banner
-                Material(
-                  color: colors.surfaceCard,
-                  borderRadius: AppRadius.mdRadius,
-                  child: InkWell(
-                    onTap: () => context.push('/claim'),
-                    borderRadius: AppRadius.mdRadius,
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(
-                          horizontal: AppSpacing.md,
-                          vertical: AppSpacing.sm + 2),
-                      decoration: BoxDecoration(
-                        borderRadius: AppRadius.mdRadius,
-                        border: Border.all(color: colors.border, width: 1),
-                      ),
-                      child: Row(
-                        children: [
-                          Icon(Icons.vpn_key_outlined,
-                              color: colors.primary, size: 20),
-                          const SizedBox(width: AppSpacing.sm),
-                          Expanded(
-                            child: Text(
-                              'Have a claim code?',
-                              style: AppTypography.bodyMedium
-                                  .copyWith(color: colors.textPrimary),
-                            ),
-                          ),
-                          Text(
-                            'Claim',
-                            style: AppTypography.titleSmall
-                                .copyWith(color: colors.primary),
-                          ),
-                          const SizedBox(width: 4),
-                          Icon(Icons.chevron_right,
-                              color: colors.primary, size: 18),
-                        ],
-                      ),
-                    ),
                   ),
                 ),
                 const SizedBox(height: AppSpacing.lg),
@@ -1021,41 +1087,6 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     );
   }
 
-  Widget _buildQuickHubItem({
-    required IconData icon,
-    required String label,
-    required Color color,
-    required VoidCallback onTap,
-  }) {
-    return InkWell(
-      onTap: onTap,
-      borderRadius: BorderRadius.circular(12),
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-        decoration: BoxDecoration(
-          color: color.withValues(alpha: 0.1),
-          borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: color.withValues(alpha: 0.3)),
-        ),
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(icon, color: color, size: 16),
-            const SizedBox(width: 6),
-            Text(
-              label,
-              style: const TextStyle(
-                color: Colors.white,
-                fontSize: 12,
-                fontWeight: FontWeight.w600,
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
   Widget _buildActionButton(
     BuildContext context, {
     required IconData icon,
@@ -1098,6 +1129,46 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
               ),
             ],
           ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildQuickPayIcon(
+    BuildContext context, {
+    required IconData icon,
+    required String label,
+    required Color color,
+    required VoidCallback onTap,
+  }) {
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(12),
+      child: Container(
+        width: 72,
+        padding: const EdgeInsets.symmetric(vertical: 8),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Container(
+              padding: const EdgeInsets.all(10),
+              decoration: BoxDecoration(
+                color: color.withValues(alpha: 0.15),
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(color: color.withValues(alpha: 0.3)),
+              ),
+              child: Icon(icon, color: color, size: 22),
+            ),
+            const SizedBox(height: 6),
+            Text(
+              label,
+              style: const TextStyle(
+                color: Colors.white,
+                fontSize: 11,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+          ],
         ),
       ),
     );

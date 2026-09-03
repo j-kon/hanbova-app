@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 import '../../../core/currency/currency_provider.dart';
 import '../../../core/market/market_provider.dart';
@@ -231,6 +232,22 @@ class _TvSubscriptionFlowScreenState
             fontWeight: FontWeight.bold,
           ),
         ),
+        actions: [
+          TextButton.icon(
+            onPressed: () => context.go('/activity?query=TV'),
+            icon: const Icon(Icons.history_rounded,
+                size: 18, color: AppColors.primary),
+            label: const Text(
+              'History',
+              style: TextStyle(
+                color: AppColors.primary,
+                fontSize: 13,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+          ),
+          const SizedBox(width: 8),
+        ],
       ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(20),
@@ -399,7 +416,7 @@ class _TvSubscriptionFlowScreenState
                           ),
                           const SizedBox(height: 2),
                           Text(
-                            '≈ ${Formatters.formatSats(sats)} sats',
+                            '≈ ${Formatters.formatSats(sats)}',
                             style: const TextStyle(
                               color: AppColors.primary,
                               fontSize: 11,

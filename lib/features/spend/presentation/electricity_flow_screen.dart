@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 import '../../../core/currency/currency_provider.dart';
 import '../../../core/market/market_provider.dart';
@@ -224,6 +225,22 @@ class _ElectricityFlowScreenState extends ConsumerState<ElectricityFlowScreen> {
             fontWeight: FontWeight.bold,
           ),
         ),
+        actions: [
+          TextButton.icon(
+            onPressed: () => context.go('/activity?query=Electricity'),
+            icon: const Icon(Icons.history_rounded,
+                size: 18, color: AppColors.primary),
+            label: const Text(
+              'History',
+              style: TextStyle(
+                color: AppColors.primary,
+                fontSize: 13,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+          ),
+          const SizedBox(width: 8),
+        ],
       ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(20),
@@ -480,7 +497,7 @@ class _ElectricityFlowScreenState extends ConsumerState<ElectricityFlowScreen> {
                   const Icon(Icons.bolt, color: AppColors.primary, size: 16),
                   const SizedBox(width: 6),
                   Text(
-                    'Bitcoin Cost: ≈ ${Formatters.formatSats(estimatedSats)} sats',
+                    'Bitcoin Cost: ≈ ${Formatters.formatSats(estimatedSats)}',
                     style: const TextStyle(
                       color: AppColors.primary,
                       fontSize: 12,

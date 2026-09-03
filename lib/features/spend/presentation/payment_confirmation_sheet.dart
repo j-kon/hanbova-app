@@ -265,8 +265,9 @@ class _PaymentConfirmationSheetState extends State<PaymentConfirmationSheet> {
                 ),
                 const Divider(color: AppColors.darkBorder, height: 20),
                 _buildRow(
-                  label: 'Network Fee',
+                  label: 'Network Fee (Sample fee)',
                   value: Formatters.formatSats(widget.feeSats),
+                  subtitle: 'Estimated demo sample fee',
                 ),
                 const Divider(color: AppColors.darkBorder, height: 20),
                 _buildRow(
@@ -319,12 +320,19 @@ class _PaymentConfirmationSheetState extends State<PaymentConfirmationSheet> {
                       valueColor: AlwaysStoppedAnimation<Color>(Colors.black),
                     ),
                   )
-                : Text(
-                    'Pay ${Formatters.formatSats(totalSats)}',
-                    style: const TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.bold,
-                    ),
+                : Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      const Icon(Icons.bolt, size: 20),
+                      const SizedBox(width: 8),
+                      Text(
+                        'Pay ${Formatters.formatSats(totalSats)}',
+                        style: const TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ],
                   ),
           ),
         ],
@@ -343,30 +351,15 @@ class _PaymentConfirmationSheetState extends State<PaymentConfirmationSheet> {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
-        Row(
+        Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            if (icon != null) ...[
-              Icon(icon, size: 16, color: AppColors.darkTextSecondary),
-              const SizedBox(width: 6),
-            ],
             Text(
               label,
-              style: const TextStyle(
-                color: AppColors.darkTextSecondary,
-                fontSize: 13,
-              ),
-            ),
-          ],
-        ),
-        Column(
-          crossAxisAlignment: CrossAxisAlignment.end,
-          children: [
-            Text(
-              value,
               style: TextStyle(
-                color: valueColor ?? Colors.white,
-                fontSize: 13,
-                fontWeight: isBold ? FontWeight.bold : FontWeight.w500,
+                color: isBold ? Colors.white : AppColors.darkTextSecondary,
+                fontSize: isBold ? 14 : 13,
+                fontWeight: isBold ? FontWeight.bold : FontWeight.normal,
               ),
             ),
             if (subtitle != null) ...[
@@ -379,6 +372,23 @@ class _PaymentConfirmationSheetState extends State<PaymentConfirmationSheet> {
                 ),
               ),
             ],
+          ],
+        ),
+        Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            if (icon != null) ...[
+              Icon(icon, size: 16, color: valueColor ?? Colors.white),
+              const SizedBox(width: 6),
+            ],
+            Text(
+              value,
+              style: TextStyle(
+                color: valueColor ?? Colors.white,
+                fontSize: isBold ? 15 : 13,
+                fontWeight: isBold ? FontWeight.bold : FontWeight.w600,
+              ),
+            ),
           ],
         ),
       ],

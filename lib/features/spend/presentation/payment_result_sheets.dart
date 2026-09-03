@@ -14,7 +14,9 @@ class PaymentSuccessSheet extends StatefulWidget {
   final String fiatCurrency;
   final int amountSats;
   final String? electricityTokenOrPin;
+  final String? serviceTitle;
   final VoidCallback onDone;
+  final VoidCallback? onBuyAgain;
 
   const PaymentSuccessSheet({
     super.key,
@@ -25,7 +27,9 @@ class PaymentSuccessSheet extends StatefulWidget {
     required this.fiatCurrency,
     required this.amountSats,
     this.electricityTokenOrPin,
+    this.serviceTitle,
     required this.onDone,
+    this.onBuyAgain,
   });
 
   static Future<void> show(
@@ -37,7 +41,9 @@ class PaymentSuccessSheet extends StatefulWidget {
     required String fiatCurrency,
     required int amountSats,
     String? electricityTokenOrPin,
+    String? serviceTitle,
     required VoidCallback onDone,
+    VoidCallback? onBuyAgain,
   }) {
     return showModalBottomSheet<void>(
       context: context,
@@ -53,7 +59,9 @@ class PaymentSuccessSheet extends StatefulWidget {
         fiatCurrency: fiatCurrency,
         amountSats: amountSats,
         electricityTokenOrPin: electricityTokenOrPin,
+        serviceTitle: serviceTitle,
         onDone: onDone,
+        onBuyAgain: onBuyAgain,
       ),
     );
   }
@@ -76,8 +84,25 @@ class _PaymentSuccessSheetState extends State<PaymentSuccessSheet> {
     }
   }
 
+  String _formatFiat(double amount, String currencyCode) {
+    final formatted = Formatters.formatSatsNumber(amount.round());
+    switch (currencyCode.toUpperCase()) {
+      case 'NGN':
+        return '₦$formatted';
+      case 'KES':
+        return 'KSh $formatted';
+      case 'GHS':
+        return 'GH₵ $formatted';
+      case 'USD':
+      default:
+        return '\$$formatted';
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
+    final title = widget.serviceTitle ?? 'Payment Successful';
+
     return Container(
       decoration: const BoxDecoration(
         color: AppColors.darkBackground,
@@ -98,11 +123,11 @@ class _PaymentSuccessSheetState extends State<PaymentSuccessSheet> {
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          // Success Badge
+          // 1. Success Icon
           Center(
             child: Container(
-              width: 64,
-              height: 64,
+              width: 60,
+              height: 60,
               decoration: BoxDecoration(
                 color: AppColors.success.withValues(alpha: 0.15),
                 shape: BoxShape.circle,
@@ -112,20 +137,21 @@ class _PaymentSuccessSheetState extends State<PaymentSuccessSheet> {
                 ),
               ),
               child: const Icon(
-                Icons.check_circle_rounded,
+                Icons.check_rounded,
                 color: AppColors.success,
-                size: 36,
+                size: 34,
               ),
             ),
           ),
-          const SizedBox(height: 16),
+          const SizedBox(height: 14),
 
-          const Center(
+          // 2. Title & Big Fiat Amount
+          Center(
             child: Text(
-              'Payment Successful',
-              style: TextStyle(
+              title,
+              style: const TextStyle(
                 color: Colors.white,
-                fontSize: 22,
+                fontSize: 18,
                 fontWeight: FontWeight.bold,
               ),
             ),
@@ -133,14 +159,66 @@ class _PaymentSuccessSheetState extends State<PaymentSuccessSheet> {
           const SizedBox(height: 6),
           Center(
             child: Text(
-              'Settled instantly via Bitcoin satoshis',
-              style: TextStyle(
-                color: Colors.white.withValues(alpha: 0.7),
-                fontSize: 13,
+              _formatFiat(widget.fiatAmount, widget.fiatCurrency),
+              style: const TextStyle(
+                color: Colors.white,
+                fontSize: 32,
+                fontWeight: FontWeight.w800,
+                letterSpacing: -0.5,
               ),
             ),
           ),
-          const SizedBox(height: 20),
+          const SizedBox(height: 12),
+
+          // 3. Recipient and Provider Pills
+          Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Container(
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                decoration: BoxDecoration(
+                  color: AppColors.darkCardBackground,
+                  borderRadius: BorderRadius.circular(8),
+                  border: Border.all(color: AppColors.darkBorder),
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    const Icon(Icons.phone_android_rounded,
+                        size: 14, color: AppColors.darkTextSecondary),
+                    const SizedBox(width: 4),
+                    Text(
+                      widget.accountReference,
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 13,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(width: 8),
+              Container(
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                decoration: BoxDecoration(
+                  color: AppColors.primary.withValues(alpha: 0.15),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: Text(
+                  widget.billerName,
+                  style: const TextStyle(
+                    color: AppColors.primary,
+                    fontSize: 13,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 18),
 
           // Token Display Box (If electricity or voucher PIN)
           if (widget.electricityTokenOrPin != null) ...[
@@ -219,29 +297,43 @@ class _PaymentSuccessSheetState extends State<PaymentSuccessSheet> {
             const SizedBox(height: 16),
           ],
 
-          // Details summary card
+          // Details summary card (Bitcoin settlement accounting)
           Container(
-            padding: const EdgeInsets.all(16),
+            padding: const EdgeInsets.all(14),
             decoration: BoxDecoration(
               color: AppColors.darkCardBackground,
-              borderRadius: BorderRadius.circular(16),
+              borderRadius: BorderRadius.circular(14),
               border: Border.all(color: AppColors.darkBorder),
             ),
-            child: Column(
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                _buildSummaryRow('Biller', widget.billerName),
-                const SizedBox(height: 10),
-                _buildSummaryRow('Account / Number', widget.accountReference),
-                const SizedBox(height: 10),
-                _buildSummaryRow(
-                  'Amount Paid',
-                  '${Formatters.formatSats(widget.amountSats)} sats',
-                  highlight: true,
+                const Row(
+                  children: [
+                    Icon(Icons.bolt_rounded,
+                        color: AppColors.primary, size: 18),
+                    SizedBox(width: 6),
+                    Text(
+                      'Bitcoin Settled',
+                      style: TextStyle(
+                        color: AppColors.darkTextSecondary,
+                        fontSize: 12,
+                      ),
+                    ),
+                  ],
+                ),
+                Text(
+                  Formatters.formatSats(widget.amountSats),
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontSize: 13,
+                    fontWeight: FontWeight.bold,
+                  ),
                 ),
               ],
             ),
           ),
-          const SizedBox(height: 16),
+          const SizedBox(height: 14),
 
           // Save Biller Checkbox Row
           GestureDetector(
@@ -262,51 +354,19 @@ class _PaymentSuccessSheetState extends State<PaymentSuccessSheet> {
                 const SizedBox(width: 10),
                 const Expanded(
                   child: Text(
-                    'Save to Pay Again billers for quick repeat',
+                    'Save to Pay Again for quick repeat',
                     style: TextStyle(
-                      color: Colors.white,
-                      fontSize: 13,
+                      color: Colors.white70,
+                      fontSize: 12,
                     ),
                   ),
                 ),
               ],
             ),
           ),
-          const SizedBox(height: 16),
+          const SizedBox(height: 18),
 
-          // Action Buttons
-          OutlinedButton.icon(
-            onPressed: () {
-              final curr = FiatCurrency.values.firstWhere(
-                (c) =>
-                    c.code.toUpperCase() == widget.fiatCurrency.toUpperCase(),
-                orElse: () => FiatCurrency.ngn,
-              );
-              TransactionReceiptSheet.show(
-                context,
-                widget.transaction,
-                curr,
-              );
-            },
-            icon: const Icon(Icons.receipt_long,
-                size: 18, color: AppColors.primary),
-            label: const Text(
-              'View Official Receipt',
-              style: TextStyle(
-                color: AppColors.primary,
-                fontWeight: FontWeight.w600,
-              ),
-            ),
-            style: OutlinedButton.styleFrom(
-              side: const BorderSide(color: AppColors.primary),
-              padding: const EdgeInsets.symmetric(vertical: 14),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(14),
-              ),
-            ),
-          ),
-          const SizedBox(height: 10),
-
+          // 4. Primary CTA: [ Done ]
           ElevatedButton(
             onPressed: () {
               Navigator.of(context).pop();
@@ -329,69 +389,106 @@ class _PaymentSuccessSheetState extends State<PaymentSuccessSheet> {
               ),
             ),
           ),
+          const SizedBox(height: 10),
+
+          // 5. Secondary Row: View Receipt & Buy Again
+          Row(
+            children: [
+              Expanded(
+                child: TextButton.icon(
+                  onPressed: () {
+                    final curr = FiatCurrency.values.firstWhere(
+                      (c) =>
+                          c.code.toUpperCase() ==
+                          widget.fiatCurrency.toUpperCase(),
+                      orElse: () => FiatCurrency.ngn,
+                    );
+                    TransactionReceiptSheet.show(
+                      context,
+                      widget.transaction,
+                      curr,
+                    );
+                  },
+                  icon: const Icon(Icons.receipt_long_outlined,
+                      size: 16, color: AppColors.primary),
+                  label: const Text(
+                    'View receipt',
+                    style: TextStyle(
+                      color: AppColors.primary,
+                      fontSize: 13,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ),
+              ),
+              if (widget.onBuyAgain != null) ...[
+                Container(height: 16, width: 1, color: AppColors.darkBorder),
+                Expanded(
+                  child: TextButton.icon(
+                    onPressed: () {
+                      Navigator.of(context).pop();
+                      widget.onBuyAgain!();
+                    },
+                    icon: const Icon(Icons.refresh_rounded,
+                        size: 16, color: AppColors.primary),
+                    label: const Text(
+                      'Buy again',
+                      style: TextStyle(
+                        color: AppColors.primary,
+                        fontSize: 13,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            ],
+          ),
         ],
       ),
-    );
-  }
-
-  Widget _buildSummaryRow(String label, String value,
-      {bool highlight = false}) {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-      children: [
-        Text(
-          label,
-          style: const TextStyle(
-            color: AppColors.darkTextSecondary,
-            fontSize: 13,
-          ),
-        ),
-        Text(
-          value,
-          style: TextStyle(
-            color: highlight ? AppColors.primary : Colors.white,
-            fontSize: 13,
-            fontWeight: highlight ? FontWeight.bold : FontWeight.w500,
-          ),
-        ),
-      ],
     );
   }
 }
 
 class PaymentUncertainSheet extends StatelessWidget {
+  final TransactionModel transaction;
   final String billerName;
-  final String accountReference;
+  final double fiatAmount;
+  final String fiatCurrency;
   final int amountSats;
-  final VoidCallback onViewPending;
   final VoidCallback onDone;
 
   const PaymentUncertainSheet({
     super.key,
+    required this.transaction,
     required this.billerName,
-    required this.accountReference,
+    required this.fiatAmount,
+    required this.fiatCurrency,
     required this.amountSats,
-    required this.onViewPending,
     required this.onDone,
   });
 
   static Future<void> show(
     BuildContext context, {
+    required TransactionModel transaction,
     required String billerName,
-    required String accountReference,
+    required double fiatAmount,
+    required String fiatCurrency,
     required int amountSats,
-    required VoidCallback onViewPending,
     required VoidCallback onDone,
   }) {
     return showModalBottomSheet<void>(
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
+      isDismissible: false,
+      enableDrag: false,
       builder: (context) => PaymentUncertainSheet(
+        transaction: transaction,
         billerName: billerName,
-        accountReference: accountReference,
+        fiatAmount: fiatAmount,
+        fiatCurrency: fiatCurrency,
         amountSats: amountSats,
-        onViewPending: onViewPending,
         onDone: onDone,
       ),
     );
@@ -404,7 +501,9 @@ class PaymentUncertainSheet extends StatelessWidget {
         color: AppColors.darkBackground,
         borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
         border: Border(
-          top: BorderSide(color: AppColors.warning, width: 1.5),
+          top: BorderSide(color: AppColors.darkBorder, width: 1),
+          left: BorderSide(color: AppColors.darkBorder, width: 1),
+          right: BorderSide(color: AppColors.darkBorder, width: 1),
         ),
       ),
       padding: EdgeInsets.only(
@@ -419,8 +518,8 @@ class PaymentUncertainSheet extends StatelessWidget {
         children: [
           Center(
             child: Container(
-              width: 64,
-              height: 64,
+              width: 60,
+              height: 60,
               decoration: BoxDecoration(
                 color: AppColors.warning.withValues(alpha: 0.15),
                 shape: BoxShape.circle,
@@ -432,58 +531,77 @@ class PaymentUncertainSheet extends StatelessWidget {
               child: const Icon(
                 Icons.hourglass_top_rounded,
                 color: AppColors.warning,
-                size: 36,
+                size: 32,
               ),
             ),
           ),
           const SizedBox(height: 16),
-
           const Center(
             child: Text(
               'Payment Processing',
               style: TextStyle(
                 color: Colors.white,
-                fontSize: 22,
+                fontSize: 20,
                 fontWeight: FontWeight.bold,
               ),
             ),
           ),
-          const SizedBox(height: 10),
-
-          // Reassurance Safety Box
+          const SizedBox(height: 6),
+          const Center(
+            child: Text(
+              'Awaiting confirmation from provider',
+              style: TextStyle(
+                color: AppColors.warning,
+                fontSize: 13,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+          ),
+          const SizedBox(height: 20),
           Container(
-            padding: const EdgeInsets.all(14),
+            padding: const EdgeInsets.all(16),
             decoration: BoxDecoration(
-              color: AppColors.warning.withValues(alpha: 0.12),
-              borderRadius: BorderRadius.circular(12),
+              color: AppColors.warning.withValues(alpha: 0.08),
+              borderRadius: BorderRadius.circular(16),
               border: Border.all(
                 color: AppColors.warning.withValues(alpha: 0.3),
               ),
             ),
-            child: const Row(
+            child: const Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Icon(Icons.info_outline, size: 18, color: AppColors.warning),
-                SizedBox(width: 10),
-                Expanded(
-                  child: Text(
-                    'Checking payment status with biller. Please don\'t pay again yet. We will update you immediately once confirmed.',
-                    style: TextStyle(
-                      color: Colors.white,
-                      fontSize: 13,
-                      height: 1.35,
+                Row(
+                  children: [
+                    Icon(Icons.info_outline,
+                        color: AppColors.warning, size: 18),
+                    SizedBox(width: 8),
+                    Text(
+                      'Please Do Not Pay Again',
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontSize: 14,
+                        fontWeight: FontWeight.bold,
+                      ),
                     ),
+                  ],
+                ),
+                SizedBox(height: 8),
+                Text(
+                  'Your payment was transmitted and satoshis reserved. The provider response is taking slightly longer than normal. Hanbova is continuously verifying the delivery.',
+                  style: TextStyle(
+                    color: AppColors.darkTextSecondary,
+                    fontSize: 12,
+                    height: 1.4,
                   ),
                 ),
               ],
             ),
           ),
           const SizedBox(height: 20),
-
           ElevatedButton(
             onPressed: () {
               Navigator.of(context).pop();
-              onViewPending();
+              onDone();
             },
             style: ElevatedButton.styleFrom(
               backgroundColor: AppColors.warning,
@@ -492,23 +610,13 @@ class PaymentUncertainSheet extends StatelessWidget {
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(14),
               ),
-              elevation: 0,
             ),
             child: const Text(
-              'View in Pending Centre',
-              style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-            ),
-          ),
-          const SizedBox(height: 10),
-
-          TextButton(
-            onPressed: () {
-              Navigator.of(context).pop();
-              onDone();
-            },
-            child: const Text(
-              'Return to Home',
-              style: TextStyle(color: AppColors.darkTextSecondary),
+              'Track in Pending Centre',
+              style: TextStyle(
+                fontSize: 15,
+                fontWeight: FontWeight.bold,
+              ),
             ),
           ),
         ],
@@ -518,31 +626,31 @@ class PaymentUncertainSheet extends StatelessWidget {
 }
 
 class PaymentFailedSheet extends StatelessWidget {
+  final String billerName;
   final String errorMessage;
   final VoidCallback onRetry;
-  final VoidCallback onDismiss;
 
   const PaymentFailedSheet({
     super.key,
+    required this.billerName,
     required this.errorMessage,
     required this.onRetry,
-    required this.onDismiss,
   });
 
   static Future<void> show(
     BuildContext context, {
+    required String billerName,
     required String errorMessage,
     required VoidCallback onRetry,
-    required VoidCallback onDismiss,
   }) {
     return showModalBottomSheet<void>(
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
       builder: (context) => PaymentFailedSheet(
+        billerName: billerName,
         errorMessage: errorMessage,
         onRetry: onRetry,
-        onDismiss: onDismiss,
       ),
     );
   }
@@ -554,7 +662,9 @@ class PaymentFailedSheet extends StatelessWidget {
         color: AppColors.darkBackground,
         borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
         border: Border(
-          top: BorderSide(color: AppColors.error, width: 1.5),
+          top: BorderSide(color: AppColors.darkBorder, width: 1),
+          left: BorderSide(color: AppColors.darkBorder, width: 1),
+          right: BorderSide(color: AppColors.darkBorder, width: 1),
         ),
       ),
       padding: EdgeInsets.only(
@@ -569,8 +679,8 @@ class PaymentFailedSheet extends StatelessWidget {
         children: [
           Center(
             child: Container(
-              width: 64,
-              height: 64,
+              width: 60,
+              height: 60,
               decoration: BoxDecoration(
                 color: AppColors.error.withValues(alpha: 0.15),
                 shape: BoxShape.circle,
@@ -582,14 +692,14 @@ class PaymentFailedSheet extends StatelessWidget {
               child: const Icon(
                 Icons.error_outline_rounded,
                 color: AppColors.error,
-                size: 36,
+                size: 32,
               ),
             ),
           ),
           const SizedBox(height: 16),
           const Center(
             child: Text(
-              'Payment Could Not Be Completed',
+              'Payment Failed',
               style: TextStyle(
                 color: Colors.white,
                 fontSize: 20,
@@ -597,35 +707,15 @@ class PaymentFailedSheet extends StatelessWidget {
               ),
             ),
           ),
-          const SizedBox(height: 10),
-          Container(
-            padding: const EdgeInsets.all(14),
-            decoration: BoxDecoration(
-              color: AppColors.darkCardBackground,
-              borderRadius: BorderRadius.circular(12),
-              border: Border.all(color: AppColors.darkBorder),
-            ),
-            child: Column(
-              children: [
-                Text(
-                  errorMessage,
-                  textAlign: TextAlign.center,
-                  style: const TextStyle(
-                    color: AppColors.darkTextSecondary,
-                    fontSize: 13,
-                  ),
-                ),
-                const SizedBox(height: 10),
-                const Text(
-                  'No Bitcoin satoshis were deducted from your wallet.',
-                  textAlign: TextAlign.center,
-                  style: TextStyle(
-                    color: AppColors.success,
-                    fontSize: 12,
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
-              ],
+          const SizedBox(height: 6),
+          Center(
+            child: Text(
+              errorMessage,
+              textAlign: TextAlign.center,
+              style: const TextStyle(
+                color: AppColors.darkTextSecondary,
+                fontSize: 13,
+              ),
             ),
           ),
           const SizedBox(height: 20),
@@ -641,22 +731,13 @@ class PaymentFailedSheet extends StatelessWidget {
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(14),
               ),
-              elevation: 0,
             ),
             child: const Text(
               'Try Again',
-              style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-            ),
-          ),
-          const SizedBox(height: 8),
-          TextButton(
-            onPressed: () {
-              Navigator.of(context).pop();
-              onDismiss();
-            },
-            child: const Text(
-              'Dismiss',
-              style: TextStyle(color: AppColors.darkTextSecondary),
+              style: TextStyle(
+                fontSize: 15,
+                fontWeight: FontWeight.bold,
+              ),
             ),
           ),
         ],

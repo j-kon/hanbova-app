@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 import '../../../core/market/country_model.dart';
 import '../../../core/market/market_provider.dart';
 import '../../../core/theme/app_colors.dart';
@@ -9,8 +10,10 @@ import '../../request_money/presentation/request_money_screen.dart';
 import 'airtime_flow_screen.dart';
 import 'data_bundle_flow_screen.dart';
 import 'electricity_flow_screen.dart';
+import 'internet_flow_screen.dart';
 import 'saved_payments_screen.dart';
 import 'tv_subscription_flow_screen.dart';
+import 'water_flow_screen.dart';
 
 class PayHubScreen extends ConsumerWidget {
   const PayHubScreen({super.key});
@@ -101,6 +104,119 @@ class PayHubScreen extends ConsumerWidget {
     );
   }
 
+  void _showDemoProviderModal(
+      BuildContext context, String providerType, String description) {
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: AppColors.darkBackground,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+        side: BorderSide(color: AppColors.darkBorder),
+      ),
+      builder: (ctx) {
+        return Container(
+          padding: const EdgeInsets.all(24),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  Container(
+                    padding: const EdgeInsets.all(10),
+                    decoration: BoxDecoration(
+                      color: AppColors.primary.withValues(alpha: 0.15),
+                      shape: BoxShape.circle,
+                    ),
+                    child: const Icon(Icons.info_outline_rounded,
+                        color: AppColors.primary, size: 22),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          '$providerType Transfer',
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontSize: 18,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                        const SizedBox(height: 2),
+                        const Text(
+                          'DEMO PREVIEW • COMING SOON',
+                          style: TextStyle(
+                            color: AppColors.primary,
+                            fontSize: 11,
+                            fontWeight: FontWeight.bold,
+                            letterSpacing: 0.5,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 16),
+              Text(
+                description,
+                style: const TextStyle(
+                  color: AppColors.darkTextSecondary,
+                  fontSize: 13,
+                  height: 1.4,
+                ),
+              ),
+              const SizedBox(height: 12),
+              Container(
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: AppColors.darkCardBackground,
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(color: AppColors.darkBorder),
+                ),
+                child: const Row(
+                  children: [
+                    Icon(Icons.shield_outlined,
+                        size: 16, color: AppColors.darkTextSecondary),
+                    SizedBox(width: 8),
+                    Expanded(
+                      child: Text(
+                        'Direct fiat settlement requires local licensed banking partner integration. No real bank accounts are accessible.',
+                        style: TextStyle(
+                          color: AppColors.darkTextSecondary,
+                          fontSize: 11,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 20),
+              SizedBox(
+                width: double.infinity,
+                child: ElevatedButton(
+                  onPressed: () => Navigator.of(ctx).pop(),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: AppColors.primary,
+                    foregroundColor: Colors.black,
+                    padding: const EdgeInsets.symmetric(vertical: 14),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                  ),
+                  child: const Text('Understood',
+                      style: TextStyle(fontWeight: FontWeight.bold)),
+                ),
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final market = ref.watch(marketProvider);
@@ -112,7 +228,7 @@ class PayHubScreen extends ConsumerWidget {
         backgroundColor: AppColors.darkBackground,
         elevation: 0,
         title: const Text(
-          'Pay & Spend Hub',
+          'Pay',
           style: TextStyle(
             color: Colors.white,
             fontSize: 20,
@@ -161,25 +277,33 @@ class PayHubScreen extends ConsumerWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Pay Again Section
-            _buildSectionHeader('Pay Again', 'Quick repeat for frequent bills'),
+            // 1. Send Money Section
+            _buildSectionHeader(
+                'Send Money', 'Instant peer-to-peer & cross-border transfers'),
+            const SizedBox(height: 12),
+            _buildSendMoneyGrid(context),
+            const SizedBox(height: 24),
+
+            // 2. Recent (Pay Again) Section
+            _buildSectionHeader(
+                'Recent', 'Quick repeat for frequent bills and contacts'),
             const SizedBox(height: 12),
             _buildPayAgainCarousel(context),
             const SizedBox(height: 28),
 
-            // Everyday Services Grid
+            // 3. Everyday Bills & Utilities Section
             _buildSectionHeader(
-                'Everyday Bills & Utilities', 'Instant Bitcoin settlement'),
+                'Everyday', 'Instant Bitcoin settlement for local bills'),
             const SizedBox(height: 14),
             _buildServicesGrid(context, spendCountry.code),
             const SizedBox(height: 28),
 
-            // Financial Actions & Management
+            // 4. More Section
             _buildSectionHeader(
-                'Payment Management', 'Cards, beneficiaries, and requests'),
+                'More', 'Payment management, beneficiaries, and cards'),
             const SizedBox(height: 12),
-            _buildManagementCards(context),
-            const SizedBox(height: 32),
+            _buildMoreCards(context),
+            const SizedBox(height: 28),
 
             // Safety Reassurance
             Container(
@@ -209,7 +333,7 @@ class PayHubScreen extends ConsumerWidget {
                         ),
                         SizedBox(height: 4),
                         Text(
-                          'Hanbova holds zero local fiat balances. Local airtime, electricity, and bills are paid on-demand directly from your satoshis.',
+                          'Hanbova holds zero local fiat balances. Local airtime, electricity, and utilities are settled on-demand directly from your satoshis.',
                           style: TextStyle(
                             color: AppColors.darkTextSecondary,
                             fontSize: 12,
@@ -253,6 +377,140 @@ class PayHubScreen extends ConsumerWidget {
     );
   }
 
+  Widget _buildSendMoneyGrid(BuildContext context) {
+    final sendOptions = [
+      {
+        'title': 'Bitcoin',
+        'subtitle': 'Lightning & On-chain',
+        'icon': Icons.bolt_rounded,
+        'color': AppColors.primary,
+        'badge': 'Instant',
+        'onTap': () => context.push('/send'),
+      },
+      {
+        'title': 'Protected',
+        'subtitle': 'Escrow with locktime',
+        'icon': Icons.shield_outlined,
+        'color': const Color(0xFF8B5CF6),
+        'badge': 'Buyer Protection',
+        'onTap': () => context.push('/protected-send'),
+      },
+      {
+        'title': 'Bank',
+        'subtitle': 'Direct bank account payout',
+        'icon': Icons.account_balance_rounded,
+        'color': const Color(0xFF38BDF8),
+        'badge': 'Demo preview',
+        'onTap': () => _showDemoProviderModal(
+              context,
+              'Bank Payout',
+              'Direct fiat payouts to local Nigerian, Kenyan, and Ghanaian bank accounts will be enabled upon external provider activation. In this demo milestone, you can test Bitcoin and Protected payments.',
+            ),
+      },
+      {
+        'title': 'Mobile Money',
+        'subtitle': 'M-Pesa, MTN MoMo, Telecel',
+        'icon': Icons.phone_iphone_rounded,
+        'color': const Color(0xFF10B981),
+        'badge': 'Demo preview',
+        'onTap': () => _showDemoProviderModal(
+              context,
+              'Mobile Money',
+              'Direct payouts to M-Pesa, MTN Mobile Money, and Telecel Cash will be connected in future integration milestones.',
+            ),
+      },
+    ];
+
+    return GridView.builder(
+      shrinkWrap: true,
+      physics: const NeverScrollableScrollPhysics(),
+      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+        crossAxisCount: 2,
+        crossAxisSpacing: 12,
+        mainAxisSpacing: 12,
+        childAspectRatio: 1.5,
+      ),
+      itemCount: sendOptions.length,
+      itemBuilder: (context, index) {
+        final item = sendOptions[index];
+        final color = item['color'] as Color;
+
+        return GestureDetector(
+          onTap: item['onTap'] as VoidCallback,
+          child: Container(
+            padding: const EdgeInsets.all(12),
+            decoration: BoxDecoration(
+              color: AppColors.darkCardBackground,
+              borderRadius: BorderRadius.circular(16),
+              border: Border.all(
+                color: color.withValues(alpha: 0.3),
+              ),
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.all(7),
+                      decoration: BoxDecoration(
+                        color: color.withValues(alpha: 0.15),
+                        shape: BoxShape.circle,
+                      ),
+                      child: Icon(item['icon'] as IconData,
+                          size: 18, color: color),
+                    ),
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 6, vertical: 2),
+                      decoration: BoxDecoration(
+                        color: color.withValues(alpha: 0.12),
+                        borderRadius: BorderRadius.circular(6),
+                      ),
+                      child: Text(
+                        item['badge'] as String,
+                        style: TextStyle(
+                          color: color,
+                          fontSize: 9,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      item['title'] as String,
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 13,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      item['subtitle'] as String,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: const TextStyle(
+                        color: AppColors.darkTextSecondary,
+                        fontSize: 10,
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
+
   Widget _buildPayAgainCarousel(BuildContext context) {
     final recentItems = [
       {
@@ -286,6 +544,17 @@ class PayHubScreen extends ConsumerWidget {
         'action': () => Navigator.of(context).push(
               MaterialPageRoute(
                   builder: (context) => const TvSubscriptionFlowScreen()),
+            ),
+      },
+      {
+        'title': 'Home Wi-Fi',
+        'subtitle': 'Spectranet ••••3819',
+        'amount': '₦ 15,000',
+        'icon': Icons.router_rounded,
+        'color': const Color(0xFF38BDF8),
+        'action': () => Navigator.of(context).push(
+              MaterialPageRoute(
+                  builder: (context) => const InternetFlowScreen()),
             ),
       },
       {
@@ -430,12 +699,12 @@ class PayHubScreen extends ConsumerWidget {
       },
       {
         'title': 'Internet',
-        'desc': 'Fibre & 5G routers',
+        'desc': 'Fibre & Wi-Fi routers',
         'icon': Icons.router_rounded,
         'color': const Color(0xFF34D399),
         'onTap': () => Navigator.of(context).push(
               MaterialPageRoute(
-                  builder: (context) => const DataBundleFlowScreen()),
+                  builder: (context) => const InternetFlowScreen()),
             ),
       },
       {
@@ -444,8 +713,7 @@ class PayHubScreen extends ConsumerWidget {
         'icon': Icons.water_drop_rounded,
         'color': const Color(0xFF60A5FA),
         'onTap': () => Navigator.of(context).push(
-              MaterialPageRoute(
-                  builder: (context) => const ElectricityFlowScreen()),
+              MaterialPageRoute(builder: (context) => const WaterFlowScreen()),
             ),
       },
     ];
@@ -512,13 +780,23 @@ class PayHubScreen extends ConsumerWidget {
     );
   }
 
-  Widget _buildManagementCards(BuildContext context) {
+  Widget _buildMoreCards(BuildContext context) {
     return Column(
       children: [
         _buildListTile(
+          icon: Icons.request_quote_rounded,
+          iconColor: const Color(0xFF10B981),
+          title: 'Request Money',
+          subtitle: 'Create payment requests and share lightning invoices',
+          onTap: () => Navigator.of(context).push(
+            MaterialPageRoute(builder: (context) => const RequestMoneyScreen()),
+          ),
+        ),
+        const SizedBox(height: 10),
+        _buildListTile(
           icon: Icons.bookmark_added_rounded,
           iconColor: AppColors.primary,
-          title: 'Saved Payments & Billers',
+          title: 'Saved Payments',
           subtitle: 'Manage saved meters, TV accounts, and recurring bills',
           onTap: () => Navigator.of(context).push(
             MaterialPageRoute(
@@ -529,7 +807,7 @@ class PayHubScreen extends ConsumerWidget {
         _buildListTile(
           icon: Icons.people_alt_rounded,
           iconColor: const Color(0xFF38BDF8),
-          title: 'Beneficiaries & Contacts',
+          title: 'Beneficiaries',
           subtitle: 'Saved peer recipients, lightning addresses, and phones',
           onTap: () => Navigator.of(context).push(
             MaterialPageRoute(
@@ -538,19 +816,9 @@ class PayHubScreen extends ConsumerWidget {
         ),
         const SizedBox(height: 10),
         _buildListTile(
-          icon: Icons.request_quote_rounded,
-          iconColor: const Color(0xFFFBBF24),
-          title: 'Request Money',
-          subtitle: 'Create payment requests and share lightning invoices',
-          onTap: () => Navigator.of(context).push(
-            MaterialPageRoute(builder: (context) => const RequestMoneyScreen()),
-          ),
-        ),
-        const SizedBox(height: 10),
-        _buildListTile(
           icon: Icons.credit_card_rounded,
           iconColor: const Color(0xFFA78BFA),
-          title: 'Virtual Travel Cards',
+          title: 'Cards',
           subtitle: 'USD Visa/Mastercard demo for global subscriptions',
           onTap: () => Navigator.of(context).push(
             MaterialPageRoute(builder: (context) => const CardsScreen()),

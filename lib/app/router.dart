@@ -41,8 +41,10 @@ import 'shell/app_shell.dart';
 import '../features/spend/presentation/airtime_flow_screen.dart';
 import '../features/spend/presentation/data_bundle_flow_screen.dart';
 import '../features/spend/presentation/electricity_flow_screen.dart';
+import '../features/spend/presentation/internet_flow_screen.dart';
 import '../features/spend/presentation/pay_hub_screen.dart';
 import '../features/spend/presentation/tv_subscription_flow_screen.dart';
+import '../features/spend/presentation/water_flow_screen.dart';
 
 final GlobalKey<NavigatorState> _rootNavigatorKey = GlobalKey<NavigatorState>();
 
@@ -212,6 +214,16 @@ final appRouterProvider = Provider<GoRouter>((ref) {
         path: '/pay/tv',
         parentNavigatorKey: _rootNavigatorKey,
         builder: (context, state) => const TvSubscriptionFlowScreen(),
+      ),
+      GoRoute(
+        path: '/pay/internet',
+        parentNavigatorKey: _rootNavigatorKey,
+        builder: (context, state) => const InternetFlowScreen(),
+      ),
+      GoRoute(
+        path: '/pay/water',
+        parentNavigatorKey: _rootNavigatorKey,
+        builder: (context, state) => const WaterFlowScreen(),
       ),
       GoRoute(
         path: '/protected',

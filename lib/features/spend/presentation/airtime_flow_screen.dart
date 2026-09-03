@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:intl/intl.dart';
-import '../../../core/currency/currency_provider.dart';
+import 'package:go_router/go_router.dart';
 import '../../../core/market/market_provider.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/utils/formatters.dart';
@@ -24,6 +23,12 @@ class OperatorOption {
   });
 }
 
+enum AirtimeRecipientMode {
+  myNumber,
+  recent,
+  someoneElse,
+}
+
 class AirtimeFlowScreen extends ConsumerStatefulWidget {
   const AirtimeFlowScreen({super.key});
 
@@ -32,11 +37,39 @@ class AirtimeFlowScreen extends ConsumerStatefulWidget {
 }
 
 class _AirtimeFlowScreenState extends ConsumerState<AirtimeFlowScreen> {
-  bool _isMyNumber = true;
+  AirtimeRecipientMode _recipientMode = AirtimeRecipientMode.myNumber;
   late TextEditingController _phoneController;
   late TextEditingController _amountController;
   String? _selectedOperatorId;
   int? _selectedPresetAmount;
+  int? _selectedRecentRecipientIndex;
+
+  final List<Map<String, String>> _recentRecipients = [
+    {
+      'name': 'Mom',
+      'phone': '+234 803 123 4567',
+      'operator': 'MTN',
+      'operatorId': 'ng-mtn',
+    },
+    {
+      'name': 'Bro David',
+      'phone': '+234 802 987 6543',
+      'operator': 'Airtel',
+      'operatorId': 'ng-airtel',
+    },
+    {
+      'name': 'Office Line',
+      'phone': '+234 805 443 2211',
+      'operator': 'Glo',
+      'operatorId': 'ng-glo',
+    },
+    {
+      'name': 'Amina (Kenya)',
+      'phone': '+254 712 345 678',
+      'operator': 'Safaricom',
+      'operatorId': 'ke-safaricom',
+    },
+  ];
 
   final Map<String, List<OperatorOption>> _countryOperators = {
     'NG': const [
@@ -103,8 +136,8 @@ class _AirtimeFlowScreenState extends ConsumerState<AirtimeFlowScreen> {
 
   @override
   void dispose() {
-    _phoneController.disposeDisposeSafely();
-    _amountController.disposeDisposeSafely();
+    _phoneController.dispose();
+    _amountController.dispose();
     super.dispose();
   }
 
@@ -144,132 +177,149 @@ class _AirtimeFlowScreenState extends ConsumerState<AirtimeFlowScreen> {
     }
   }
 
-  void _onToggleMyNumber(bool isMy) {
+  int _calculateSats(double fiatAmount, String countryCode) {
+    double rate;
+    switch (countryCode.toUpperCase()) {
+      case 'KE':
+        rate = 12500000.0;
+        break;
+      case 'GH':
+        rate = 1450000.0;
+        break;
+      case 'NG':
+      default:
+        rate = 145000000.0;
+    }
+    final btc = fiatAmount / rate;
+    return (btc * 100000000).round().clamp(10, 50000000);
+  }
+
+  void _onSelectRecipientMode(AirtimeRecipientMode mode) {
     setState(() {
-      _isMyNumber = isMy;
-      if (isMy) {
-        final market = ref.read(marketProvider);
-        if (market.spendCountry.toUpperCase() == 'KE') {
-          _phoneController.text = '+254 712 345 678';
-        } else {
-          _phoneController.text = '+234 803 123 4567';
-        }
+      _recipientMode = mode;
+      if (mode == AirtimeRecipientMode.myNumber) {
+        _phoneController.text = '+234 803 123 4567';
+        _selectedRecentRecipientIndex = null;
+      } else if (mode == AirtimeRecipientMode.recent) {
+        _selectedRecentRecipientIndex = 0;
+        _phoneController.text = _recentRecipients[0]['phone']!;
+        _selectedOperatorId = _recentRecipients[0]['operatorId'];
       } else {
         _phoneController.text = '';
+        _selectedRecentRecipientIndex = null;
       }
     });
   }
 
-  void _onSelectPreset(int amount) {
+  void _onSelectRecent(int index) {
+    setState(() {
+      _selectedRecentRecipientIndex = index;
+      _phoneController.text = _recentRecipients[index]['phone']!;
+      _selectedOperatorId = _recentRecipients[index]['operatorId'];
+    });
+  }
+
+  void _handlePresetSelect(int amount) {
     setState(() {
       _selectedPresetAmount = amount;
       _amountController.text = amount.toString();
     });
   }
 
-  void _onCustomAmountChanged(String val) {
-    final parsed = int.tryParse(val.replaceAll(RegExp(r'[^0-9]'), ''));
-    setState(() {
-      _selectedPresetAmount = parsed;
-    });
-  }
+  Future<void> _handleContinueToPay(String countryCode) async {
+    final amount = double.tryParse(_amountController.text.trim()) ?? 0.0;
+    if (amount <= 0) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Please select or enter an amount'),
+          backgroundColor: AppColors.error,
+        ),
+      );
+      return;
+    }
 
-  Future<void> _proceedToConfirmation() async {
-    final market = ref.read(marketProvider);
-    final countryCode = market.spendCountry.toUpperCase();
-    final currencyCode = _formatCurrencyCode(countryCode);
-    final amount = double.tryParse(_amountController.text) ?? 0.0;
-    if (amount <= 0) return;
+    final phone = _phoneController.text.trim();
+    if (phone.length < 8) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Please enter a valid phone number'),
+          backgroundColor: AppColors.error,
+        ),
+      );
+      return;
+    }
 
     final operators =
         _countryOperators[countryCode] ?? _countryOperators['NG']!;
-    final op = operators.firstWhere(
-      (o) => o.id == _selectedOperatorId,
+    final operator = operators.firstWhere(
+      (op) => op.id == _selectedOperatorId,
       orElse: () => operators.first,
     );
 
-    // Dynamic sats conversion
-    final currency = ref.read(currencyProvider);
-    final amountSats = currency.fiatToSats(amount);
+    final sats = _calculateSats(amount, countryCode);
+    final fiatCode = _formatCurrencyCode(countryCode);
 
-    final confirmed = await PaymentConfirmationSheet.show(
+    await PaymentConfirmationSheet.show(
       context,
-      title: 'Confirm Airtime Recharge',
-      billerName: '${op.name} Airtime',
-      accountReference: _phoneController.text.trim(),
+      title: 'Confirm Airtime Purchase',
+      billerName: operator.name,
+      accountReference: phone,
       fiatAmount: amount,
-      fiatCurrency: currencyCode,
-      amountSats: amountSats,
-      feeSats: 50,
+      fiatCurrency: fiatCode,
+      amountSats: sats,
       serviceIcon: Icons.phone_android_rounded,
       onConfirm: () async {
-        // Record in transactions list
+        await Future.delayed(const Duration(milliseconds: 500));
+
         final tx = TransactionModel(
-          id: 'tx-airtime-${DateTime.now().millisecondsSinceEpoch}',
+          id: 'air_${DateTime.now().millisecondsSinceEpoch}',
           type: TransactionType.airtime,
           status: TransactionStatus.completed,
-          amountSats: amountSats,
-          recipientOrSender: _phoneController.text.trim(),
-          description: '${op.name} Airtime Recharge',
-          createdAt: DateTime.now(),
+          amountSats: sats,
           fiatAmount: amount,
-          fiatCurrency: currencyCode,
-          feeSats: 50,
-          billerName: '${op.name} Airtime',
-          accountReference: _phoneController.text.trim(),
-          paymentMethod: 'Bitcoin Wallet',
+          fiatCurrency: fiatCode,
+          recipientOrSender: operator.name,
+          billerName: operator.name,
+          accountReference: phone,
+          receiptReference:
+              'AIR-${DateTime.now().millisecondsSinceEpoch % 1000000}',
           spendCountry: countryCode,
-          receiptReference: 'AIR-${DateTime.now().millisecondsSinceEpoch}',
+          description: '${operator.name} Airtime Recharge ($phone)',
+          createdAt: DateTime.now(),
         );
 
         ref.read(transactionsProvider.notifier).addTransaction(tx);
+
+        if (mounted) {
+          PaymentSuccessSheet.show(
+            context,
+            transaction: tx,
+            billerName: operator.name,
+            accountReference: phone,
+            fiatAmount: amount,
+            fiatCurrency: fiatCode,
+            amountSats: sats,
+            serviceTitle: 'Airtime sent',
+            onDone: () => Navigator.of(context).pop(),
+            onBuyAgain: () {
+              // Stay on airtime screen to buy again
+            },
+          );
+        }
       },
     );
-
-    if (confirmed == true && mounted) {
-      final tx = TransactionModel(
-        id: 'tx-airtime-recent',
-        type: TransactionType.airtime,
-        status: TransactionStatus.completed,
-        amountSats: amountSats,
-        recipientOrSender: _phoneController.text.trim(),
-        description: '${op.name} Airtime Recharge',
-        createdAt: DateTime.now(),
-        fiatAmount: amount,
-        fiatCurrency: currencyCode,
-        feeSats: 50,
-        billerName: '${op.name} Airtime',
-        accountReference: _phoneController.text.trim(),
-        paymentMethod: 'Bitcoin Wallet',
-        spendCountry: countryCode,
-        receiptReference: 'AIR-REC-${DateTime.now().millisecondsSinceEpoch}',
-      );
-
-      await PaymentSuccessSheet.show(
-        context,
-        transaction: tx,
-        billerName: '${op.name} Airtime',
-        accountReference: _phoneController.text.trim(),
-        fiatAmount: amount,
-        fiatCurrency: currencyCode,
-        amountSats: amountSats,
-        onDone: () => Navigator.of(context).pop(),
-      );
-    }
   }
 
   @override
   Widget build(BuildContext context) {
     final market = ref.watch(marketProvider);
-    final currency = ref.watch(currencyProvider);
     final countryCode = market.spendCountry.toUpperCase();
     final operators =
         _countryOperators[countryCode] ?? _countryOperators['NG']!;
     final presets = _getPresets(countryCode);
-    final sym = _currencySymbol(countryCode);
-
-    final amount = double.tryParse(_amountController.text) ?? 0.0;
-    final estimatedSats = currency.fiatToSats(amount);
+    final currencySymbol = _currencySymbol(countryCode);
+    final currentAmount = double.tryParse(_amountController.text.trim()) ?? 0.0;
+    final currentSats = _calculateSats(currentAmount, countryCode);
 
     return Scaffold(
       backgroundColor: AppColors.darkBackground,
@@ -285,181 +335,192 @@ class _AirtimeFlowScreenState extends ConsumerState<AirtimeFlowScreen> {
           ),
         ),
         actions: [
-          Container(
-            margin: const EdgeInsets.only(right: 16),
-            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-            decoration: BoxDecoration(
-              color: AppColors.darkCardBackground,
-              borderRadius: BorderRadius.circular(12),
-              border: Border.all(color: AppColors.darkBorder),
-            ),
-            child: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Text(market.spendCountryInfo.flagEmoji,
-                    style: const TextStyle(fontSize: 14)),
-                const SizedBox(width: 4),
-                Text(
-                  market.spendCountryInfo.code,
-                  style: const TextStyle(
-                    color: Colors.white,
-                    fontSize: 12,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-              ],
+          TextButton.icon(
+            onPressed: () => context.go('/activity?query=Airtime'),
+            icon: const Icon(Icons.history_rounded,
+                size: 18, color: AppColors.primary),
+            label: const Text(
+              'History',
+              style: TextStyle(
+                color: AppColors.primary,
+                fontSize: 13,
+                fontWeight: FontWeight.bold,
+              ),
             ),
           ),
+          const SizedBox(width: 8),
         ],
       ),
       body: SingleChildScrollView(
-        padding: const EdgeInsets.all(20),
+        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Target Number Toggle
+            // 1. Recipient Selector Segmented Tabs
             Container(
               padding: const EdgeInsets.all(4),
               decoration: BoxDecoration(
                 color: AppColors.darkCardBackground,
-                borderRadius: BorderRadius.circular(12),
+                borderRadius: BorderRadius.circular(14),
                 border: Border.all(color: AppColors.darkBorder),
               ),
               child: Row(
                 children: [
-                  Expanded(
-                    child: InkWell(
-                      onTap: () => _onToggleMyNumber(true),
-                      borderRadius: BorderRadius.circular(10),
-                      child: Container(
-                        padding: const EdgeInsets.symmetric(vertical: 10),
-                        decoration: BoxDecoration(
-                          color: _isMyNumber
-                              ? AppColors.primary
-                              : Colors.transparent,
-                          borderRadius: BorderRadius.circular(10),
-                        ),
-                        alignment: Alignment.center,
-                        child: Text(
-                          'My Number',
-                          style: TextStyle(
-                            color: _isMyNumber ? Colors.black : Colors.white,
-                            fontSize: 13,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                      ),
-                    ),
+                  _buildSegment(
+                    'My Number',
+                    AirtimeRecipientMode.myNumber,
+                    Icons.person_rounded,
                   ),
-                  Expanded(
-                    child: InkWell(
-                      onTap: () => _onToggleMyNumber(false),
-                      borderRadius: BorderRadius.circular(10),
-                      child: Container(
-                        padding: const EdgeInsets.symmetric(vertical: 10),
-                        decoration: BoxDecoration(
-                          color: !_isMyNumber
-                              ? AppColors.primary
-                              : Colors.transparent,
-                          borderRadius: BorderRadius.circular(10),
-                        ),
-                        alignment: Alignment.center,
-                        child: Text(
-                          'Someone Else',
-                          style: TextStyle(
-                            color: !_isMyNumber ? Colors.black : Colors.white,
-                            fontSize: 13,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                      ),
-                    ),
+                  _buildSegment(
+                    'Recent',
+                    AirtimeRecipientMode.recent,
+                    Icons.history_rounded,
+                  ),
+                  _buildSegment(
+                    'Someone Else',
+                    AirtimeRecipientMode.someoneElse,
+                    Icons.contacts_rounded,
                   ),
                 ],
               ),
             ),
-            const SizedBox(height: 20),
+            const SizedBox(height: 16),
 
-            // Operator Selector
-            const Text(
-              'Select Mobile Operator',
-              style: TextStyle(
-                color: AppColors.darkTextSecondary,
-                fontSize: 13,
-                fontWeight: FontWeight.w600,
+            // Recent Recipients Chips (When in Recent mode)
+            if (_recipientMode == AirtimeRecipientMode.recent) ...[
+              const Text(
+                'Recent Recipients',
+                style: TextStyle(
+                  color: Colors.white,
+                  fontSize: 13,
+                  fontWeight: FontWeight.w600,
+                ),
               ),
-            ),
-            const SizedBox(height: 10),
-            Row(
-              children: operators.map((op) {
-                final isSelected = _selectedOperatorId == op.id;
-                return Expanded(
-                  child: GestureDetector(
-                    onTap: () => setState(() => _selectedOperatorId = op.id),
-                    child: Container(
-                      margin: const EdgeInsets.symmetric(horizontal: 4),
-                      padding: const EdgeInsets.symmetric(vertical: 12),
-                      decoration: BoxDecoration(
-                        color: isSelected
-                            ? op.brandColor.withValues(alpha: 0.2)
-                            : AppColors.darkCardBackground,
-                        borderRadius: BorderRadius.circular(12),
-                        border: Border.all(
-                          color:
-                              isSelected ? op.brandColor : AppColors.darkBorder,
-                          width: isSelected ? 2 : 1,
-                        ),
-                      ),
-                      alignment: Alignment.center,
-                      child: Text(
-                        op.name,
-                        style: TextStyle(
+              const SizedBox(height: 8),
+              SingleChildScrollView(
+                scrollDirection: Axis.horizontal,
+                child: Row(
+                  children: _recentRecipients.asMap().entries.map((entry) {
+                    final idx = entry.key;
+                    final rec = entry.value;
+                    final isSelected = _selectedRecentRecipientIndex == idx;
+
+                    return GestureDetector(
+                      onTap: () => _onSelectRecent(idx),
+                      child: Container(
+                        margin: const EdgeInsets.only(right: 8),
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 12, vertical: 8),
+                        decoration: BoxDecoration(
                           color: isSelected
-                              ? Colors.white
-                              : AppColors.darkTextSecondary,
-                          fontSize: 13,
-                          fontWeight: FontWeight.bold,
+                              ? AppColors.primary.withValues(alpha: 0.15)
+                              : AppColors.darkCardBackground,
+                          borderRadius: BorderRadius.circular(12),
+                          border: Border.all(
+                            color: isSelected
+                                ? AppColors.primary
+                                : AppColors.darkBorder,
+                            width: isSelected ? 1.5 : 1,
+                          ),
+                        ),
+                        child: Row(
+                          children: [
+                            CircleAvatar(
+                              radius: 12,
+                              backgroundColor:
+                                  AppColors.primary.withValues(alpha: 0.2),
+                              child: Text(
+                                rec['name']![0],
+                                style: const TextStyle(
+                                  color: AppColors.primary,
+                                  fontSize: 11,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                            ),
+                            const SizedBox(width: 8),
+                            Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  rec['name']!,
+                                  style: TextStyle(
+                                    color: isSelected
+                                        ? Colors.white
+                                        : Colors.white70,
+                                    fontSize: 12,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
+                                Text(
+                                  '${rec['operator']} • ${rec['phone']}',
+                                  style: const TextStyle(
+                                    color: AppColors.darkTextSecondary,
+                                    fontSize: 10,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ],
                         ),
                       ),
-                    ),
-                  ),
-                );
-              }).toList(),
-            ),
-            const SizedBox(height: 24),
+                    );
+                  }).toList(),
+                ),
+              ),
+              const SizedBox(height: 16),
+            ],
 
             // Phone Number Input
-            const Text(
-              'Phone Number',
-              style: TextStyle(
-                color: AppColors.darkTextSecondary,
-                fontSize: 13,
-                fontWeight: FontWeight.w600,
-              ),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                const Text(
+                  'Phone Number',
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontSize: 13,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+                if (_recipientMode == AirtimeRecipientMode.someoneElse)
+                  GestureDetector(
+                    onTap: () {
+                      _phoneController.text = '+234 809 999 0000';
+                      setState(() {});
+                    },
+                    child: const Row(
+                      children: [
+                        Icon(Icons.contacts,
+                            size: 14, color: AppColors.primary),
+                        SizedBox(width: 4),
+                        Text(
+                          'Contacts',
+                          style: TextStyle(
+                            color: AppColors.primary,
+                            fontSize: 12,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+              ],
             ),
-            const SizedBox(height: 8),
+            const SizedBox(height: 6),
             TextField(
               controller: _phoneController,
               keyboardType: TextInputType.phone,
               style: const TextStyle(color: Colors.white, fontSize: 16),
               decoration: InputDecoration(
+                hintText: '+234 800 000 0000',
+                hintStyle: const TextStyle(color: AppColors.darkTextSecondary),
                 filled: true,
                 fillColor: AppColors.darkCardBackground,
-                prefixIcon: const Icon(Icons.phone_android,
-                    color: AppColors.darkTextSecondary, size: 20),
-                suffixIcon: IconButton(
-                  icon: const Icon(Icons.contacts_rounded,
-                      color: AppColors.primary, size: 20),
-                  onPressed: () {
-                    // Pre-fill a sample contact
-                    setState(() {
-                      _phoneController.text = '+234 802 987 6543';
-                      _isMyNumber = false;
-                    });
-                  },
-                ),
-                hintText: 'Enter phone number',
-                hintStyle: const TextStyle(color: AppColors.darkTextSecondary),
+                prefixIcon: const Icon(Icons.phone_iphone_rounded,
+                    color: AppColors.primary, size: 20),
+                contentPadding:
+                    const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
                 border: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(12),
                   borderSide: const BorderSide(color: AppColors.darkBorder),
@@ -474,39 +535,108 @@ class _AirtimeFlowScreenState extends ConsumerState<AirtimeFlowScreen> {
                 ),
               ),
             ),
-            const SizedBox(height: 24),
+            const SizedBox(height: 20),
 
-            // Amount Presets
+            // 2. Operator Network Selector
             const Text(
-              'Select Amount',
+              'Select Operator Network',
               style: TextStyle(
-                color: AppColors.darkTextSecondary,
+                color: Colors.white,
                 fontSize: 13,
                 fontWeight: FontWeight.w600,
               ),
             ),
-            const SizedBox(height: 10),
+            const SizedBox(height: 8),
+            Row(
+              children: operators.map((op) {
+                final isSelected = op.id == _selectedOperatorId;
+                return Expanded(
+                  child: GestureDetector(
+                    onTap: () => setState(() => _selectedOperatorId = op.id),
+                    child: Container(
+                      margin: const EdgeInsets.symmetric(horizontal: 4),
+                      padding: const EdgeInsets.symmetric(vertical: 10),
+                      decoration: BoxDecoration(
+                        color: isSelected
+                            ? op.brandColor.withValues(alpha: 0.18)
+                            : AppColors.darkCardBackground,
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(
+                          color:
+                              isSelected ? op.brandColor : AppColors.darkBorder,
+                          width: isSelected ? 1.5 : 1,
+                        ),
+                      ),
+                      child: Column(
+                        children: [
+                          Container(
+                            width: 14,
+                            height: 14,
+                            decoration: BoxDecoration(
+                              color: op.brandColor,
+                              shape: BoxShape.circle,
+                            ),
+                          ),
+                          const SizedBox(height: 6),
+                          Text(
+                            op.name,
+                            style: TextStyle(
+                              color: isSelected ? Colors.white : Colors.white70,
+                              fontSize: 12,
+                              fontWeight: isSelected
+                                  ? FontWeight.bold
+                                  : FontWeight.normal,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                );
+              }).toList(),
+            ),
+            const SizedBox(height: 20),
+
+            // 3. Amount Presets
+            const Text(
+              'Select Amount',
+              style: TextStyle(
+                color: Colors.white,
+                fontSize: 13,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+            const SizedBox(height: 8),
             Wrap(
               spacing: 8,
               runSpacing: 8,
-              children: presets.map((preset) {
-                final isSelected = _selectedPresetAmount == preset;
-                return ChoiceChip(
-                  label: Text('$sym ${NumberFormat('#,##0').format(preset)}'),
-                  selected: isSelected,
-                  onSelected: (_) => _onSelectPreset(preset),
-                  selectedColor: AppColors.primary,
-                  backgroundColor: AppColors.darkCardBackground,
-                  labelStyle: TextStyle(
-                    color: isSelected ? Colors.black : Colors.white,
-                    fontWeight: FontWeight.bold,
-                    fontSize: 13,
-                  ),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(10),
-                    side: BorderSide(
-                      color:
-                          isSelected ? AppColors.primary : AppColors.darkBorder,
+              children: presets.map((p) {
+                final isSelected = _selectedPresetAmount == p;
+                return GestureDetector(
+                  onTap: () => _handlePresetSelect(p),
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 16, vertical: 10),
+                    decoration: BoxDecoration(
+                      color: isSelected
+                          ? AppColors.primary.withValues(alpha: 0.15)
+                          : AppColors.darkCardBackground,
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(
+                        color: isSelected
+                            ? AppColors.primary
+                            : AppColors.darkBorder,
+                        width: isSelected ? 1.5 : 1,
+                      ),
+                    ),
+                    child: Text(
+                      '$currencySymbol ${Formatters.formatSatsNumber(p)}',
+                      style: TextStyle(
+                        color: isSelected ? AppColors.primary : Colors.white,
+                        fontSize: 13,
+                        fontWeight:
+                            isSelected ? FontWeight.bold : FontWeight.w500,
+                      ),
                     ),
                   ),
                 );
@@ -515,29 +645,38 @@ class _AirtimeFlowScreenState extends ConsumerState<AirtimeFlowScreen> {
             const SizedBox(height: 16),
 
             // Custom Amount Input
+            Text(
+              'Custom Amount ($currencySymbol)',
+              style: const TextStyle(
+                color: Colors.white,
+                fontSize: 13,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+            const SizedBox(height: 6),
             TextField(
               controller: _amountController,
               keyboardType: TextInputType.number,
-              onChanged: _onCustomAmountChanged,
+              onChanged: (val) {
+                setState(() {
+                  _selectedPresetAmount = int.tryParse(val);
+                });
+              },
               style: const TextStyle(
                 color: Colors.white,
-                fontSize: 20,
+                fontSize: 18,
                 fontWeight: FontWeight.bold,
               ),
               decoration: InputDecoration(
+                prefixText: '$currencySymbol ',
+                prefixStyle: const TextStyle(
+                    color: Colors.white,
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold),
                 filled: true,
                 fillColor: AppColors.darkCardBackground,
-                prefixText: '$sym ',
-                prefixStyle: const TextStyle(
-                  color: AppColors.primary,
-                  fontSize: 20,
-                  fontWeight: FontWeight.bold,
-                ),
-                hintText: 'Custom amount',
-                hintStyle: const TextStyle(
-                  color: AppColors.darkTextSecondary,
-                  fontSize: 16,
-                ),
+                contentPadding:
+                    const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
                 border: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(12),
                   borderSide: const BorderSide(color: AppColors.darkBorder),
@@ -552,21 +691,24 @@ class _AirtimeFlowScreenState extends ConsumerState<AirtimeFlowScreen> {
                 ),
               ),
             ),
-            const SizedBox(height: 10),
+            const SizedBox(height: 12),
 
-            // Live Satoshi Deduction Display
+            // Live Sats preview badge
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
               decoration: BoxDecoration(
                 color: AppColors.primary.withValues(alpha: 0.1),
-                borderRadius: BorderRadius.circular(8),
+                borderRadius: BorderRadius.circular(10),
+                border: Border.all(
+                  color: AppColors.primary.withValues(alpha: 0.3),
+                ),
               ),
               child: Row(
                 children: [
                   const Icon(Icons.bolt, color: AppColors.primary, size: 16),
                   const SizedBox(width: 6),
                   Text(
-                    'Estimated Satoshi Cost: ≈ ${Formatters.formatSats(estimatedSats)} sats',
+                    'Estimated Bitcoin cost: ${Formatters.formatSats(currentSats)}',
                     style: const TextStyle(
                       color: AppColors.primary,
                       fontSize: 12,
@@ -576,13 +718,13 @@ class _AirtimeFlowScreenState extends ConsumerState<AirtimeFlowScreen> {
                 ],
               ),
             ),
-            const SizedBox(height: 32),
+            const SizedBox(height: 24),
 
-            // Submit Button
+            // 4. Continue Action Button
             SizedBox(
               width: double.infinity,
               child: ElevatedButton(
-                onPressed: amount > 0 ? _proceedToConfirmation : null,
+                onPressed: () => _handleContinueToPay(countryCode),
                 style: ElevatedButton.styleFrom(
                   backgroundColor: AppColors.primary,
                   foregroundColor: Colors.black,
@@ -593,20 +735,54 @@ class _AirtimeFlowScreenState extends ConsumerState<AirtimeFlowScreen> {
                   elevation: 0,
                 ),
                 child: const Text(
-                  'Continue to Confirmation',
-                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                  'Continue to Pay',
+                  style: TextStyle(
+                    fontSize: 15,
+                    fontWeight: FontWeight.bold,
+                  ),
                 ),
               ),
             ),
+            const SizedBox(height: 40),
           ],
         ),
       ),
     );
   }
-}
 
-extension SafeDispose on TextEditingController {
-  void disposeDisposeSafely() {
-    dispose();
+  Widget _buildSegment(String label, AirtimeRecipientMode mode, IconData icon) {
+    final isSelected = _recipientMode == mode;
+    return Expanded(
+      child: GestureDetector(
+        onTap: () => _onSelectRecipientMode(mode),
+        child: Container(
+          padding: const EdgeInsets.symmetric(vertical: 8),
+          decoration: BoxDecoration(
+            color: isSelected ? AppColors.primary : Colors.transparent,
+            borderRadius: BorderRadius.circular(10),
+          ),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(
+                icon,
+                size: 14,
+                color: isSelected ? Colors.black : AppColors.darkTextSecondary,
+              ),
+              const SizedBox(width: 4),
+              Text(
+                label,
+                style: TextStyle(
+                  color:
+                      isSelected ? Colors.black : AppColors.darkTextSecondary,
+                  fontSize: 12,
+                  fontWeight: isSelected ? FontWeight.bold : FontWeight.w600,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
   }
 }
