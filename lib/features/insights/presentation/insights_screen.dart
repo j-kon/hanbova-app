@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:hanbova_app/core/currency/currency_provider.dart';
+import 'package:hanbova_app/core/demo/demo_mode_provider.dart';
 import 'package:hanbova_app/core/security/privacy_provider.dart';
 import 'package:hanbova_app/core/theme/app_colors.dart';
 import 'package:intl/intl.dart';
@@ -32,6 +33,7 @@ class _InsightsScreenState extends ConsumerState<InsightsScreen> {
   Widget build(BuildContext context) {
     final currency = ref.watch(currencyProvider);
     final privacy = ref.watch(privacyProvider);
+    final demoState = ref.watch(demoModeProvider);
 
     // Filter aggregated statistics based on demo dataset
     final int moneyInSats = 950000;
@@ -56,6 +58,36 @@ class _InsightsScreenState extends ConsumerState<InsightsScreen> {
       body: ListView(
         padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
         children: [
+          // Demo Banner
+          if (demoState.isEnabled)
+            Container(
+              margin: const EdgeInsets.only(bottom: 12),
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+              decoration: BoxDecoration(
+                color: AppColors.primary.withValues(alpha: 0.15),
+                borderRadius: BorderRadius.circular(10),
+                border: Border.all(
+                  color: AppColors.primary.withValues(alpha: 0.4),
+                ),
+              ),
+              child: const Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(Icons.info_outline, size: 16, color: AppColors.primary),
+                  SizedBox(width: 8),
+                  Text(
+                    'DEMO MODE • SAMPLE DATA • NO REAL MONEY',
+                    style: TextStyle(
+                      color: AppColors.primary,
+                      fontSize: 11,
+                      fontWeight: FontWeight.bold,
+                      letterSpacing: 0.8,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+
           // Period Selector Pills
           SingleChildScrollView(
             scrollDirection: Axis.horizontal,
@@ -171,7 +203,7 @@ class _InsightsScreenState extends ConsumerState<InsightsScreen> {
             color: const Color(0xFFF7931A),
           ),
           _buildCategoryItem(
-            name: 'Protected Escrow',
+            name: 'Protected Payments',
             satsAmount: 300000,
             percent: '74%',
             currency: currency,

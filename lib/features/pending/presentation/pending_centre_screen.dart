@@ -186,7 +186,7 @@ class PendingCentreScreen extends ConsumerWidget {
                 ),
                 const SizedBox(height: 8),
                 Text(
-                  'Escrow locktime expired for uncollected payment to merchant.',
+                  'Protection window expired for uncollected payment to merchant.',
                   style: const TextStyle(
                     color: AppColors.darkTextSecondary,
                     fontSize: 12,
@@ -249,7 +249,7 @@ class PendingCentreScreen extends ConsumerWidget {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       const Text(
-                        'Protected Escrow (300,000 sats)',
+                        'Protected Payment (300,000 sats)',
                         style: TextStyle(
                           color: Colors.white,
                           fontSize: 14,

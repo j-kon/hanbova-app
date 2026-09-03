@@ -60,7 +60,37 @@ class _MoneyScreenState extends ConsumerState<MoneyScreen> {
       body: ListView(
         padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
         children: [
-          // Total Balance Card
+          // Demo Banner
+          if (demoState.isEnabled)
+            Container(
+              margin: const EdgeInsets.only(bottom: 16),
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+              decoration: BoxDecoration(
+                color: AppColors.primary.withValues(alpha: 0.15),
+                borderRadius: BorderRadius.circular(10),
+                border: Border.all(
+                  color: AppColors.primary.withValues(alpha: 0.4),
+                ),
+              ),
+              child: const Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(Icons.info_outline, size: 16, color: AppColors.primary),
+                  SizedBox(width: 8),
+                  Text(
+                    'DEMO MODE • SAMPLE DATA • NO REAL MONEY',
+                    style: TextStyle(
+                      color: AppColors.primary,
+                      fontSize: 11,
+                      fontWeight: FontWeight.bold,
+                      letterSpacing: 0.8,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+
+          // Primary Authoritative Bitcoin Balance Card
           Container(
             padding: const EdgeInsets.all(24),
             decoration: BoxDecoration(
@@ -82,7 +112,7 @@ class _MoneyScreenState extends ConsumerState<MoneyScreen> {
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
                     const Text(
-                      'TOTAL WALLET BALANCE',
+                      'BITCOIN BALANCE',
                       style: TextStyle(
                         color: AppColors.darkTextSecondary,
                         fontSize: 12,
@@ -94,18 +124,18 @@ class _MoneyScreenState extends ConsumerState<MoneyScreen> {
                       padding: const EdgeInsets.symmetric(
                           horizontal: 8, vertical: 4),
                       decoration: BoxDecoration(
-                        color: AppColors.primary.withValues(alpha: 0.15),
+                        color: const Color(0xFF10B981).withValues(alpha: 0.15),
                         borderRadius: BorderRadius.circular(8),
                       ),
                       child: const Row(
                         children: [
-                          Icon(Icons.currency_bitcoin,
-                              size: 14, color: AppColors.primary),
+                          Icon(Icons.check_circle_outline,
+                              size: 14, color: Color(0xFF10B981)),
                           SizedBox(width: 4),
                           Text(
-                            'Bitcoin Core Asset',
+                            'Available to spend',
                             style: TextStyle(
-                              color: AppColors.primary,
+                              color: Color(0xFF10B981),
                               fontSize: 11,
                               fontWeight: FontWeight.w600,
                             ),
@@ -119,7 +149,7 @@ class _MoneyScreenState extends ConsumerState<MoneyScreen> {
                 Text(
                   privacy.isBalanceHidden
                       ? '•••••• sats'
-                      : '${_numberFormat.format(totalSats)} sats',
+                      : '${_numberFormat.format(availableSats)} sats',
                   style: const TextStyle(
                     color: Colors.white,
                     fontSize: 32,
@@ -130,7 +160,7 @@ class _MoneyScreenState extends ConsumerState<MoneyScreen> {
                 Text(
                   privacy.isBalanceHidden
                       ? '≈ ••••••'
-                      : '≈ ${currency.format(totalSats)}',
+                      : '≈ ${currency.format(availableSats)}',
                   style: TextStyle(
                     color: AppColors.primary.withValues(alpha: 0.9),
                     fontSize: 18,
@@ -146,12 +176,12 @@ class _MoneyScreenState extends ConsumerState<MoneyScreen> {
                   ),
                   child: const Row(
                     children: [
-                      Icon(Icons.info_outline,
+                      Icon(Icons.account_balance_wallet_outlined,
                           size: 16, color: AppColors.darkTextSecondary),
                       SizedBox(width: 8),
                       Expanded(
                         child: Text(
-                          'Your funds are held 100% in genuine Bitcoin sats. Display currencies are reference conversions only.',
+                          'Authoritative spendable wallet balance ready for instant payments and transfers.',
                           style: TextStyle(
                             color: AppColors.darkTextSecondary,
                             fontSize: 11,
@@ -165,37 +195,32 @@ class _MoneyScreenState extends ConsumerState<MoneyScreen> {
             ),
           ),
 
-          const SizedBox(height: 20),
+          const SizedBox(height: 24),
 
-          // Balances Breakdown Grid
+          // Money in Motion Section
           const Text(
-            'Balance Breakdown',
+            'Money in motion',
             style: TextStyle(
               color: Colors.white,
               fontSize: 16,
               fontWeight: FontWeight.bold,
             ),
           ),
+          const SizedBox(height: 4),
+          const Text(
+            'Funds locked in protection or awaiting network settlement',
+            style: TextStyle(
+              color: AppColors.darkTextSecondary,
+              fontSize: 12,
+            ),
+          ),
           const SizedBox(height: 12),
 
-          // Available Balance Card
+          // Protected Payments Card
           _buildBreakdownCard(
-            title: 'Available Balance',
-            subtitle: 'Ready to spend, send, or transfer immediately',
-            satsAmount: availableSats,
-            currency: currency,
-            isHidden: privacy.isBalanceHidden,
-            icon: Icons.account_balance_wallet_outlined,
-            iconColor: const Color(0xFF10B981),
-          ),
-
-          const SizedBox(height: 10),
-
-          // Protected Balance Card
-          _buildBreakdownCard(
-            title: 'Protected Balance',
+            title: 'Protected payments',
             subtitle:
-                'Locked in conditional escrow (${_numberFormat.format(demoState.protectedWaitingSats)} sats waiting, ${_numberFormat.format(demoState.protectedRefundableSats)} sats refundable)',
+                'Locked in conditional protection (${_numberFormat.format(demoState.protectedWaitingSats)} sats waiting, ${_numberFormat.format(demoState.protectedRefundableSats)} sats refundable)',
             satsAmount: protectedSats,
             currency: currency,
             isHidden: privacy.isBalanceHidden,
@@ -212,9 +237,9 @@ class _MoneyScreenState extends ConsumerState<MoneyScreen> {
 
           const SizedBox(height: 10),
 
-          // Pending Balance Card
+          // Pending & In Flight Card
           _buildBreakdownCard(
-            title: 'Pending & In Flight',
+            title: 'Pending',
             subtitle: '1 processing payment, 1 uncertain verification',
             satsAmount: pendingSats,
             currency: currency,
@@ -228,6 +253,50 @@ class _MoneyScreenState extends ConsumerState<MoneyScreen> {
                 MaterialPageRoute(builder: (_) => const PendingCentreScreen()),
               );
             },
+          ),
+
+          const SizedBox(height: 14),
+
+          // Portfolio Reference Summary Card
+          Container(
+            padding: const EdgeInsets.all(14),
+            decoration: BoxDecoration(
+              color: AppColors.darkCardBackground,
+              borderRadius: BorderRadius.circular(14),
+              border: Border.all(color: AppColors.darkBorder),
+            ),
+            child: Row(
+              children: [
+                const Icon(Icons.pie_chart_outline,
+                    size: 20, color: AppColors.darkTextSecondary),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        privacy.isBalanceHidden
+                            ? 'Portfolio Total: •••••• sats'
+                            : 'Portfolio Total: ${_numberFormat.format(totalSats)} sats (≈ ${currency.format(totalSats)})',
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontSize: 13,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                      const SizedBox(height: 2),
+                      Text(
+                        'Total combines Available (${_numberFormat.format(availableSats)} sats) + Protected (${_numberFormat.format(protectedSats)} sats) + Pending (${_numberFormat.format(pendingSats)} sats). Only Available is immediately spendable.',
+                        style: const TextStyle(
+                          color: AppColors.darkTextSecondary,
+                          fontSize: 11,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
           ),
 
           const SizedBox(height: 24),

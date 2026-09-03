@@ -24,6 +24,7 @@ import '../../security/presentation/mainnet_safety_dialog.dart';
 import '../../transactions/domain/transaction_model.dart';
 import '../../transactions/presentation/transactions_provider.dart';
 import '../../wallet/presentation/unified_deposit_sheet.dart';
+import '../../../core/demo/demo_mode_provider.dart';
 
 class HomeScreen extends ConsumerStatefulWidget {
   const HomeScreen({super.key});
@@ -210,6 +211,37 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                   ],
                 ),
                 const SizedBox(height: AppSpacing.md),
+
+                // 2. Demo Banner (if demo active)
+                if (ref.watch(demoModeProvider).isEnabled)
+                  Container(
+                    margin: const EdgeInsets.only(bottom: AppSpacing.sm),
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                    decoration: BoxDecoration(
+                      color: colors.primary.withValues(alpha: 0.15),
+                      borderRadius: AppRadius.xsRadius,
+                      border: Border.all(
+                        color: colors.primary.withValues(alpha: 0.4),
+                      ),
+                    ),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Icon(Icons.info_outline,
+                            size: 14, color: colors.primary),
+                        const SizedBox(width: 6),
+                        Text(
+                          'DEMO MODE • SAMPLE DATA • NO REAL MONEY',
+                          style: AppTypography.caption.copyWith(
+                            color: colors.primary,
+                            fontWeight: FontWeight.bold,
+                            letterSpacing: 0.8,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
 
                 // 2. Balance Card
                 Container(

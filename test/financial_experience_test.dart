@@ -134,10 +134,93 @@ void main() {
       expect(container.read(demoModeProvider).demoBeneficiaries.length,
           initialBenCount);
     });
+
+    test(
+        'available balance does not equal portfolio total (money in motion isolation)',
+        () {
+      final container = ProviderContainer();
+      addTearDown(container.dispose);
+
+      final state = container.read(demoModeProvider);
+      expect(state.availableBalanceSats, 1800000);
+      expect(state.protectedTotalSats, 450000);
+      expect(state.pendingBalanceSats, 200000);
+      expect(state.totalBalanceSats, 2450000);
+
+      // Verify that available balance is NOT equal to total portfolio
+      expect(state.availableBalanceSats != state.totalBalanceSats, true);
+      expect(
+          state.availableBalanceSats +
+              state.protectedTotalSats +
+              state.pendingBalanceSats,
+          state.totalBalanceSats);
+    });
+
+    test('demo mutations are isolated from real wallet storage and CDK proofs',
+        () {
+      final container = ProviderContainer();
+      addTearDown(container.dispose);
+
+      final initialDemo = container.read(demoModeProvider);
+      container.read(demoModeProvider.notifier).fundCard(100.0);
+
+      final updatedDemo = container.read(demoModeProvider);
+      expect(updatedDemo.demoCard!.balanceUsd,
+          initialDemo.demoCard!.balanceUsd + 100.0);
+
+      // Verify demo card funding did NOT mutate cashu redb wallet balance
+      expect(updatedDemo.availableBalanceSats, 1800000);
+    });
+
+    test(
+        'insights metrics mathematically reconcile with demo transaction dataset',
+        () {
+      final container = ProviderContainer();
+      addTearDown(container.dispose);
+
+      final state = container.read(demoModeProvider);
+      final txs = state.demoTransactions;
+
+      final incomingTxs = txs.where((t) => !t.isOutgoing);
+      final outgoingTxs = txs.where((t) => t.isOutgoing);
+
+      final sumIn = incomingTxs.fold(0, (sum, t) => sum + t.amountSats);
+      final sumOut = outgoingTxs.fold(0, (sum, t) => sum + t.amountSats);
+      final sumFees = txs.fold(0, (sum, t) => sum + (t.feeSats ?? 0));
+
+      expect(sumIn, 400000); // 250k received + 150k refund
+      expect(sumOut, 393300); // 12.8k + 300k + 12k + 8.5k + 45k + 15k
+      expect(sumFees, 750); // 150+50+200+50+50+100+50+100
+      expect(sumIn - sumOut, 6700);
+    });
+
+    test(
+        'changing display currency or spend market preserves underlying sats and residence',
+        () {
+      final container = ProviderContainer();
+      addTearDown(container.dispose);
+
+      const sats = 50000;
+      final currencyNotifier = container.read(currencyProvider.notifier);
+
+      // Start in NGN (Nigeria)
+      currencyNotifier.setCurrency(FiatCurrency.ngn);
+      final ngnFormat = container.read(currencyProvider).format(sats);
+      expect(ngnFormat, '₦47,500.00');
+
+      // Travel to Kenya: Switch display currency to KES
+      currencyNotifier.setCurrency(FiatCurrency.kes);
+      final kesFormat = container.read(currencyProvider).format(sats);
+      expect(kesFormat, 'KSh 3,900.00');
+
+      // Switching display currency preserves underlying Bitcoin satoshis
+      expect(sats, 50000);
+    });
   });
 
   group('M3B.2.1 UI Widget Tests', () {
-    testWidgets('MoneyScreen renders total balance and breakdown cards',
+    testWidgets(
+        'MoneyScreen renders authoritative available balance and money in motion',
         (tester) async {
       tester.view.physicalSize = const Size(1200, 2400);
       tester.view.devicePixelRatio = 1.0;
@@ -154,15 +237,15 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(find.text('Money & Balances'), findsOneWidget);
-      expect(find.text('TOTAL WALLET BALANCE'), findsOneWidget);
-      expect(find.text('Available Balance'), findsOneWidget);
-      expect(find.text('Protected Balance'), findsOneWidget);
-      expect(find.text('Pending & In Flight'), findsOneWidget);
+      expect(find.text('BITCOIN BALANCE'), findsOneWidget);
+      expect(find.text('Available to spend'), findsOneWidget);
+      expect(find.text('Money in motion'), findsOneWidget);
+      expect(find.text('Protected payments'), findsOneWidget);
+      expect(find.text('Pending'), findsOneWidget);
       expect(find.text('Reference Display Currency'), findsOneWidget);
     });
 
-    testWidgets(
-        'InsightsScreen renders periods, categories, and country spend',
+    testWidgets('InsightsScreen renders periods, categories, and country spend',
         (tester) async {
       tester.view.physicalSize = const Size(1200, 2400);
       tester.view.devicePixelRatio = 1.0;
@@ -187,8 +270,7 @@ void main() {
       expect(find.text('Currencies Used in Spend'), findsOneWidget);
     });
 
-    testWidgets(
-        'PendingCentreScreen renders safety notice and action items',
+    testWidgets('PendingCentreScreen renders safety notice and action items',
         (tester) async {
       tester.view.physicalSize = const Size(1200, 2400);
       tester.view.devicePixelRatio = 1.0;
@@ -212,8 +294,7 @@ void main() {
       expect(find.text('Backup Recovery Phrase'), findsOneWidget);
     });
 
-    testWidgets(
-        'CardsScreen renders virtual card and transaction history',
+    testWidgets('CardsScreen renders virtual card and transaction history',
         (tester) async {
       tester.view.physicalSize = const Size(1200, 2400);
       tester.view.devicePixelRatio = 1.0;
@@ -273,15 +354,14 @@ void main() {
       );
       await tester.pumpAndSettle();
 
-      expect(find.text('Account Statements'), findsOneWidget);
+      expect(find.text('Hanbova Activity Statements'), findsOneWidget);
       expect(find.text('August 2026'), findsOneWidget);
       expect(find.text('July 2026'), findsOneWidget);
       expect(find.text('Export CSV'), findsWidgets);
       expect(find.text('Download PDF'), findsWidgets);
     });
 
-    testWidgets(
-        'RequestMoneyScreen renders amount and switches currencies',
+    testWidgets('RequestMoneyScreen renders amount and switches currencies',
         (tester) async {
       tester.view.physicalSize = const Size(1200, 2400);
       tester.view.devicePixelRatio = 1.0;

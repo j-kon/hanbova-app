@@ -274,7 +274,7 @@ class TransactionReceiptSheet extends StatelessWidget {
       case TransactionType.protectedClaim:
       case TransactionType.protectedRefund:
         return (
-          'Protected Escrow Payment',
+          'Protected Payment',
           Icons.shield_outlined,
           const Color(0xFF38BDF8)
         );
@@ -347,7 +347,8 @@ class TransactionReceiptSheet extends StatelessWidget {
                 ctx, 'Payment not received by merchant / recipient'),
             _buildHelpOption(ctx, 'Meter token not generating electricity'),
             _buildHelpOption(ctx, 'eSIM QR code not scanning or activating'),
-            _buildHelpOption(ctx, 'Protected escrow locktime dispute'),
+            _buildHelpOption(
+                ctx, 'Protected payment protection window dispute'),
             _buildHelpOption(ctx, 'Other general transaction inquiry'),
             const SizedBox(height: 10),
           ],
