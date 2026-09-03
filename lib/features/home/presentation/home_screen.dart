@@ -120,6 +120,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     final isBalanceVisible = ref.watch(balanceVisibilityProvider);
     final currency = ref.watch(currencyProvider);
     final transactions = ref.watch(transactionsProvider);
+    final demoState = ref.watch(demoModeProvider);
     final cashuBalanceAsync = ref.watch(cashuBalanceProvider);
     final cashuBalance = cashuBalanceAsync.value ??
         const CashuWalletBalance(spendableSats: 0, lockedEscrowSats: 0);
@@ -461,10 +462,160 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                 ),
                 const SizedBox(height: AppSpacing.md),
 
-                // 2.5 Incoming Payment Alert Banner
+                // 2.5 Attention Hub (High-priority actionable items only)
+                // Card 1: Refund Available
+                if (demoState.isEnabled &&
+                    demoState.protectedRefundableSats > 0) ...[
+                  Container(
+                    margin: const EdgeInsets.only(bottom: AppSpacing.sm),
+                    padding: const EdgeInsets.all(AppSpacing.md),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFF06B6D4).withValues(alpha: 0.12),
+                      borderRadius: AppRadius.mdRadius,
+                      border: Border.all(
+                        color: const Color(0xFF06B6D4).withValues(alpha: 0.4),
+                        width: 1.5,
+                      ),
+                    ),
+                    child: Row(
+                      children: [
+                        Container(
+                          padding: const EdgeInsets.all(8),
+                          decoration: const BoxDecoration(
+                            color: Color(0xFF06B6D4),
+                            shape: BoxShape.circle,
+                          ),
+                          child: const Icon(Icons.refresh_rounded,
+                              color: Colors.black, size: 18),
+                        ),
+                        const SizedBox(width: AppSpacing.sm),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              const Text(
+                                'Protected Refund Ready',
+                                style: TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 13,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                              const SizedBox(height: 2),
+                              Text(
+                                '${Formatters.formatSats(demoState.protectedRefundableSats)} sats expired locktime can be claimed back.',
+                                style: const TextStyle(
+                                  color: AppColors.darkTextSecondary,
+                                  fontSize: 11,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                        ElevatedButton(
+                          onPressed: () => context.push('/pending'),
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: const Color(0xFF06B6D4),
+                            foregroundColor: Colors.black,
+                            padding: const EdgeInsets.symmetric(
+                                horizontal: 12, vertical: 6),
+                            minimumSize: Size.zero,
+                            tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                          ),
+                          child: const Text(
+                            'Refund',
+                            style: TextStyle(
+                                fontSize: 12, fontWeight: FontWeight.bold),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+
+                // Card 2: Payment Uncertain Notice
+                if (transactions
+                        .any((t) => t.status == TransactionStatus.uncertain) ||
+                    (demoState.isEnabled &&
+                        demoState.demoTransactions.any((t) =>
+                            t.status == TransactionStatus.uncertain))) ...[
+                  Container(
+                    margin: const EdgeInsets.only(bottom: AppSpacing.sm),
+                    padding: const EdgeInsets.all(AppSpacing.md),
+                    decoration: BoxDecoration(
+                      color: AppColors.warning.withValues(alpha: 0.12),
+                      borderRadius: AppRadius.mdRadius,
+                      border: Border.all(
+                        color: AppColors.warning.withValues(alpha: 0.4),
+                        width: 1.5,
+                      ),
+                    ),
+                    child: Row(
+                      children: [
+                        Container(
+                          padding: const EdgeInsets.all(8),
+                          decoration: const BoxDecoration(
+                            color: AppColors.warning,
+                            shape: BoxShape.circle,
+                          ),
+                          child: const Icon(Icons.hourglass_top_rounded,
+                              color: Colors.black, size: 18),
+                        ),
+                        const SizedBox(width: AppSpacing.sm),
+                        const Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                'Payment Processing (Uncertain)',
+                                style: TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 13,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                              SizedBox(height: 2),
+                              Text(
+                                'Checking status with biller. Please don\'t pay again yet.',
+                                style: TextStyle(
+                                  color: AppColors.darkTextSecondary,
+                                  fontSize: 11,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                        ElevatedButton(
+                          onPressed: () => context.push('/pending'),
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: AppColors.warning,
+                            foregroundColor: Colors.black,
+                            padding: const EdgeInsets.symmetric(
+                                horizontal: 12, vertical: 6),
+                            minimumSize: Size.zero,
+                            tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                          ),
+                          child: const Text(
+                            'Status',
+                            style: TextStyle(
+                                fontSize: 12, fontWeight: FontWeight.bold),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+
+                // Card 3: Incoming Protected Payment Received
                 if (incomingClaimable.isNotEmpty) ...[
                   Container(
-                    margin: const EdgeInsets.only(bottom: AppSpacing.md),
+                    margin: const EdgeInsets.only(bottom: AppSpacing.sm),
                     padding: const EdgeInsets.all(AppSpacing.md),
                     decoration: BoxDecoration(
                       color: colors.incoming.withValues(alpha: 0.12),
@@ -547,150 +698,128 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                   ),
                 ],
 
-                // 3. Primary Action Buttons (Send / Receive)
-                Row(
-                  children: [
-                    Expanded(
-                      child: ElevatedButton.icon(
-                        onPressed: () => context.push('/send'),
-                        icon: const Icon(Icons.arrow_upward, size: 18),
-                        label: const Text('Send'),
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: colors.primary,
-                          foregroundColor: AppColors.charcoal,
-                          padding: const EdgeInsets.symmetric(vertical: 14),
-                        ),
+                // Card 4: eSIM Low Data Alert
+                if (demoState.isEnabled) ...[
+                  Container(
+                    margin: const EdgeInsets.only(bottom: AppSpacing.sm),
+                    padding: const EdgeInsets.all(AppSpacing.md),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFF8B5CF6).withValues(alpha: 0.12),
+                      borderRadius: AppRadius.mdRadius,
+                      border: Border.all(
+                        color: const Color(0xFF8B5CF6).withValues(alpha: 0.35),
+                        width: 1.5,
                       ),
                     ),
-                    const SizedBox(width: AppSpacing.md),
-                    Expanded(
-                      child: OutlinedButton.icon(
-                        onPressed: () => UnifiedDepositSheet.show(context),
-                        icon: const Icon(Icons.arrow_downward, size: 18),
-                        label: const Text('Receive'),
-                        style: OutlinedButton.styleFrom(
-                          foregroundColor: colors.textPrimary,
-                          padding: const EdgeInsets.symmetric(vertical: 14),
+                    child: Row(
+                      children: [
+                        Container(
+                          padding: const EdgeInsets.all(8),
+                          decoration: const BoxDecoration(
+                            color: Color(0xFF8B5CF6),
+                            shape: BoxShape.circle,
+                          ),
+                          child: const Icon(Icons.sim_card_rounded,
+                              color: Colors.white, size: 18),
                         ),
-                      ),
+                        const SizedBox(width: AppSpacing.sm),
+                        const Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                'eSIM Low Data (250 MB left)',
+                                style: TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 13,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                              SizedBox(height: 2),
+                              Text(
+                                'Kenya Traveler 3 GB eSIM is running low.',
+                                style: TextStyle(
+                                  color: AppColors.darkTextSecondary,
+                                  fontSize: 11,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                        ElevatedButton(
+                          onPressed: () => context.push('/travel'),
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: const Color(0xFF8B5CF6),
+                            foregroundColor: Colors.white,
+                            padding: const EdgeInsets.symmetric(
+                                horizontal: 12, vertical: 6),
+                            minimumSize: Size.zero,
+                            tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                          ),
+                          child: const Text(
+                            'Top Up',
+                            style: TextStyle(
+                                fontSize: 12, fontWeight: FontWeight.bold),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+
+                // 3. Primary Quick Action Grid (Send, Receive, Pay, Scan)
+                Row(
+                  children: [
+                    _buildActionButton(
+                      context,
+                      icon: Icons.arrow_upward_rounded,
+                      label: 'Send',
+                      color: colors.primary,
+                      onTap: () => context.push('/send'),
+                    ),
+                    const SizedBox(width: 8),
+                    _buildActionButton(
+                      context,
+                      icon: Icons.arrow_downward_rounded,
+                      label: 'Receive',
+                      color: const Color(0xFF10B981),
+                      onTap: () => UnifiedDepositSheet.show(context),
+                    ),
+                    const SizedBox(width: 8),
+                    _buildActionButton(
+                      context,
+                      icon: Icons.payments_rounded,
+                      label: 'Pay',
+                      color: const Color(0xFFF59E0B),
+                      onTap: () => context.go('/pay'),
+                    ),
+                    const SizedBox(width: 8),
+                    _buildActionButton(
+                      context,
+                      icon: Icons.qr_code_scanner_rounded,
+                      label: 'Scan',
+                      color: const Color(0xFF38BDF8),
+                      onTap: () => context.push('/scan'),
                     ),
                   ],
                 ),
                 const SizedBox(height: AppSpacing.md),
-
-                // 3.5 Spend & Travel Quick Actions
-                Row(
-                  children: [
-                    Expanded(
-                      child: InkWell(
-                        onTap: () => context.push('/spend'),
-                        borderRadius: AppRadius.mdRadius,
-                        child: Container(
-                          padding: const EdgeInsets.all(AppSpacing.md),
-                          decoration: BoxDecoration(
-                            color: colors.surfaceCard,
-                            borderRadius: AppRadius.mdRadius,
-                            border: Border.all(color: colors.border),
-                          ),
-                          child: Row(
-                            children: [
-                              Container(
-                                padding: const EdgeInsets.all(8),
-                                decoration: BoxDecoration(
-                                  color: Colors.amber.withValues(alpha: 0.15),
-                                  borderRadius: AppRadius.smRadius,
-                                ),
-                                child: const Icon(Icons.bolt,
-                                    color: Colors.amberAccent, size: 20),
-                              ),
-                              const SizedBox(width: AppSpacing.sm),
-                              Expanded(
-                                child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    Text(
-                                      'Spend & Bills',
-                                      style: AppTypography.titleSmall.copyWith(
-                                        color: colors.textPrimary,
-                                        fontWeight: FontWeight.w700,
-                                        fontSize: 13,
-                                      ),
-                                    ),
-                                    Text(
-                                      'Airtime & Utilities',
-                                      style: AppTypography.caption.copyWith(
-                                        color: colors.textSecondary,
-                                        fontSize: 11,
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                      ),
-                    ),
-                    const SizedBox(width: AppSpacing.sm),
-                    Expanded(
-                      child: InkWell(
-                        onTap: () => context.push('/travel'),
-                        borderRadius: AppRadius.mdRadius,
-                        child: Container(
-                          padding: const EdgeInsets.all(AppSpacing.md),
-                          decoration: BoxDecoration(
-                            color: colors.surfaceCard,
-                            borderRadius: AppRadius.mdRadius,
-                            border: Border.all(color: colors.border),
-                          ),
-                          child: Row(
-                            children: [
-                              Container(
-                                padding: const EdgeInsets.all(8),
-                                decoration: BoxDecoration(
-                                  color: Colors.purple.withValues(alpha: 0.15),
-                                  borderRadius: AppRadius.smRadius,
-                                ),
-                                child: const Icon(Icons.flight_takeoff,
-                                    color: Colors.purpleAccent, size: 20),
-                              ),
-                              const SizedBox(width: AppSpacing.sm),
-                              Expanded(
-                                child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    Text(
-                                      'Travel Hub',
-                                      style: AppTypography.titleSmall.copyWith(
-                                        color: colors.textPrimary,
-                                        fontWeight: FontWeight.w700,
-                                        fontSize: 13,
-                                      ),
-                                    ),
-                                    Text(
-                                      'eSIM & Corridors',
-                                      style: AppTypography.caption.copyWith(
-                                        color: colors.textSecondary,
-                                        fontSize: 11,
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: AppSpacing.sm),
 
                 // 3.6 Financial Services Quick Hub Row
                 SingleChildScrollView(
                   scrollDirection: Axis.horizontal,
                   child: Row(
                     children: [
+                      _buildQuickHubItem(
+                        icon: Icons.account_balance_wallet_outlined,
+                        label: 'Money',
+                        color: AppColors.primary,
+                        onTap: () => context.push('/money'),
+                      ),
+                      const SizedBox(width: 8),
                       _buildQuickHubItem(
                         icon: Icons.pie_chart_outline_rounded,
                         label: 'Insights',
@@ -721,7 +850,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                       const SizedBox(width: 8),
                       _buildQuickHubItem(
                         icon: Icons.people_outline_rounded,
-                        label: 'People',
+                        label: 'Beneficiaries',
                         color: const Color(0xFF8B5CF6),
                         onTap: () => context.push('/beneficiaries'),
                       ),
@@ -779,7 +908,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                         ),
                       ),
                       TextButton(
-                        onPressed: () => context.go('/protected'),
+                        onPressed: () => context.push('/protected'),
                         child: const Text('View'),
                       ),
                     ],
@@ -922,6 +1051,53 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
               ),
             ),
           ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildActionButton(
+    BuildContext context, {
+    required IconData icon,
+    required String label,
+    required Color color,
+    required VoidCallback onTap,
+  }) {
+    return Expanded(
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(14),
+        child: Container(
+          padding: const EdgeInsets.symmetric(vertical: 12),
+          decoration: BoxDecoration(
+            color: AppColors.darkCardBackground,
+            borderRadius: BorderRadius.circular(14),
+            border: Border.all(
+              color: color.withValues(alpha: 0.35),
+            ),
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Container(
+                padding: const EdgeInsets.all(8),
+                decoration: BoxDecoration(
+                  color: color.withValues(alpha: 0.15),
+                  shape: BoxShape.circle,
+                ),
+                child: Icon(icon, color: color, size: 20),
+              ),
+              const SizedBox(height: 6),
+              Text(
+                label,
+                style: const TextStyle(
+                  color: Colors.white,
+                  fontSize: 12,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+            ],
+          ),
         ),
       ),
     );

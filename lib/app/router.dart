@@ -38,6 +38,12 @@ import '../features/travel/presentation/esim_screen.dart';
 import '../features/travel/presentation/travel_screen.dart';
 import 'shell/app_shell.dart';
 
+import '../features/spend/presentation/airtime_flow_screen.dart';
+import '../features/spend/presentation/data_bundle_flow_screen.dart';
+import '../features/spend/presentation/electricity_flow_screen.dart';
+import '../features/spend/presentation/pay_hub_screen.dart';
+import '../features/spend/presentation/tv_subscription_flow_screen.dart';
+
 final GlobalKey<NavigatorState> _rootNavigatorKey = GlobalKey<NavigatorState>();
 
 String safePostLoginPath(Uri uri) =>
@@ -132,7 +138,7 @@ final appRouterProvider = Provider<GoRouter>((ref) {
         builder: (context, state) => const WalletSetupScreen(),
       ),
 
-      // Main Navigation Shell
+      // Main Navigation Shell (5 Standard Tabs: Home, Pay, Activity, Travel, Me)
       StatefulShellRoute.indexedStack(
         builder: (context, state, navigationShell) {
           return AppShell(navigationShell: navigationShell);
@@ -147,7 +153,16 @@ final appRouterProvider = Provider<GoRouter>((ref) {
               ),
             ],
           ),
-          // Branch 1: Activity
+          // Branch 1: Pay Hub
+          StatefulShellBranch(
+            routes: [
+              GoRoute(
+                path: '/pay',
+                builder: (context, state) => const PayHubScreen(),
+              ),
+            ],
+          ),
+          // Branch 2: Activity
           StatefulShellBranch(
             routes: [
               GoRoute(
@@ -156,16 +171,16 @@ final appRouterProvider = Provider<GoRouter>((ref) {
               ),
             ],
           ),
-          // Branch 2: Protected
+          // Branch 3: Travel
           StatefulShellBranch(
             routes: [
               GoRoute(
-                path: '/protected',
-                builder: (context, state) => const ProtectedScreen(),
+                path: '/travel',
+                builder: (context, state) => const TravelScreen(),
               ),
             ],
           ),
-          // Branch 3: Me
+          // Branch 4: Me
           StatefulShellBranch(
             routes: [
               GoRoute(
@@ -175,6 +190,33 @@ final appRouterProvider = Provider<GoRouter>((ref) {
             ],
           ),
         ],
+      ),
+
+      // Modal & Feature routes
+      GoRoute(
+        path: '/pay/airtime',
+        parentNavigatorKey: _rootNavigatorKey,
+        builder: (context, state) => const AirtimeFlowScreen(),
+      ),
+      GoRoute(
+        path: '/pay/data',
+        parentNavigatorKey: _rootNavigatorKey,
+        builder: (context, state) => const DataBundleFlowScreen(),
+      ),
+      GoRoute(
+        path: '/pay/electricity',
+        parentNavigatorKey: _rootNavigatorKey,
+        builder: (context, state) => const ElectricityFlowScreen(),
+      ),
+      GoRoute(
+        path: '/pay/tv',
+        parentNavigatorKey: _rootNavigatorKey,
+        builder: (context, state) => const TvSubscriptionFlowScreen(),
+      ),
+      GoRoute(
+        path: '/protected',
+        parentNavigatorKey: _rootNavigatorKey,
+        builder: (context, state) => const ProtectedScreen(),
       ),
 
       // Modal & Feature routes

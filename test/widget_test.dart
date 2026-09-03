@@ -23,23 +23,24 @@ void main() {
     // Verify header and balance card
     expect(find.byType(HomeScreen), findsOneWidget);
     expect(find.text('Total Balance'), findsOneWidget);
-    expect(find.text('Send'), findsOneWidget);
-    expect(find.text('Receive'), findsOneWidget);
+    expect(find.text('Send'), findsWidgets);
+    expect(find.text('Receive'), findsWidgets);
 
     // Verify Quick Claim Banner & Protected Summary
     expect(find.text('Protected Payments'), findsOneWidget);
     expect(find.text('Have a claim code?'), findsOneWidget);
-    expect(find.text('Claim'), findsOneWidget);
+    expect(find.text('Claim'), findsWidgets);
 
-    // Verify Bottom Navigation Items
+    // Verify 5 Bottom Navigation Items
     expect(find.text('Home'), findsOneWidget);
+    expect(find.text('Pay'), findsWidgets);
     expect(find.text('Activity'), findsOneWidget);
-    expect(find.byIcon(Icons.shield_outlined), findsWidgets);
+    expect(find.text('Travel'), findsOneWidget);
     expect(find.text('Me'), findsOneWidget);
   });
 
   testWidgets(
-      'Bottom navigation tabs switch between Home, Activity, Protected, Me', (
+      'Bottom navigation tabs switch between Home, Pay, Activity, Travel, Me', (
     WidgetTester tester,
   ) async {
     tester.view.physicalSize = const Size(800, 1600);
@@ -53,21 +54,25 @@ void main() {
     );
     await tester.pumpAndSettle();
 
+    // Switch to Pay Tab via Bottom Navigation
+    await tester.tap(find.byIcon(Icons.payments_outlined));
+    await tester.pumpAndSettle();
+    expect(find.text('Pay & Spend Hub'), findsOneWidget);
+    expect(find.text('Everyday Bills & Utilities'), findsOneWidget);
+
     // Switch to Activity Tab
-    await tester.tap(find.text('Activity'));
+    await tester.tap(find.byIcon(Icons.receipt_long_outlined));
     await tester.pumpAndSettle();
     expect(find.text('Money In'), findsOneWidget);
     expect(find.text('Money Out'), findsOneWidget);
 
-    // Switch to Protected Tab via Bottom Navigation icon
-    await tester.tap(find.byIcon(Icons.shield_outlined).last);
+    // Switch to Travel Tab
+    await tester.tap(find.byIcon(Icons.flight_takeoff_outlined));
     await tester.pumpAndSettle();
-    expect(find.textContaining('Active'), findsOneWidget);
-    expect(find.textContaining('Incoming'), findsOneWidget);
-    expect(find.textContaining('Completed'), findsOneWidget);
+    expect(find.text('Travel & Spend Hub'), findsOneWidget);
 
     // Switch to Me Tab
-    await tester.tap(find.text('Me'));
+    await tester.tap(find.byIcon(Icons.person_outline_rounded));
     await tester.pumpAndSettle();
     expect(find.text('Recovery Phrase Backup'), findsOneWidget);
     expect(find.text('Appearance'), findsOneWidget);
@@ -75,7 +80,7 @@ void main() {
     expect(find.text('Sign out'), findsOneWidget);
   });
 
-  testWidgets('Center Pay button opens Pay Action Sheet modal', (
+  testWidgets('Pay Tab displays Pay Again carousel and Everyday services', (
     WidgetTester tester,
   ) async {
     tester.view.physicalSize = const Size(800, 1600);
@@ -89,15 +94,16 @@ void main() {
     );
     await tester.pumpAndSettle();
 
-    // Tap center Pay button
-    await tester.tap(find.byIcon(Icons.arrow_upward_rounded).last);
+    // Tap bottom Pay icon
+    await tester.tap(find.byIcon(Icons.payments_outlined));
     await tester.pumpAndSettle();
 
-    // Verify modal sheet contents
-    expect(find.text('What would you like to do?'), findsOneWidget);
-    expect(find.text('Send Instant'), findsOneWidget);
-    expect(find.text('Send Protected'), findsOneWidget);
-    expect(find.text('Receive Bitcoin'), findsOneWidget);
-    expect(find.text('Scan'), findsOneWidget);
+    // Verify Pay Hub content
+    expect(find.text('Pay & Spend Hub'), findsOneWidget);
+    expect(find.text('Pay Again'), findsOneWidget);
+    expect(find.text('Airtime'), findsOneWidget);
+    expect(find.text('Data Bundles'), findsOneWidget);
+    expect(find.text('Electricity'), findsOneWidget);
+    expect(find.text('TV Cables'), findsOneWidget);
   });
 }

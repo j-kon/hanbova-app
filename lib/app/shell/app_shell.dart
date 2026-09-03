@@ -3,7 +3,6 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import '../../core/theme/app_colors.dart';
 import '../../core/theme/app_typography.dart';
-import 'pay_action_sheet.dart';
 
 class AppShell extends StatelessWidget {
   final StatefulNavigationShell navigationShell;
@@ -14,30 +13,17 @@ class AppShell extends StatelessWidget {
   });
 
   void _onTap(BuildContext context, int index) {
-    if (index == 2) {
-      // Central Pay button opens modal action sheet
-      PayActionSheet.show(context);
-      return;
-    }
-
-    // Map tab index to branch index (0 -> 0, 1 -> 1, 3 -> 2, 4 -> 3)
-    final branchIndex = index > 2 ? index - 1 : index;
     navigationShell.goBranch(
-      branchIndex,
-      initialLocation: branchIndex == navigationShell.currentIndex,
+      index,
+      initialLocation: index == navigationShell.currentIndex,
     );
-  }
-
-  int _calculateSelectedIndex() {
-    final branchIndex = navigationShell.currentIndex;
-    return branchIndex >= 2 ? branchIndex + 1 : branchIndex;
   }
 
   @override
   Widget build(BuildContext context) {
     final colors = context.colors;
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final selectedIndex = _calculateSelectedIndex();
+    final selectedIndex = navigationShell.currentIndex;
 
     return Scaffold(
       backgroundColor: colors.background,
@@ -74,7 +60,7 @@ class AppShell extends StatelessWidget {
                   child: Container(
                     height: 68,
                     padding:
-                        const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
+                        const EdgeInsets.symmetric(horizontal: 4, vertical: 6),
                     decoration: BoxDecoration(
                       color: isDark
                           ? AppColors.graphite.withValues(alpha: 0.88)
@@ -99,25 +85,29 @@ class AppShell extends StatelessWidget {
                           onTap: () => _onTap(context, 0),
                         ),
 
-                        // 2. Activity
+                        // 2. Pay (Everyday Pay Hub)
                         _IosNavItem(
-                          icon: Icons.receipt_long_outlined,
-                          activeIcon: Icons.receipt_long_rounded,
-                          label: 'Activity',
+                          icon: Icons.payments_outlined,
+                          activeIcon: Icons.payments_rounded,
+                          label: 'Pay',
                           isSelected: selectedIndex == 1,
                           onTap: () => _onTap(context, 1),
                         ),
 
-                        // 3. Center Pay Floating Action Button
-                        _CenterPayButton(
+                        // 3. Activity
+                        _IosNavItem(
+                          icon: Icons.receipt_long_outlined,
+                          activeIcon: Icons.receipt_long_rounded,
+                          label: 'Activity',
+                          isSelected: selectedIndex == 2,
                           onTap: () => _onTap(context, 2),
                         ),
 
-                        // 4. Protected
+                        // 4. Travel
                         _IosNavItem(
-                          icon: Icons.shield_outlined,
-                          activeIcon: Icons.shield_rounded,
-                          label: 'Protected',
+                          icon: Icons.flight_takeoff_outlined,
+                          activeIcon: Icons.flight_takeoff_rounded,
+                          label: 'Travel',
                           isSelected: selectedIndex == 3,
                           onTap: () => _onTap(context, 3),
                         ),
