@@ -355,14 +355,19 @@ class _InsightsScreenState extends ConsumerState<InsightsScreen> {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Text(
-                title,
-                style: const TextStyle(
-                  color: AppColors.darkTextSecondary,
-                  fontSize: 12,
-                  fontWeight: FontWeight.w600,
+              Flexible(
+                child: Text(
+                  title,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: const TextStyle(
+                    color: AppColors.darkTextSecondary,
+                    fontSize: 12,
+                    fontWeight: FontWeight.w600,
+                  ),
                 ),
               ),
+              const SizedBox(width: 4),
               Icon(icon, size: 16, color: color),
             ],
           ),
@@ -371,15 +376,19 @@ class _InsightsScreenState extends ConsumerState<InsightsScreen> {
             isHidden
                 ? '•••• sats'
                 : '$prefix${_numberFormat.format(satsAmount)} sats',
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
             style: TextStyle(
               color: color,
-              fontSize: 16,
+              fontSize: 15,
               fontWeight: FontWeight.bold,
             ),
           ),
           const SizedBox(height: 2),
           Text(
             isHidden ? '≈ ••••' : '≈ ${currency.format(satsAmount)}',
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
             style: const TextStyle(
               color: AppColors.darkTextSecondary,
               fontSize: 11,
