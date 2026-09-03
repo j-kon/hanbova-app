@@ -169,12 +169,16 @@ class _BeneficiariesScreenState extends ConsumerState<BeneficiariesScreen> {
               children: [
                 Row(
                   children: [
-                    Text(
-                      ben.name,
-                      style: const TextStyle(
-                        color: Colors.white,
-                        fontSize: 15,
-                        fontWeight: FontWeight.bold,
+                    Flexible(
+                      child: Text(
+                        ben.name,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontSize: 15,
+                          fontWeight: FontWeight.bold,
+                        ),
                       ),
                     ),
                     const SizedBox(width: 6),
@@ -199,6 +203,8 @@ class _BeneficiariesScreenState extends ConsumerState<BeneficiariesScreen> {
                 const SizedBox(height: 3),
                 Text(
                   ben.handleOrAccount,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
                   style: TextStyle(
                     color: AppColors.primary.withValues(alpha: 0.9),
                     fontSize: 12,
@@ -209,6 +215,8 @@ class _BeneficiariesScreenState extends ConsumerState<BeneficiariesScreen> {
                   const SizedBox(height: 2),
                   Text(
                     '${ben.bankOrOperator} • Last sent: $lastUsed',
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
                     style: const TextStyle(
                       color: AppColors.darkTextSecondary,
                       fontSize: 11,
@@ -219,6 +227,8 @@ class _BeneficiariesScreenState extends ConsumerState<BeneficiariesScreen> {
             ),
           ),
           IconButton(
+            constraints: const BoxConstraints(),
+            padding: const EdgeInsets.all(8),
             icon: const Icon(Icons.send_rounded,
                 color: AppColors.primary, size: 20),
             onPressed: () {
@@ -229,6 +239,8 @@ class _BeneficiariesScreenState extends ConsumerState<BeneficiariesScreen> {
             },
           ),
           PopupMenuButton<String>(
+            constraints: const BoxConstraints(),
+            padding: const EdgeInsets.all(6),
             icon: const Icon(Icons.more_vert,
                 color: AppColors.darkTextSecondary, size: 18),
             color: AppColors.darkCardBackground,
