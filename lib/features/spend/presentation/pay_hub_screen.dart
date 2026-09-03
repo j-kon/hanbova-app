@@ -20,7 +20,7 @@ class PayHubScreen extends ConsumerWidget {
 
   void _showSpendMarketSelector(BuildContext context, WidgetRef ref) {
     final market = ref.read(marketProvider);
-    const countries = CountryInfo.supportedCountries;
+    final countries = CountryInfo.supportedCountries;
 
     showModalBottomSheet(
       context: context,
@@ -40,7 +40,7 @@ class PayHubScreen extends ConsumerWidget {
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
                   Text(
-                    'Select Spend Market',
+                    'Select Active Market',
                     style: TextStyle(
                       color: Colors.white,
                       fontSize: 18,
@@ -53,7 +53,7 @@ class PayHubScreen extends ConsumerWidget {
               ),
               const SizedBox(height: 6),
               const Text(
-                'Switch your spending market to pay local bills while traveling. Your legal residence remains unchanged.',
+                'Switch your spending market to pay local bills while traveling. Your legal country of residence remains unchanged.',
                 style: TextStyle(
                   color: AppColors.darkTextSecondary,
                   fontSize: 12,
@@ -62,7 +62,7 @@ class PayHubScreen extends ConsumerWidget {
               const SizedBox(height: 16),
               ...countries.map((c) {
                 final isSelected =
-                    c.code.toUpperCase() == market.spendCountry.toUpperCase();
+                    c.code.toUpperCase() == market.activeMarket.toUpperCase();
                 return ListTile(
                   leading:
                       Text(c.flagEmoji, style: const TextStyle(fontSize: 24)),
@@ -92,11 +92,98 @@ class PayHubScreen extends ConsumerWidget {
                       ? AppColors.primary.withValues(alpha: 0.1)
                       : Colors.transparent,
                   onTap: () {
-                    ref.read(marketProvider.notifier).setSpendCountry(c.code);
+                    ref.read(marketProvider.notifier).setActiveMarket(c.code);
                     Navigator.of(ctx).pop();
                   },
                 );
               }),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
+  void _showStablecoinInfoModal(BuildContext context) {
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: AppColors.darkBackground,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+        side: BorderSide(color: AppColors.darkBorder),
+      ),
+      builder: (ctx) {
+        return Container(
+          padding: const EdgeInsets.all(24),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  Container(
+                    padding: const EdgeInsets.all(10),
+                    decoration: BoxDecoration(
+                      color: AppColors.primary.withValues(alpha: 0.15),
+                      shape: BoxShape.circle,
+                    ),
+                    child: const Icon(Icons.token_rounded,
+                        color: AppColors.primary, size: 22),
+                  ),
+                  const SizedBox(width: 12),
+                  const Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          'Stablecoin Rail',
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontSize: 18,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                        SizedBox(height: 2),
+                        Text(
+                          'COMING SOON • PREVIEW',
+                          style: TextStyle(
+                            color: AppColors.primary,
+                            fontSize: 11,
+                            fontWeight: FontWeight.bold,
+                            letterSpacing: 0.5,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 16),
+              const Text(
+                'USD-pegged stablecoin settlement will be supported once compliant custody and on/off-ramp rails are integrated. No live stablecoin balances or transactions are faked.',
+                style: TextStyle(
+                  color: AppColors.darkTextSecondary,
+                  fontSize: 13,
+                  height: 1.4,
+                ),
+              ),
+              const SizedBox(height: 20),
+              SizedBox(
+                width: double.infinity,
+                child: ElevatedButton(
+                  onPressed: () => Navigator.of(ctx).pop(),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: AppColors.primary,
+                    foregroundColor: Colors.black,
+                    padding: const EdgeInsets.symmetric(vertical: 14),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                  ),
+                  child: const Text('Understood',
+                      style: TextStyle(fontWeight: FontWeight.bold)),
+                ),
+              ),
             ],
           ),
         );
@@ -220,7 +307,9 @@ class PayHubScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final market = ref.watch(marketProvider);
-    final spendCountry = market.spendCountryInfo;
+    final activeMarketInfo = market.activeMarketInfo;
+    final caps = market.capabilities;
+    final hasLocalServices = caps.hasLocalServices;
 
     return Scaffold(
       backgroundColor: AppColors.darkBackground,
@@ -236,7 +325,7 @@ class PayHubScreen extends ConsumerWidget {
           ),
         ),
         actions: [
-          // Spend Market Switcher Pill
+          // Active Market Switcher Pill
           GestureDetector(
             onTap: () => _showSpendMarketSelector(context, ref),
             child: Container(
@@ -252,11 +341,11 @@ class PayHubScreen extends ConsumerWidget {
               child: Row(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  Text(spendCountry.flagEmoji,
+                  Text(activeMarketInfo.flagEmoji,
                       style: const TextStyle(fontSize: 16)),
                   const SizedBox(width: 6),
                   Text(
-                    spendCountry.code,
+                    activeMarketInfo.code,
                     style: const TextStyle(
                       color: Colors.white,
                       fontSize: 13,
@@ -274,70 +363,74 @@ class PayHubScreen extends ConsumerWidget {
       ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // 1. Send Money Section
-            _buildSectionHeader(
-                'Send Money', 'Instant peer-to-peer & cross-border transfers'),
-            const SizedBox(height: 12),
-            _buildSendMoneyGrid(context),
-            const SizedBox(height: 24),
+        child: hasLocalServices
+            ? _buildSupportedMarketPayHub(context, activeMarketInfo, caps)
+            : _buildGlobalMarketPayHub(context),
+      ),
+    );
+  }
 
-            // 2. Recent (Pay Again) Section
-            _buildSectionHeader(
-                'Recent', 'Quick repeat for frequent bills and contacts'),
-            const SizedBox(height: 12),
-            _buildPayAgainCarousel(context),
-            const SizedBox(height: 28),
+  // GLOBAL / UNSUPPORTED MARKET PAY HUB (e.g. US, SN without Roam)
+  Widget _buildGlobalMarketPayHub(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        // 1. Send Section
+        _buildSectionHeader('Send', 'Peer-to-peer & cross-border transfers'),
+        const SizedBox(height: 12),
+        _buildGlobalSendGrid(context),
+        const SizedBox(height: 28),
 
-            // 3. Everyday Bills & Utilities Section
-            _buildSectionHeader(
-                'Everyday', 'Instant Bitcoin settlement for local bills'),
-            const SizedBox(height: 14),
-            _buildServicesGrid(context, spendCountry.code),
-            const SizedBox(height: 28),
+        // 2. Wallet Section
+        _buildSectionHeader('Wallet', 'Multi-rail digital balances'),
+        const SizedBox(height: 12),
+        _buildWalletCards(context),
+        const SizedBox(height: 28),
 
-            // 4. More Section
-            _buildSectionHeader(
-                'More', 'Payment management, beneficiaries, and cards'),
-            const SizedBox(height: 12),
-            _buildMoreCards(context),
-            const SizedBox(height: 28),
-
-            // Safety Reassurance
-            Container(
-              padding: const EdgeInsets.all(16),
-              decoration: BoxDecoration(
-                color: AppColors.darkCardBackground,
-                borderRadius: BorderRadius.circular(16),
-                border: Border.all(color: AppColors.darkBorder),
-              ),
-              child: const Row(
-                crossAxisAlignment: CrossAxisAlignment.start,
+        // 3. Local Services Placeholder
+        _buildSectionHeader(
+            'Local services', 'Regional utilities and bill payment'),
+        const SizedBox(height: 12),
+        Container(
+          padding: const EdgeInsets.all(18),
+          decoration: BoxDecoration(
+            color: AppColors.darkCardBackground,
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(color: AppColors.darkBorder),
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
                 children: [
-                  Icon(Icons.lock_outline_rounded,
-                      color: AppColors.primary, size: 20),
-                  SizedBox(width: 12),
-                  Expanded(
+                  Container(
+                    padding: const EdgeInsets.all(10),
+                    decoration: BoxDecoration(
+                      color: AppColors.primary.withValues(alpha: 0.15),
+                      shape: BoxShape.circle,
+                    ),
+                    child: const Icon(Icons.flight_takeoff_rounded,
+                        color: AppColors.primary, size: 22),
+                  ),
+                  const SizedBox(width: 12),
+                  const Expanded(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          '100% Bitcoin Backed',
+                          'Activate Roam for Local Services',
                           style: TextStyle(
                             color: Colors.white,
-                            fontSize: 14,
+                            fontSize: 15,
                             fontWeight: FontWeight.bold,
                           ),
                         ),
-                        SizedBox(height: 4),
+                        SizedBox(height: 2),
                         Text(
-                          'Hanbova holds zero local fiat balances. Local airtime, electricity, and utilities are settled on-demand directly from your satoshis.',
+                          'Local airtime, electricity, and bills are available in supported markets.',
                           style: TextStyle(
                             color: AppColors.darkTextSecondary,
                             fontSize: 12,
-                            height: 1.35,
                           ),
                         ),
                       ],
@@ -345,11 +438,84 @@ class PayHubScreen extends ConsumerWidget {
                   ),
                 ],
               ),
-            ),
-            const SizedBox(height: 80),
-          ],
+              const SizedBox(height: 16),
+              const Text(
+                'Traveling to Nigeria, Kenya, Ghana, Rwanda, Uganda, Tanzania, or South Africa? Activate Roam to unlock everyday bills with instant Bitcoin settlement.',
+                style: TextStyle(
+                  color: AppColors.darkTextSecondary,
+                  fontSize: 12,
+                  height: 1.4,
+                ),
+              ),
+              const SizedBox(height: 16),
+              SizedBox(
+                width: double.infinity,
+                child: OutlinedButton.icon(
+                  onPressed: () => context.push('/roam'),
+                  icon: const Icon(Icons.travel_explore_rounded, size: 18),
+                  label: const Text('Explore Supported Markets'),
+                  style: OutlinedButton.styleFrom(
+                    foregroundColor: AppColors.primary,
+                    side: const BorderSide(color: AppColors.primary),
+                    padding: const EdgeInsets.symmetric(vertical: 12),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          ),
         ),
-      ),
+        const SizedBox(height: 28),
+
+        // Safety Reassurance
+        _buildSafetyReassurance(),
+        const SizedBox(height: 80),
+      ],
+    );
+  }
+
+  // SUPPORTED LOCAL MARKET PAY HUB (e.g. NG, or KE under Roam)
+  Widget _buildSupportedMarketPayHub(
+      BuildContext context, CountryInfo activeMarket, MarketCapabilities caps) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        // 1. Send Money Section
+        _buildSectionHeader(
+            'Send Money', 'Instant peer-to-peer & domestic payouts'),
+        const SizedBox(height: 12),
+        _buildSupportedSendMoneyGrid(context, caps),
+        const SizedBox(height: 24),
+
+        // 2. Recent Section
+        _buildSectionHeader(
+            'Recent', 'Quick repeat for frequent bills and contacts'),
+        const SizedBox(height: 12),
+        _buildPayAgainCarousel(context),
+        const SizedBox(height: 28),
+
+        // 3. Everyday Bills Section
+        if (caps.hasEverydayBills) ...[
+          _buildSectionHeader(
+              'Everyday', 'Instant Bitcoin settlement for local bills'),
+          const SizedBox(height: 14),
+          _buildServicesGrid(context, caps),
+          const SizedBox(height: 28),
+        ],
+
+        // 4. Manage Section
+        _buildSectionHeader(
+            'Manage', 'Payment management, beneficiaries, and cards'),
+        const SizedBox(height: 12),
+        _buildMoreCards(context, caps),
+        const SizedBox(height: 28),
+
+        // Safety Reassurance
+        _buildSafetyReassurance(),
+        const SizedBox(height: 80),
+      ],
     );
   }
 
@@ -377,8 +543,8 @@ class PayHubScreen extends ConsumerWidget {
     );
   }
 
-  Widget _buildSendMoneyGrid(BuildContext context) {
-    final sendOptions = [
+  Widget _buildGlobalSendGrid(BuildContext context) {
+    final options = [
       {
         'title': 'Bitcoin',
         'subtitle': 'Lightning & On-chain',
@@ -396,27 +562,174 @@ class PayHubScreen extends ConsumerWidget {
         'onTap': () => context.push('/protected-send'),
       },
       {
-        'title': 'Bank',
-        'subtitle': 'Direct bank account payout',
-        'icon': Icons.account_balance_rounded,
-        'color': const Color(0xFF38BDF8),
-        'badge': 'Demo preview',
-        'onTap': () => _showDemoProviderModal(
-              context,
-              'Bank Payout',
-              'Direct fiat payouts to local Nigerian, Kenyan, and Ghanaian bank accounts will be enabled upon external provider activation. In this demo milestone, you can test Bitcoin and Protected payments.',
+        'title': 'Request Money',
+        'subtitle': 'Invoice & claim link',
+        'icon': Icons.call_received_rounded,
+        'color': const Color(0xFF10B981),
+        'badge': 'Peer-to-peer',
+        'onTap': () => showModalBottomSheet(
+              context: context,
+              isScrollControlled: true,
+              backgroundColor: Colors.transparent,
+              builder: (ctx) => const RequestMoneyScreen(),
             ),
       },
+    ];
+
+    return GridView.builder(
+      shrinkWrap: true,
+      physics: const NeverScrollableScrollPhysics(),
+      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+        crossAxisCount: 3,
+        crossAxisSpacing: 10,
+        mainAxisSpacing: 10,
+        childAspectRatio: 0.95,
+      ),
+      itemCount: options.length,
+      itemBuilder: (context, index) {
+        final item = options[index];
+        final color = item['color'] as Color;
+
+        return GestureDetector(
+          onTap: item['onTap'] as VoidCallback,
+          child: Container(
+            padding: const EdgeInsets.all(10),
+            decoration: BoxDecoration(
+              color: AppColors.darkCardBackground,
+              borderRadius: BorderRadius.circular(14),
+              border: Border.all(color: color.withValues(alpha: 0.3)),
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(8),
+                  decoration: BoxDecoration(
+                    color: color.withValues(alpha: 0.15),
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  child: Icon(item['icon'] as IconData, color: color, size: 20),
+                ),
+                const Spacer(),
+                Text(
+                  item['title'] as String,
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontSize: 13,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  item['badge'] as String,
+                  style: TextStyle(
+                    color: color,
+                    fontSize: 10,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _buildWalletCards(BuildContext context) {
+    return Column(
+      children: [
+        _buildListTile(
+          icon: Icons.currency_bitcoin,
+          iconColor: AppColors.primary,
+          title: 'Bitcoin',
+          subtitle: 'Instant Lightning and self-custodial on-chain sats',
+          badgeText: 'Live',
+          badgeColor: const Color(0xFF10B981),
+          onTap: () => context.push('/send'),
+        ),
+        const SizedBox(height: 10),
+        _buildListTile(
+          icon: Icons.shield_moon_outlined,
+          iconColor: const Color(0xFF8B5CF6),
+          title: 'Cashu',
+          subtitle: 'Private ecash mint tokens and offline bearer tokens',
+          badgeText: 'Active',
+          badgeColor: const Color(0xFF10B981),
+          onTap: () => context.push('/send'),
+        ),
+        const SizedBox(height: 10),
+        _buildListTile(
+          icon: Icons.token_rounded,
+          iconColor: const Color(0xFF38BDF8),
+          title: 'Stablecoin',
+          subtitle: 'Compliant USD-pegged stablecoin rail coming soon',
+          badgeText: 'Coming soon',
+          badgeColor: AppColors.primary,
+          onTap: () => _showStablecoinInfoModal(context),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildSupportedSendMoneyGrid(
+      BuildContext context, MarketCapabilities caps) {
+    final sendOptions = [
       {
-        'title': 'Mobile Money',
-        'subtitle': 'M-Pesa, MTN MoMo, Telecel',
-        'icon': Icons.phone_iphone_rounded,
-        'color': const Color(0xFF10B981),
-        'badge': 'Demo preview',
-        'onTap': () => _showDemoProviderModal(
-              context,
-              'Mobile Money',
-              'Direct payouts to M-Pesa, MTN Mobile Money, and Telecel Cash will be connected in future integration milestones.',
+        'title': 'Bitcoin',
+        'subtitle': 'Lightning & On-chain',
+        'icon': Icons.bolt_rounded,
+        'color': AppColors.primary,
+        'badge': 'Instant',
+        'onTap': () => context.push('/send'),
+      },
+      {
+        'title': 'Protected',
+        'subtitle': 'Escrow with locktime',
+        'icon': Icons.shield_outlined,
+        'color': const Color(0xFF8B5CF6),
+        'badge': 'Buyer Protection',
+        'onTap': () => context.push('/protected-send'),
+      },
+      if (caps.bankPayout) ...[
+        {
+          'title': 'Bank',
+          'subtitle': 'Direct bank account payout',
+          'icon': Icons.account_balance_rounded,
+          'color': const Color(0xFF38BDF8),
+          'badge': 'Local Payout',
+          'onTap': () => _showDemoProviderModal(
+                context,
+                'Bank Payout',
+                'Direct fiat payouts to local domestic bank accounts are connected upon licensed provider verification.',
+              ),
+        },
+      ],
+      if (caps.mobileMoney) ...[
+        {
+          'title': 'Mobile Money',
+          'subtitle': 'M-Pesa, MTN MoMo, Telecel',
+          'icon': Icons.phone_iphone_rounded,
+          'color': const Color(0xFF10B981),
+          'badge': 'Instant MoMo',
+          'onTap': () => _showDemoProviderModal(
+                context,
+                'Mobile Money',
+                'Direct payouts to regional mobile money operators are processed directly from satoshis.',
+              ),
+        },
+      ],
+      {
+        'title': 'Request Money',
+        'subtitle': 'Create payment invoice',
+        'icon': Icons.call_received_rounded,
+        'color': const Color(0xFFEC4899),
+        'badge': 'Peer-to-peer',
+        'onTap': () => showModalBottomSheet(
+              context: context,
+              isScrollControlled: true,
+              backgroundColor: Colors.transparent,
+              builder: (ctx) => const RequestMoneyScreen(),
             ),
       },
     ];
@@ -448,60 +761,58 @@ class PayHubScreen extends ConsumerWidget {
             ),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
                     Container(
-                      padding: const EdgeInsets.all(7),
+                      padding: const EdgeInsets.all(8),
                       decoration: BoxDecoration(
                         color: color.withValues(alpha: 0.15),
-                        shape: BoxShape.circle,
+                        borderRadius: BorderRadius.circular(10),
                       ),
-                      child: Icon(item['icon'] as IconData,
-                          size: 18, color: color),
+                      child: Icon(
+                        item['icon'] as IconData,
+                        color: color,
+                        size: 20,
+                      ),
                     ),
                     Container(
                       padding: const EdgeInsets.symmetric(
-                          horizontal: 6, vertical: 2),
+                          horizontal: 8, vertical: 3),
                       decoration: BoxDecoration(
-                        color: color.withValues(alpha: 0.12),
-                        borderRadius: BorderRadius.circular(6),
+                        color: color.withValues(alpha: 0.15),
+                        borderRadius: BorderRadius.circular(8),
                       ),
                       child: Text(
                         item['badge'] as String,
                         style: TextStyle(
                           color: color,
-                          fontSize: 9,
+                          fontSize: 10,
                           fontWeight: FontWeight.bold,
                         ),
                       ),
                     ),
                   ],
                 ),
-                Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      item['title'] as String,
-                      style: const TextStyle(
-                        color: Colors.white,
-                        fontSize: 13,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                    const SizedBox(height: 2),
-                    Text(
-                      item['subtitle'] as String,
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: const TextStyle(
-                        color: AppColors.darkTextSecondary,
-                        fontSize: 10,
-                      ),
-                    ),
-                  ],
+                const Spacer(),
+                Text(
+                  item['title'] as String,
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontSize: 14,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  item['subtitle'] as String,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: const TextStyle(
+                    color: AppColors.darkTextSecondary,
+                    fontSize: 10,
+                  ),
                 ),
               ],
             ),
@@ -515,8 +826,8 @@ class PayHubScreen extends ConsumerWidget {
     final recentItems = [
       {
         'title': 'Mom\'s MTN',
-        'subtitle': '+234 803 123 4567',
-        'amount': '₦ 2,000',
+        'subtitle': 'Airtime top-up',
+        'amount': '2,000 sats',
         'icon': Icons.phone_android_rounded,
         'color': const Color(0xFFFFCC00),
         'action': () => Navigator.of(context).push(
@@ -527,7 +838,7 @@ class PayHubScreen extends ConsumerWidget {
       {
         'title': 'Home IKEDC',
         'subtitle': 'Meter: 04182938192',
-        'amount': '₦ 10,000',
+        'amount': '10,000 sats',
         'icon': Icons.electric_bolt_rounded,
         'color': const Color(0xFFFBBF24),
         'action': () => Navigator.of(context).push(
@@ -538,34 +849,12 @@ class PayHubScreen extends ConsumerWidget {
       {
         'title': 'DStv Compact',
         'subtitle': 'Smartcard: 1029384756',
-        'amount': '₦ 15,700',
+        'amount': '15,700 sats',
         'icon': Icons.tv_rounded,
         'color': const Color(0xFFA78BFA),
         'action': () => Navigator.of(context).push(
               MaterialPageRoute(
                   builder: (context) => const TvSubscriptionFlowScreen()),
-            ),
-      },
-      {
-        'title': 'Home Wi-Fi',
-        'subtitle': 'Spectranet ••••3819',
-        'amount': '₦ 15,000',
-        'icon': Icons.router_rounded,
-        'color': const Color(0xFF38BDF8),
-        'action': () => Navigator.of(context).push(
-              MaterialPageRoute(
-                  builder: (context) => const InternetFlowScreen()),
-            ),
-      },
-      {
-        'title': 'Nairobi KPLC',
-        'subtitle': 'Meter: 37189201948',
-        'amount': 'KSh 1,000',
-        'icon': Icons.electric_meter_rounded,
-        'color': const Color(0xFF34D399),
-        'action': () => Navigator.of(context).push(
-              MaterialPageRoute(
-                  builder: (context) => const ElectricityFlowScreen()),
             ),
       },
     ];
@@ -578,10 +867,12 @@ class PayHubScreen extends ConsumerWidget {
         separatorBuilder: (_, __) => const SizedBox(width: 12),
         itemBuilder: (context, index) {
           final item = recentItems[index];
+          final color = item['color'] as Color;
+
           return GestureDetector(
             onTap: item['action'] as VoidCallback,
             child: Container(
-              width: 175,
+              width: 155,
               padding: const EdgeInsets.all(12),
               decoration: BoxDecoration(
                 color: AppColors.darkCardBackground,
@@ -598,14 +889,13 @@ class PayHubScreen extends ConsumerWidget {
                       Container(
                         padding: const EdgeInsets.all(6),
                         decoration: BoxDecoration(
-                          color:
-                              (item['color'] as Color).withValues(alpha: 0.15),
+                          color: color.withValues(alpha: 0.15),
                           shape: BoxShape.circle,
                         ),
                         child: Icon(
                           item['icon'] as IconData,
                           size: 16,
-                          color: item['color'] as Color,
+                          color: color,
                         ),
                       ),
                       const SizedBox(width: 8),
@@ -655,9 +945,11 @@ class PayHubScreen extends ConsumerWidget {
     );
   }
 
-  Widget _buildServicesGrid(BuildContext context, String countryCode) {
-    final services = [
-      {
+  Widget _buildServicesGrid(BuildContext context, MarketCapabilities caps) {
+    final services = <Map<String, dynamic>>[];
+
+    if (caps.airtime) {
+      services.add({
         'title': 'Airtime',
         'desc': 'Instant top-up',
         'icon': Icons.phone_android_rounded,
@@ -666,8 +958,11 @@ class PayHubScreen extends ConsumerWidget {
               MaterialPageRoute(
                   builder: (context) => const AirtimeFlowScreen()),
             ),
-      },
-      {
+      });
+    }
+
+    if (caps.data) {
+      services.add({
         'title': 'Data Bundles',
         'desc': 'Daily, weekly, monthly',
         'icon': Icons.wifi_rounded,
@@ -676,8 +971,11 @@ class PayHubScreen extends ConsumerWidget {
               MaterialPageRoute(
                   builder: (context) => const DataBundleFlowScreen()),
             ),
-      },
-      {
+      });
+    }
+
+    if (caps.electricity) {
+      services.add({
         'title': 'Electricity',
         'desc': 'Prepaid token generator',
         'icon': Icons.electric_bolt_rounded,
@@ -686,37 +984,46 @@ class PayHubScreen extends ConsumerWidget {
               MaterialPageRoute(
                   builder: (context) => const ElectricityFlowScreen()),
             ),
-      },
-      {
+      });
+    }
+
+    if (caps.tv) {
+      services.add({
         'title': 'TV Cables',
-        'desc': 'DStv, GOtv, StarTimes',
+        'desc': 'Digital satellite plans',
         'icon': Icons.tv_rounded,
         'color': const Color(0xFFA78BFA),
         'onTap': () => Navigator.of(context).push(
               MaterialPageRoute(
                   builder: (context) => const TvSubscriptionFlowScreen()),
             ),
-      },
-      {
+      });
+    }
+
+    if (caps.internet) {
+      services.add({
         'title': 'Internet',
-        'desc': 'Fibre & Wi-Fi routers',
+        'desc': 'Fibre & 4G LTE broadband',
         'icon': Icons.router_rounded,
         'color': const Color(0xFF34D399),
         'onTap': () => Navigator.of(context).push(
               MaterialPageRoute(
                   builder: (context) => const InternetFlowScreen()),
             ),
-      },
-      {
+      });
+    }
+
+    if (caps.water) {
+      services.add({
         'title': 'Water Bills',
-        'desc': 'Utility supply',
+        'desc': 'Municipal utilities',
         'icon': Icons.water_drop_rounded,
-        'color': const Color(0xFF60A5FA),
+        'color': const Color(0xFF06B6D4),
         'onTap': () => Navigator.of(context).push(
               MaterialPageRoute(builder: (context) => const WaterFlowScreen()),
             ),
-      },
-    ];
+      });
+    }
 
     return GridView.builder(
       shrinkWrap: true,
@@ -725,11 +1032,13 @@ class PayHubScreen extends ConsumerWidget {
         crossAxisCount: 2,
         crossAxisSpacing: 12,
         mainAxisSpacing: 12,
-        childAspectRatio: 1.4,
+        childAspectRatio: 1.35,
       ),
       itemCount: services.length,
       itemBuilder: (context, index) {
         final item = services[index];
+        final color = item['color'] as Color;
+
         return GestureDetector(
           onTap: item['onTap'] as VoidCallback,
           child: Container(
@@ -741,18 +1050,17 @@ class PayHubScreen extends ConsumerWidget {
             ),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
-              mainAxisAlignment: MainAxisAlignment.center,
               children: [
                 Container(
                   padding: const EdgeInsets.all(8),
                   decoration: BoxDecoration(
-                    color: (item['color'] as Color).withValues(alpha: 0.15),
+                    color: color.withValues(alpha: 0.15),
                     borderRadius: BorderRadius.circular(10),
                   ),
                   child: Icon(
                     item['icon'] as IconData,
                     size: 22,
-                    color: item['color'] as Color,
+                    color: color,
                   ),
                 ),
                 const Spacer(),
@@ -780,19 +1088,9 @@ class PayHubScreen extends ConsumerWidget {
     );
   }
 
-  Widget _buildMoreCards(BuildContext context) {
+  Widget _buildMoreCards(BuildContext context, MarketCapabilities caps) {
     return Column(
       children: [
-        _buildListTile(
-          icon: Icons.request_quote_rounded,
-          iconColor: const Color(0xFF10B981),
-          title: 'Request Money',
-          subtitle: 'Create payment requests and share lightning invoices',
-          onTap: () => Navigator.of(context).push(
-            MaterialPageRoute(builder: (context) => const RequestMoneyScreen()),
-          ),
-        ),
-        const SizedBox(height: 10),
         _buildListTile(
           icon: Icons.bookmark_added_rounded,
           iconColor: AppColors.primary,
@@ -814,16 +1112,18 @@ class PayHubScreen extends ConsumerWidget {
                 builder: (context) => const BeneficiariesScreen()),
           ),
         ),
-        const SizedBox(height: 10),
-        _buildListTile(
-          icon: Icons.credit_card_rounded,
-          iconColor: const Color(0xFFA78BFA),
-          title: 'Cards',
-          subtitle: 'USD Visa/Mastercard demo for global subscriptions',
-          onTap: () => Navigator.of(context).push(
-            MaterialPageRoute(builder: (context) => const CardsScreen()),
+        if (caps.virtualCards) ...[
+          const SizedBox(height: 10),
+          _buildListTile(
+            icon: Icons.credit_card_rounded,
+            iconColor: const Color(0xFFA78BFA),
+            title: 'Cards',
+            subtitle: 'USD Visa/Mastercard demo for global subscriptions',
+            onTap: () => Navigator.of(context).push(
+              MaterialPageRoute(builder: (context) => const CardsScreen()),
+            ),
           ),
-        ),
+        ],
       ],
     );
   }
@@ -833,6 +1133,8 @@ class PayHubScreen extends ConsumerWidget {
     required Color iconColor,
     required String title,
     required String subtitle,
+    String? badgeText,
+    Color? badgeColor,
     required VoidCallback onTap,
   }) {
     return GestureDetector(
@@ -878,10 +1180,72 @@ class PayHubScreen extends ConsumerWidget {
                 ],
               ),
             ),
-            const Icon(Icons.chevron_right,
-                color: AppColors.darkTextSecondary, size: 20),
+            if (badgeText != null) ...[
+              const SizedBox(width: 8),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                decoration: BoxDecoration(
+                  color:
+                      (badgeColor ?? AppColors.primary).withValues(alpha: 0.15),
+                  borderRadius: BorderRadius.circular(6),
+                ),
+                child: Text(
+                  badgeText,
+                  style: TextStyle(
+                    color: badgeColor ?? AppColors.primary,
+                    fontSize: 10,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ),
+            ],
+            const SizedBox(width: 4),
+            const Icon(Icons.chevron_right_rounded,
+                color: AppColors.darkTextTertiary, size: 20),
           ],
         ),
+      ),
+    );
+  }
+
+  Widget _buildSafetyReassurance() {
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: AppColors.darkCardBackground,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: AppColors.darkBorder),
+      ),
+      child: const Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Icon(Icons.lock_outline_rounded, color: AppColors.primary, size: 20),
+          SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  '100% Bitcoin Backed',
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontSize: 14,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                SizedBox(height: 4),
+                Text(
+                  'Hanbova holds zero local fiat balances. Local airtime, electricity, and utilities are settled on-demand directly from your satoshis.',
+                  style: TextStyle(
+                    color: AppColors.darkTextSecondary,
+                    fontSize: 12,
+                    height: 1.35,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
       ),
     );
   }

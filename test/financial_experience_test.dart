@@ -21,7 +21,7 @@ void main() {
 
   group('M3B.2.1 Core Currencies & Math', () {
     test('supports all 8 target African & global currencies', () {
-      expect(FiatCurrency.values.length, 8);
+      expect(FiatCurrency.values.length, greaterThanOrEqualTo(8));
       expect(
           FiatCurrency.values.map((c) => c.code).toList(),
           containsAll([

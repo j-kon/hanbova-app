@@ -12,6 +12,7 @@ import '../../../core/theme/app_radius.dart';
 import '../../../core/theme/app_spacing.dart';
 import '../../../core/theme/app_typography.dart';
 import '../../auth/providers/auth_provider.dart';
+import '../../../core/demo/demo_personas.dart';
 
 class DeveloperOptionsScreen extends ConsumerStatefulWidget {
   const DeveloperOptionsScreen({super.key});
@@ -262,6 +263,78 @@ class _DeveloperOptionsScreenState
                       ),
                     );
                   }),
+                ],
+              ),
+            ),
+            // Market Experience Personas
+            _SectionHeader(title: 'Market Experience Personas'),
+            Container(
+              padding: const EdgeInsets.all(AppSpacing.md),
+              decoration: BoxDecoration(
+                color: colors.surfaceCard,
+                borderRadius: AppRadius.mdRadius,
+                border: Border.all(color: colors.border),
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'Quick switch between architecture personas to test adaptive capabilities, rail states, and currency handling.',
+                    style: AppTypography.bodySmall
+                        .copyWith(color: colors.textSecondary),
+                  ),
+                  const SizedBox(height: AppSpacing.md),
+                  ...[
+                    DemoPersonas.personaA,
+                    DemoPersonas.personaB,
+                    DemoPersonas.personaC,
+                  ].map((persona) => Padding(
+                        padding: const EdgeInsets.only(bottom: 8),
+                        child: SizedBox(
+                          width: double.infinity,
+                          child: OutlinedButton(
+                            onPressed: () async {
+                              await applyPersona(ref, persona);
+                              if (context.mounted) {
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  SnackBar(
+                                    content: Text(
+                                      'Applied ${persona.name}: ${persona.residenceCountry} (Roam: ${persona.roamEnabled ? persona.roamDestination : "Off"})',
+                                    ),
+                                    backgroundColor: colors.primary,
+                                  ),
+                                );
+                              }
+                            },
+                            style: OutlinedButton.styleFrom(
+                              foregroundColor: colors.textPrimary,
+                              side: BorderSide(color: colors.border),
+                              alignment: Alignment.centerLeft,
+                              padding: const EdgeInsets.symmetric(
+                                  horizontal: 14, vertical: 10),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: AppRadius.smRadius,
+                              ),
+                            ),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(persona.name,
+                                    style: const TextStyle(
+                                        fontWeight: FontWeight.bold)),
+                                const SizedBox(height: 2),
+                                Text(
+                                  persona.description,
+                                  style: TextStyle(
+                                    color: colors.textTertiary,
+                                    fontSize: 11,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                      )),
                 ],
               ),
             ),

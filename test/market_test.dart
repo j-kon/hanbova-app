@@ -78,7 +78,7 @@ void main() {
       expect(za.defaultCurrency, FiatCurrency.zar);
 
       final unknown = CountryInfo.findByCode('ZZ');
-      expect(unknown.code, 'KE'); // Fallback default
+      expect(unknown.code, 'US'); // Global baseline fallback
     });
   });
 }

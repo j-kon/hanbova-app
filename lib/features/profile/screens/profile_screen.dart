@@ -133,8 +133,9 @@ class ProfileScreen extends ConsumerWidget {
           ),
           const SizedBox(height: AppSpacing.lg),
 
-          // 2. Roam Mode Highlight Tile
+          // 2. Roam Mode & Market Context Card
           Container(
+            padding: const EdgeInsets.all(AppSpacing.md),
             decoration: BoxDecoration(
               gradient: LinearGradient(
                 colors: [
@@ -153,62 +154,106 @@ class ProfileScreen extends ConsumerWidget {
                     : colors.border,
               ),
             ),
-            child: Material(
-              color: Colors.transparent,
-              child: ListTile(
-                contentPadding: const EdgeInsets.symmetric(
-                    horizontal: AppSpacing.md, vertical: 4),
-                leading: Container(
-                  padding: const EdgeInsets.all(8),
-                  decoration: BoxDecoration(
-                    color: colors.primary.withValues(alpha: 0.12),
-                    shape: BoxShape.circle,
-                  ),
-                  child: Icon(
-                    Icons.travel_explore_rounded,
-                    color: colors.primary,
-                    size: 22,
-                  ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Row(
+                      children: [
+                        Container(
+                          padding: const EdgeInsets.all(8),
+                          decoration: BoxDecoration(
+                            color: colors.primary.withValues(alpha: 0.12),
+                            shape: BoxShape.circle,
+                          ),
+                          child: Icon(
+                            Icons.travel_explore_rounded,
+                            color: colors.primary,
+                            size: 20,
+                          ),
+                        ),
+                        const SizedBox(width: 10),
+                        Text(
+                          'Roam Mode',
+                          style: AppTypography.bodyMedium.copyWith(
+                            color: colors.textPrimary,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ],
+                    ),
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 8, vertical: 4),
+                      decoration: BoxDecoration(
+                        color: market.isRoamActive
+                            ? const Color(0xFF10B981).withValues(alpha: 0.15)
+                            : colors.surface,
+                        borderRadius: BorderRadius.circular(6),
+                      ),
+                      child: Text(
+                        market.isRoamActive ? 'ACTIVE' : 'OFF',
+                        style: TextStyle(
+                          color: market.isRoamActive
+                              ? const Color(0xFF10B981)
+                              : colors.textTertiary,
+                          fontSize: 11,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ),
+                  ],
                 ),
-                title: Text(
-                  'Roam Mode',
-                  style: AppTypography.bodyMedium.copyWith(
-                    color: colors.textPrimary,
-                    fontWeight: FontWeight.bold,
-                  ),
+                const SizedBox(height: 12),
+                Divider(color: colors.divider),
+                const SizedBox(height: 8),
+                _buildProfileDetailRow(
+                  label: 'Country of residence',
+                  value:
+                      '${market.residenceCountryInfo.name} ${market.residenceCountryInfo.flagEmoji}',
+                  colors: colors,
                 ),
-                subtitle: Text(
-                  market.isRoamActive
-                      ? 'Active in ${market.spendCountryInfo.name} (${market.spendCountryInfo.flagEmoji})'
-                      : 'Disabled • Using residence (${market.identityCountryInfo.flagEmoji})',
-                  style: AppTypography.caption.copyWith(
-                    color: market.isRoamActive
-                        ? colors.primary
-                        : colors.textSecondary,
-                  ),
+                const SizedBox(height: 6),
+                _buildProfileDetailRow(
+                  label: 'Active market',
+                  value: market.isRoamActive
+                      ? '${market.activeMarketInfo.name} ${market.activeMarketInfo.flagEmoji} (Roam)'
+                      : '${market.activeMarketInfo.name} ${market.activeMarketInfo.flagEmoji}',
+                  colors: colors,
+                  isHighlighted: market.isRoamActive,
                 ),
-                trailing: Container(
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                  decoration: BoxDecoration(
-                    color: market.isRoamActive
-                        ? const Color(0xFF10B981).withValues(alpha: 0.15)
-                        : colors.surface,
-                    borderRadius: BorderRadius.circular(6),
-                  ),
-                  child: Text(
-                    market.isRoamActive ? 'ACTIVE' : 'OFF',
-                    style: TextStyle(
-                      color: market.isRoamActive
-                          ? const Color(0xFF10B981)
-                          : colors.textTertiary,
-                      fontSize: 11,
-                      fontWeight: FontWeight.bold,
+                const SizedBox(height: 6),
+                _buildProfileDetailRow(
+                  label: 'Display currency',
+                  value: market.displayCurrency.code,
+                  colors: colors,
+                ),
+                const SizedBox(height: 12),
+                SizedBox(
+                  width: double.infinity,
+                  child: OutlinedButton(
+                    onPressed: () => context.push('/roam'),
+                    style: OutlinedButton.styleFrom(
+                      foregroundColor: colors.primary,
+                      side: BorderSide(
+                          color: colors.primary.withValues(alpha: 0.5)),
+                      padding: const EdgeInsets.symmetric(vertical: 8),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: AppRadius.smRadius,
+                      ),
+                    ),
+                    child: Text(
+                      market.isRoamActive
+                          ? 'Manage Roam'
+                          : 'Explore Roam Markets',
+                      style: const TextStyle(
+                          fontWeight: FontWeight.bold, fontSize: 12),
                     ),
                   ),
                 ),
-                onTap: () => context.push('/roam'),
-              ),
+              ],
             ),
           ),
           const SizedBox(height: AppSpacing.lg),
@@ -350,6 +395,32 @@ class ProfileScreen extends ConsumerWidget {
             Icon(Icons.chevron_right, size: 18, color: colors.textTertiary),
         onTap: onTap,
       ),
+    );
+  }
+
+  Widget _buildProfileDetailRow({
+    required String label,
+    required String value,
+    required dynamic colors,
+    bool isHighlighted = false,
+  }) {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      children: [
+        Text(
+          label,
+          style: AppTypography.caption.copyWith(
+            color: colors.textSecondary,
+          ),
+        ),
+        Text(
+          value,
+          style: AppTypography.bodySmall.copyWith(
+            color: isHighlighted ? colors.primary : colors.textPrimary,
+            fontWeight: FontWeight.bold,
+          ),
+        ),
+      ],
     );
   }
 }

@@ -118,6 +118,7 @@ class ProfileNotifier extends StateNotifier<UserProfileData> {
     String? username,
     String? phone,
     String? email,
+    String? residenceCountry,
   }) async {
     final cleanUsername =
         (username ?? state.username).replaceAll('@', '').trim();
@@ -127,6 +128,7 @@ class ProfileNotifier extends StateNotifier<UserProfileData> {
       username: cleanUsername.isNotEmpty ? cleanUsername : state.username,
       phone: phone?.trim() ?? state.phone,
       email: email?.trim() ?? state.email,
+      residenceCountry: residenceCountry?.trim() ?? state.residenceCountry,
     );
 
     if (firstName != null) {
@@ -143,6 +145,9 @@ class ProfileNotifier extends StateNotifier<UserProfileData> {
     }
     if (email != null) {
       await _storage.write(key: _keyEmail, value: state.email);
+    }
+    if (residenceCountry != null) {
+      await _storage.write(key: _keyResidence, value: state.residenceCountry);
     }
   }
 

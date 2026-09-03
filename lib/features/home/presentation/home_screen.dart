@@ -25,6 +25,8 @@ import '../../transactions/domain/transaction_model.dart';
 import '../../transactions/presentation/transactions_provider.dart';
 import '../../wallet/presentation/unified_deposit_sheet.dart';
 import '../../../core/demo/demo_mode_provider.dart';
+import '../../../core/market/market_provider.dart';
+import '../../request_money/presentation/request_money_screen.dart';
 
 class HomeScreen extends ConsumerStatefulWidget {
   const HomeScreen({super.key});
@@ -121,6 +123,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     final currency = ref.watch(currencyProvider);
     final transactions = ref.watch(transactionsProvider);
     final demoState = ref.watch(demoModeProvider);
+    final market = ref.watch(marketProvider);
     final cashuBalanceAsync = ref.watch(cashuBalanceProvider);
     final cashuBalance = cashuBalanceAsync.value ??
         const CashuWalletBalance(spendableSats: 0, lockedEscrowSats: 0);
@@ -549,114 +552,181 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                 ),
                 const SizedBox(height: AppSpacing.md),
 
-                // 3. Primary Quick Action Grid (Send, Receive, Protected, Scan)
-                Row(
-                  children: [
-                    _buildActionButton(
-                      context,
-                      icon: Icons.arrow_upward_rounded,
-                      label: 'Send',
-                      color: colors.primary,
-                      onTap: () => context.push('/send'),
-                    ),
-                    const SizedBox(width: 8),
-                    _buildActionButton(
-                      context,
-                      icon: Icons.arrow_downward_rounded,
-                      label: 'Receive',
-                      color: const Color(0xFF10B981),
-                      onTap: () => UnifiedDepositSheet.show(context),
-                    ),
-                    const SizedBox(width: 8),
-                    _buildActionButton(
-                      context,
-                      icon: Icons.shield_outlined,
-                      label: 'Protected',
-                      color: colors.protected,
-                      onTap: () => context.push('/protected-send'),
-                    ),
-                    const SizedBox(width: 8),
-                    _buildActionButton(
-                      context,
-                      icon: Icons.qr_code_scanner_rounded,
-                      label: 'Scan',
-                      color: const Color(0xFF38BDF8),
-                      onTap: () => context.push('/scan'),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: AppSpacing.md),
-
-                // 3.5 Quick Pay Services (Airtime, Data, Electricity, TV)
-                Container(
-                  padding: const EdgeInsets.all(AppSpacing.md),
-                  decoration: BoxDecoration(
-                    color: colors.surfaceCard,
-                    borderRadius: AppRadius.mdRadius,
-                    border: Border.all(color: colors.border, width: 1),
-                  ),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
+                // 3. Action Rail (Adaptive based on market capabilities)
+                SingleChildScrollView(
+                  scrollDirection: Axis.horizontal,
+                  child: Row(
                     children: [
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          Text(
-                            'Quick Pay',
-                            style: AppTypography.titleSmall.copyWith(
-                              color: colors.textPrimary,
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
-                          TextButton(
-                            onPressed: () => context.go('/pay'),
-                            style: TextButton.styleFrom(
-                              padding: EdgeInsets.zero,
-                              minimumSize: Size.zero,
-                              tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                            ),
-                            child: const Text('All Bills'),
-                          ),
-                        ],
+                      _buildActionRailItem(
+                        context,
+                        icon: Icons.arrow_upward_rounded,
+                        label: 'Send',
+                        color: colors.primary,
+                        onTap: () => context.push('/send'),
                       ),
-                      const SizedBox(height: 10),
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          _buildQuickPayIcon(
-                            context,
-                            icon: Icons.phone_android_rounded,
-                            label: 'Airtime',
-                            color: AppColors.primary,
-                            onTap: () => context.push('/pay/airtime'),
-                          ),
-                          _buildQuickPayIcon(
-                            context,
-                            icon: Icons.wifi_rounded,
-                            label: 'Data',
-                            color: const Color(0xFF38BDF8),
-                            onTap: () => context.push('/pay/data'),
-                          ),
-                          _buildQuickPayIcon(
-                            context,
-                            icon: Icons.electric_bolt_rounded,
-                            label: 'Electricity',
-                            color: const Color(0xFFFBBF24),
-                            onTap: () => context.push('/pay/electricity'),
-                          ),
-                          _buildQuickPayIcon(
-                            context,
-                            icon: Icons.tv_rounded,
-                            label: 'TV',
-                            color: const Color(0xFFA78BFA),
-                            onTap: () => context.push('/pay/tv'),
-                          ),
-                        ],
+                      const SizedBox(width: 8),
+                      _buildActionRailItem(
+                        context,
+                        icon: Icons.arrow_downward_rounded,
+                        label: 'Receive',
+                        color: const Color(0xFF10B981),
+                        onTap: () => UnifiedDepositSheet.show(context),
+                      ),
+                      const SizedBox(width: 8),
+                      _buildActionRailItem(
+                        context,
+                        icon: Icons.shield_outlined,
+                        label: 'Protected',
+                        color: colors.protected,
+                        onTap: () => context.push('/protected-send'),
+                      ),
+                      const SizedBox(width: 8),
+                      _buildActionRailItem(
+                        context,
+                        icon: Icons.qr_code_scanner_rounded,
+                        label: 'Scan',
+                        color: const Color(0xFF38BDF8),
+                        onTap: () => context.push('/scan'),
+                      ),
+                      const SizedBox(width: 8),
+                      _buildActionRailItem(
+                        context,
+                        icon: Icons.call_received_rounded,
+                        label: 'Request',
+                        color: const Color(0xFFEC4899),
+                        onTap: () => showModalBottomSheet(
+                          context: context,
+                          isScrollControlled: true,
+                          backgroundColor: Colors.transparent,
+                          builder: (ctx) => const RequestMoneyScreen(),
+                        ),
+                      ),
+                      if (market.capabilities.airtime) ...[
+                        const SizedBox(width: 8),
+                        _buildActionRailItem(
+                          context,
+                          icon: Icons.phone_android_rounded,
+                          label: 'Airtime',
+                          color: AppColors.primary,
+                          onTap: () => context.push('/pay/airtime'),
+                        ),
+                      ],
+                      const SizedBox(width: 8),
+                      _buildActionRailItem(
+                        context,
+                        icon: Icons.more_horiz_rounded,
+                        label: 'More',
+                        color: const Color(0xFF94A3B8),
+                        onTap: () => context.go('/pay'),
                       ),
                     ],
                   ),
                 ),
                 const SizedBox(height: AppSpacing.md),
+
+                // 3.5 Quick Pay Services (Rendered only when active market supports everyday bills)
+                if (market.capabilities.hasEverydayBills) ...[
+                  Container(
+                    padding: const EdgeInsets.all(AppSpacing.md),
+                    decoration: BoxDecoration(
+                      color: colors.surfaceCard,
+                      borderRadius: AppRadius.mdRadius,
+                      border: Border.all(color: colors.border, width: 1),
+                    ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            Text(
+                              'Quick Pay',
+                              style: AppTypography.titleSmall.copyWith(
+                                color: colors.textPrimary,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                            TextButton(
+                              onPressed: () => context.go('/pay'),
+                              style: TextButton.styleFrom(
+                                padding: EdgeInsets.zero,
+                                minimumSize: Size.zero,
+                                tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                              ),
+                              child: const Text('All Bills'),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 10),
+                        SingleChildScrollView(
+                          scrollDirection: Axis.horizontal,
+                          child: Row(
+                            children: [
+                              if (market.capabilities.airtime) ...[
+                                _buildQuickPayIcon(
+                                  context,
+                                  icon: Icons.phone_android_rounded,
+                                  label: 'Airtime',
+                                  color: AppColors.primary,
+                                  onTap: () => context.push('/pay/airtime'),
+                                ),
+                                const SizedBox(width: 12),
+                              ],
+                              if (market.capabilities.data) ...[
+                                _buildQuickPayIcon(
+                                  context,
+                                  icon: Icons.wifi_rounded,
+                                  label: 'Data',
+                                  color: const Color(0xFF38BDF8),
+                                  onTap: () => context.push('/pay/data'),
+                                ),
+                                const SizedBox(width: 12),
+                              ],
+                              if (market.capabilities.electricity) ...[
+                                _buildQuickPayIcon(
+                                  context,
+                                  icon: Icons.electric_bolt_rounded,
+                                  label: 'Electricity',
+                                  color: const Color(0xFFFBBF24),
+                                  onTap: () => context.push('/pay/electricity'),
+                                ),
+                                const SizedBox(width: 12),
+                              ],
+                              if (market.capabilities.water) ...[
+                                _buildQuickPayIcon(
+                                  context,
+                                  icon: Icons.water_drop_rounded,
+                                  label: 'Water',
+                                  color: const Color(0xFF06B6D4),
+                                  onTap: () => context.push('/pay/water'),
+                                ),
+                                const SizedBox(width: 12),
+                              ],
+                              if (market.capabilities.tv) ...[
+                                _buildQuickPayIcon(
+                                  context,
+                                  icon: Icons.tv_rounded,
+                                  label: 'TV',
+                                  color: const Color(0xFFA78BFA),
+                                  onTap: () => context.push('/pay/tv'),
+                                ),
+                                const SizedBox(width: 12),
+                              ],
+                              _buildQuickPayIcon(
+                                context,
+                                icon: Icons.more_horiz_rounded,
+                                label: 'More',
+                                color: const Color(0xFF94A3B8),
+                                onTap: () => context.go('/pay'),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(height: AppSpacing.md),
+                ],
 
                 // 4. Needs Attention Hub (High-priority actionable items only)
                 // Card 1: Refund Available
@@ -1087,48 +1157,50 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     );
   }
 
-  Widget _buildActionButton(
+  Widget _buildActionRailItem(
     BuildContext context, {
     required IconData icon,
     required String label,
     required Color color,
     required VoidCallback onTap,
   }) {
-    return Expanded(
-      child: InkWell(
-        onTap: onTap,
-        borderRadius: BorderRadius.circular(14),
-        child: Container(
-          padding: const EdgeInsets.symmetric(vertical: 12),
-          decoration: BoxDecoration(
-            color: AppColors.darkCardBackground,
-            borderRadius: BorderRadius.circular(14),
-            border: Border.all(
-              color: color.withValues(alpha: 0.35),
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(14),
+      child: Container(
+        width: 74,
+        padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 4),
+        decoration: BoxDecoration(
+          color: AppColors.darkCardBackground,
+          borderRadius: BorderRadius.circular(14),
+          border: Border.all(
+            color: color.withValues(alpha: 0.35),
+          ),
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Container(
+              padding: const EdgeInsets.all(8),
+              decoration: BoxDecoration(
+                color: color.withValues(alpha: 0.15),
+                shape: BoxShape.circle,
+              ),
+              child: Icon(icon, color: color, size: 20),
             ),
-          ),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Container(
-                padding: const EdgeInsets.all(8),
-                decoration: BoxDecoration(
-                  color: color.withValues(alpha: 0.15),
-                  shape: BoxShape.circle,
-                ),
-                child: Icon(icon, color: color, size: 20),
+            const SizedBox(height: 6),
+            Text(
+              label,
+              style: const TextStyle(
+                color: Colors.white,
+                fontSize: 11,
+                fontWeight: FontWeight.bold,
               ),
-              const SizedBox(height: 6),
-              Text(
-                label,
-                style: const TextStyle(
-                  color: Colors.white,
-                  fontSize: 12,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-            ],
-          ),
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              textAlign: TextAlign.center,
+            ),
+          ],
         ),
       ),
     );

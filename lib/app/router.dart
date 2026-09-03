@@ -38,6 +38,7 @@ import '../features/transactions/presentation/transaction_details_screen.dart';
 import '../features/transactions/presentation/transactions_screen.dart';
 import '../features/travel/presentation/esim_screen.dart';
 import '../features/travel/presentation/travel_screen.dart';
+import '../features/roam/presentation/roam_screen.dart';
 import 'shell/app_shell.dart';
 
 import '../features/spend/presentation/airtime_flow_screen.dart';
@@ -338,7 +339,7 @@ final appRouterProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: '/roam',
         parentNavigatorKey: _rootNavigatorKey,
-        builder: (context, state) => const TravelScreen(),
+        builder: (context, state) => const RoamScreen(),
       ),
       GoRoute(
         path: '/backup-seed',

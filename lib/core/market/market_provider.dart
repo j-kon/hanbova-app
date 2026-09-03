@@ -11,64 +11,98 @@ final marketProvider =
 });
 
 class MarketNotifier extends StateNotifier<UserCountryContext> {
-  final ApiClient _apiClient;
+  final ApiClient? _apiClient;
   static const _storage = FlutterSecureStorage();
 
+  static const _residenceKey = 'hanbova_residence_country';
   static const _identityKey = 'hanbova_identity_country';
+  static const _activeMarketKey = 'hanbova_active_market';
   static const _spendKey = 'hanbova_spend_country';
   static const _currencyKey = 'hanbova_display_currency';
   static const _roamEnabledKey = 'hanbova_roam_enabled';
 
-  MarketNotifier(this._apiClient)
+  MarketNotifier([this._apiClient])
       : super(const UserCountryContext(
-          identityCountry: 'NG',
-          spendCountry: 'NG',
+          residenceCountry: 'NG',
+          activeMarket: 'NG',
           displayCurrency: FiatCurrency.ngn,
           roamEnabled: false,
+          capabilities: MarketCapabilities(
+            bitcoin: true,
+            cashu: true,
+            protectedPayments: true,
+            stablecoin: false,
+            airtime: true,
+            data: true,
+            electricity: true,
+            water: true,
+            tv: true,
+            internet: true,
+            bankPayout: true,
+            mobileMoney: false,
+            virtualCards: true,
+            esim: true,
+          ),
         )) {
     _loadPersisted();
   }
 
   Future<void> _loadPersisted() async {
     try {
-      final identity = await _storage.read(key: _identityKey);
-      final spend = await _storage.read(key: _spendKey);
+      final residence = (await _storage.read(key: _residenceKey)) ??
+          (await _storage.read(key: _identityKey));
+      final market = (await _storage.read(key: _activeMarketKey)) ??
+          (await _storage.read(key: _spendKey));
       final currencyStr = await _storage.read(key: _currencyKey);
       final roamStr = await _storage.read(key: _roamEnabledKey);
 
-      final newIdentity = identity ?? state.identityCountry;
-      final newSpend = spend ?? state.spendCountry;
+      final newResidence = residence ?? state.residenceCountry;
       final isRoam = roamStr == 'true';
+      final newMarket = isRoam ? (market ?? newResidence) : newResidence;
+
+      final defaultCurr = CountryInfo.findByCode(newMarket).defaultCurrency;
       final currency = currencyStr != null
           ? FiatCurrency.values.firstWhere(
               (c) => c.code == currencyStr,
-              orElse: () => CountryInfo.findByCode(newSpend).defaultCurrency,
+              orElse: () => defaultCurr,
             )
-          : state.displayCurrency;
+          : defaultCurr;
 
       state = state.copyWith(
-        identityCountry: newIdentity,
-        spendCountry: newSpend,
+        residenceCountry: newResidence,
+        activeMarket: newMarket,
         displayCurrency: currency,
         roamEnabled: isRoam,
+        capabilities: MarketCapabilities.forMarket(newMarket),
       );
 
-      await fetchCapabilities(newSpend);
+      await fetchCapabilities(newMarket);
     } catch (_) {}
   }
 
-  Future<void> setIdentityCountry(String countryCode) async {
+  /// Sets the user's permanent legal Country of Residence.
+  Future<void> setResidenceCountry(String countryCode) async {
     final clean = countryCode.trim().toUpperCase();
+    await _storage.write(key: _residenceKey, value: clean);
     await _storage.write(key: _identityKey, value: clean);
-    state = state.copyWith(identityCountry: clean);
+
+    state = state.copyWith(residenceCountry: clean);
+
+    // When Roam is NOT active, active market follows residence country
     if (!state.roamEnabled) {
-      await setSpendCountry(clean, syncDisplayCurrency: true);
+      await setActiveMarket(clean, syncDisplayCurrency: true);
     }
   }
 
-  Future<void> setSpendCountry(String countryCode,
+  /// Backward-compatible alias for setResidenceCountry
+  Future<void> setIdentityCountry(String countryCode) =>
+      setResidenceCountry(countryCode);
+
+  /// Sets the active market context.
+  Future<void> setActiveMarket(String countryCode,
       {bool syncDisplayCurrency = true}) async {
     final clean = countryCode.trim().toUpperCase();
+    await _storage.write(key: _activeMarketKey, value: clean);
     await _storage.write(key: _spendKey, value: clean);
 
     FiatCurrency newCurrency = state.displayCurrency;
@@ -78,44 +112,56 @@ class MarketNotifier extends StateNotifier<UserCountryContext> {
     }
 
     state = state.copyWith(
-      spendCountry: clean,
+      activeMarket: clean,
       displayCurrency: newCurrency,
+      capabilities: MarketCapabilities.forMarket(clean),
     );
 
     await fetchCapabilities(clean);
   }
 
+  /// Backward-compatible alias for setActiveMarket
+  Future<void> setSpendCountry(String countryCode,
+          {bool syncDisplayCurrency = true}) =>
+      setActiveMarket(countryCode, syncDisplayCurrency: syncDisplayCurrency);
+
   /// Explicitly activates Roam mode for a target destination country.
-  Future<void> activateRoam(String countryCode) async {
-    final clean = countryCode.trim().toUpperCase();
+  /// Residence country remains completely unchanged.
+  Future<void> activateRoam(String targetCountryCode) async {
+    final clean = targetCountryCode.trim().toUpperCase();
     final newCurrency = CountryInfo.findByCode(clean).defaultCurrency;
 
     await _storage.write(key: _roamEnabledKey, value: 'true');
+    await _storage.write(key: _activeMarketKey, value: clean);
     await _storage.write(key: _spendKey, value: clean);
     await _storage.write(key: _currencyKey, value: newCurrency.code);
 
     state = state.copyWith(
       roamEnabled: true,
-      spendCountry: clean,
+      activeMarket: clean,
       displayCurrency: newCurrency,
+      capabilities: MarketCapabilities.forMarket(clean),
     );
 
     await fetchCapabilities(clean);
   }
 
-  /// Explicitly turns off Roam mode, restoring spend country and currency to residence country.
+  /// Explicitly turns off Roam mode, restoring active market and display currency
+  /// to the user's permanent Country of Residence.
   Future<void> deactivateRoam() async {
-    final residence = state.identityCountry;
+    final residence = state.residenceCountry;
     final residenceCurrency = CountryInfo.findByCode(residence).defaultCurrency;
 
     await _storage.write(key: _roamEnabledKey, value: 'false');
+    await _storage.write(key: _activeMarketKey, value: residence);
     await _storage.write(key: _spendKey, value: residence);
     await _storage.write(key: _currencyKey, value: residenceCurrency.code);
 
     state = state.copyWith(
       roamEnabled: false,
-      spendCountry: residence,
+      activeMarket: residence,
       displayCurrency: residenceCurrency,
+      capabilities: MarketCapabilities.forMarket(residence),
     );
 
     await fetchCapabilities(residence);
@@ -128,29 +174,23 @@ class MarketNotifier extends StateNotifier<UserCountryContext> {
 
   Future<void> fetchCapabilities(String countryCode) async {
     final clean = countryCode.trim().toUpperCase();
-    try {
-      final data = await _apiClient.get('/markets/$clean/capabilities');
-      final capsJson = data['capabilities'] as Map<String, dynamic>? ?? {};
-      final caps = MarketCapabilities.fromJson(capsJson);
-      if (state.spendCountry == clean) {
-        state = state.copyWith(capabilities: caps);
-      }
-    } catch (_) {
-      // Fallback default capabilities for known countries
+    final client = _apiClient;
+    if (client != null) {
+      try {
+        final data = await client.get('/markets/$clean/capabilities');
+        final capsJson = data['capabilities'] as Map<String, dynamic>? ?? {};
+        final caps = MarketCapabilities.fromJson(capsJson);
+        if (state.activeMarket == clean) {
+          state = state.copyWith(capabilities: caps);
+        }
+        return;
+      } catch (_) {}
+    }
+
+    // Deterministic capability matrix for frontend development
+    if (state.activeMarket == clean) {
       state = state.copyWith(
-        capabilities: MarketCapabilities(
-          payouts: true,
-          mobileMoney: clean != 'NG' && clean != 'ZA',
-          cards: true,
-          airtime: true,
-          data: true,
-          electricity: true,
-          water:
-              clean == 'KE' || clean == 'GH' || clean == 'UG' || clean == 'RW',
-          tv: true,
-          internet: clean == 'KE' || clean == 'NG' || clean == 'ZA',
-          esim: true,
-        ),
+        capabilities: MarketCapabilities.forMarket(clean),
       );
     }
   }

@@ -126,16 +126,14 @@ void main() {
       expect(find.text('First name'), findsOneWidget);
       expect(find.text('Last name'), findsOneWidget);
       expect(find.text('Username'), findsOneWidget);
-      expect(find.text('Email address'), findsOneWidget);
 
-      final button = find.widgetWithText(ElevatedButton, 'Create Account');
+      final button = find.widgetWithText(ElevatedButton, 'Continue');
       await tester.ensureVisible(button);
       await tester.tap(button);
       await tester.pumpAndSettle();
 
       expect(find.text('Required'), findsNWidgets(2));
       expect(find.text('Username is required'), findsOneWidget);
-      expect(find.text('Email is required'), findsOneWidget);
     });
 
     testWidgets('ForgotPasswordScreen renders email field and continue action',

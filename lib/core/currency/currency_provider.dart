@@ -33,6 +33,10 @@ class DevelopmentExchangeRateProvider implements ExchangeRateProvider {
         return 160000000.0; // 1 BTC = 160M TZS
       case FiatCurrency.usd:
         return 60000.0; // 1 BTC = $60k USD
+      case FiatCurrency.eur:
+        return 55000.0; // 1 BTC = €55k EUR
+      case FiatCurrency.gbp:
+        return 47000.0; // 1 BTC = £47k GBP
     }
   }
 }
@@ -49,7 +53,9 @@ enum FiatCurrency {
   rwf('RWF', 'FRw '),
   ugx('UGX', 'USh '),
   tzs('TZS', 'TSh '),
-  zar('ZAR', 'R ');
+  zar('ZAR', 'R '),
+  eur('EUR', '€'),
+  gbp('GBP', '£');
 
   final String code;
   final String symbol;
