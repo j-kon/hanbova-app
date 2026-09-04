@@ -211,8 +211,8 @@ class _TransactionsScreenState extends ConsumerState<TransactionsScreen> {
                   ),
                   const SizedBox(height: 16),
                   Text('Status',
-                      style: TextStyle(
-                          color: colors.textSecondary, fontSize: 13)),
+                      style:
+                          TextStyle(color: colors.textSecondary, fontSize: 13)),
                   const SizedBox(height: 8),
                   Wrap(
                     spacing: 8,
@@ -276,8 +276,8 @@ class _TransactionsScreenState extends ConsumerState<TransactionsScreen> {
                   ),
                   const SizedBox(height: 20),
                   Text('Destination / Spend Country',
-                      style: TextStyle(
-                          color: colors.textSecondary, fontSize: 13)),
+                      style:
+                          TextStyle(color: colors.textSecondary, fontSize: 13)),
                   const SizedBox(height: 8),
                   Wrap(
                     spacing: 8,
@@ -562,8 +562,7 @@ class _TransactionsScreenState extends ConsumerState<TransactionsScreen> {
                   ? 'Try adjusting your search or filters.'
                   : 'Your Bitcoin payments, protected sends, utility bills, and travel activity will appear here.',
               textAlign: TextAlign.center,
-              style: TextStyle(
-                  color: colors.textSecondary, fontSize: 13),
+              style: TextStyle(color: colors.textSecondary, fontSize: 13),
             ),
           ],
         ),

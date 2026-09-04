@@ -83,8 +83,7 @@ class PayHubScreen extends ConsumerWidget {
                     ),
                   ),
                   trailing: isSelected
-                      ? Icon(Icons.check_circle_rounded,
-                          color: colors.primary)
+                      ? Icon(Icons.check_circle_rounded, color: colors.primary)
                       : null,
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(12),
@@ -512,8 +511,8 @@ class PayHubScreen extends ConsumerWidget {
         ],
 
         // 4. Manage Section
-        _buildSectionHeader(context, 'Manage',
-            'Payment management, beneficiaries, and cards'),
+        _buildSectionHeader(
+            context, 'Manage', 'Payment management, beneficiaries, and cards'),
         const SizedBox(height: 12),
         _buildMoreCards(context, caps),
         const SizedBox(height: 28),
@@ -1210,8 +1209,7 @@ class PayHubScreen extends ConsumerWidget {
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
                 decoration: BoxDecoration(
-                  color:
-                      (badgeColor ?? colors.primary).withValues(alpha: 0.15),
+                  color: (badgeColor ?? colors.primary).withValues(alpha: 0.15),
                   borderRadius: BorderRadius.circular(6),
                 ),
                 child: Text(

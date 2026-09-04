@@ -286,9 +286,8 @@ class MoneyScreen extends ConsumerWidget {
                 : '\$0.00',
             fiatEstimate: demoState.isEnabled ? '1,250.00 USDT' : null,
             stateBadge: demoState.isEnabled ? 'Demo' : 'Coming soon',
-            badgeColor: demoState.isEnabled
-                ? colors.primary
-                : const Color(0xFF38BDF8),
+            badgeColor:
+                demoState.isEnabled ? colors.primary : const Color(0xFF38BDF8),
             onTap: () => context.push('/money/usdt'),
             colors: colors,
           ),
@@ -308,9 +307,8 @@ class MoneyScreen extends ConsumerWidget {
                 : '\$0.00',
             fiatEstimate: demoState.isEnabled ? '750.00 USDC' : null,
             stateBadge: demoState.isEnabled ? 'Demo' : 'Coming soon',
-            badgeColor: demoState.isEnabled
-                ? colors.primary
-                : const Color(0xFF38BDF8),
+            badgeColor:
+                demoState.isEnabled ? colors.primary : const Color(0xFF38BDF8),
             onTap: () => context.push('/money/usdc'),
             colors: colors,
           ),
@@ -743,37 +741,37 @@ class MoneyScreen extends ConsumerWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                    Wrap(
-                      crossAxisAlignment: WrapCrossAlignment.center,
-                      spacing: 6,
-                      runSpacing: 2,
-                      children: [
-                        Text(
-                          name,
+                  Wrap(
+                    crossAxisAlignment: WrapCrossAlignment.center,
+                    spacing: 6,
+                    runSpacing: 2,
+                    children: [
+                      Text(
+                        name,
+                        style: TextStyle(
+                          color: colors.textPrimary,
+                          fontWeight: FontWeight.bold,
+                          fontSize: 15,
+                        ),
+                      ),
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 6, vertical: 2),
+                        decoration: BoxDecoration(
+                          color: badgeColor.withValues(alpha: 0.12),
+                          borderRadius: BorderRadius.circular(4),
+                        ),
+                        child: Text(
+                          stateBadge,
                           style: TextStyle(
-                            color: colors.textPrimary,
+                            color: badgeColor,
+                            fontSize: 10,
                             fontWeight: FontWeight.bold,
-                            fontSize: 15,
                           ),
                         ),
-                        Container(
-                          padding: const EdgeInsets.symmetric(
-                              horizontal: 6, vertical: 2),
-                          decoration: BoxDecoration(
-                            color: badgeColor.withValues(alpha: 0.12),
-                            borderRadius: BorderRadius.circular(4),
-                          ),
-                          child: Text(
-                            stateBadge,
-                            style: TextStyle(
-                              color: badgeColor,
-                              fontSize: 10,
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
+                      ),
+                    ],
+                  ),
                   const SizedBox(height: 2),
                   Text(
                     subtitle,

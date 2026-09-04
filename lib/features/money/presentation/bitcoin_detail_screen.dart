@@ -40,9 +40,8 @@ class BitcoinDetailScreen extends ConsumerWidget {
             orElse: () => 0,
           );
 
-    final int pendingSats = demoState.isEnabled
-        ? demoState.pendingBalanceSats
-        : 0;
+    final int pendingSats =
+        demoState.isEnabled ? demoState.pendingBalanceSats : 0;
 
     final int totalSats = availableSats + protectedSats;
 
@@ -121,7 +120,8 @@ class BitcoinDetailScreen extends ConsumerWidget {
               decoration: BoxDecoration(
                 color: colors.primary.withValues(alpha: 0.15),
                 borderRadius: BorderRadius.circular(10),
-                border: Border.all(color: colors.primary.withValues(alpha: 0.4)),
+                border:
+                    Border.all(color: colors.primary.withValues(alpha: 0.4)),
               ),
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.center,

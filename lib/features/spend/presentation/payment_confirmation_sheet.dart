@@ -441,12 +441,14 @@ class _PaymentConfirmationSheetState extends State<PaymentConfirmationSheet> {
             children: [
               Icon(asset.icon,
                   size: 20,
-                  color: isSelected ? asset.color : AppColors.darkTextSecondary),
+                  color:
+                      isSelected ? asset.color : AppColors.darkTextSecondary),
               const SizedBox(height: 4),
               Text(
                 label,
                 style: TextStyle(
-                  color: isSelected ? Colors.white : AppColors.darkTextSecondary,
+                  color:
+                      isSelected ? Colors.white : AppColors.darkTextSecondary,
                   fontWeight: FontWeight.bold,
                   fontSize: 12,
                 ),

@@ -220,9 +220,8 @@ class _ConversionFlowScreenState extends ConsumerState<ConversionFlowScreen> {
                     Container(
                       padding: const EdgeInsets.all(AppSpacing.md),
                       decoration: BoxDecoration(
-                        color: isDark
-                            ? colors.background
-                            : colors.surfaceElevated,
+                        color:
+                            isDark ? colors.background : colors.surfaceElevated,
                         borderRadius: AppRadius.mdRadius,
                         border: Border.all(color: colors.border),
                       ),
@@ -406,8 +405,7 @@ class _ConversionFlowScreenState extends ConsumerState<ConversionFlowScreen> {
           padding: const EdgeInsets.all(AppSpacing.xl),
           decoration: BoxDecoration(
             color: colors.surfaceCard,
-            borderRadius:
-                const BorderRadius.vertical(top: Radius.circular(24)),
+            borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
             border: Border.all(color: colors.border),
           ),
           child: SafeArea(
@@ -510,8 +508,7 @@ class _ConversionFlowScreenState extends ConsumerState<ConversionFlowScreen> {
           padding: const EdgeInsets.all(AppSpacing.xl),
           decoration: BoxDecoration(
             color: colors.surfaceCard,
-            borderRadius:
-                const BorderRadius.vertical(top: Radius.circular(24)),
+            borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
             border: Border.all(color: colors.border),
           ),
           child: SafeArea(
@@ -600,7 +597,9 @@ class _ConversionFlowScreenState extends ConsumerState<ConversionFlowScreen> {
           IconButton(
             icon: Icon(
               Icons.refresh_rounded,
-              color: _secondsRemaining == 0 ? colors.primary : colors.textSecondary,
+              color: _secondsRemaining == 0
+                  ? colors.primary
+                  : colors.textSecondary,
             ),
             onPressed: _refreshQuote,
             tooltip: 'Refresh Quote',
@@ -617,7 +616,8 @@ class _ConversionFlowScreenState extends ConsumerState<ConversionFlowScreen> {
               decoration: BoxDecoration(
                 color: colors.primary.withValues(alpha: 0.12),
                 borderRadius: AppRadius.smRadius,
-                border: Border.all(color: colors.primary.withValues(alpha: 0.3)),
+                border:
+                    Border.all(color: colors.primary.withValues(alpha: 0.3)),
               ),
               child: Row(
                 children: [
@@ -709,18 +709,16 @@ class _ConversionFlowScreenState extends ConsumerState<ConversionFlowScreen> {
                     children: [
                       _buildPercentChip('25%', () {
                         setState(() {
-                          _amountController.text = _fromAsset == AssetType.btc
-                              ? '25000'
-                              : '12.50';
+                          _amountController.text =
+                              _fromAsset == AssetType.btc ? '25000' : '12.50';
                           _refreshQuote();
                         });
                       }, colors),
                       const SizedBox(width: 8),
                       _buildPercentChip('50%', () {
                         setState(() {
-                          _amountController.text = _fromAsset == AssetType.btc
-                              ? '50000'
-                              : '25.00';
+                          _amountController.text =
+                              _fromAsset == AssetType.btc ? '50000' : '25.00';
                           _refreshQuote();
                         });
                       }, colors),
@@ -891,8 +889,7 @@ class _ConversionFlowScreenState extends ConsumerState<ConversionFlowScreen> {
                 backgroundColor: colors.primary,
                 foregroundColor: Colors.white,
                 padding: const EdgeInsets.symmetric(vertical: 16),
-                shape:
-                    RoundedRectangleBorder(borderRadius: AppRadius.mdRadius),
+                shape: RoundedRectangleBorder(borderRadius: AppRadius.mdRadius),
               ),
               child: Text(
                 _status == ConversionLifecycleStatus.quoteExpired

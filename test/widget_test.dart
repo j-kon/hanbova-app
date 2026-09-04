@@ -31,7 +31,8 @@ void main() {
     // Verify Navigation Items
     expect(find.text('Home'), findsOneWidget);
     expect(find.text('Activity'), findsOneWidget);
-    expect(find.byKey(const Key('navbar_center_action_button')), findsOneWidget);
+    expect(
+        find.byKey(const Key('navbar_center_action_button')), findsOneWidget);
     expect(find.text('Money'), findsOneWidget);
     expect(find.text('Profile'), findsOneWidget);
   });

@@ -30,7 +30,9 @@ void main() {
   });
 
   group('M3B.2.2 Multi-Asset Domain Models & Provider Abstraction', () {
-    test('1. AssetType supports BTC, USDT, and USDC with appropriate attributes', () {
+    test(
+        '1. AssetType supports BTC, USDT, and USDC with appropriate attributes',
+        () {
       expect(AssetType.values.length, 3);
 
       expect(AssetType.btc.symbol, 'BTC');
@@ -47,14 +49,16 @@ void main() {
     });
 
     test('2. AssetFeatureState covers all 6 normalized lifecycle states', () {
-      expect(AssetFeatureState.values, containsAll([
-        AssetFeatureState.unavailable,
-        AssetFeatureState.comingSoon,
-        AssetFeatureState.setupRequired,
-        AssetFeatureState.verificationRequired,
-        AssetFeatureState.active,
-        AssetFeatureState.restricted,
-      ]));
+      expect(
+          AssetFeatureState.values,
+          containsAll([
+            AssetFeatureState.unavailable,
+            AssetFeatureState.comingSoon,
+            AssetFeatureState.setupRequired,
+            AssetFeatureState.verificationRequired,
+            AssetFeatureState.active,
+            AssetFeatureState.restricted,
+          ]));
     });
 
     test('3. AssetBalance properly calculates formatted balances', () {
@@ -82,7 +86,9 @@ void main() {
       expect(usdtBalance.formattedBalance, '\$1250.00');
     });
 
-    test('4. ConversionPair and ConversionQuote handle quotes and 30s expiration', () {
+    test(
+        '4. ConversionPair and ConversionQuote handle quotes and 30s expiration',
+        () {
       const pair = ConversionPair(
         from: AssetType.btc,
         to: AssetType.usdt,
@@ -119,25 +125,30 @@ void main() {
       expect(expiredQuote.isExpired, isTrue);
     });
 
-    test('5. ConversionLifecycleStatus covers all 8 distinct lifecycle stages', () {
+    test('5. ConversionLifecycleStatus covers all 8 distinct lifecycle stages',
+        () {
       expect(ConversionLifecycleStatus.values.length, 8);
-      expect(ConversionLifecycleStatus.values, containsAll([
-        ConversionLifecycleStatus.quoteLoading,
-        ConversionLifecycleStatus.quoted,
-        ConversionLifecycleStatus.quoteExpired,
-        ConversionLifecycleStatus.confirming,
-        ConversionLifecycleStatus.processing,
-        ConversionLifecycleStatus.completed,
-        ConversionLifecycleStatus.failed,
-        ConversionLifecycleStatus.uncertain,
-      ]));
+      expect(
+          ConversionLifecycleStatus.values,
+          containsAll([
+            ConversionLifecycleStatus.quoteLoading,
+            ConversionLifecycleStatus.quoted,
+            ConversionLifecycleStatus.quoteExpired,
+            ConversionLifecycleStatus.confirming,
+            ConversionLifecycleStatus.processing,
+            ConversionLifecycleStatus.completed,
+            ConversionLifecycleStatus.failed,
+            ConversionLifecycleStatus.uncertain,
+          ]));
     });
 
-    test('6. Normal mode maintains financial truthfulness (0 fake balances)', () {
+    test('6. Normal mode maintains financial truthfulness (0 fake balances)',
+        () {
       final container = ProviderContainer();
       final demoState = container.read(demoModeProvider);
 
-      expect(demoState.demoUsdtBalance, 1250.00); // Demo fixture definition exists
+      expect(
+          demoState.demoUsdtBalance, 1250.00); // Demo fixture definition exists
       expect(demoState.demoUsdcBalance, 750.00);
 
       // Stablecoin balance in non-demo mode defaults to 0.0 with comingSoon state
@@ -196,13 +207,15 @@ void main() {
       );
     }
 
-    testWidgets('8. MoneyScreen displays Bitcoin, USDT, and USDC in Assets section',
+    testWidgets(
+        '8. MoneyScreen displays Bitcoin, USDT, and USDC in Assets section',
         (tester) async {
       tester.view.physicalSize = const Size(1080, 2400);
       tester.view.devicePixelRatio = 2.5;
       addTearDown(tester.view.reset);
 
-      await tester.pumpWidget(buildTestHarness(const MoneyScreen(), demoMode: true));
+      await tester
+          .pumpWidget(buildTestHarness(const MoneyScreen(), demoMode: true));
       await tester.pumpAndSettle();
 
       expect(find.text('Assets'), findsOneWidget);
@@ -212,13 +225,15 @@ void main() {
       expect(find.text('Active'), findsOneWidget);
     });
 
-    testWidgets('9. BitcoinDetailScreen renders Available, Protected, and Actions',
+    testWidgets(
+        '9. BitcoinDetailScreen renders Available, Protected, and Actions',
         (tester) async {
       tester.view.physicalSize = const Size(1080, 2400);
       tester.view.devicePixelRatio = 2.5;
       addTearDown(tester.view.reset);
 
-      await tester.pumpWidget(buildTestHarness(const BitcoinDetailScreen(), demoMode: true));
+      await tester.pumpWidget(
+          buildTestHarness(const BitcoinDetailScreen(), demoMode: true));
       await tester.pumpAndSettle();
 
       expect(find.text('Bitcoin (BTC)'), findsOneWidget);
@@ -229,7 +244,8 @@ void main() {
       expect(find.text('Convert'), findsOneWidget);
     });
 
-    testWidgets('10. StablecoinDetailScreen for USDT displays Coming Soon banner in normal mode',
+    testWidgets(
+        '10. StablecoinDetailScreen for USDT displays Coming Soon banner in normal mode',
         (tester) async {
       tester.view.physicalSize = const Size(1080, 2400);
       tester.view.devicePixelRatio = 2.5;
@@ -243,10 +259,12 @@ void main() {
 
       expect(find.textContaining('Tether USD'), findsWidgets);
       expect(find.textContaining('Coming Soon'), findsWidgets);
-      expect(find.textContaining('Backend provider integration pending'), findsOneWidget);
+      expect(find.textContaining('Backend provider integration pending'),
+          findsOneWidget);
     });
 
-    testWidgets('11. StablecoinDetailScreen for USDC displays demo balance in Demo mode',
+    testWidgets(
+        '11. StablecoinDetailScreen for USDC displays demo balance in Demo mode',
         (tester) async {
       tester.view.physicalSize = const Size(1080, 2400);
       tester.view.devicePixelRatio = 2.5;
@@ -263,20 +281,23 @@ void main() {
       expect(find.textContaining('DEMO'), findsWidgets);
     });
 
-    testWidgets('12. ConversionFlowScreen has pair selector, amount input, and countdown timer',
+    testWidgets(
+        '12. ConversionFlowScreen has pair selector, amount input, and countdown timer',
         (tester) async {
       tester.view.physicalSize = const Size(1080, 2400);
       tester.view.devicePixelRatio = 2.5;
       addTearDown(tester.view.reset);
 
-      await tester.pumpWidget(buildTestHarness(const ConversionFlowScreen(), demoMode: true));
+      await tester.pumpWidget(
+          buildTestHarness(const ConversionFlowScreen(), demoMode: true));
       await tester.pumpAndSettle();
 
       expect(find.text('Convert Assets'), findsOneWidget);
       expect(find.text('From'), findsOneWidget);
       expect(find.text('To (Estimated)'), findsOneWidget);
       expect(find.byKey(const Key('conversion_amount_input')), findsOneWidget);
-      expect(find.textContaining('30 seconds'), findsOneWidget); // Countdown timer initial state
+      expect(find.textContaining('30 seconds'),
+          findsOneWidget); // Countdown timer initial state
     });
 
     testWidgets('13. HomeScreen action rail includes Convert action',
@@ -285,7 +306,8 @@ void main() {
       tester.view.devicePixelRatio = 2.5;
       addTearDown(tester.view.reset);
 
-      await tester.pumpWidget(buildTestHarness(const HomeScreen(), demoMode: true));
+      await tester
+          .pumpWidget(buildTestHarness(const HomeScreen(), demoMode: true));
       await tester.pumpAndSettle();
 
       expect(find.text('Convert'), findsOneWidget);
@@ -299,7 +321,8 @@ void main() {
       tester.view.devicePixelRatio = 2.5;
       addTearDown(tester.view.reset);
 
-      await tester.pumpWidget(buildTestHarness(const SettingsScreen(), demoMode: true));
+      await tester
+          .pumpWidget(buildTestHarness(const SettingsScreen(), demoMode: true));
       await tester.pumpAndSettle();
 
       await tester.scrollUntilVisible(find.text('Wallets & Assets'), 200);
@@ -307,13 +330,15 @@ void main() {
       expect(find.text('Bitcoin, USDT, USDC configuration'), findsOneWidget);
     });
 
-    testWidgets('15. SendScreen presents asset selector prompt with BTC, USDT, USDC',
+    testWidgets(
+        '15. SendScreen presents asset selector prompt with BTC, USDT, USDC',
         (tester) async {
       tester.view.physicalSize = const Size(1080, 2400);
       tester.view.devicePixelRatio = 2.5;
       addTearDown(tester.view.reset);
 
-      await tester.pumpWidget(buildTestHarness(const SendScreen(), demoMode: true));
+      await tester
+          .pumpWidget(buildTestHarness(const SendScreen(), demoMode: true));
       await tester.pumpAndSettle();
 
       expect(find.text('What are you sending?'), findsOneWidget);
@@ -322,13 +347,15 @@ void main() {
       expect(find.text('USDC'), findsOneWidget);
     });
 
-    testWidgets('16. ProtectedSendScreen remains strictly Bitcoin-only (no Protected USDT/USDC)',
+    testWidgets(
+        '16. ProtectedSendScreen remains strictly Bitcoin-only (no Protected USDT/USDC)',
         (tester) async {
       tester.view.physicalSize = const Size(1080, 2400);
       tester.view.devicePixelRatio = 2.5;
       addTearDown(tester.view.reset);
 
-      await tester.pumpWidget(buildTestHarness(const ProtectedSendScreen(), demoMode: true));
+      await tester.pumpWidget(
+          buildTestHarness(const ProtectedSendScreen(), demoMode: true));
       await tester.pumpAndSettle();
 
       expect(find.text('Protected Send'), findsOneWidget);
@@ -336,7 +363,8 @@ void main() {
       expect(find.text('Protected USDC'), findsNothing);
     });
 
-    testWidgets('17. ReceiveScreen displays same-network warning when USDT is selected',
+    testWidgets(
+        '17. ReceiveScreen displays same-network warning when USDT is selected',
         (tester) async {
       tester.view.physicalSize = const Size(1080, 2400);
       tester.view.devicePixelRatio = 2.5;
@@ -354,7 +382,8 @@ void main() {
       expect(find.text('Copy Address'), findsOneWidget);
     });
 
-    testWidgets('18. PaymentConfirmationSheet includes Pay-With selector with multi-asset support',
+    testWidgets(
+        '18. PaymentConfirmationSheet includes Pay-With selector with multi-asset support',
         (tester) async {
       tester.view.physicalSize = const Size(1080, 2400);
       tester.view.devicePixelRatio = 2.5;
@@ -421,13 +450,15 @@ void main() {
       expect(find.text('HNBV-SWAP-98124'), findsOneWidget);
     });
 
-    testWidgets('20. TransactionsScreen includes Bitcoin, Conversions, Stablecoins filter chips',
+    testWidgets(
+        '20. TransactionsScreen includes Bitcoin, Conversions, Stablecoins filter chips',
         (tester) async {
       tester.view.physicalSize = const Size(1080, 2400);
       tester.view.devicePixelRatio = 2.5;
       addTearDown(tester.view.reset);
 
-      await tester.pumpWidget(buildTestHarness(const TransactionsScreen(), demoMode: true));
+      await tester.pumpWidget(
+          buildTestHarness(const TransactionsScreen(), demoMode: true));
       await tester.pumpAndSettle();
 
       expect(find.text('Bitcoin'), findsOneWidget);
@@ -435,13 +466,15 @@ void main() {
       expect(find.text('Stablecoins'), findsOneWidget);
     });
 
-    testWidgets('21. InsightsScreen displays Asset Allocation and Conversion Activity',
+    testWidgets(
+        '21. InsightsScreen displays Asset Allocation and Conversion Activity',
         (tester) async {
       tester.view.physicalSize = const Size(1080, 2400);
       tester.view.devicePixelRatio = 2.5;
       addTearDown(tester.view.reset);
 
-      await tester.pumpWidget(buildTestHarness(const InsightsScreen(), demoMode: true));
+      await tester
+          .pumpWidget(buildTestHarness(const InsightsScreen(), demoMode: true));
       await tester.pumpAndSettle();
 
       expect(find.text('Asset Allocation'), findsOneWidget);

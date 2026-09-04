@@ -70,7 +70,8 @@ class PendingCentreScreen extends ConsumerWidget {
                       child: Text(
                         'Payment Status Uncertain',
                         style: TextStyle(
-                          color: isDark ? Colors.white : const Color(0xFF92400E),
+                          color:
+                              isDark ? Colors.white : const Color(0xFF92400E),
                           fontSize: 15,
                           fontWeight: FontWeight.bold,
                         ),
@@ -115,7 +116,9 @@ class PendingCentreScreen extends ConsumerWidget {
                   child: Text(
                     '⚠️ Checking payment status with telecom provider. Please don\'t pay again yet. We will notify you as soon as the status resolves.',
                     style: TextStyle(
-                      color: isDark ? const Color(0xFFFDE68A) : const Color(0xFF92400E),
+                      color: isDark
+                          ? const Color(0xFFFDE68A)
+                          : const Color(0xFF92400E),
                       fontSize: 12,
                       height: 1.3,
                     ),
@@ -134,7 +137,9 @@ class PendingCentreScreen extends ConsumerWidget {
                       );
                     },
                     style: OutlinedButton.styleFrom(
-                      foregroundColor: isDark ? const Color(0xFFFCD34D) : const Color(0xFFB45309),
+                      foregroundColor: isDark
+                          ? const Color(0xFFFCD34D)
+                          : const Color(0xFFB45309),
                       side: const BorderSide(color: Color(0xFFF59E0B)),
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(8),

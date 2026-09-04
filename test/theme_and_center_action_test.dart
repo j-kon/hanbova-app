@@ -23,7 +23,9 @@ void main() {
   });
 
   group('Theme (Dark and Light) & Enhanced Navbar Action Button Tests', () {
-    test('1. HanbovaColors has distinct color palettes for Dark and Light themes', () {
+    test(
+        '1. HanbovaColors has distinct color palettes for Dark and Light themes',
+        () {
       final darkColors = AppTheme.darkTheme.extension<HanbovaColors>()!;
       final lightColors = AppTheme.lightTheme.extension<HanbovaColors>()!;
 
@@ -44,7 +46,8 @@ void main() {
       expect(darkColors.primary, lightColors.primary);
     });
 
-    testWidgets('2. Navbar Center Action Button exists and opens 8-feature Action Sheet',
+    testWidgets(
+        '2. Navbar Center Action Button exists and opens 8-feature Action Sheet',
         (tester) async {
       tester.view.physicalSize = const Size(1080, 2400);
       tester.view.devicePixelRatio = 2.5;
@@ -58,16 +61,24 @@ void main() {
                 AppShell(navigationShell: navigationShell),
             branches: [
               StatefulShellBranch(routes: [
-                GoRoute(path: '/home', builder: (_, __) => const Scaffold(body: Text('HOME'))),
+                GoRoute(
+                    path: '/home',
+                    builder: (_, __) => const Scaffold(body: Text('HOME'))),
               ]),
               StatefulShellBranch(routes: [
-                GoRoute(path: '/activity', builder: (_, __) => const Scaffold(body: Text('ACTIVITY'))),
+                GoRoute(
+                    path: '/activity',
+                    builder: (_, __) => const Scaffold(body: Text('ACTIVITY'))),
               ]),
               StatefulShellBranch(routes: [
-                GoRoute(path: '/money', builder: (_, __) => const Scaffold(body: Text('MONEY'))),
+                GoRoute(
+                    path: '/money',
+                    builder: (_, __) => const Scaffold(body: Text('MONEY'))),
               ]),
               StatefulShellBranch(routes: [
-                GoRoute(path: '/profile', builder: (_, __) => const Scaffold(body: Text('PROFILE'))),
+                GoRoute(
+                    path: '/profile',
+                    builder: (_, __) => const Scaffold(body: Text('PROFILE'))),
               ]),
             ],
           ),
@@ -246,7 +257,8 @@ void main() {
       expect(find.text('Everyday'), findsOneWidget);
     });
 
-    testWidgets('6. TransactionsScreen renders cleanly in both Dark and Light mode',
+    testWidgets(
+        '6. TransactionsScreen renders cleanly in both Dark and Light mode',
         (tester) async {
       tester.view.physicalSize = const Size(1080, 2400);
       tester.view.devicePixelRatio = 2.5;

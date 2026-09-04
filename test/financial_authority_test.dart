@@ -984,9 +984,7 @@ void main() {
         createdAt: DateTime.now(),
         claimReference: 'cashuBmock_token',
       );
-      await container
-          .read(transactionsProvider.notifier)
-          .addTransaction(tx);
+      await container.read(transactionsProvider.notifier).addTransaction(tx);
 
       final cashuWallet = container.read(cashuWalletServiceProvider);
 
@@ -1032,9 +1030,7 @@ void main() {
         createdAt: DateTime.now(),
         claimReference: 'cashuBmock_token',
       );
-      await container
-          .read(transactionsProvider.notifier)
-          .addTransaction(tx);
+      await container.read(transactionsProvider.notifier).addTransaction(tx);
 
       final cashuWallet = container.read(cashuWalletServiceProvider)!;
 
@@ -1076,9 +1072,7 @@ void main() {
         createdAt: DateTime.now().subtract(const Duration(hours: 48)),
         expiresAt: DateTime.now().subtract(const Duration(hours: 24)),
       );
-      await container
-          .read(transactionsProvider.notifier)
-          .addTransaction(tx);
+      await container.read(transactionsProvider.notifier).addTransaction(tx);
 
       final cashuWallet = container.read(cashuWalletServiceProvider);
 
@@ -1121,9 +1115,7 @@ void main() {
         createdAt: DateTime.now(),
         expiresAt: DateTime.now().add(const Duration(hours: 24)),
       );
-      await container
-          .read(transactionsProvider.notifier)
-          .addTransaction(tx);
+      await container.read(transactionsProvider.notifier).addTransaction(tx);
 
       final cashuWallet = container.read(cashuWalletServiceProvider)!;
 
@@ -1420,9 +1412,7 @@ void main() {
         syncPendingStatus: 'claimable',
       );
 
-      await container
-          .read(transactionsProvider.notifier)
-          .addTransaction(tx);
+      await container.read(transactionsProvider.notifier).addTransaction(tx);
       final initialTx = container.read(transactionsProvider).first;
       expect(initialTx.coordinationSyncPending, isTrue);
       expect(initialTx.syncPendingStatus, equals('claimable'));
@@ -1472,9 +1462,7 @@ void main() {
         recipientOrSender: '@$recipientUsername',
         createdAt: DateTime.now(),
       );
-      await container
-          .read(transactionsProvider.notifier)
-          .addTransaction(tx);
+      await container.read(transactionsProvider.notifier).addTransaction(tx);
 
       // 2. Save an existing escrow in Mainnet Pilot storage namespace
       final storage = CashuWalletStorage();

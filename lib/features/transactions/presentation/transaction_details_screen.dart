@@ -418,7 +418,8 @@ class _TransactionDetailsScreenState
                 const SizedBox(width: 6),
                 GestureDetector(
                   onTap: onCopy,
-                  child: Icon(Icons.copy, size: 14, color: colors.textSecondary),
+                  child:
+                      Icon(Icons.copy, size: 14, color: colors.textSecondary),
                 ),
               ],
             ],

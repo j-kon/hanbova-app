@@ -39,8 +39,7 @@ class TravelScreen extends ConsumerWidget {
             decoration: BoxDecoration(
               color: colors.primary.withValues(alpha: 0.15),
               borderRadius: BorderRadius.circular(16),
-              border:
-                  Border.all(color: colors.primary.withValues(alpha: 0.3)),
+              border: Border.all(color: colors.primary.withValues(alpha: 0.3)),
             ),
             child: Row(
               mainAxisSize: MainAxisSize.min,
@@ -295,8 +294,7 @@ class TravelScreen extends ConsumerWidget {
                 children: [
                   Row(
                     children: [
-                      Icon(Icons.radar,
-                          color: colors.primary, size: 16),
+                      Icon(Icons.radar, color: colors.primary, size: 16),
                       const SizedBox(width: 8),
                       Text(
                         'Market Rails in ${spendCountry.name} (${spendCountry.code})',
@@ -503,8 +501,8 @@ class TravelScreen extends ConsumerWidget {
                 decoration: BoxDecoration(
                   color: colors.primary.withValues(alpha: 0.12),
                   borderRadius: BorderRadius.circular(8),
-                  border: Border.all(
-                      color: colors.primary.withValues(alpha: 0.25)),
+                  border:
+                      Border.all(color: colors.primary.withValues(alpha: 0.25)),
                 ),
                 child: Text(
                   'Notice: Your country of residence will not change. Only the destination utilities, local eSIM packages, and spend corridors adapt.',

@@ -115,7 +115,8 @@ class StablecoinDetailScreen extends ConsumerWidget {
               decoration: BoxDecoration(
                 color: colors.primary.withValues(alpha: 0.15),
                 borderRadius: BorderRadius.circular(10),
-                border: Border.all(color: colors.primary.withValues(alpha: 0.4)),
+                border:
+                    Border.all(color: colors.primary.withValues(alpha: 0.4)),
               ),
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.center,
@@ -416,7 +417,9 @@ class StablecoinDetailScreen extends ConsumerWidget {
               ),
             )
           else
-            ...stablecoinTxs.take(5).map((tx) => _buildTxTile(context, tx, colors)),
+            ...stablecoinTxs
+                .take(5)
+                .map((tx) => _buildTxTile(context, tx, colors)),
         ],
       ),
     );

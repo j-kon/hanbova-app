@@ -311,8 +311,7 @@ class _PaymentSuccessSheetState extends State<PaymentSuccessSheet> {
               children: [
                 Row(
                   children: [
-                    Icon(Icons.bolt_rounded,
-                        color: colors.primary, size: 18),
+                    Icon(Icons.bolt_rounded, color: colors.primary, size: 18),
                     const SizedBox(width: 6),
                     Text(
                       'Bitcoin Settled',
