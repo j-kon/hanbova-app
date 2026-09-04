@@ -8,6 +8,7 @@ import 'package:hanbova_app/core/security/biometric_service.dart';
 import 'package:hanbova_app/core/security/wallet_backup_store.dart';
 import 'package:hanbova_app/core/theme/app_theme.dart';
 import 'package:hanbova_app/core/wallet/wallet_context.dart';
+import 'package:hanbova_app/l10n/app_localizations.dart';
 import 'package:hanbova_app/features/security/presentation/backup_seed_screen.dart';
 
 const validMnemonic =
@@ -81,6 +82,8 @@ Widget backupApp({
     ],
     child: MaterialApp(
       theme: AppTheme.darkTheme,
+      localizationsDelegates: AppLocalizations.localizationsDelegates,
+      supportedLocales: AppLocalizations.supportedLocales,
       home: const BackupSeedScreen(),
     ),
   );

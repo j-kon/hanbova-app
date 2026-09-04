@@ -10,6 +10,7 @@ import '../../../core/theme/app_radius.dart';
 import '../../../core/theme/app_spacing.dart';
 import '../../../core/theme/app_typography.dart';
 import '../../../core/wallet/wallet_context.dart';
+import '../../../l10n/app_localizations.dart';
 import '../application/restore_wallet_controller.dart';
 
 const restoredMessage =
@@ -83,12 +84,11 @@ class _RestoreSeedScreenState extends ConsumerState<RestoreSeedScreen> {
   }
 
   Future<void> _restoreWallet() async {
+    final l10n = AppLocalizations.of(context)!;
     final words = _controllers.map((c) => c.text.trim().toLowerCase()).toList();
     if (words.any((w) => w.isEmpty)) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-            content:
-                Text('Please fill in all 12 words of your recovery phrase')),
+        SnackBar(content: Text(l10n.restoreAllWordsRequired)),
       );
       return;
     }
@@ -98,9 +98,8 @@ class _RestoreSeedScreenState extends ConsumerState<RestoreSeedScreen> {
     if (!mounted) return;
     if (!isValid) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text(
-              'Invalid recovery phrase or checksum mismatch. Please check spelling.'),
+        SnackBar(
+          content: Text(l10n.invalidRecoveryPhrase),
           backgroundColor: Colors.redAccent,
         ),
       );
@@ -111,18 +110,16 @@ class _RestoreSeedScreenState extends ConsumerState<RestoreSeedScreen> {
       context: context,
       barrierDismissible: false,
       builder: (dialogContext) => AlertDialog(
-        title: const Text('Replace wallet identity?'),
-        content: const Text(
-          'This replaces the wallet identity for the signed-in account in this wallet environment.',
-        ),
+        title: Text(l10n.replaceWalletIdentity),
+        content: Text(l10n.replaceWalletIdentityDescription),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(dialogContext, false),
-            child: const Text('Cancel'),
+            child: Text(l10n.cancel),
           ),
           ElevatedButton(
             onPressed: () => Navigator.pop(dialogContext, true),
-            child: const Text('Replace Wallet'),
+            child: Text(l10n.replaceWallet),
           ),
         ],
       ),
@@ -166,11 +163,12 @@ class _RestoreSeedScreenState extends ConsumerState<RestoreSeedScreen> {
   }
 
   Future<void> _showRestoredDialog() {
+    final l10n = AppLocalizations.of(context)!;
     return showDialog<void>(
       context: context,
       barrierDismissible: false,
       builder: (dialogContext) => AlertDialog(
-        title: const Text('Wallet Restored'),
+        title: Text(l10n.walletRestored),
         content: const Text(restoredMessage),
         actions: [
           ElevatedButton(
@@ -178,7 +176,7 @@ class _RestoreSeedScreenState extends ConsumerState<RestoreSeedScreen> {
               Navigator.pop(dialogContext);
               context.go('/home');
             },
-            child: const Text('Go to Wallet'),
+            child: Text(l10n.goToWallet),
           ),
         ],
       ),
@@ -186,11 +184,12 @@ class _RestoreSeedScreenState extends ConsumerState<RestoreSeedScreen> {
   }
 
   Future<void> _showSyncPendingDialog() {
+    final l10n = AppLocalizations.of(context)!;
     return showDialog<void>(
       context: context,
       barrierDismissible: false,
       builder: (dialogContext) => AlertDialog(
-        title: const Text('Wallet Restored — Sync Pending'),
+        title: Text(l10n.walletRestoredSyncPending),
         content: const Text(syncPendingMessage),
         actions: [
           TextButton(
@@ -205,19 +204,19 @@ class _RestoreSeedScreenState extends ConsumerState<RestoreSeedScreen> {
                 return;
               }
               ScaffoldMessenger.of(dialogContext).showSnackBar(
-                const SnackBar(
-                  content: Text('Payment-key sync is still pending.'),
+                SnackBar(
+                  content: Text(l10n.syncStillPending),
                 ),
               );
             },
-            child: const Text('Retry sync'),
+            child: Text(l10n.retrySync),
           ),
           ElevatedButton(
             onPressed: () {
               Navigator.pop(dialogContext);
               context.go('/home');
             },
-            child: const Text('Continue'),
+            child: Text(l10n.continueLabel),
           ),
         ],
       ),
@@ -227,13 +226,14 @@ class _RestoreSeedScreenState extends ConsumerState<RestoreSeedScreen> {
   @override
   Widget build(BuildContext context) {
     final colors = context.colors;
+    final l10n = AppLocalizations.of(context)!;
     final activeContext = ref.watch(activeWalletContextKeyProvider);
 
     return SensitiveScreenProtection(
       child: Scaffold(
         backgroundColor: colors.background,
         appBar: AppBar(
-          title: const Text('Restore from Phrase'),
+          title: Text(l10n.restoreFromPhrase),
           leading: IconButton(
             icon: const Icon(Icons.arrow_back),
             onPressed: () => context.pop(),
@@ -251,13 +251,13 @@ class _RestoreSeedScreenState extends ConsumerState<RestoreSeedScreen> {
                           crossAxisAlignment: CrossAxisAlignment.stretch,
                           children: [
                             Text(
-                              'Enter Your 12-Word Phrase',
+                              l10n.enterTwelveWordPhrase,
                               style: AppTypography.titleMedium
                                   .copyWith(color: colors.textPrimary),
                             ),
                             const SizedBox(height: AppSpacing.xs),
                             Text(
-                              'Type in your recovery words in the exact sequence they were generated.',
+                              l10n.enterRecoveryPhraseDescription,
                               style: AppTypography.bodySmall
                                   .copyWith(color: colors.textSecondary),
                             ),
@@ -336,7 +336,7 @@ class _RestoreSeedScreenState extends ConsumerState<RestoreSeedScreen> {
                                           strokeWidth: 2))
                                   : const Icon(Icons.download_rounded,
                                       size: 18),
-                              label: const Text('Restore Wallet'),
+                              label: Text(l10n.restoreWallet),
                             ),
                           ],
                         ),
@@ -376,6 +376,7 @@ class _RestoreSeedScreenState extends ConsumerState<RestoreSeedScreen> {
   }
 
   Widget _buildAuthenticationRequired(HanbovaColors colors) {
+    final l10n = AppLocalizations.of(context)!;
     return Center(
       child: Padding(
         padding: const EdgeInsets.all(AppSpacing.lg),
@@ -385,7 +386,7 @@ class _RestoreSeedScreenState extends ConsumerState<RestoreSeedScreen> {
             Icon(Icons.lock_outline, size: 42, color: colors.textSecondary),
             const SizedBox(height: AppSpacing.sm),
             Text(
-              'Sign in to restore your wallet',
+              l10n.signInToRestoreWallet,
               style: AppTypography.titleMedium.copyWith(
                 color: colors.textPrimary,
               ),
@@ -394,7 +395,7 @@ class _RestoreSeedScreenState extends ConsumerState<RestoreSeedScreen> {
             const SizedBox(height: AppSpacing.md),
             ElevatedButton(
               onPressed: () => context.go('/login?next=%2Frestore-seed'),
-              child: const Text('Sign in'),
+              child: Text(l10n.signIn),
             ),
           ],
         ),

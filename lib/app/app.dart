@@ -5,6 +5,7 @@ import '../core/notifications/in_app_notification.dart';
 import '../core/sync/wallet_sync_coordinator.dart';
 import '../core/theme/app_theme.dart';
 import '../core/theme/theme_controller.dart';
+import '../l10n/app_localizations.dart';
 import 'router.dart';
 
 class HanbovaApp extends ConsumerWidget {
@@ -23,6 +24,8 @@ class HanbovaApp extends ConsumerWidget {
       darkTheme: AppTheme.darkTheme,
       themeMode: themeMode,
       routerConfig: router,
+      localizationsDelegates: AppLocalizations.localizationsDelegates,
+      supportedLocales: AppLocalizations.supportedLocales,
       builder: (context, child) {
         return Stack(
           children: [

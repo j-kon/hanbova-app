@@ -12,6 +12,7 @@ import '../../../core/theme/app_radius.dart';
 import '../../../core/theme/app_spacing.dart';
 import '../../../core/theme/app_typography.dart';
 import '../../../core/wallet/wallet_context.dart';
+import '../../../l10n/app_localizations.dart';
 
 class BackupSeedScreen extends ConsumerStatefulWidget {
   const BackupSeedScreen({super.key});
@@ -166,6 +167,7 @@ class _BackupSeedScreenState extends ConsumerState<BackupSeedScreen> {
   @override
   Widget build(BuildContext context) {
     final colors = context.colors;
+    final l10n = AppLocalizations.of(context)!;
     final activeContext = ref.watch(activeWalletContextKeyProvider);
     final contextMatches =
         _loadedContext != null && _loadedContext == activeContext;
@@ -174,7 +176,7 @@ class _BackupSeedScreenState extends ConsumerState<BackupSeedScreen> {
       child: Scaffold(
         backgroundColor: colors.background,
         appBar: AppBar(
-          title: const Text('Recovery Phrase Backup'),
+          title: Text(l10n.recoveryPhraseBackup),
           leading: IconButton(
             icon: const Icon(Icons.arrow_back),
             onPressed: () => context.pop(),
@@ -199,7 +201,8 @@ class _BackupSeedScreenState extends ConsumerState<BackupSeedScreen> {
   }
 
   Widget _buildUnavailableState(HanbovaColors colors) {
-    final message = _loadError ?? 'Wallet unavailable';
+    final l10n = AppLocalizations.of(context)!;
+    final message = _loadError ?? l10n.walletUnavailable;
     return Center(
       child: Padding(
         padding: const EdgeInsets.all(AppSpacing.lg),
@@ -225,7 +228,7 @@ class _BackupSeedScreenState extends ConsumerState<BackupSeedScreen> {
                   });
                   _loadWalletMnemonic();
                 },
-                child: const Text('Try Again'),
+                child: Text(l10n.tryAgain),
               ),
             ],
           ],
@@ -235,6 +238,7 @@ class _BackupSeedScreenState extends ConsumerState<BackupSeedScreen> {
   }
 
   Widget _buildViewWordsStep(HanbovaColors colors) {
+    final l10n = AppLocalizations.of(context)!;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
@@ -254,13 +258,13 @@ class _BackupSeedScreenState extends ConsumerState<BackupSeedScreen> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      'Secret Recovery Phrase',
+                      l10n.secretRecoveryPhrase,
                       style: AppTypography.titleSmall
                           .copyWith(color: Colors.redAccent),
                     ),
                     const SizedBox(height: 2),
                     Text(
-                      'Write these 12 words down in order on paper. Never share them or take a digital screenshot.',
+                      l10n.recoveryPhraseSafetyNotice,
                       style: AppTypography.bodySmall
                           .copyWith(color: colors.textPrimary),
                     ),
@@ -326,7 +330,7 @@ class _BackupSeedScreenState extends ConsumerState<BackupSeedScreen> {
                     child: ElevatedButton.icon(
                       onPressed: _revealWords,
                       icon: const Icon(Icons.visibility_outlined, size: 18),
-                      label: const Text('Tap to Reveal 12 Words'),
+                      label: Text(l10n.revealTwelveWords),
                     ),
                   ),
                 ),
@@ -338,38 +342,42 @@ class _BackupSeedScreenState extends ConsumerState<BackupSeedScreen> {
         ElevatedButton(
           onPressed:
               _isRevealed ? () => setState(() => _currentStep = 1) : null,
-          child: const Text('I Have Written It Down -> Continue'),
+          child: Text(l10n.continueAfterBackup),
         ),
       ],
     );
   }
 
   Widget _buildQuizStep(HanbovaColors colors) {
+    final l10n = AppLocalizations.of(context)!;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         Text(
-          'Verify Recovery Phrase',
+          l10n.verifyRecoveryPhrase,
           style: AppTypography.headline.copyWith(color: colors.textPrimary),
         ),
         const SizedBox(height: AppSpacing.xs),
         Text(
-          'Select the correct words corresponding to their positions to confirm your backup.',
+          l10n.verifyRecoveryPhraseDescription,
           style: AppTypography.bodySmall.copyWith(color: colors.textSecondary),
         ),
         const SizedBox(height: AppSpacing.lg),
         _buildQuizQuestion(
-            'Word #${_quizWordIndex1 + 1}', _options1, _selectedWord1, (w) {
+            l10n.wordPosition(_quizWordIndex1 + 1), _options1, _selectedWord1,
+            (w) {
           setState(() => _selectedWord1 = w);
         }, colors),
         const SizedBox(height: AppSpacing.md),
         _buildQuizQuestion(
-            'Word #${_quizWordIndex2 + 1}', _options2, _selectedWord2, (w) {
+            l10n.wordPosition(_quizWordIndex2 + 1), _options2, _selectedWord2,
+            (w) {
           setState(() => _selectedWord2 = w);
         }, colors),
         const SizedBox(height: AppSpacing.md),
         _buildQuizQuestion(
-            'Word #${_quizWordIndex3 + 1}', _options3, _selectedWord3, (w) {
+            l10n.wordPosition(_quizWordIndex3 + 1), _options3, _selectedWord3,
+            (w) {
           setState(() => _selectedWord3 = w);
         }, colors),
         const SizedBox(height: AppSpacing.xl),
@@ -380,7 +388,7 @@ class _BackupSeedScreenState extends ConsumerState<BackupSeedScreen> {
               ? (_isConfirming ? null : _verifyQuiz)
               : null,
           child: Text(
-            _isConfirming ? 'Saving…' : 'Verify & Complete Backup',
+            _isConfirming ? l10n.saving : l10n.verifyAndCompleteBackup,
           ),
         ),
       ],
@@ -430,6 +438,7 @@ class _BackupSeedScreenState extends ConsumerState<BackupSeedScreen> {
   }
 
   Widget _buildSuccessStep(HanbovaColors colors) {
+    final l10n = AppLocalizations.of(context)!;
     return Column(
       mainAxisAlignment: MainAxisAlignment.center,
       crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -449,20 +458,20 @@ class _BackupSeedScreenState extends ConsumerState<BackupSeedScreen> {
         ),
         const SizedBox(height: AppSpacing.lg),
         Text(
-          'Wallet Successfully Backed Up!',
+          l10n.walletSuccessfullyBackedUp,
           style: AppTypography.headline.copyWith(color: colors.textPrimary),
           textAlign: TextAlign.center,
         ),
         const SizedBox(height: AppSpacing.xs),
         Text(
-          'Your 12-word recovery phrase has been verified for this test environment. In this beta build, your cryptographic keys remain securely stored on this device.',
+          l10n.backupSuccessDescription,
           style: AppTypography.bodyMedium.copyWith(color: colors.textSecondary),
           textAlign: TextAlign.center,
         ),
         const SizedBox(height: AppSpacing.xl),
         ElevatedButton(
           onPressed: () => context.go('/me'),
-          child: const Text('Done'),
+          child: Text(l10n.done),
         ),
       ],
     );
