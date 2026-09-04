@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 import '../../../core/crypto/bip39_words.dart';
 import '../../../core/crypto/crypto_identity_service.dart';
 import '../../../core/security/biometric_service.dart';
+import '../../../core/security/sensitive_screen_protection.dart';
 import '../../../core/security/wallet_backup_store.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_radius.dart';
@@ -169,28 +170,30 @@ class _BackupSeedScreenState extends ConsumerState<BackupSeedScreen> {
     final contextMatches =
         _loadedContext != null && _loadedContext == activeContext;
 
-    return Scaffold(
-      backgroundColor: colors.background,
-      appBar: AppBar(
-        title: const Text('Recovery Phrase Backup'),
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back),
-          onPressed: () => context.pop(),
+    return SensitiveScreenProtection(
+      child: Scaffold(
+        backgroundColor: colors.background,
+        appBar: AppBar(
+          title: const Text('Recovery Phrase Backup'),
+          leading: IconButton(
+            icon: const Icon(Icons.arrow_back),
+            onPressed: () => context.pop(),
+          ),
         ),
-      ),
-      body: SafeArea(
-        child: _isLoading
-            ? const Center(child: CircularProgressIndicator())
-            : _loadError != null || !contextMatches
-                ? _buildUnavailableState(colors)
-                : SingleChildScrollView(
-                    padding: const EdgeInsets.all(AppSpacing.md),
-                    child: _currentStep == 0
-                        ? _buildViewWordsStep(colors)
-                        : _currentStep == 1
-                            ? _buildQuizStep(colors)
-                            : _buildSuccessStep(colors),
-                  ),
+        body: SafeArea(
+          child: _isLoading
+              ? const Center(child: CircularProgressIndicator())
+              : _loadError != null || !contextMatches
+                  ? _buildUnavailableState(colors)
+                  : SingleChildScrollView(
+                      padding: const EdgeInsets.all(AppSpacing.md),
+                      child: _currentStep == 0
+                          ? _buildViewWordsStep(colors)
+                          : _currentStep == 1
+                              ? _buildQuizStep(colors)
+                              : _buildSuccessStep(colors),
+                    ),
+        ),
       ),
     );
   }
