@@ -14,14 +14,16 @@ import UIKit
 
   func didInitializeImplicitFlutterEngine(_ engineBridge: FlutterImplicitEngineBridge) {
     GeneratedPluginRegistrant.register(with: engineBridge.pluginRegistry)
-    let registrar = engineBridge.pluginRegistry.registrar(
+    guard let registrar = engineBridge.pluginRegistry.registrar(
       forPlugin: "SensitiveScreenProtection"
-    )
+    ) else {
+      return
+    }
     let channel = FlutterMethodChannel(
       name: "org.hanbova.hanbova/sensitive_screen",
       binaryMessenger: registrar.messenger()
     )
-    channel.setMethodCallHandler { [weak self] call, result in
+    channel.setMethodCallHandler { [weak self] (call: FlutterMethodCall, result: @escaping FlutterResult) in
       guard call.method == "setSensitiveScreen",
             let arguments = call.arguments as? [String: Any],
             let enabled = arguments["enabled"] as? Bool else {
