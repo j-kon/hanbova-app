@@ -11,7 +11,7 @@ import 'package:hanbova_app/features/spend/presentation/pay_hub_screen.dart';
 import 'package:hanbova_app/features/spend/presentation/payment_confirmation_sheet.dart';
 import 'package:hanbova_app/features/spend/presentation/payment_result_sheets.dart';
 import 'package:hanbova_app/features/spend/presentation/tv_subscription_flow_screen.dart';
-import 'package:hanbova_app/features/travel/presentation/travel_screen.dart';
+import 'package:hanbova_app/features/money/presentation/money_screen.dart';
 import 'package:hanbova_app/features/profile/screens/profile_screen.dart';
 import 'package:hanbova_app/features/transactions/domain/transaction_model.dart';
 
@@ -34,29 +34,35 @@ void main() {
       // Starts at Home Tab
       expect(find.byType(HomeScreen), findsOneWidget);
 
-      // Switch to Pay (Tab 1)
-      await tester.tap(find.byIcon(Icons.payments_outlined));
+      // Switch to Pay via Center Action Button
+      await tester.tap(find.byKey(const Key('navbar_center_action_button')));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Pay Everyday Bills'));
       await tester.pumpAndSettle();
       expect(find.byType(PayHubScreen), findsOneWidget);
 
-      // Switch to Activity (Tab 2)
-      await tester.tap(find.byIcon(Icons.receipt_long_outlined));
+      // Pop back from pushed Pay screen to Shell
+      await tester.pageBack();
+      await tester.pumpAndSettle();
+
+      // Switch to Activity (Tab 1)
+      await tester.tap(find.text('Activity'));
       await tester.pumpAndSettle();
       expect(find.text('Money In'), findsOneWidget);
 
-      // Switch to Travel (Tab 3)
-      await tester.tap(find.byIcon(Icons.flight_takeoff_outlined));
+      // Switch to Money (Tab 2)
+      await tester.tap(find.text('Money'));
       await tester.pumpAndSettle();
-      expect(find.byType(TravelScreen), findsOneWidget);
+      expect(find.byType(MoneyScreen), findsOneWidget);
 
-      // Switch to Me (Tab 4)
-      await tester.tap(find.byIcon(Icons.person_outline_rounded));
+      // Switch to Profile (Tab 3)
+      await tester.tap(find.text('Profile'));
       await tester.pumpAndSettle();
       expect(find.byType(ProfileScreen), findsOneWidget);
       expect(find.text('Edit Profile'), findsOneWidget);
 
       // Return to Home (Tab 0)
-      await tester.tap(find.byIcon(Icons.home_outlined));
+      await tester.tap(find.text('Home'));
       await tester.pumpAndSettle();
       expect(find.byType(HomeScreen), findsOneWidget);
     });

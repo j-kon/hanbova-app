@@ -311,6 +311,31 @@ class TransactionReceiptSheet extends StatelessWidget {
           Icons.account_balance,
           const Color(0xFF38BDF8)
         );
+      case TransactionType.usdtSent:
+      case TransactionType.usdtReceived:
+        return (
+          'Tether USD Transfer',
+          Icons.attach_money_rounded,
+          const Color(0xFF26A17B),
+        );
+      case TransactionType.usdcSent:
+      case TransactionType.usdcReceived:
+        return (
+          'USD Coin Transfer',
+          Icons.monetization_on_rounded,
+          const Color(0xFF2775CA),
+        );
+      case TransactionType.btcToUsdtConversion:
+      case TransactionType.btcToUsdcConversion:
+      case TransactionType.usdtToBtcConversion:
+      case TransactionType.usdcToBtcConversion:
+      case TransactionType.usdtToUsdcConversion:
+      case TransactionType.usdcToUsdtConversion:
+        return (
+          'Asset Conversion',
+          Icons.swap_horiz_rounded,
+          const Color(0xFF38BDF8),
+        );
     }
   }
 

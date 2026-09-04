@@ -101,16 +101,17 @@ class _PaymentSuccessSheetState extends State<PaymentSuccessSheet> {
 
   @override
   Widget build(BuildContext context) {
+    final colors = context.colors;
     final title = widget.serviceTitle ?? 'Payment Successful';
 
     return Container(
-      decoration: const BoxDecoration(
-        color: AppColors.darkBackground,
-        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+      decoration: BoxDecoration(
+        color: colors.surfaceCard,
+        borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
         border: Border(
-          top: BorderSide(color: AppColors.darkBorder, width: 1),
-          left: BorderSide(color: AppColors.darkBorder, width: 1),
-          right: BorderSide(color: AppColors.darkBorder, width: 1),
+          top: BorderSide(color: colors.border, width: 1),
+          left: BorderSide(color: colors.border, width: 1),
+          right: BorderSide(color: colors.border, width: 1),
         ),
       ),
       padding: EdgeInsets.only(
@@ -149,8 +150,8 @@ class _PaymentSuccessSheetState extends State<PaymentSuccessSheet> {
           Center(
             child: Text(
               title,
-              style: const TextStyle(
-                color: Colors.white,
+              style: TextStyle(
+                color: colors.textPrimary,
                 fontSize: 18,
                 fontWeight: FontWeight.bold,
               ),
@@ -160,8 +161,8 @@ class _PaymentSuccessSheetState extends State<PaymentSuccessSheet> {
           Center(
             child: Text(
               _formatFiat(widget.fiatAmount, widget.fiatCurrency),
-              style: const TextStyle(
-                color: Colors.white,
+              style: TextStyle(
+                color: colors.textPrimary,
                 fontSize: 32,
                 fontWeight: FontWeight.w800,
                 letterSpacing: -0.5,
@@ -178,20 +179,20 @@ class _PaymentSuccessSheetState extends State<PaymentSuccessSheet> {
                 padding:
                     const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                 decoration: BoxDecoration(
-                  color: AppColors.darkCardBackground,
+                  color: colors.surfaceElevated,
                   borderRadius: BorderRadius.circular(8),
-                  border: Border.all(color: AppColors.darkBorder),
+                  border: Border.all(color: colors.border),
                 ),
                 child: Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    const Icon(Icons.phone_android_rounded,
-                        size: 14, color: AppColors.darkTextSecondary),
+                    Icon(Icons.phone_android_rounded,
+                        size: 14, color: colors.textSecondary),
                     const SizedBox(width: 4),
                     Text(
                       widget.accountReference,
-                      style: const TextStyle(
-                        color: Colors.white,
+                      style: TextStyle(
+                        color: colors.textPrimary,
                         fontSize: 13,
                         fontWeight: FontWeight.w600,
                       ),
@@ -204,13 +205,13 @@ class _PaymentSuccessSheetState extends State<PaymentSuccessSheet> {
                 padding:
                     const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                 decoration: BoxDecoration(
-                  color: AppColors.primary.withValues(alpha: 0.15),
+                  color: colors.primary.withValues(alpha: 0.15),
                   borderRadius: BorderRadius.circular(8),
                 ),
                 child: Text(
                   widget.billerName,
-                  style: const TextStyle(
-                    color: AppColors.primary,
+                  style: TextStyle(
+                    color: colors.primary,
                     fontSize: 13,
                     fontWeight: FontWeight.bold,
                   ),
@@ -225,23 +226,23 @@ class _PaymentSuccessSheetState extends State<PaymentSuccessSheet> {
             Container(
               padding: const EdgeInsets.all(16),
               decoration: BoxDecoration(
-                color: AppColors.primary.withValues(alpha: 0.12),
+                color: colors.primary.withValues(alpha: 0.12),
                 borderRadius: BorderRadius.circular(16),
                 border: Border.all(
-                  color: AppColors.primary.withValues(alpha: 0.4),
+                  color: colors.primary.withValues(alpha: 0.4),
                 ),
               ),
               child: Column(
                 children: [
-                  const Row(
+                  Row(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      Icon(Icons.bolt, size: 16, color: AppColors.primary),
-                      SizedBox(width: 6),
+                      Icon(Icons.bolt, size: 16, color: colors.primary),
+                      const SizedBox(width: 6),
                       Text(
                         'ELECTRICITY RECHARGE TOKEN',
                         style: TextStyle(
-                          color: AppColors.primary,
+                          color: colors.primary,
                           fontSize: 12,
                           fontWeight: FontWeight.bold,
                           letterSpacing: 0.8,
@@ -252,8 +253,8 @@ class _PaymentSuccessSheetState extends State<PaymentSuccessSheet> {
                   const SizedBox(height: 10),
                   SelectableText(
                     widget.electricityTokenOrPin!,
-                    style: const TextStyle(
-                      color: Colors.white,
+                    style: TextStyle(
+                      color: colors.textPrimary,
                       fontSize: 20,
                       fontWeight: FontWeight.bold,
                       letterSpacing: 2.0,
@@ -267,7 +268,7 @@ class _PaymentSuccessSheetState extends State<PaymentSuccessSheet> {
                       padding: const EdgeInsets.symmetric(
                           horizontal: 14, vertical: 6),
                       decoration: BoxDecoration(
-                        color: AppColors.primary,
+                        color: colors.primary,
                         borderRadius: BorderRadius.circular(8),
                       ),
                       child: Row(
@@ -301,22 +302,22 @@ class _PaymentSuccessSheetState extends State<PaymentSuccessSheet> {
           Container(
             padding: const EdgeInsets.all(14),
             decoration: BoxDecoration(
-              color: AppColors.darkCardBackground,
+              color: colors.surfaceElevated,
               borderRadius: BorderRadius.circular(14),
-              border: Border.all(color: AppColors.darkBorder),
+              border: Border.all(color: colors.border),
             ),
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                const Row(
+                Row(
                   children: [
                     Icon(Icons.bolt_rounded,
-                        color: AppColors.primary, size: 18),
-                    SizedBox(width: 6),
+                        color: colors.primary, size: 18),
+                    const SizedBox(width: 6),
                     Text(
                       'Bitcoin Settled',
                       style: TextStyle(
-                        color: AppColors.darkTextSecondary,
+                        color: colors.textSecondary,
                         fontSize: 12,
                       ),
                     ),
@@ -324,8 +325,8 @@ class _PaymentSuccessSheetState extends State<PaymentSuccessSheet> {
                 ),
                 Text(
                   Formatters.formatSats(widget.amountSats),
-                  style: const TextStyle(
-                    color: Colors.white,
+                  style: TextStyle(
+                    color: colors.textPrimary,
                     fontSize: 13,
                     fontWeight: FontWeight.bold,
                   ),
@@ -345,18 +346,18 @@ class _PaymentSuccessSheetState extends State<PaymentSuccessSheet> {
                   width: 24,
                   child: Checkbox(
                     value: _saveBiller,
-                    activeColor: AppColors.primary,
+                    activeColor: colors.primary,
                     checkColor: Colors.black,
                     onChanged: (val) =>
                         setState(() => _saveBiller = val ?? true),
                   ),
                 ),
                 const SizedBox(width: 10),
-                const Expanded(
+                Expanded(
                   child: Text(
                     'Save to Pay Again for quick repeat',
                     style: TextStyle(
-                      color: Colors.white70,
+                      color: colors.textSecondary,
                       fontSize: 12,
                     ),
                   ),
@@ -373,7 +374,7 @@ class _PaymentSuccessSheetState extends State<PaymentSuccessSheet> {
               widget.onDone();
             },
             style: ElevatedButton.styleFrom(
-              backgroundColor: AppColors.primary,
+              backgroundColor: colors.primary,
               foregroundColor: Colors.black,
               padding: const EdgeInsets.symmetric(vertical: 16),
               shape: RoundedRectangleBorder(
@@ -409,12 +410,12 @@ class _PaymentSuccessSheetState extends State<PaymentSuccessSheet> {
                       curr,
                     );
                   },
-                  icon: const Icon(Icons.receipt_long_outlined,
-                      size: 16, color: AppColors.primary),
-                  label: const Text(
+                  icon: Icon(Icons.receipt_long_outlined,
+                      size: 16, color: colors.primary),
+                  label: Text(
                     'View receipt',
                     style: TextStyle(
-                      color: AppColors.primary,
+                      color: colors.primary,
                       fontSize: 13,
                       fontWeight: FontWeight.w600,
                     ),
@@ -422,19 +423,19 @@ class _PaymentSuccessSheetState extends State<PaymentSuccessSheet> {
                 ),
               ),
               if (widget.onBuyAgain != null) ...[
-                Container(height: 16, width: 1, color: AppColors.darkBorder),
+                Container(height: 16, width: 1, color: colors.border),
                 Expanded(
                   child: TextButton.icon(
                     onPressed: () {
                       Navigator.of(context).pop();
                       widget.onBuyAgain!();
                     },
-                    icon: const Icon(Icons.refresh_rounded,
-                        size: 16, color: AppColors.primary),
-                    label: const Text(
+                    icon: Icon(Icons.refresh_rounded,
+                        size: 16, color: colors.primary),
+                    label: Text(
                       'Buy again',
                       style: TextStyle(
-                        color: AppColors.primary,
+                        color: colors.primary,
                         fontSize: 13,
                         fontWeight: FontWeight.w600,
                       ),
@@ -496,14 +497,15 @@ class PaymentUncertainSheet extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colors = context.colors;
     return Container(
-      decoration: const BoxDecoration(
-        color: AppColors.darkBackground,
-        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+      decoration: BoxDecoration(
+        color: colors.surfaceCard,
+        borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
         border: Border(
-          top: BorderSide(color: AppColors.darkBorder, width: 1),
-          left: BorderSide(color: AppColors.darkBorder, width: 1),
-          right: BorderSide(color: AppColors.darkBorder, width: 1),
+          top: BorderSide(color: colors.border, width: 1),
+          left: BorderSide(color: colors.border, width: 1),
+          right: BorderSide(color: colors.border, width: 1),
         ),
       ),
       padding: EdgeInsets.only(
@@ -536,11 +538,11 @@ class PaymentUncertainSheet extends StatelessWidget {
             ),
           ),
           const SizedBox(height: 16),
-          const Center(
+          Center(
             child: Text(
               'Payment Processing',
               style: TextStyle(
-                color: Colors.white,
+                color: colors.textPrimary,
                 fontSize: 20,
                 fontWeight: FontWeight.bold,
               ),
@@ -567,29 +569,29 @@ class PaymentUncertainSheet extends StatelessWidget {
                 color: AppColors.warning.withValues(alpha: 0.3),
               ),
             ),
-            child: const Column(
+            child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Row(
                   children: [
-                    Icon(Icons.info_outline,
+                    const Icon(Icons.info_outline,
                         color: AppColors.warning, size: 18),
-                    SizedBox(width: 8),
+                    const SizedBox(width: 8),
                     Text(
                       'Please Do Not Pay Again',
                       style: TextStyle(
-                        color: Colors.white,
+                        color: colors.textPrimary,
                         fontSize: 14,
                         fontWeight: FontWeight.bold,
                       ),
                     ),
                   ],
                 ),
-                SizedBox(height: 8),
+                const SizedBox(height: 8),
                 Text(
                   'Your payment was transmitted and satoshis reserved. The provider response is taking slightly longer than normal. Hanbova is continuously verifying the delivery.',
                   style: TextStyle(
-                    color: AppColors.darkTextSecondary,
+                    color: colors.textSecondary,
                     fontSize: 12,
                     height: 1.4,
                   ),
@@ -657,14 +659,15 @@ class PaymentFailedSheet extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colors = context.colors;
     return Container(
-      decoration: const BoxDecoration(
-        color: AppColors.darkBackground,
-        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+      decoration: BoxDecoration(
+        color: colors.surfaceCard,
+        borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
         border: Border(
-          top: BorderSide(color: AppColors.darkBorder, width: 1),
-          left: BorderSide(color: AppColors.darkBorder, width: 1),
-          right: BorderSide(color: AppColors.darkBorder, width: 1),
+          top: BorderSide(color: colors.border, width: 1),
+          left: BorderSide(color: colors.border, width: 1),
+          right: BorderSide(color: colors.border, width: 1),
         ),
       ),
       padding: EdgeInsets.only(
@@ -697,11 +700,11 @@ class PaymentFailedSheet extends StatelessWidget {
             ),
           ),
           const SizedBox(height: 16),
-          const Center(
+          Center(
             child: Text(
               'Payment Failed',
               style: TextStyle(
-                color: Colors.white,
+                color: colors.textPrimary,
                 fontSize: 20,
                 fontWeight: FontWeight.bold,
               ),
@@ -712,8 +715,8 @@ class PaymentFailedSheet extends StatelessWidget {
             child: Text(
               errorMessage,
               textAlign: TextAlign.center,
-              style: const TextStyle(
-                color: AppColors.darkTextSecondary,
+              style: TextStyle(
+                color: colors.textSecondary,
                 fontSize: 13,
               ),
             ),
@@ -725,7 +728,7 @@ class PaymentFailedSheet extends StatelessWidget {
               onRetry();
             },
             style: ElevatedButton.styleFrom(
-              backgroundColor: AppColors.primary,
+              backgroundColor: colors.primary,
               foregroundColor: Colors.black,
               padding: const EdgeInsets.symmetric(vertical: 16),
               shape: RoundedRectangleBorder(

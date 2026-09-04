@@ -413,11 +413,16 @@ class ProfileScreen extends ConsumerWidget {
             color: colors.textSecondary,
           ),
         ),
-        Text(
-          value,
-          style: AppTypography.bodySmall.copyWith(
-            color: isHighlighted ? colors.primary : colors.textPrimary,
-            fontWeight: FontWeight.bold,
+        const SizedBox(width: 8),
+        Flexible(
+          child: Text(
+            value,
+            style: AppTypography.bodySmall.copyWith(
+              color: isHighlighted ? colors.primary : colors.textPrimary,
+              fontWeight: FontWeight.bold,
+            ),
+            overflow: TextOverflow.ellipsis,
+            textAlign: TextAlign.end,
           ),
         ),
       ],

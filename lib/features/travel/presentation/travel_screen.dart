@@ -12,20 +12,22 @@ class TravelScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final colors = context.colors;
+    final isDark = context.isDark;
     final market = ref.watch(marketProvider);
     final spendCountry = market.spendCountryInfo;
     final identityCountry = market.identityCountryInfo;
     final caps = market.capabilities;
 
     return Scaffold(
-      backgroundColor: AppColors.darkBackground,
+      backgroundColor: colors.background,
       appBar: AppBar(
-        backgroundColor: AppColors.darkBackground,
+        backgroundColor: colors.background,
         elevation: 0,
-        title: const Text(
+        title: Text(
           'Travel & Spend Hub',
           style: TextStyle(
-            color: Colors.white,
+            color: colors.textPrimary,
             fontSize: 20,
             fontWeight: FontWeight.bold,
           ),
@@ -35,10 +37,10 @@ class TravelScreen extends ConsumerWidget {
             margin: const EdgeInsets.only(right: 16),
             padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
             decoration: BoxDecoration(
-              color: AppColors.primary.withValues(alpha: 0.15),
+              color: colors.primary.withValues(alpha: 0.15),
               borderRadius: BorderRadius.circular(16),
               border:
-                  Border.all(color: AppColors.primary.withValues(alpha: 0.3)),
+                  Border.all(color: colors.primary.withValues(alpha: 0.3)),
             ),
             child: Row(
               mainAxisSize: MainAxisSize.min,
@@ -50,8 +52,8 @@ class TravelScreen extends ConsumerWidget {
                 const SizedBox(width: 6),
                 Text(
                   market.displayCurrency.code,
-                  style: const TextStyle(
-                    color: AppColors.primary,
+                  style: TextStyle(
+                    color: colors.primary,
                     fontWeight: FontWeight.bold,
                     fontSize: 13,
                   ),
@@ -72,14 +74,14 @@ class TravelScreen extends ConsumerWidget {
               decoration: BoxDecoration(
                 gradient: LinearGradient(
                   colors: [
-                    AppColors.darkSurfaceCard,
-                    AppColors.darkSurfaceCard.withValues(alpha: 0.8),
+                    colors.surfaceCard,
+                    colors.surfaceElevated,
                   ],
                   begin: Alignment.topLeft,
                   end: Alignment.bottomRight,
                 ),
                 borderRadius: BorderRadius.circular(20),
-                border: Border.all(color: AppColors.darkBorder),
+                border: Border.all(color: colors.border),
               ),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -87,10 +89,10 @@ class TravelScreen extends ConsumerWidget {
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      const Text(
+                      Text(
                         'DESTINATION MARKET',
                         style: TextStyle(
-                          color: AppColors.darkTextSecondary,
+                          color: colors.textSecondary,
                           fontSize: 11,
                           fontWeight: FontWeight.w600,
                           letterSpacing: 1.1,
@@ -141,8 +143,8 @@ class TravelScreen extends ConsumerWidget {
                           children: [
                             Text(
                               spendCountry.name,
-                              style: const TextStyle(
-                                color: Colors.white,
+                              style: TextStyle(
+                                color: colors.textPrimary,
                                 fontSize: 20,
                                 fontWeight: FontWeight.bold,
                               ),
@@ -150,8 +152,8 @@ class TravelScreen extends ConsumerWidget {
                             const SizedBox(height: 2),
                             Text(
                               'Currency: ${market.displayCurrency.code} (${spendCountry.defaultCurrency.symbol.trim()}) • Dial: ${spendCountry.dialCode}',
-                              style: const TextStyle(
-                                color: AppColors.darkTextSecondary,
+                              style: TextStyle(
+                                color: colors.textSecondary,
                                 fontSize: 13,
                               ),
                             ),
@@ -165,7 +167,9 @@ class TravelScreen extends ConsumerWidget {
                     Container(
                       padding: const EdgeInsets.all(10),
                       decoration: BoxDecoration(
-                        color: Colors.blueAccent.withValues(alpha: 0.1),
+                        color: isDark
+                            ? Colors.blueAccent.withValues(alpha: 0.1)
+                            : Colors.blue.withValues(alpha: 0.08),
                         borderRadius: BorderRadius.circular(10),
                         border: Border.all(
                             color: Colors.blueAccent.withValues(alpha: 0.2)),
@@ -178,8 +182,8 @@ class TravelScreen extends ConsumerWidget {
                           Expanded(
                             child: Text(
                               'Traveling from ${identityCountry.flagEmoji} ${identityCountry.name}. Your spending is set to ${spendCountry.name}.',
-                              style: const TextStyle(
-                                color: Colors.white70,
+                              style: TextStyle(
+                                color: colors.textPrimary,
                                 fontSize: 12,
                               ),
                             ),
@@ -194,10 +198,10 @@ class TravelScreen extends ConsumerWidget {
 
             const SizedBox(height: 24),
 
-            const Text(
+            Text(
               'TRAVEL SERVICES',
               style: TextStyle(
-                color: AppColors.darkTextSecondary,
+                color: colors.textSecondary,
                 fontSize: 12,
                 fontWeight: FontWeight.w600,
                 letterSpacing: 1.1,
@@ -282,22 +286,22 @@ class TravelScreen extends ConsumerWidget {
             Container(
               padding: const EdgeInsets.all(16),
               decoration: BoxDecoration(
-                color: AppColors.darkSurface,
+                color: colors.surfaceElevated,
                 borderRadius: BorderRadius.circular(16),
-                border: Border.all(color: AppColors.darkBorder),
+                border: Border.all(color: colors.border),
               ),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Row(
                     children: [
-                      const Icon(Icons.radar,
-                          color: AppColors.primary, size: 16),
+                      Icon(Icons.radar,
+                          color: colors.primary, size: 16),
                       const SizedBox(width: 8),
                       Text(
                         'Market Rails in ${spendCountry.name} (${spendCountry.code})',
-                        style: const TextStyle(
-                          color: Colors.white,
+                        style: TextStyle(
+                          color: colors.textPrimary,
                           fontSize: 13,
                           fontWeight: FontWeight.bold,
                         ),
@@ -341,15 +345,16 @@ class TravelScreen extends ConsumerWidget {
     required Color badgeColor,
     required VoidCallback onTap,
   }) {
+    final colors = context.colors;
     return InkWell(
       onTap: onTap,
       borderRadius: BorderRadius.circular(16),
       child: Container(
         padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
-          color: AppColors.darkSurfaceCard,
+          color: colors.surfaceCard,
           borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: AppColors.darkBorder),
+          border: Border.all(color: colors.border),
         ),
         child: Row(
           children: [
@@ -371,8 +376,8 @@ class TravelScreen extends ConsumerWidget {
                       Expanded(
                         child: Text(
                           title,
-                          style: const TextStyle(
-                            color: Colors.white,
+                          style: TextStyle(
+                            color: colors.textPrimary,
                             fontSize: 15,
                             fontWeight: FontWeight.bold,
                           ),
@@ -402,8 +407,8 @@ class TravelScreen extends ConsumerWidget {
                   const SizedBox(height: 4),
                   Text(
                     subtitle,
-                    style: const TextStyle(
-                      color: AppColors.darkTextSecondary,
+                    style: TextStyle(
+                      color: colors.textSecondary,
                       fontSize: 12,
                     ),
                   ),
@@ -411,9 +416,9 @@ class TravelScreen extends ConsumerWidget {
               ),
             ),
             const SizedBox(width: 8),
-            const Icon(
+            Icon(
               Icons.chevron_right,
-              color: AppColors.darkTextSecondary,
+              color: colors.textSecondary,
               size: 20,
             ),
           ],
@@ -423,45 +428,56 @@ class TravelScreen extends ConsumerWidget {
   }
 
   Widget _buildCapabilityChip(String label, bool active) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-      decoration: BoxDecoration(
-        color: active
-            ? AppColors.success.withValues(alpha: 0.15)
-            : Colors.grey.withValues(alpha: 0.1),
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(
+    return Builder(builder: (context) {
+      final colors = context.colors;
+      final isDark = context.isDark;
+      return Container(
+        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+        decoration: BoxDecoration(
           color: active
-              ? AppColors.success.withValues(alpha: 0.3)
-              : Colors.grey.withValues(alpha: 0.2),
+              ? AppColors.success.withValues(alpha: 0.15)
+              : (isDark
+                  ? Colors.grey.withValues(alpha: 0.1)
+                  : Colors.grey.shade200),
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(
+            color: active
+                ? AppColors.success.withValues(alpha: 0.3)
+                : (isDark
+                    ? Colors.grey.withValues(alpha: 0.2)
+                    : Colors.grey.shade300),
+          ),
         ),
-      ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Icon(
-            active ? Icons.check_circle : Icons.cancel,
-            color: active ? AppColors.success : Colors.grey,
-            size: 12,
-          ),
-          const SizedBox(width: 5),
-          Text(
-            label,
-            style: TextStyle(
-              color: active ? Colors.white : Colors.white54,
-              fontSize: 11,
-              fontWeight: active ? FontWeight.w600 : FontWeight.normal,
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(
+              active ? Icons.check_circle : Icons.cancel,
+              color: active ? AppColors.success : Colors.grey,
+              size: 12,
             ),
-          ),
-        ],
-      ),
-    );
+            const SizedBox(width: 5),
+            Text(
+              label,
+              style: TextStyle(
+                color: active
+                    ? (isDark ? Colors.white : colors.textPrimary)
+                    : colors.textTertiary,
+                fontSize: 11,
+                fontWeight: active ? FontWeight.w600 : FontWeight.normal,
+              ),
+            ),
+          ],
+        ),
+      );
+    });
   }
 
   void _showCountryPicker(BuildContext context, WidgetRef ref) {
+    final colors = context.colors;
     showModalBottomSheet(
       context: context,
-      backgroundColor: AppColors.darkSurface,
+      backgroundColor: colors.surfaceCard,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
       ),
@@ -472,10 +488,10 @@ class TravelScreen extends ConsumerWidget {
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const Text(
+              Text(
                 'Select Destination Market',
                 style: TextStyle(
-                  color: Colors.white,
+                  color: colors.textPrimary,
                   fontSize: 18,
                   fontWeight: FontWeight.bold,
                 ),
@@ -485,15 +501,15 @@ class TravelScreen extends ConsumerWidget {
                 padding:
                     const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
                 decoration: BoxDecoration(
-                  color: AppColors.primary.withValues(alpha: 0.12),
+                  color: colors.primary.withValues(alpha: 0.12),
                   borderRadius: BorderRadius.circular(8),
                   border: Border.all(
-                      color: AppColors.primary.withValues(alpha: 0.25)),
+                      color: colors.primary.withValues(alpha: 0.25)),
                 ),
-                child: const Text(
+                child: Text(
                   'Notice: Your country of residence will not change. Only the destination utilities, local eSIM packages, and spend corridors adapt.',
                   style: TextStyle(
-                    color: Colors.white70,
+                    color: colors.textPrimary,
                     fontSize: 12,
                   ),
                 ),
@@ -503,8 +519,8 @@ class TravelScreen extends ConsumerWidget {
                 child: ListView.separated(
                   shrinkWrap: true,
                   itemCount: CountryInfo.supportedCountries.length,
-                  separatorBuilder: (_, __) => const Divider(
-                    color: AppColors.darkBorder,
+                  separatorBuilder: (_, __) => Divider(
+                    color: colors.divider,
                     height: 1,
                   ),
                   itemBuilder: (context, index) {
@@ -517,21 +533,21 @@ class TravelScreen extends ConsumerWidget {
                       ),
                       title: Text(
                         c.name,
-                        style: const TextStyle(
-                          color: Colors.white,
+                        style: TextStyle(
+                          color: colors.textPrimary,
                           fontWeight: FontWeight.bold,
                         ),
                       ),
                       subtitle: Text(
                         'Currency: ${c.defaultCurrency.code} • Dial: ${c.dialCode}',
-                        style: const TextStyle(
-                          color: AppColors.darkTextSecondary,
+                        style: TextStyle(
+                          color: colors.textSecondary,
                           fontSize: 12,
                         ),
                       ),
-                      trailing: const Icon(
+                      trailing: Icon(
                         Icons.chevron_right,
-                        color: AppColors.darkTextSecondary,
+                        color: colors.textSecondary,
                       ),
                       onTap: () {
                         ref

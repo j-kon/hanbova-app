@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import '../../core/theme/app_colors.dart';
 import '../../core/theme/app_typography.dart';
+import 'pay_action_sheet.dart';
 
 class AppShell extends StatelessWidget {
   final StatefulNavigationShell navigationShell;
@@ -22,7 +23,7 @@ class AppShell extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final colors = context.colors;
-    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final isDark = context.isDark;
     final selectedIndex = navigationShell.currentIndex;
 
     return Scaffold(
@@ -62,14 +63,11 @@ class AppShell extends StatelessWidget {
                     padding:
                         const EdgeInsets.symmetric(horizontal: 4, vertical: 6),
                     decoration: BoxDecoration(
-                      color: isDark
-                          ? AppColors.graphite.withValues(alpha: 0.88)
-                          : AppColors.warmWhite.withValues(alpha: 0.90),
+                      color: colors.surfaceCard
+                          .withValues(alpha: isDark ? 0.88 : 0.92),
                       borderRadius: BorderRadius.circular(28),
                       border: Border.all(
-                        color: isDark
-                            ? AppColors.darkBorder.withValues(alpha: 0.8)
-                            : AppColors.lightBorder.withValues(alpha: 0.9),
+                        color: colors.border.withValues(alpha: 0.8),
                         width: 1,
                       ),
                     ),
@@ -85,16 +83,7 @@ class AppShell extends StatelessWidget {
                           onTap: () => _onTap(context, 0),
                         ),
 
-                        // 2. Pay (Everyday Pay Hub)
-                        _IosNavItem(
-                          icon: Icons.payments_outlined,
-                          activeIcon: Icons.payments_rounded,
-                          label: 'Pay',
-                          isSelected: selectedIndex == 1,
-                          onTap: () => _onTap(context, 1),
-                        ),
-
-                        // 3. Activity
+                        // 2. Activity
                         _IosNavItem(
                           icon: Icons.receipt_long_outlined,
                           activeIcon: Icons.receipt_long_rounded,
@@ -103,20 +92,26 @@ class AppShell extends StatelessWidget {
                           onTap: () => _onTap(context, 2),
                         ),
 
-                        // 4. Travel
+                        // 3. Middle Action Button (Quick Action Hub)
+                        _CenterActionButton(
+                          key: const Key('navbar_center_action_button'),
+                          onTap: () => PayActionSheet.show(context),
+                        ),
+
+                        // 4. Money (Balances, Protected, Pending, Insights, Statements)
                         _IosNavItem(
-                          icon: Icons.flight_takeoff_outlined,
-                          activeIcon: Icons.flight_takeoff_rounded,
-                          label: 'Travel',
+                          icon: Icons.account_balance_wallet_outlined,
+                          activeIcon: Icons.account_balance_wallet_rounded,
+                          label: 'Money',
                           isSelected: selectedIndex == 3,
                           onTap: () => _onTap(context, 3),
                         ),
 
-                        // 5. Me / Profile
+                        // 5. Profile (Identity, Account, Settings)
                         _IosNavItem(
                           icon: Icons.person_outline_rounded,
                           activeIcon: Icons.person_rounded,
-                          label: 'Me',
+                          label: 'Profile',
                           isSelected: selectedIndex == 4,
                           onTap: () => _onTap(context, 4),
                         ),
@@ -133,20 +128,22 @@ class AppShell extends StatelessWidget {
   }
 }
 
-class _CenterPayButton extends StatefulWidget {
+class _CenterActionButton extends StatefulWidget {
   final VoidCallback onTap;
 
-  const _CenterPayButton({required this.onTap});
+  const _CenterActionButton({super.key, required this.onTap});
 
   @override
-  State<_CenterPayButton> createState() => _CenterPayButtonState();
+  State<_CenterActionButton> createState() => _CenterActionButtonState();
 }
 
-class _CenterPayButtonState extends State<_CenterPayButton> {
+class _CenterActionButtonState extends State<_CenterActionButton> {
   bool _isPressed = false;
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
     return GestureDetector(
       onTapDown: (_) => setState(() => _isPressed = true),
       onTapUp: (_) {
@@ -155,7 +152,7 @@ class _CenterPayButtonState extends State<_CenterPayButton> {
       },
       onTapCancel: () => setState(() => _isPressed = false),
       child: AnimatedScale(
-        scale: _isPressed ? 0.92 : 1.0,
+        scale: _isPressed ? 0.90 : 1.0,
         duration: const Duration(milliseconds: 120),
         curve: Curves.easeInOut,
         child: Container(
@@ -173,7 +170,8 @@ class _CenterPayButtonState extends State<_CenterPayButton> {
             ),
             boxShadow: [
               BoxShadow(
-                color: AppColors.bitcoinOrange.withValues(alpha: 0.38),
+                color: AppColors.bitcoinOrange
+                    .withValues(alpha: isDark ? 0.45 : 0.35),
                 blurRadius: 12,
                 offset: const Offset(0, 4),
               ),
@@ -181,7 +179,7 @@ class _CenterPayButtonState extends State<_CenterPayButton> {
           ),
           child: const Center(
             child: Icon(
-              Icons.arrow_upward_rounded,
+              Icons.swap_horiz_rounded,
               color: AppColors.charcoal,
               size: 26,
             ),
@@ -209,10 +207,10 @@ class _IosNavItem extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    final activeColor = AppColors.bitcoinOrange;
-    final inactiveColor =
-        isDark ? AppColors.darkTextTertiary : AppColors.softGray;
+    final colors = context.colors;
+    final isDark = context.isDark;
+    final activeColor = colors.primary;
+    final inactiveColor = colors.textTertiary;
 
     return InkWell(
       onTap: onTap,

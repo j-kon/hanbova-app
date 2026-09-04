@@ -181,17 +181,22 @@ void main() {
       final state = container.read(demoModeProvider);
       final txs = state.demoTransactions;
 
-      final incomingTxs = txs.where((t) => !t.isOutgoing);
-      final outgoingTxs = txs.where((t) => t.isOutgoing);
+      final btcTxs = txs.where((t) => !t.isConversion && !t.isStablecoin);
+      final incomingTxs = btcTxs.where((t) => !t.isOutgoing);
+      final outgoingTxs = btcTxs.where((t) => t.isOutgoing);
 
       final sumIn = incomingTxs.fold(0, (sum, t) => sum + t.amountSats);
       final sumOut = outgoingTxs.fold(0, (sum, t) => sum + t.amountSats);
-      final sumFees = txs.fold(0, (sum, t) => sum + (t.feeSats ?? 0));
+      final sumFees = btcTxs.fold(0, (sum, t) => sum + (t.feeSats ?? 0));
 
       expect(sumIn, 400000); // 250k received + 150k refund
       expect(sumOut, 393300); // 12.8k + 300k + 12k + 8.5k + 45k + 15k
       expect(sumFees, 750); // 150+50+200+50+50+100+50+100
       expect(sumIn - sumOut, 6700);
+
+      // Verify multi-asset demo transactions exist
+      expect(txs.where((t) => t.isConversion).length, 3);
+      expect(txs.where((t) => t.isStablecoin).length, 2);
     });
 
     test(

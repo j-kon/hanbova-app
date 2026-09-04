@@ -326,10 +326,13 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      Text(
-                        'Country of Residence',
-                        style: AppTypography.caption.copyWith(
-                          color: colors.textSecondary,
+                      Flexible(
+                        child: Text(
+                          'Country of Residence',
+                          style: AppTypography.caption.copyWith(
+                            color: colors.textSecondary,
+                          ),
+                          overflow: TextOverflow.ellipsis,
                         ),
                       ),
                       Container(

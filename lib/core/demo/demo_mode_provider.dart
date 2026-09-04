@@ -128,6 +128,51 @@ class VirtualCardModel {
   }
 }
 
+class DemoPersona {
+  final String id;
+  final String name;
+  final String residenceCountry;
+  final String activeMarket;
+  final bool isRoamActive;
+  final String currency;
+
+  const DemoPersona({
+    required this.id,
+    required this.name,
+    required this.residenceCountry,
+    required this.activeMarket,
+    required this.isRoamActive,
+    required this.currency,
+  });
+
+  static const nigeriaResident = DemoPersona(
+    id: 'nigeria',
+    name: 'Jeremiah Jacob',
+    residenceCountry: 'NG',
+    activeMarket: 'NG',
+    isRoamActive: false,
+    currency: 'NGN',
+  );
+
+  static const usaResident = DemoPersona(
+    id: 'usa',
+    name: 'David Miller',
+    residenceCountry: 'US',
+    activeMarket: 'US',
+    isRoamActive: false,
+    currency: 'USD',
+  );
+
+  static const usaResidentRoamingKenya = DemoPersona(
+    id: 'usa_roam_ke',
+    name: 'David Miller',
+    residenceCountry: 'US',
+    activeMarket: 'KE',
+    isRoamActive: true,
+    currency: 'KES',
+  );
+}
+
 /// Isolated Demo State Holder
 class DemoModeState {
   final bool isEnabled;
@@ -136,6 +181,9 @@ class DemoModeState {
   final int protectedWaitingSats;
   final int protectedRefundableSats;
   final int pendingBalanceSats;
+  final double demoUsdtBalance;
+  final double demoUsdcBalance;
+  final DemoPersona currentPersona;
 
   final List<TransactionModel> demoTransactions;
   final List<BeneficiaryItem> demoBeneficiaries;
@@ -150,6 +198,9 @@ class DemoModeState {
     this.protectedWaitingSats = 300000,
     this.protectedRefundableSats = 150000,
     this.pendingBalanceSats = 200000,
+    this.demoUsdtBalance = 1250.00,
+    this.demoUsdcBalance = 750.00,
+    this.currentPersona = DemoPersona.nigeriaResident,
     this.demoTransactions = const [],
     this.demoBeneficiaries = const [],
     this.demoNotifications = const [],
@@ -161,6 +212,9 @@ class DemoModeState {
 
   DemoModeState copyWith({
     bool? isEnabled,
+    double? demoUsdtBalance,
+    double? demoUsdcBalance,
+    DemoPersona? currentPersona,
     List<TransactionModel>? demoTransactions,
     List<BeneficiaryItem>? demoBeneficiaries,
     List<AppNotificationItem>? demoNotifications,
@@ -173,6 +227,9 @@ class DemoModeState {
       protectedWaitingSats: protectedWaitingSats,
       protectedRefundableSats: protectedRefundableSats,
       pendingBalanceSats: pendingBalanceSats,
+      demoUsdtBalance: demoUsdtBalance ?? this.demoUsdtBalance,
+      demoUsdcBalance: demoUsdcBalance ?? this.demoUsdcBalance,
+      currentPersona: currentPersona ?? this.currentPersona,
       demoTransactions: demoTransactions ?? this.demoTransactions,
       demoBeneficiaries: demoBeneficiaries ?? this.demoBeneficiaries,
       demoNotifications: demoNotifications ?? this.demoNotifications,
@@ -190,6 +247,10 @@ final demoModeProvider =
 class DemoModeNotifier extends StateNotifier<DemoModeState> {
   DemoModeNotifier() : super(_buildInitialDemoState());
 
+  void setPersona(DemoPersona persona) {
+    state = state.copyWith(currentPersona: persona);
+  }
+
   static DemoModeState _buildInitialDemoState() {
     final now = DateTime.now();
 
@@ -202,6 +263,21 @@ class DemoModeNotifier extends StateNotifier<DemoModeState> {
         createdAt: now.subtract(const Duration(hours: 2)),
         recipientOrSender: 'bc1qj4...998x (Nodeless Deposit)',
         feeSats: 150,
+      ),
+      TransactionModel(
+        id: 'demo-tx-conv-1',
+        type: TransactionType.btcToUsdtConversion,
+        status: TransactionStatus.completed,
+        amountSats: 100000,
+        createdAt: now.subtract(const Duration(days: 1, hours: 1)),
+        recipientOrSender: 'Conversion • BTC to USDT',
+        sourceAsset: 'BTC',
+        sourceAmount: 100000,
+        destinationAsset: 'USDT',
+        destinationAmount: 64.82,
+        exchangeRate: 64820.0,
+        feeSats: 250,
+        hanbovaReference: 'HNB-SWAP-9821',
       ),
       TransactionModel(
         id: 'demo-tx-2',
@@ -222,6 +298,22 @@ class DemoModeNotifier extends StateNotifier<DemoModeState> {
         feeSats: 200,
       ),
       TransactionModel(
+        id: 'demo-tx-conv-2',
+        type: TransactionType.usdtToBtcConversion,
+        status: TransactionStatus.completed,
+        amountSats: 77150,
+        createdAt: now.subtract(const Duration(days: 2, hours: 6)),
+        recipientOrSender: 'Conversion • USDT to BTC',
+        sourceAsset: 'USDT',
+        sourceAmount: 50.0,
+        destinationAsset: 'BTC',
+        destinationAmount: 77150,
+        exchangeRate: 64820.0,
+        fiatAmount: 50.0,
+        fiatCurrency: 'USD',
+        hanbovaReference: 'HNB-SWAP-9844',
+      ),
+      TransactionModel(
         id: 'demo-tx-4',
         type: TransactionType.esimPurchase,
         status: TransactionStatus.completed,
@@ -231,6 +323,22 @@ class DemoModeNotifier extends StateNotifier<DemoModeState> {
         feeSats: 50,
       ),
       TransactionModel(
+        id: 'demo-tx-conv-3',
+        type: TransactionType.usdtToUsdcConversion,
+        status: TransactionStatus.completed,
+        amountSats: 0,
+        createdAt: now.subtract(const Duration(days: 4)),
+        recipientOrSender: 'Conversion • USDT to USDC',
+        sourceAsset: 'USDT',
+        sourceAmount: 100.0,
+        destinationAsset: 'USDC',
+        destinationAmount: 99.90,
+        exchangeRate: 0.999,
+        fiatAmount: 100.0,
+        fiatCurrency: 'USD',
+        hanbovaReference: 'HNB-SWAP-9872',
+      ),
+      TransactionModel(
         id: 'demo-tx-5',
         type: TransactionType.data,
         status: TransactionStatus.completed,
@@ -238,6 +346,18 @@ class DemoModeNotifier extends StateNotifier<DemoModeState> {
         createdAt: now.subtract(const Duration(days: 5)),
         recipientOrSender: 'MTN Data Bundles 10 GB (#08031234567)',
         feeSats: 50,
+      ),
+      TransactionModel(
+        id: 'demo-tx-stable-1',
+        type: TransactionType.usdtSent,
+        status: TransactionStatus.completed,
+        amountSats: 0,
+        createdAt: now.subtract(const Duration(days: 6)),
+        recipientOrSender: '0x71C...B29 (Polygon)',
+        fiatAmount: 50.0,
+        fiatCurrency: 'USDT',
+        sourceAsset: 'USDT',
+        sourceAmount: 50.0,
       ),
       TransactionModel(
         id: 'demo-tx-6',
@@ -256,6 +376,18 @@ class DemoModeNotifier extends StateNotifier<DemoModeState> {
         createdAt: now.subtract(const Duration(days: 8)),
         recipientOrSender: 'Spectranet LTE Internet (#SPEC-55443)',
         feeSats: 50,
+      ),
+      TransactionModel(
+        id: 'demo-tx-stable-2',
+        type: TransactionType.usdcReceived,
+        status: TransactionStatus.completed,
+        amountSats: 0,
+        createdAt: now.subtract(const Duration(days: 10)),
+        recipientOrSender: '0x32A...F81 (Ethereum)',
+        fiatAmount: 250.0,
+        fiatCurrency: 'USDC',
+        destinationAsset: 'USDC',
+        destinationAmount: 250.0,
       ),
       TransactionModel(
         id: 'demo-tx-8',

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/utils/formatters.dart';
+import '../../wallet/domain/asset_model.dart';
 
 class PaymentConfirmationSheet extends StatefulWidget {
   final String title;
@@ -72,6 +73,7 @@ class PaymentConfirmationSheet extends StatefulWidget {
 
 class _PaymentConfirmationSheetState extends State<PaymentConfirmationSheet> {
   bool _isLoading = false;
+  AssetType _selectedAsset = AssetType.btc;
   final NumberFormat _fiatFormat = NumberFormat('#,##0.00');
 
   String _formatFiat(double amount, String code) {
@@ -121,6 +123,7 @@ class _PaymentConfirmationSheetState extends State<PaymentConfirmationSheet> {
   @override
   Widget build(BuildContext context) {
     final totalSats = widget.amountSats + widget.feeSats;
+    final usdEstimate = (widget.amountSats / 100000000.0) * 65000.0;
 
     return Container(
       decoration: const BoxDecoration(
@@ -210,11 +213,18 @@ class _PaymentConfirmationSheetState extends State<PaymentConfirmationSheet> {
                   child: Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      const Icon(Icons.bolt,
-                          color: AppColors.primary, size: 14),
+                      Icon(
+                        _selectedAsset == AssetType.btc
+                            ? Icons.bolt
+                            : Icons.attach_money_rounded,
+                        color: AppColors.primary,
+                        size: 14,
+                      ),
                       const SizedBox(width: 4),
                       Text(
-                        Formatters.formatSats(widget.amountSats),
+                        _selectedAsset == AssetType.btc
+                            ? Formatters.formatSats(widget.amountSats)
+                            : '≈ \$${usdEstimate.toStringAsFixed(2)} ${_selectedAsset.symbol}',
                         style: const TextStyle(
                           color: AppColors.primary,
                           fontSize: 13,
@@ -227,7 +237,43 @@ class _PaymentConfirmationSheetState extends State<PaymentConfirmationSheet> {
               ],
             ),
           ),
-          const SizedBox(height: 20),
+          const SizedBox(height: 16),
+
+          // Pay With Selector
+          const Text(
+            'Pay with',
+            style: TextStyle(
+              color: Colors.white,
+              fontSize: 14,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+          const SizedBox(height: 8),
+          Row(
+            children: [
+              _buildPayWithOption(
+                asset: AssetType.btc,
+                label: 'Bitcoin',
+                sublabel: '${Formatters.formatSats(widget.amountSats)} sats',
+                isSelected: _selectedAsset == AssetType.btc,
+              ),
+              const SizedBox(width: 8),
+              _buildPayWithOption(
+                asset: AssetType.usdt,
+                label: 'USDT',
+                sublabel: '\$${usdEstimate.toStringAsFixed(2)}',
+                isSelected: _selectedAsset == AssetType.usdt,
+              ),
+              const SizedBox(width: 8),
+              _buildPayWithOption(
+                asset: AssetType.usdc,
+                label: 'USDC',
+                sublabel: '\$${usdEstimate.toStringAsFixed(2)}',
+                isSelected: _selectedAsset == AssetType.usdc,
+              ),
+            ],
+          ),
+          const SizedBox(height: 16),
 
           // Breakdown Section
           Container(
@@ -259,20 +305,33 @@ class _PaymentConfirmationSheetState extends State<PaymentConfirmationSheet> {
                 ),
                 const Divider(color: AppColors.darkBorder, height: 20),
                 _buildRow(
-                  label: 'Source',
-                  value: 'Bitcoin Wallet',
-                  valueColor: AppColors.primary,
+                  label: 'Payment Method',
+                  value: '${_selectedAsset.name} Wallet',
+                  valueColor: _selectedAsset.color,
                 ),
+                if (_selectedAsset.isStablecoin) ...[
+                  const Divider(color: AppColors.darkBorder, height: 20),
+                  _buildRow(
+                    label: 'Conversion Path',
+                    value:
+                        '${_selectedAsset.symbol} → USD (\$${usdEstimate.toStringAsFixed(2)}) → ${widget.fiatCurrency}',
+                    subtitle: 'Normalized multi-rail settlement',
+                  ),
+                ],
                 const Divider(color: AppColors.darkBorder, height: 20),
                 _buildRow(
-                  label: 'Network Fee (Sample fee)',
-                  value: Formatters.formatSats(widget.feeSats),
-                  subtitle: 'Estimated demo sample fee',
+                  label: 'Network Fee',
+                  value: _selectedAsset == AssetType.btc
+                      ? Formatters.formatSats(widget.feeSats)
+                      : '≈ \$0.05 ${_selectedAsset.symbol}',
+                  subtitle: 'Estimated sample fee',
                 ),
                 const Divider(color: AppColors.darkBorder, height: 20),
                 _buildRow(
                   label: 'Total Deducted',
-                  value: Formatters.formatSats(totalSats),
+                  value: _selectedAsset == AssetType.btc
+                      ? Formatters.formatSats(totalSats)
+                      : '≈ \$${(usdEstimate + 0.05).toStringAsFixed(2)} ${_selectedAsset.symbol}',
                   isBold: true,
                   valueColor: Colors.white,
                 ),
@@ -282,17 +341,22 @@ class _PaymentConfirmationSheetState extends State<PaymentConfirmationSheet> {
           const SizedBox(height: 16),
 
           // Safety Reassurance
-          const Row(
+          Row(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Icon(Icons.shield_outlined,
+              const Icon(Icons.shield_outlined,
                   size: 14, color: AppColors.darkTextSecondary),
-              SizedBox(width: 6),
-              Text(
-                'Instant Bitcoin settlement • Direct to provider',
-                style: TextStyle(
-                  color: AppColors.darkTextSecondary,
-                  fontSize: 12,
+              const SizedBox(width: 6),
+              Flexible(
+                child: Text(
+                  _selectedAsset == AssetType.btc
+                      ? 'Instant Bitcoin settlement • Direct to provider'
+                      : 'Provider-neutral stablecoin route • Instant settlement',
+                  style: const TextStyle(
+                    color: AppColors.darkTextSecondary,
+                    fontSize: 12,
+                  ),
+                  overflow: TextOverflow.ellipsis,
                 ),
               ),
             ],
@@ -323,10 +387,17 @@ class _PaymentConfirmationSheetState extends State<PaymentConfirmationSheet> {
                 : Row(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      const Icon(Icons.bolt, size: 20),
+                      Icon(
+                        _selectedAsset == AssetType.btc
+                            ? Icons.bolt
+                            : Icons.check_circle_outline,
+                        size: 20,
+                      ),
                       const SizedBox(width: 8),
                       Text(
-                        'Pay ${Formatters.formatSats(totalSats)}',
+                        _selectedAsset == AssetType.btc
+                            ? 'Pay ${Formatters.formatSats(totalSats)}'
+                            : 'Pay \$${(usdEstimate + 0.05).toStringAsFixed(2)} ${_selectedAsset.symbol}',
                         style: const TextStyle(
                           fontSize: 16,
                           fontWeight: FontWeight.bold,
@@ -336,6 +407,63 @@ class _PaymentConfirmationSheetState extends State<PaymentConfirmationSheet> {
                   ),
           ),
         ],
+      ),
+    );
+  }
+
+  Widget _buildPayWithOption({
+    required AssetType asset,
+    required String label,
+    required String sublabel,
+    required bool isSelected,
+  }) {
+    return Expanded(
+      child: InkWell(
+        onTap: () {
+          setState(() {
+            _selectedAsset = asset;
+          });
+        },
+        borderRadius: BorderRadius.circular(12),
+        child: Container(
+          padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 8),
+          decoration: BoxDecoration(
+            color: isSelected
+                ? asset.color.withValues(alpha: 0.15)
+                : AppColors.darkCardBackground,
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(
+              color: isSelected ? asset.color : AppColors.darkBorder,
+              width: isSelected ? 1.5 : 1,
+            ),
+          ),
+          child: Column(
+            children: [
+              Icon(asset.icon,
+                  size: 20,
+                  color: isSelected ? asset.color : AppColors.darkTextSecondary),
+              const SizedBox(height: 4),
+              Text(
+                label,
+                style: TextStyle(
+                  color: isSelected ? Colors.white : AppColors.darkTextSecondary,
+                  fontWeight: FontWeight.bold,
+                  fontSize: 12,
+                ),
+              ),
+              const SizedBox(height: 2),
+              Text(
+                sublabel,
+                style: TextStyle(
+                  color: isSelected ? asset.color : AppColors.darkTextSecondary,
+                  fontSize: 10,
+                ),
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+              ),
+            ],
+          ),
+        ),
       ),
     );
   }
@@ -351,29 +479,32 @@ class _PaymentConfirmationSheetState extends State<PaymentConfirmationSheet> {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
-        Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              label,
-              style: TextStyle(
-                color: isBold ? Colors.white : AppColors.darkTextSecondary,
-                fontSize: isBold ? 14 : 13,
-                fontWeight: isBold ? FontWeight.bold : FontWeight.normal,
-              ),
-            ),
-            if (subtitle != null) ...[
-              const SizedBox(height: 2),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
               Text(
-                subtitle,
-                style: const TextStyle(
-                  color: AppColors.darkTextSecondary,
-                  fontSize: 11,
+                label,
+                style: TextStyle(
+                  color: isBold ? Colors.white : AppColors.darkTextSecondary,
+                  fontSize: isBold ? 14 : 13,
+                  fontWeight: isBold ? FontWeight.bold : FontWeight.normal,
                 ),
               ),
+              if (subtitle != null) ...[
+                const SizedBox(height: 2),
+                Text(
+                  subtitle,
+                  style: const TextStyle(
+                    color: AppColors.darkTextSecondary,
+                    fontSize: 11,
+                  ),
+                ),
+              ],
             ],
-          ],
+          ),
         ),
+        const SizedBox(width: 8),
         Row(
           mainAxisSize: MainAxisSize.min,
           children: [

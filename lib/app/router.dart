@@ -10,10 +10,14 @@ import '../features/auth/screens/wallet_setup_screen.dart';
 import '../features/auth/screens/welcome_screen.dart';
 import '../features/beneficiaries/presentation/beneficiaries_screen.dart';
 import '../features/cards/presentation/cards_screen.dart';
+import '../features/conversion/presentation/conversion_flow_screen.dart';
 import '../features/home/presentation/home_screen.dart';
 import '../features/insights/presentation/insights_screen.dart';
 import '../features/mints/presentation/mints_screen.dart';
+import '../features/money/presentation/bitcoin_detail_screen.dart';
 import '../features/money/presentation/money_screen.dart';
+import '../features/money/presentation/stablecoin_detail_screen.dart';
+import '../features/wallet/domain/asset_model.dart';
 import '../features/notifications/presentation/notifications_screen.dart';
 import '../features/pending/presentation/pending_centre_screen.dart';
 import '../features/profile/screens/developer_options_screen.dart';
@@ -37,7 +41,6 @@ import '../features/transactions/domain/transaction_model.dart';
 import '../features/transactions/presentation/transaction_details_screen.dart';
 import '../features/transactions/presentation/transactions_screen.dart';
 import '../features/travel/presentation/esim_screen.dart';
-import '../features/travel/presentation/travel_screen.dart';
 import '../features/roam/presentation/roam_screen.dart';
 import 'shell/app_shell.dart';
 
@@ -176,20 +179,20 @@ final appRouterProvider = Provider<GoRouter>((ref) {
               ),
             ],
           ),
-          // Branch 3: Travel
+          // Branch 3: Money (Balances, Protected, Pending, Insights, Statements)
           StatefulShellBranch(
             routes: [
               GoRoute(
-                path: '/travel',
-                builder: (context, state) => const TravelScreen(),
+                path: '/money',
+                builder: (context, state) => const MoneyScreen(),
               ),
             ],
           ),
-          // Branch 4: Me
+          // Branch 4: Profile (Identity, Account, Preferences, Settings)
           StatefulShellBranch(
             routes: [
               GoRoute(
-                path: '/me',
+                path: '/profile',
                 builder: (context, state) => const ProfileScreen(),
               ),
             ],
@@ -236,9 +239,8 @@ final appRouterProvider = Provider<GoRouter>((ref) {
 
       // Modal & Feature routes
       GoRoute(
-        path: '/money',
-        parentNavigatorKey: _rootNavigatorKey,
-        builder: (context, state) => const MoneyScreen(),
+        path: '/me',
+        redirect: (context, state) => '/profile',
       ),
       GoRoute(
         path: '/insights',
@@ -297,6 +299,28 @@ final appRouterProvider = Provider<GoRouter>((ref) {
         path: '/receive',
         parentNavigatorKey: _rootNavigatorKey,
         builder: (context, state) => const ReceiveScreen(),
+      ),
+      GoRoute(
+        path: '/convert',
+        parentNavigatorKey: _rootNavigatorKey,
+        builder: (context, state) => const ConversionFlowScreen(),
+      ),
+      GoRoute(
+        path: '/money/bitcoin',
+        parentNavigatorKey: _rootNavigatorKey,
+        builder: (context, state) => const BitcoinDetailScreen(),
+      ),
+      GoRoute(
+        path: '/money/usdt',
+        parentNavigatorKey: _rootNavigatorKey,
+        builder: (context, state) =>
+            const StablecoinDetailScreen(asset: AssetType.usdt),
+      ),
+      GoRoute(
+        path: '/money/usdc',
+        parentNavigatorKey: _rootNavigatorKey,
+        builder: (context, state) =>
+            const StablecoinDetailScreen(asset: AssetType.usdc),
       ),
       GoRoute(
         path: '/protected-send',
@@ -358,8 +382,7 @@ final appRouterProvider = Provider<GoRouter>((ref) {
       ),
       GoRoute(
         path: '/travel',
-        parentNavigatorKey: _rootNavigatorKey,
-        builder: (context, state) => const TravelScreen(),
+        redirect: (context, state) => '/roam',
       ),
       GoRoute(
         path: '/esim',

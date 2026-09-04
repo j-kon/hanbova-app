@@ -75,6 +75,8 @@ class HanbovaColors extends ThemeExtension<HanbovaColors> {
   final Color incoming;
   final Color outgoing;
 
+  Color get danger => error;
+
   const HanbovaColors({
     required this.background,
     required this.surface,
@@ -211,4 +213,6 @@ class HanbovaColors extends ThemeExtension<HanbovaColors> {
 extension HanbovaColorsContext on BuildContext {
   HanbovaColors get colors =>
       Theme.of(this).extension<HanbovaColors>() ?? HanbovaColors.dark;
+
+  bool get isDark => Theme.of(this).brightness == Brightness.dark;
 }

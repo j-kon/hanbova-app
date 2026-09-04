@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import '../../../core/market/country_model.dart';
 import '../../../core/market/market_provider.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_radius.dart';
@@ -18,7 +17,6 @@ class RoamScreen extends ConsumerStatefulWidget {
 class _RoamScreenState extends ConsumerState<RoamScreen> {
   // Supported local markets catalog for roaming
   static const List<Map<String, String>> _destinations = [
-    {'code': 'NG', 'name': 'Nigeria', 'flag': '🇳🇬', 'currency': 'NGN'},
     {'code': 'KE', 'name': 'Kenya', 'flag': '🇰🇪', 'currency': 'KES'},
     {'code': 'GH', 'name': 'Ghana', 'flag': '🇬🇭', 'currency': 'GHS'},
     {'code': 'RW', 'name': 'Rwanda', 'flag': '🇷🇼', 'currency': 'RWF'},
@@ -33,7 +31,6 @@ class _RoamScreenState extends ConsumerState<RoamScreen> {
     final market = ref.read(marketProvider);
     final residenceName = market.residenceCountryInfo.name;
     final destCode = destination['code']!;
-    final caps = MarketCapabilities.forMarket(destCode);
 
     showModalBottomSheet(
       context: context,
@@ -116,33 +113,17 @@ class _RoamScreenState extends ConsumerState<RoamScreen> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        'Capabilities available in ${destination['name']}:',
+                        'Hanbova will adapt:',
                         style: AppTypography.bodySmall.copyWith(
                           color: colors.textPrimary,
-                          fontWeight: FontWeight.w600,
+                          fontWeight: FontWeight.bold,
                         ),
                       ),
                       const SizedBox(height: 8),
-                      _buildBulletPoint(context,
-                          '• Local currency display (${destination['currency']})'),
-                      if (caps.airtime)
-                        _buildBulletPoint(
-                            context, '• Airtime & Mobile Data top-up'),
-                      if (caps.electricity)
-                        _buildBulletPoint(
-                            context, '• Electricity prepaid tokens'),
-                      if (caps.water)
-                        _buildBulletPoint(context, '• Water utility bills'),
-                      if (caps.tv)
-                        _buildBulletPoint(
-                            context, '• Digital TV subscriptions'),
-                      if (caps.mobileMoney)
-                        _buildBulletPoint(context, '• Mobile Money transfers'),
-                      if (caps.bankPayout)
-                        _buildBulletPoint(context, '• Domestic Bank payouts'),
-                      if (caps.esim)
-                        _buildBulletPoint(
-                            context, '• Travel eSIM roaming data'),
+                      _buildBulletPoint(context, '• Local currency'),
+                      _buildBulletPoint(context, '• Local payment options'),
+                      _buildBulletPoint(context, '• eSIM packages'),
+                      _buildBulletPoint(context, '• Bills and services'),
                       const SizedBox(height: 12),
                       Divider(color: colors.divider),
                       const SizedBox(height: 8),
@@ -320,7 +301,7 @@ class _RoamScreenState extends ConsumerState<RoamScreen> {
                   ),
                   const SizedBox(height: AppSpacing.md),
                   Text(
-                    'Take Hanbova with you.',
+                    'Roam Mode',
                     style: AppTypography.titleMedium.copyWith(
                       color: colors.textPrimary,
                       fontWeight: FontWeight.bold,
@@ -328,9 +309,18 @@ class _RoamScreenState extends ConsumerState<RoamScreen> {
                   ),
                   const SizedBox(height: 4),
                   Text(
-                    'Spend like a local with instant Bitcoin settlement wherever you travel.',
-                    style: AppTypography.caption.copyWith(
+                    "Spend like a local when you're away.",
+                    style: AppTypography.bodySmall.copyWith(
                       color: colors.textSecondary,
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                  const SizedBox(height: 2),
+                  Text(
+                    'Land. Connect. Spend.',
+                    style: AppTypography.caption.copyWith(
+                      color: colors.primary,
+                      fontWeight: FontWeight.w600,
                     ),
                   ),
                 ],
@@ -360,15 +350,14 @@ class _RoamScreenState extends ConsumerState<RoamScreen> {
                     const SizedBox(height: AppSpacing.md),
                     _buildInfoRow(
                       context,
-                      label: 'Country of residence',
-                      value: '${residenceInfo.name} ${residenceInfo.flagEmoji}',
+                      label: 'Residence',
+                      value: residenceInfo.name,
                     ),
                     const SizedBox(height: 10),
                     _buildInfoRow(
                       context,
-                      label: 'Active market',
-                      value:
-                          '${activeMarketInfo.name} ${activeMarketInfo.flagEmoji}',
+                      label: 'Current market',
+                      value: activeMarketInfo.name,
                       isHighlighted: true,
                     ),
                     const SizedBox(height: 10),
@@ -497,15 +486,15 @@ class _RoamScreenState extends ConsumerState<RoamScreen> {
               const SizedBox(height: AppSpacing.lg),
 
               Text(
-                'Supported markets',
-                style: AppTypography.titleSmall.copyWith(
+                'Where are you going?',
+                style: AppTypography.titleMedium.copyWith(
                   color: colors.textPrimary,
                   fontWeight: FontWeight.bold,
                 ),
               ),
               const SizedBox(height: 4),
               Text(
-                'Select a destination to view capabilities before activation.',
+                'Select a destination to activate Roam Mode.',
                 style: AppTypography.caption.copyWith(
                   color: colors.textSecondary,
                 ),
@@ -526,77 +515,89 @@ class _RoamScreenState extends ConsumerState<RoamScreen> {
                       borderRadius: AppRadius.mdRadius,
                       border: Border.all(color: colors.border),
                     ),
-                    child: ListTile(
-                      contentPadding: const EdgeInsets.symmetric(
-                          horizontal: AppSpacing.md, vertical: 4),
-                      leading: Container(
-                        padding: const EdgeInsets.all(8),
-                        decoration: BoxDecoration(
-                          color: colors.surface,
-                          shape: BoxShape.circle,
-                        ),
-                        child: Text(
-                          dest['flag'] ?? '🌍',
-                          style: const TextStyle(fontSize: 22),
-                        ),
-                      ),
-                      title: Row(
-                        children: [
-                          Text(
-                            dest['name'] ?? '',
-                            style: AppTypography.bodyMedium.copyWith(
-                              color: colors.textPrimary,
-                              fontWeight: FontWeight.w600,
-                            ),
-                          ),
-                          if (isResidence) ...[
-                            const SizedBox(width: 8),
-                            Container(
-                              padding: const EdgeInsets.symmetric(
-                                  horizontal: 6, vertical: 2),
-                              decoration: BoxDecoration(
-                                color: colors.primary.withValues(alpha: 0.12),
-                                borderRadius: BorderRadius.circular(4),
-                              ),
-                              child: Text(
-                                'Residence',
-                                style: TextStyle(
-                                  color: colors.primary,
-                                  fontSize: 10,
-                                  fontWeight: FontWeight.bold,
-                                ),
-                              ),
-                            ),
-                          ],
-                        ],
-                      ),
-                      subtitle: Text(
-                        'Currency: ${dest['currency']}',
-                        style: AppTypography.caption.copyWith(
-                          color: colors.textTertiary,
-                        ),
-                      ),
-                      trailing: ElevatedButton(
-                        onPressed: isResidence
+                    child: Material(
+                      color: Colors.transparent,
+                      borderRadius: AppRadius.mdRadius,
+                      child: ListTile(
+                        onTap: isResidence
                             ? null
                             : () => _showActivationConfirmation(context, dest),
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: colors.primary,
-                          foregroundColor: AppColors.charcoal,
-                          elevation: 0,
-                          padding: const EdgeInsets.symmetric(
-                              horizontal: 14, vertical: 6),
-                          minimumSize: Size.zero,
-                          tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(16),
+                        contentPadding: const EdgeInsets.symmetric(
+                            horizontal: AppSpacing.md, vertical: 4),
+                        leading: Container(
+                          padding: const EdgeInsets.all(8),
+                          decoration: BoxDecoration(
+                            color: colors.surface,
+                            shape: BoxShape.circle,
+                          ),
+                          child: Text(
+                            dest['flag'] ?? '🌍',
+                            style: const TextStyle(fontSize: 22),
                           ),
                         ),
-                        child: const Text(
-                          'View & Roam',
-                          style: TextStyle(
-                            fontSize: 12,
-                            fontWeight: FontWeight.bold,
+                        title: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Flexible(
+                              child: Text(
+                                dest['name'] ?? '',
+                                style: AppTypography.bodyMedium.copyWith(
+                                  color: colors.textPrimary,
+                                  fontWeight: FontWeight.w600,
+                                ),
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                            ),
+                            if (isResidence) ...[
+                              const SizedBox(width: 8),
+                              Container(
+                                padding: const EdgeInsets.symmetric(
+                                    horizontal: 6, vertical: 2),
+                                decoration: BoxDecoration(
+                                  color: colors.primary.withValues(alpha: 0.12),
+                                  borderRadius: BorderRadius.circular(4),
+                                ),
+                                child: Text(
+                                  'Residence',
+                                  style: TextStyle(
+                                    color: colors.primary,
+                                    fontSize: 10,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ],
+                        ),
+                        subtitle: Text(
+                          'Currency: ${dest['currency']}',
+                          style: AppTypography.caption.copyWith(
+                            color: colors.textTertiary,
+                          ),
+                        ),
+                        trailing: ElevatedButton(
+                          onPressed: isResidence
+                              ? null
+                              : () =>
+                                  _showActivationConfirmation(context, dest),
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: colors.primary,
+                            foregroundColor: AppColors.charcoal,
+                            elevation: 0,
+                            padding: const EdgeInsets.symmetric(
+                                horizontal: 14, vertical: 6),
+                            minimumSize: Size.zero,
+                            tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(16),
+                            ),
+                          ),
+                          child: const Text(
+                            'View & Roam',
+                            style: TextStyle(
+                              fontSize: 12,
+                              fontWeight: FontWeight.bold,
+                            ),
                           ),
                         ),
                       ),

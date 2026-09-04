@@ -75,13 +75,16 @@ class _InsightsScreenState extends ConsumerState<InsightsScreen> {
                 children: [
                   Icon(Icons.info_outline, size: 16, color: AppColors.primary),
                   SizedBox(width: 8),
-                  Text(
-                    'DEMO MODE • SAMPLE DATA • NO REAL MONEY',
-                    style: TextStyle(
-                      color: AppColors.primary,
-                      fontSize: 11,
-                      fontWeight: FontWeight.bold,
-                      letterSpacing: 0.8,
+                  Flexible(
+                    child: Text(
+                      'DEMO MODE • SAMPLE DATA • NO REAL MONEY',
+                      style: TextStyle(
+                        color: AppColors.primary,
+                        fontSize: 11,
+                        fontWeight: FontWeight.bold,
+                        letterSpacing: 0.8,
+                      ),
+                      overflow: TextOverflow.ellipsis,
                     ),
                   ),
                 ],
@@ -179,6 +182,34 @@ class _InsightsScreenState extends ConsumerState<InsightsScreen> {
               ),
             ],
           ),
+
+          const SizedBox(height: 24),
+
+          // Multi-Asset Allocation (Requirement 24)
+          const Text(
+            'Asset Allocation',
+            style: TextStyle(
+              color: Colors.white,
+              fontSize: 16,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+          const SizedBox(height: 8),
+          const Text(
+            'Portfolio distribution across Bitcoin and digital dollar stablecoins.',
+            style: TextStyle(
+              color: AppColors.darkTextSecondary,
+              fontSize: 12,
+            ),
+          ),
+          const SizedBox(height: 12),
+          _buildAssetAllocationCard(
+              demoState.isEnabled, privacy.isBalanceHidden),
+          const SizedBox(height: 16),
+
+          // Conversion Activity
+          _buildConversionActivityCard(
+              demoState.isEnabled, privacy.isBalanceHidden),
 
           const SizedBox(height: 24),
 
@@ -588,6 +619,222 @@ class _InsightsScreenState extends ConsumerState<InsightsScreen> {
                 ),
               ),
             ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildAssetAllocationCard(bool isDemo, bool isHidden) {
+    // In demo mode: BTC 37%, USDT 39%, USDC 24%
+    // In normal mode: BTC 100%, USDT 0%, USDC 0%
+    final btcPct = isDemo ? 37 : 100;
+    final usdtPct = isDemo ? 39 : 0;
+    final usdcPct = isDemo ? 24 : 0;
+
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: AppColors.darkCardBackground,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: AppColors.darkBorder),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              const Text(
+                'Total Portfolio Holdings',
+                style: TextStyle(
+                  color: AppColors.darkTextSecondary,
+                  fontSize: 12,
+                ),
+              ),
+              const SizedBox(width: 8),
+              Flexible(
+                child: Text(
+                  isDemo
+                      ? (isHidden ? '••••••' : '≈ \$3,170.00 USD')
+                      : (isHidden ? '••••••' : '100% Bitcoin'),
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontSize: 13,
+                    fontWeight: FontWeight.bold,
+                  ),
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+
+          // Multi-segmented Progress Bar
+          ClipRRect(
+            borderRadius: BorderRadius.circular(6),
+            child: SizedBox(
+              height: 10,
+              child: Row(
+                children: [
+                  Expanded(
+                    flex: btcPct,
+                    child: Container(color: const Color(0xFFF7931A)),
+                  ),
+                  if (usdtPct > 0)
+                    Expanded(
+                      flex: usdtPct,
+                      child: Container(color: const Color(0xFF26A17B)),
+                    ),
+                  if (usdcPct > 0)
+                    Expanded(
+                      flex: usdcPct,
+                      child: Container(color: const Color(0xFF2775CA)),
+                    ),
+                ],
+              ),
+            ),
+          ),
+          const SizedBox(height: 14),
+
+          // Asset Breakdown Chips
+          Wrap(
+            spacing: 12,
+            runSpacing: 8,
+            alignment: WrapAlignment.spaceBetween,
+            children: [
+              _buildAllocationLegendItem(
+                color: const Color(0xFFF7931A),
+                label: 'Bitcoin (BTC)',
+                pct: '$btcPct%',
+                value: isHidden ? '••••' : (isDemo ? '1.8M sats' : 'Active'),
+              ),
+              _buildAllocationLegendItem(
+                color: const Color(0xFF26A17B),
+                label: 'Tether (USDT)',
+                pct: '$usdtPct%',
+                value: isHidden ? '••••' : (isDemo ? '\$1,250' : '\$0'),
+              ),
+              _buildAllocationLegendItem(
+                color: const Color(0xFF2775CA),
+                label: 'USD Coin (USDC)',
+                pct: '$usdcPct%',
+                value: isHidden ? '••••' : (isDemo ? '\$750' : '\$0'),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildAllocationLegendItem({
+    required Color color,
+    required String label,
+    required String pct,
+    required String value,
+  }) {
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Container(
+          width: 8,
+          height: 8,
+          decoration: BoxDecoration(
+            color: color,
+            shape: BoxShape.circle,
+          ),
+        ),
+        const SizedBox(width: 6),
+        Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              '$label $pct',
+              style: const TextStyle(
+                color: Colors.white,
+                fontSize: 11,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+            Text(
+              value,
+              style: const TextStyle(
+                color: AppColors.darkTextSecondary,
+                fontSize: 10,
+              ),
+            ),
+          ],
+        ),
+      ],
+    );
+  }
+
+  Widget _buildConversionActivityCard(bool isDemo, bool isHidden) {
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: AppColors.darkCardBackground,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: AppColors.darkBorder),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              const Expanded(
+                child: Row(
+                  children: [
+                    Icon(Icons.swap_horiz_rounded,
+                        color: Color(0xFF38BDF8), size: 18),
+                    SizedBox(width: 8),
+                    Flexible(
+                      child: Text(
+                        'Conversion Activity',
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontSize: 14,
+                          fontWeight: FontWeight.bold,
+                        ),
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(width: 8),
+              Container(
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                decoration: BoxDecoration(
+                  color: const Color(0xFF38BDF8).withValues(alpha: 0.15),
+                  borderRadius: BorderRadius.circular(6),
+                ),
+                child: Text(
+                  isDemo ? '2 Swaps' : '0 Swaps',
+                  style: const TextStyle(
+                    color: Color(0xFF38BDF8),
+                    fontSize: 11,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 10),
+          Text(
+            isDemo
+                ? (isHidden
+                    ? '••••••'
+                    : 'Converted volume: \$1,450.00 • Active pairs: BTC/USDT, USDT/USDC • Spread savings: ≈ 2.4% vs local OTC')
+                : 'No conversion history yet. Use Convert on Home to swap between BTC, USDT, and USDC.',
+            style: const TextStyle(
+              color: AppColors.darkTextSecondary,
+              fontSize: 12,
+              height: 1.35,
+            ),
           ),
         ],
       ),

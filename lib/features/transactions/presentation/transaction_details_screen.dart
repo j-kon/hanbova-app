@@ -99,23 +99,23 @@ class _TransactionDetailsScreenState
                 child: Column(
                   children: [
                     Text(
-                      '${tx.isOutgoing ? '-' : '+'}${Formatters.formatSats(tx.amountSats)}',
-                      style: const TextStyle(
-                        color: Colors.white,
-                        fontSize: 28,
+                      _buildAmountHeader(tx),
+                      style: TextStyle(
+                        color: colors.textPrimary,
+                        fontSize: tx.isConversion ? 22 : 28,
                         fontWeight: FontWeight.w800,
                       ),
+                      textAlign: TextAlign.center,
                     ),
                     const SizedBox(height: 4),
                     Text(
-                      tx.fiatAmount != null && tx.fiatCurrency != null
-                          ? '${tx.fiatCurrency} ${tx.fiatAmount!.toStringAsFixed(2)}'
-                          : currency.format(tx.amountSats),
-                      style: const TextStyle(
-                        color: AppColors.darkTextSecondary,
+                      _buildSubtitle(tx, currency),
+                      style: TextStyle(
+                        color: colors.textSecondary,
                         fontSize: 14,
                         fontWeight: FontWeight.w500,
                       ),
+                      textAlign: TextAlign.center,
                     ),
                     const SizedBox(height: 16),
 
@@ -232,6 +232,38 @@ class _TransactionDetailsScreenState
                         onCopy: () => _copy('Claim Code', tx.claimReference!),
                       ),
                     ],
+
+                    if (tx.sourceAsset != null && tx.sourceAmount != null) ...[
+                      const SizedBox(height: 12),
+                      _buildDetailRow(
+                        label: 'Converted From',
+                        value: '${tx.sourceAmount} ${tx.sourceAsset}',
+                      ),
+                    ],
+                    if (tx.destinationAsset != null &&
+                        tx.destinationAmount != null) ...[
+                      const SizedBox(height: 12),
+                      _buildDetailRow(
+                        label: 'Converted To',
+                        value: '${tx.destinationAmount} ${tx.destinationAsset}',
+                      ),
+                    ],
+                    if (tx.exchangeRate != null) ...[
+                      const SizedBox(height: 12),
+                      _buildDetailRow(
+                        label: 'Exchange Rate',
+                        value: '${tx.exchangeRate}',
+                      ),
+                    ],
+                    if (tx.hanbovaReference != null) ...[
+                      const SizedBox(height: 12),
+                      _buildDetailRow(
+                        label: 'Hanbova Reference',
+                        value: tx.hanbovaReference!,
+                        onCopy: () =>
+                            _copy('Hanbova Reference', tx.hanbovaReference!),
+                      ),
+                    ],
                   ],
                 ),
               ),
@@ -250,14 +282,15 @@ class _TransactionDetailsScreenState
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      const Row(
+                      Row(
                         children: [
-                          Icon(Icons.bolt, color: Colors.amberAccent, size: 20),
-                          SizedBox(width: 8),
+                          const Icon(Icons.bolt,
+                              color: Colors.amberAccent, size: 20),
+                          const SizedBox(width: 8),
                           Text(
                             'Prepaid Meter Token',
                             style: TextStyle(
-                              color: Colors.white,
+                              color: colors.textPrimary,
                               fontSize: 14,
                               fontWeight: FontWeight.bold,
                             ),
@@ -267,8 +300,8 @@ class _TransactionDetailsScreenState
                       const SizedBox(height: 10),
                       Text(
                         tx.tokenOrPin!,
-                        style: const TextStyle(
-                          color: Colors.white,
+                        style: TextStyle(
+                          color: colors.textPrimary,
                           fontSize: 20,
                           fontWeight: FontWeight.bold,
                           letterSpacing: 1.5,
@@ -301,23 +334,23 @@ class _TransactionDetailsScreenState
                 Container(
                   padding: const EdgeInsets.all(16),
                   decoration: BoxDecoration(
-                    color: AppColors.primary.withValues(alpha: 0.08),
+                    color: colors.primary.withValues(alpha: 0.08),
                     borderRadius: BorderRadius.circular(16),
                     border: Border.all(
-                        color: AppColors.primary.withValues(alpha: 0.25)),
+                        color: colors.primary.withValues(alpha: 0.25)),
                   ),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      const Row(
+                      Row(
                         children: [
                           Icon(Icons.shield_outlined,
-                              color: AppColors.primary, size: 18),
-                          SizedBox(width: 8),
+                              color: colors.primary, size: 18),
+                          const SizedBox(width: 8),
                           Text(
                             'Protected Payment Protection',
                             style: TextStyle(
-                                color: Colors.white,
+                                color: colors.textPrimary,
                                 fontSize: 13,
                                 fontWeight: FontWeight.bold),
                           ),
@@ -331,8 +364,8 @@ class _TransactionDetailsScreenState
                             : (tx.status == TransactionStatus.claimed
                                 ? 'The recipient has claimed this payment. It is now completed and settled.'
                                 : 'Funds are held with claim and refund safeguards. If the recipient does not claim before the locktime expires, you gain a refund path.'),
-                        style: const TextStyle(
-                            color: AppColors.darkTextSecondary,
+                        style: TextStyle(
+                            color: colors.textSecondary,
                             fontSize: 12,
                             height: 1.4),
                       ),
@@ -354,14 +387,14 @@ class _TransactionDetailsScreenState
     required String value,
     VoidCallback? onCopy,
   }) {
+    final colors = context.colors;
     return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
         Text(
           label,
-          style:
-              const TextStyle(color: AppColors.darkTextSecondary, fontSize: 13),
+          style: TextStyle(color: colors.textSecondary, fontSize: 13),
         ),
         const SizedBox(width: 16),
         Flexible(
@@ -371,8 +404,8 @@ class _TransactionDetailsScreenState
               Flexible(
                 child: Text(
                   value,
-                  style: const TextStyle(
-                    color: Colors.white,
+                  style: TextStyle(
+                    color: colors.textPrimary,
                     fontSize: 13,
                     fontWeight: FontWeight.w600,
                   ),
@@ -385,8 +418,7 @@ class _TransactionDetailsScreenState
                 const SizedBox(width: 6),
                 GestureDetector(
                   onTap: onCopy,
-                  child: const Icon(Icons.copy,
-                      size: 14, color: AppColors.darkTextSecondary),
+                  child: Icon(Icons.copy, size: 14, color: colors.textSecondary),
                 ),
               ],
             ],
@@ -404,14 +436,14 @@ class _TransactionDetailsScreenState
     required VoidCallback onToggleReveal,
     required VoidCallback onCopy,
   }) {
+    final colors = context.colors;
     return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
         Text(
           label,
-          style:
-              const TextStyle(color: AppColors.darkTextSecondary, fontSize: 13),
+          style: TextStyle(color: colors.textSecondary, fontSize: 13),
         ),
         const SizedBox(width: 16),
         Flexible(
@@ -422,7 +454,7 @@ class _TransactionDetailsScreenState
                 child: Text(
                   isRevealed ? fullValue : maskedValue,
                   style: TextStyle(
-                    color: Colors.white,
+                    color: colors.textPrimary,
                     fontSize: 13,
                     fontWeight: FontWeight.w600,
                     fontFamily: isRevealed ? null : 'monospace',
@@ -440,19 +472,60 @@ class _TransactionDetailsScreenState
                       ? Icons.visibility_off_outlined
                       : Icons.visibility_outlined,
                   size: 16,
-                  color: AppColors.primary,
+                  color: colors.primary,
                 ),
               ),
               const SizedBox(width: 6),
               GestureDetector(
                 onTap: onCopy,
-                child: const Icon(Icons.copy,
-                    size: 14, color: AppColors.darkTextSecondary),
+                child: Icon(Icons.copy, size: 14, color: colors.textSecondary),
               ),
             ],
           ),
         ),
       ],
     );
+  }
+
+  String _buildAmountHeader(TransactionModel tx) {
+    if (tx.isConversion &&
+        tx.sourceAsset != null &&
+        tx.destinationAsset != null) {
+      final srcFormatted = tx.sourceAmount != null
+          ? (tx.sourceAsset == 'BTC'
+              ? '${tx.sourceAmount!.toInt()} sats'
+              : '\$${tx.sourceAmount!.toStringAsFixed(2)}')
+          : '';
+      final dstFormatted = tx.destinationAmount != null
+          ? (tx.destinationAsset == 'BTC'
+              ? '${tx.destinationAmount!.toInt()} sats'
+              : '\$${tx.destinationAmount!.toStringAsFixed(2)}')
+          : '';
+      return '$srcFormatted ${tx.sourceAsset} → $dstFormatted ${tx.destinationAsset}';
+    }
+    if (tx.type == TransactionType.usdtSent ||
+        tx.type == TransactionType.usdtReceived) {
+      return '${tx.isOutgoing ? '-' : '+'}\$${(tx.amountSats / 1000.0).toStringAsFixed(2)} USDT';
+    }
+    if (tx.type == TransactionType.usdcSent ||
+        tx.type == TransactionType.usdcReceived) {
+      return '${tx.isOutgoing ? '-' : '+'}\$${(tx.amountSats / 1000.0).toStringAsFixed(2)} USDC';
+    }
+    return '${tx.isOutgoing ? '-' : '+'}${Formatters.formatSats(tx.amountSats)}';
+  }
+
+  String _buildSubtitle(TransactionModel tx, dynamic currency) {
+    if (tx.isConversion) {
+      return 'Hanbova Multi-Asset Conversion';
+    }
+    if (tx.type == TransactionType.usdtSent ||
+        tx.type == TransactionType.usdtReceived ||
+        tx.type == TransactionType.usdcSent ||
+        tx.type == TransactionType.usdcReceived) {
+      return 'Digital Dollar Settlement';
+    }
+    return tx.fiatAmount != null && tx.fiatCurrency != null
+        ? '${tx.fiatCurrency} ${tx.fiatAmount!.toStringAsFixed(2)}'
+        : currency.format(tx.amountSats);
   }
 }

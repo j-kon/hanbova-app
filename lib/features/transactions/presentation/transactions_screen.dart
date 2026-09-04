@@ -15,6 +15,9 @@ import 'transactions_provider.dart';
 
 enum QuickFilter {
   all,
+  bitcoin,
+  conversions,
+  stablecoins,
   moneyIn,
   moneyOut,
   protected,
@@ -74,6 +77,15 @@ class _TransactionsScreenState extends ConsumerState<TransactionsScreen> {
       // 1. Quick Filter
       switch (_selectedQuickFilter) {
         case QuickFilter.all:
+          break;
+        case QuickFilter.bitcoin:
+          if (tx.isConversion || tx.isStablecoin) return false;
+          break;
+        case QuickFilter.conversions:
+          if (!tx.isConversion) return false;
+          break;
+        case QuickFilter.stablecoins:
+          if (!tx.isStablecoin) return false;
           break;
         case QuickFilter.moneyIn:
           if (tx.category != TransactionCategory.moneyIn) return false;
@@ -150,10 +162,11 @@ class _TransactionsScreenState extends ConsumerState<TransactionsScreen> {
   }
 
   void _openAdvancedFiltersModal() {
+    final colors = context.colors;
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
-      backgroundColor: AppColors.darkSurfaceCard,
+      backgroundColor: colors.surfaceCard,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
       ),
@@ -174,10 +187,10 @@ class _TransactionsScreenState extends ConsumerState<TransactionsScreen> {
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      const Text(
+                      Text(
                         'Advanced Filters',
                         style: TextStyle(
-                            color: Colors.white,
+                            color: colors.textPrimary,
                             fontSize: 18,
                             fontWeight: FontWeight.bold),
                       ),
@@ -191,15 +204,15 @@ class _TransactionsScreenState extends ConsumerState<TransactionsScreen> {
                           });
                           Navigator.pop(ctx);
                         },
-                        child: const Text('Reset All',
-                            style: TextStyle(color: AppColors.primary)),
+                        child: Text('Reset All',
+                            style: TextStyle(color: colors.primary)),
                       ),
                     ],
                   ),
                   const SizedBox(height: 16),
-                  const Text('Status',
+                  Text('Status',
                       style: TextStyle(
-                          color: AppColors.darkTextSecondary, fontSize: 13)),
+                          color: colors.textSecondary, fontSize: 13)),
                   const SizedBox(height: 8),
                   Wrap(
                     spacing: 8,
@@ -262,9 +275,9 @@ class _TransactionsScreenState extends ConsumerState<TransactionsScreen> {
                     ],
                   ),
                   const SizedBox(height: 20),
-                  const Text('Destination / Spend Country',
+                  Text('Destination / Spend Country',
                       style: TextStyle(
-                          color: AppColors.darkTextSecondary, fontSize: 13)),
+                          color: colors.textSecondary, fontSize: 13)),
                   const SizedBox(height: 8),
                   Wrap(
                     spacing: 8,
@@ -295,7 +308,7 @@ class _TransactionsScreenState extends ConsumerState<TransactionsScreen> {
                     width: double.infinity,
                     child: ElevatedButton(
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: AppColors.primary,
+                        backgroundColor: colors.primary,
                         foregroundColor: Colors.black,
                         shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(12)),
@@ -320,13 +333,19 @@ class _TransactionsScreenState extends ConsumerState<TransactionsScreen> {
     required bool selected,
     required ValueChanged<bool> onSelected,
   }) {
+    final colors = context.colors;
+    final isDark = context.isDark;
     return ChoiceChip(
       label: Text(label,
           style: TextStyle(
-              color: selected ? Colors.black : Colors.white, fontSize: 12)),
+              color: selected
+                  ? (isDark ? Colors.black : Colors.white)
+                  : colors.textPrimary,
+              fontSize: 12)),
       selected: selected,
-      selectedColor: AppColors.primary,
-      backgroundColor: AppColors.darkSurface,
+      selectedColor: colors.primary,
+      backgroundColor: colors.surfaceElevated,
+      side: BorderSide(color: selected ? colors.primary : colors.border),
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
       onSelected: onSelected,
     );
@@ -394,18 +413,27 @@ class _TransactionsScreenState extends ConsumerState<TransactionsScreen> {
             ? TextField(
                 controller: _searchController,
                 autofocus: true,
-                style: const TextStyle(color: Colors.white),
-                decoration: const InputDecoration(
+                style: TextStyle(color: colors.textPrimary),
+                decoration: InputDecoration(
                   hintText: 'Search recipient, biller, reference...',
-                  hintStyle: TextStyle(color: Colors.white54, fontSize: 14),
+                  hintStyle:
+                      TextStyle(color: colors.textTertiary, fontSize: 14),
                   border: InputBorder.none,
                 ),
                 onChanged: (val) => setState(() => _searchQuery = val.trim()),
               )
-            : const Text('Activity'),
+            : Text(
+                'Activity',
+                style: TextStyle(
+                  color: colors.textPrimary,
+                  fontSize: 20,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
         actions: [
           IconButton(
-            icon: Icon(_isSearchVisible ? Icons.close : Icons.search),
+            icon: Icon(_isSearchVisible ? Icons.close : Icons.search,
+                color: colors.textPrimary),
             onPressed: () {
               setState(() {
                 if (_isSearchVisible) {
@@ -417,12 +445,20 @@ class _TransactionsScreenState extends ConsumerState<TransactionsScreen> {
             },
           ),
           IconButton(
-            icon: const Icon(Icons.tune),
+            icon: Icon(
+              Icons.tune,
+              color: (_filterStatus != null ||
+                      _filterCountry != null ||
+                      _filterDateRange != null ||
+                      _filterAmountRange != null)
+                  ? colors.primary
+                  : colors.textSecondary,
+            ),
             tooltip: 'Advanced Filters',
             onPressed: _openAdvancedFiltersModal,
           ),
           IconButton(
-            icon: const Icon(Icons.file_download_outlined),
+            icon: Icon(Icons.file_download_outlined, color: colors.primary),
             tooltip: 'Export CSV',
             onPressed: () => _exportActivity(transactions),
           ),
@@ -437,6 +473,9 @@ class _TransactionsScreenState extends ConsumerState<TransactionsScreen> {
             child: Row(
               children: [
                 _buildQuickFilterChip('All', QuickFilter.all),
+                _buildQuickFilterChip('Bitcoin', QuickFilter.bitcoin),
+                _buildQuickFilterChip('Conversions', QuickFilter.conversions),
+                _buildQuickFilterChip('Stablecoins', QuickFilter.stablecoins),
                 _buildQuickFilterChip('Money In', QuickFilter.moneyIn),
                 _buildQuickFilterChip('Money Out', QuickFilter.moneyOut),
                 _buildQuickFilterChip('Protected', QuickFilter.protected),
@@ -471,6 +510,8 @@ class _TransactionsScreenState extends ConsumerState<TransactionsScreen> {
   }
 
   Widget _buildQuickFilterChip(String label, QuickFilter filter) {
+    final colors = context.colors;
+    final isDark = context.isDark;
     final isSelected = _selectedQuickFilter == filter;
     return Padding(
       padding: const EdgeInsets.only(right: 8),
@@ -478,14 +519,17 @@ class _TransactionsScreenState extends ConsumerState<TransactionsScreen> {
         label: Text(
           label,
           style: TextStyle(
-            color: isSelected ? Colors.black : Colors.white,
+            color: isSelected
+                ? (isDark ? Colors.black : Colors.white)
+                : colors.textPrimary,
             fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
             fontSize: 12,
           ),
         ),
         selected: isSelected,
-        selectedColor: AppColors.primary,
-        backgroundColor: AppColors.darkSurfaceCard,
+        selectedColor: colors.primary,
+        backgroundColor: colors.surfaceCard,
+        side: BorderSide(color: isSelected ? colors.primary : colors.border),
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
         onSelected: (val) {
           if (val) setState(() => _selectedQuickFilter = filter);
@@ -495,19 +539,20 @@ class _TransactionsScreenState extends ConsumerState<TransactionsScreen> {
   }
 
   Widget _buildEmptyState() {
+    final colors = context.colors;
     return Center(
       child: Padding(
         padding: const EdgeInsets.all(32),
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            const Icon(Icons.receipt_long_outlined,
-                color: Colors.grey, size: 54),
+            Icon(Icons.receipt_long_outlined,
+                color: colors.textTertiary, size: 54),
             const SizedBox(height: 16),
-            const Text(
+            Text(
               'No transactions found',
               style: TextStyle(
-                  color: Colors.white,
+                  color: colors.textPrimary,
                   fontSize: 16,
                   fontWeight: FontWeight.bold),
             ),
@@ -517,8 +562,8 @@ class _TransactionsScreenState extends ConsumerState<TransactionsScreen> {
                   ? 'Try adjusting your search or filters.'
                   : 'Your Bitcoin payments, protected sends, utility bills, and travel activity will appear here.',
               textAlign: TextAlign.center,
-              style: const TextStyle(
-                  color: AppColors.darkTextSecondary, fontSize: 13),
+              style: TextStyle(
+                  color: colors.textSecondary, fontSize: 13),
             ),
           ],
         ),
@@ -604,6 +649,28 @@ class _TransactionsScreenState extends ConsumerState<TransactionsScreen> {
         iconColor = Colors.indigoAccent;
         iconBg = Colors.indigoAccent.withValues(alpha: 0.15);
         break;
+      case TransactionType.usdtSent:
+      case TransactionType.usdtReceived:
+        icon = Icons.attach_money_rounded;
+        iconColor = const Color(0xFF26A17B);
+        iconBg = const Color(0xFF26A17B).withValues(alpha: 0.15);
+        break;
+      case TransactionType.usdcSent:
+      case TransactionType.usdcReceived:
+        icon = Icons.monetization_on_rounded;
+        iconColor = const Color(0xFF2775CA);
+        iconBg = const Color(0xFF2775CA).withValues(alpha: 0.15);
+        break;
+      case TransactionType.btcToUsdtConversion:
+      case TransactionType.btcToUsdcConversion:
+      case TransactionType.usdtToBtcConversion:
+      case TransactionType.usdcToBtcConversion:
+      case TransactionType.usdtToUsdcConversion:
+      case TransactionType.usdcToUsdtConversion:
+        icon = Icons.swap_horiz_rounded;
+        iconColor = const Color(0xFF38BDF8);
+        iconBg = const Color(0xFF38BDF8).withValues(alpha: 0.15);
+        break;
     }
 
     return InkWell(
@@ -639,8 +706,8 @@ class _TransactionsScreenState extends ConsumerState<TransactionsScreen> {
                 children: [
                   Text(
                     tx.displayTitle,
-                    style: const TextStyle(
-                      color: Colors.white,
+                    style: TextStyle(
+                      color: colors.textPrimary,
                       fontSize: 14,
                       fontWeight: FontWeight.bold,
                     ),
@@ -650,8 +717,8 @@ class _TransactionsScreenState extends ConsumerState<TransactionsScreen> {
                   const SizedBox(height: 2),
                   Text(
                     '${tx.recipientOrSender} • ${Formatters.formatDate(tx.createdAt)}',
-                    style: const TextStyle(
-                      color: AppColors.darkTextSecondary,
+                    style: TextStyle(
+                      color: colors.textSecondary,
                       fontSize: 12,
                     ),
                     maxLines: 1,
@@ -667,7 +734,7 @@ class _TransactionsScreenState extends ConsumerState<TransactionsScreen> {
                 Text(
                   '${tx.isOutgoing ? '-' : '+'}${Formatters.formatSats(tx.amountSats)}',
                   style: TextStyle(
-                    color: tx.isOutgoing ? Colors.white : AppColors.success,
+                    color: tx.isOutgoing ? colors.textPrimary : colors.incoming,
                     fontSize: 14,
                     fontWeight: FontWeight.bold,
                   ),
@@ -675,8 +742,8 @@ class _TransactionsScreenState extends ConsumerState<TransactionsScreen> {
                 const SizedBox(height: 2),
                 Text(
                   currency.format(tx.amountSats),
-                  style: const TextStyle(
-                    color: AppColors.darkTextSecondary,
+                  style: TextStyle(
+                    color: colors.textSecondary,
                     fontSize: 11,
                   ),
                 ),

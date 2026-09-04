@@ -9,7 +9,7 @@ class PayoutsAndCardsSheet {
   static void showPayouts(BuildContext context, String country) {
     showModalBottomSheet(
       context: context,
-      backgroundColor: AppColors.darkSurface,
+      backgroundColor: context.colors.surfaceCard,
       isScrollControlled: true,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
@@ -21,7 +21,7 @@ class PayoutsAndCardsSheet {
   static void showCards(BuildContext context, String country) {
     showModalBottomSheet(
       context: context,
-      backgroundColor: AppColors.darkSurface,
+      backgroundColor: context.colors.surfaceCard,
       isScrollControlled: true,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
@@ -63,6 +63,7 @@ class _PayoutsModalContentState extends ConsumerState<_PayoutsModalContent> {
 
   @override
   Widget build(BuildContext context) {
+    final colors = context.colors;
     return Padding(
       padding: const EdgeInsets.all(24),
       child: Column(
@@ -72,10 +73,10 @@ class _PayoutsModalContentState extends ConsumerState<_PayoutsModalContent> {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              const Text(
+              Text(
                 'Local Cash Payouts',
                 style: TextStyle(
-                  color: Colors.white,
+                  color: colors.textPrimary,
                   fontSize: 20,
                   fontWeight: FontWeight.bold,
                 ),
@@ -98,9 +99,9 @@ class _PayoutsModalContentState extends ConsumerState<_PayoutsModalContent> {
             ],
           ),
           const SizedBox(height: 6),
-          const Text(
+          Text(
             'Convert Bitcoin instantly to local mobile money and domestic bank accounts.',
-            style: TextStyle(color: AppColors.darkTextSecondary, fontSize: 13),
+            style: TextStyle(color: colors.textSecondary, fontSize: 13),
           ),
           const SizedBox(height: 16),
 
@@ -108,19 +109,19 @@ class _PayoutsModalContentState extends ConsumerState<_PayoutsModalContent> {
           Container(
             padding: const EdgeInsets.all(10),
             decoration: BoxDecoration(
-              color: AppColors.primary.withValues(alpha: 0.1),
+              color: colors.primary.withValues(alpha: 0.1),
               borderRadius: BorderRadius.circular(10),
               border:
-                  Border.all(color: AppColors.primary.withValues(alpha: 0.25)),
+                  Border.all(color: colors.primary.withValues(alpha: 0.25)),
             ),
-            child: const Row(
+            child: Row(
               children: [
-                Icon(Icons.shield_outlined, color: AppColors.primary, size: 16),
-                SizedBox(width: 8),
+                Icon(Icons.shield_outlined, color: colors.primary, size: 16),
+                const SizedBox(width: 8),
                 Expanded(
                   child: Text(
                     'SIMULATION ENVIRONMENT: Cash-out rails operate in safe simulation mode.',
-                    style: TextStyle(color: Colors.white70, fontSize: 11),
+                    style: TextStyle(color: colors.textPrimary, fontSize: 11),
                   ),
                 ),
               ],
@@ -129,18 +130,18 @@ class _PayoutsModalContentState extends ConsumerState<_PayoutsModalContent> {
           const SizedBox(height: 18),
 
           if (_isLoading)
-            const Center(
+            Center(
               child: Padding(
-                padding: EdgeInsets.all(30),
-                child: CircularProgressIndicator(color: AppColors.primary),
+                padding: const EdgeInsets.all(30),
+                child: CircularProgressIndicator(color: colors.primary),
               ),
             )
           else if (_corridors.isEmpty)
-            const Padding(
-              padding: EdgeInsets.symmetric(vertical: 20),
+            Padding(
+              padding: const EdgeInsets.symmetric(vertical: 20),
               child: Text(
                 'No payout corridors available for this region.',
-                style: TextStyle(color: AppColors.darkTextSecondary),
+                style: TextStyle(color: colors.textSecondary),
               ),
             )
           else
@@ -154,23 +155,23 @@ class _PayoutsModalContentState extends ConsumerState<_PayoutsModalContent> {
                   return Container(
                     padding: const EdgeInsets.all(14),
                     decoration: BoxDecoration(
-                      color: AppColors.darkSurfaceCard,
+                      color: colors.surfaceCard,
                       borderRadius: BorderRadius.circular(14),
-                      border: Border.all(color: AppColors.darkBorder),
+                      border: Border.all(color: colors.border),
                     ),
                     child: Row(
                       children: [
                         Container(
                           padding: const EdgeInsets.all(10),
                           decoration: BoxDecoration(
-                            color: AppColors.darkSurface,
+                            color: colors.surfaceElevated,
                             borderRadius: BorderRadius.circular(10),
                           ),
                           child: Icon(
                             corr.isMobileMoney
                                 ? Icons.phone_android
                                 : Icons.account_balance,
-                            color: AppColors.primary,
+                            color: colors.primary,
                             size: 20,
                           ),
                         ),
@@ -181,8 +182,8 @@ class _PayoutsModalContentState extends ConsumerState<_PayoutsModalContent> {
                             children: [
                               Text(
                                 corr.name,
-                                style: const TextStyle(
-                                  color: Colors.white,
+                                style: TextStyle(
+                                  color: colors.textPrimary,
                                   fontWeight: FontWeight.bold,
                                   fontSize: 14,
                                 ),
@@ -190,8 +191,8 @@ class _PayoutsModalContentState extends ConsumerState<_PayoutsModalContent> {
                               const SizedBox(height: 2),
                               Text(
                                 'Rail: ${corr.type.toUpperCase()} • Currency: ${corr.currency}',
-                                style: const TextStyle(
-                                  color: AppColors.darkTextSecondary,
+                                style: TextStyle(
+                                  color: colors.textSecondary,
                                   fontSize: 11,
                                 ),
                               ),
@@ -200,18 +201,17 @@ class _PayoutsModalContentState extends ConsumerState<_PayoutsModalContent> {
                         ),
                         ElevatedButton(
                           style: ElevatedButton.styleFrom(
-                            backgroundColor: AppColors.primary,
+                            backgroundColor: colors.primary,
                             foregroundColor: Colors.black,
                             shape: RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(8),
                             ),
                             padding: const EdgeInsets.symmetric(
-                                horizontal: 12, vertical: 6),
+                                horizontal: 12, vertical: 8),
                           ),
                           onPressed: () => _showPayoutForm(context, corr),
-                          child: const Text('Cash Out',
-                              style: TextStyle(
-                                  fontSize: 12, fontWeight: FontWeight.bold)),
+                          child: const Text('Send',
+                              style: TextStyle(fontWeight: FontWeight.bold)),
                         ),
                       ],
                     ),
@@ -225,12 +225,13 @@ class _PayoutsModalContentState extends ConsumerState<_PayoutsModalContent> {
   }
 
   void _showPayoutForm(BuildContext context, PayoutCorridor corr) {
+    final colors = context.colors;
     final destinationController = TextEditingController();
     final amountController = TextEditingController(text: '1000');
 
     showModalBottomSheet(
       context: context,
-      backgroundColor: AppColors.darkSurfaceCard,
+      backgroundColor: colors.surfaceCard,
       isScrollControlled: true,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
@@ -248,8 +249,8 @@ class _PayoutsModalContentState extends ConsumerState<_PayoutsModalContent> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text('Cash Out to ${corr.name}',
-                  style: const TextStyle(
-                      color: Colors.white,
+                  style: TextStyle(
+                      color: colors.textPrimary,
                       fontSize: 16,
                       fontWeight: FontWeight.bold)),
               const SizedBox(height: 12),
@@ -257,40 +258,40 @@ class _PayoutsModalContentState extends ConsumerState<_PayoutsModalContent> {
                   corr.isMobileMoney
                       ? 'Mobile Number / Account'
                       : 'Bank Account Number',
-                  style: const TextStyle(
-                      color: AppColors.darkTextSecondary, fontSize: 12)),
+                  style: TextStyle(
+                      color: colors.textSecondary, fontSize: 12)),
               const SizedBox(height: 6),
               TextField(
                 controller: destinationController,
-                style: const TextStyle(color: Colors.white),
+                style: TextStyle(color: colors.textPrimary),
                 decoration: InputDecoration(
                   filled: true,
-                  fillColor: AppColors.darkSurface,
+                  fillColor: colors.surfaceElevated,
                   hintText:
                       corr.isMobileMoney ? '+254 700 000 000' : '0123456789',
-                  hintStyle: const TextStyle(color: Colors.white30),
+                  hintStyle: TextStyle(color: colors.textTertiary),
                   border: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(10),
-                    borderSide: const BorderSide(color: AppColors.darkBorder),
+                    borderSide: BorderSide(color: colors.border),
                   ),
                 ),
               ),
               const SizedBox(height: 12),
               Text('Amount (${corr.currency})',
-                  style: const TextStyle(
-                      color: AppColors.darkTextSecondary, fontSize: 12)),
+                  style: TextStyle(
+                      color: colors.textSecondary, fontSize: 12)),
               const SizedBox(height: 6),
               TextField(
                 controller: amountController,
                 keyboardType: TextInputType.number,
-                style: const TextStyle(color: Colors.white),
+                style: TextStyle(color: colors.textPrimary),
                 decoration: InputDecoration(
                   filled: true,
-                  fillColor: AppColors.darkSurface,
+                  fillColor: colors.surfaceElevated,
                   hintText: '1000',
                   border: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(10),
-                    borderSide: const BorderSide(color: AppColors.darkBorder),
+                    borderSide: BorderSide(color: colors.border),
                   ),
                 ),
               ),
@@ -299,7 +300,7 @@ class _PayoutsModalContentState extends ConsumerState<_PayoutsModalContent> {
                 width: double.infinity,
                 child: ElevatedButton(
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: AppColors.primary,
+                    backgroundColor: colors.primary,
                     foregroundColor: Colors.black,
                     padding: const EdgeInsets.symmetric(vertical: 14),
                     shape: RoundedRectangleBorder(
@@ -348,6 +349,7 @@ class _CardsModalContent extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final colors = context.colors;
     return Padding(
       padding: const EdgeInsets.all(24),
       child: Column(
@@ -357,10 +359,10 @@ class _CardsModalContent extends ConsumerWidget {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              const Text(
+              Text(
                 'Virtual Dollar Cards',
                 style: TextStyle(
-                  color: Colors.white,
+                  color: colors.textPrimary,
                   fontSize: 20,
                   fontWeight: FontWeight.bold,
                 ),
@@ -368,13 +370,13 @@ class _CardsModalContent extends ConsumerWidget {
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
                 decoration: BoxDecoration(
-                  color: AppColors.primary.withValues(alpha: 0.15),
+                  color: colors.primary.withValues(alpha: 0.15),
                   borderRadius: BorderRadius.circular(8),
                 ),
-                child: const Text(
+                child: Text(
                   'Visa / Mastercard',
                   style: TextStyle(
-                    color: AppColors.primary,
+                    color: colors.primary,
                     fontSize: 11,
                     fontWeight: FontWeight.bold,
                   ),
@@ -383,9 +385,9 @@ class _CardsModalContent extends ConsumerWidget {
             ],
           ),
           const SizedBox(height: 6),
-          const Text(
+          Text(
             'Spend globally online with instant USD virtual cards funded from Bitcoin.',
-            style: TextStyle(color: AppColors.darkTextSecondary, fontSize: 13),
+            style: TextStyle(color: colors.textSecondary, fontSize: 13),
           ),
           const SizedBox(height: 20),
 
@@ -459,19 +461,19 @@ class _CardsModalContent extends ConsumerWidget {
           Container(
             padding: const EdgeInsets.all(10),
             decoration: BoxDecoration(
-              color: AppColors.primary.withValues(alpha: 0.1),
+              color: colors.primary.withValues(alpha: 0.1),
               borderRadius: BorderRadius.circular(10),
               border:
-                  Border.all(color: AppColors.primary.withValues(alpha: 0.25)),
+                  Border.all(color: colors.primary.withValues(alpha: 0.25)),
             ),
-            child: const Row(
+            child: Row(
               children: [
-                Icon(Icons.shield_outlined, color: AppColors.primary, size: 16),
-                SizedBox(width: 8),
+                Icon(Icons.shield_outlined, color: colors.primary, size: 16),
+                const SizedBox(width: 8),
                 Expanded(
                   child: Text(
                     'SIMULATION ENVIRONMENT: Virtual card issuance operates in safe simulation mode.',
-                    style: TextStyle(color: Colors.white70, fontSize: 11),
+                    style: TextStyle(color: colors.textPrimary, fontSize: 11),
                   ),
                 ),
               ],
@@ -483,7 +485,7 @@ class _CardsModalContent extends ConsumerWidget {
             width: double.infinity,
             child: ElevatedButton(
               style: ElevatedButton.styleFrom(
-                backgroundColor: AppColors.primary,
+                backgroundColor: colors.primary,
                 foregroundColor: Colors.black,
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(12),

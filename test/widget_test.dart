@@ -28,16 +28,17 @@ void main() {
     expect(find.text('Protected'), findsWidgets);
     expect(find.text('Scan'), findsWidgets);
 
-    // Verify 5 Bottom Navigation Items
+    // Verify Navigation Items
     expect(find.text('Home'), findsOneWidget);
-    expect(find.text('Pay'), findsWidgets);
     expect(find.text('Activity'), findsOneWidget);
-    expect(find.text('Travel'), findsOneWidget);
-    expect(find.text('Me'), findsOneWidget);
+    expect(find.byKey(const Key('navbar_center_action_button')), findsOneWidget);
+    expect(find.text('Money'), findsOneWidget);
+    expect(find.text('Profile'), findsOneWidget);
   });
 
   testWidgets(
-      'Bottom navigation tabs switch between Home, Pay, Activity, Travel, Me', (
+      'Bottom navigation tabs switch between Home, Center Action, Activity, Money, Profile',
+      (
     WidgetTester tester,
   ) async {
     tester.view.physicalSize = const Size(800, 1600);
@@ -51,9 +52,13 @@ void main() {
     );
     await tester.pumpAndSettle();
 
-    // Switch to Pay Tab via Bottom Navigation
-    await tester.tap(find.byIcon(Icons.payments_outlined));
+    // Tap Center Action Button and select Pay Everyday Bills
+    await tester.tap(find.byKey(const Key('navbar_center_action_button')));
     await tester.pumpAndSettle();
+    expect(find.text('Pay Everyday Bills'), findsOneWidget);
+    await tester.tap(find.text('Pay Everyday Bills'));
+    await tester.pumpAndSettle();
+
     expect(find.text('Send Money'), findsOneWidget);
     expect(find.text('Recent'), findsOneWidget);
     expect(find.text('Everyday'), findsOneWidget);
@@ -65,12 +70,12 @@ void main() {
     expect(find.text('Money In'), findsOneWidget);
     expect(find.text('Money Out'), findsOneWidget);
 
-    // Switch to Travel Tab
-    await tester.tap(find.byIcon(Icons.flight_takeoff_outlined));
+    // Switch to Money Tab
+    await tester.tap(find.byIcon(Icons.account_balance_wallet_outlined));
     await tester.pumpAndSettle();
-    expect(find.text('Travel & Spend Hub'), findsOneWidget);
+    expect(find.text('Money & Balances'), findsOneWidget);
 
-    // Switch to Me Tab
+    // Switch to Profile Tab
     await tester.tap(find.byIcon(Icons.person_outline_rounded));
     await tester.pumpAndSettle();
     expect(find.text('Edit Profile'), findsOneWidget);
@@ -90,8 +95,10 @@ void main() {
     );
     await tester.pumpAndSettle();
 
-    // Tap bottom Pay icon
-    await tester.tap(find.byIcon(Icons.payments_outlined));
+    // Tap center action button to launch Pay
+    await tester.tap(find.byKey(const Key('navbar_center_action_button')));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Pay Everyday Bills'));
     await tester.pumpAndSettle();
 
     // Verify Pay Hub content

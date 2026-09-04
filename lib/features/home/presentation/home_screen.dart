@@ -25,8 +25,28 @@ import '../../transactions/domain/transaction_model.dart';
 import '../../transactions/presentation/transactions_provider.dart';
 import '../../wallet/presentation/unified_deposit_sheet.dart';
 import '../../../core/demo/demo_mode_provider.dart';
+import '../../../core/market/country_model.dart';
 import '../../../core/market/market_provider.dart';
+import '../../profile/providers/profile_provider.dart';
 import '../../request_money/presentation/request_money_screen.dart';
+
+/// Data model representing an item in the Home action rail.
+/// Allows dynamic and future user-customizable ordering of quick actions.
+class ActionRailItemData {
+  final String id;
+  final String label;
+  final IconData icon;
+  final Color color;
+  final VoidCallback onTap;
+
+  const ActionRailItemData({
+    required this.id,
+    required this.label,
+    required this.icon,
+    required this.color,
+    required this.onTap,
+  });
+}
 
 class HomeScreen extends ConsumerStatefulWidget {
   const HomeScreen({super.key});
@@ -136,15 +156,20 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     final protectedSats = cashuBalance.lockedEscrowSats;
     final spendableSats = cashuBalance.spendableSats;
 
+    final profile = ref.watch(profileProvider);
+    final residence = profile.residenceCountryInfo;
     final greeting = _getGreeting();
-    final firstName =
-        user?.firstName.isNotEmpty == true ? user!.firstName : 'Jeremiah';
+    final displayName = profile.firstName.isNotEmpty
+        ? profile.firstName
+        : (user?.firstName.isNotEmpty == true ? user!.firstName : 'Jaykon');
 
     final currentNetwork = ref.watch(networkEnvironmentProvider);
     final isPilotActive = ref.watch(mainnetPilotOverrideProvider);
     final netConfig =
         NetworkConfig.fromNetwork(currentNetwork, pilotActive: isPilotActive);
     final isMainnet = currentNetwork == HanbovaNetwork.mainnet;
+
+    final actionRailItems = _getActionRailItems(context, colors, market);
 
     return Scaffold(
       backgroundColor: colors.background,
@@ -161,41 +186,56 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                // 1. Header (User profile, Greeting, Actions)
+                // 1. Header (User profile avatar, Greeting, Actions)
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    Row(
-                      children: [
-                        CircleAvatar(
-                          radius: 20,
-                          backgroundColor:
-                              colors.primary.withValues(alpha: 0.15),
-                          child: Text(
-                            firstName.isNotEmpty
-                                ? firstName[0].toUpperCase()
-                                : 'H',
-                            style: AppTypography.titleMedium
-                                .copyWith(color: colors.primary),
-                          ),
-                        ),
-                        const SizedBox(width: AppSpacing.sm),
-                        Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
+                    Expanded(
+                      child: InkWell(
+                        onTap: () => context.go('/profile'),
+                        borderRadius: BorderRadius.circular(20),
+                        child: Row(
                           children: [
-                            Text(
-                              greeting,
-                              style: AppTypography.caption
-                                  .copyWith(color: colors.textSecondary),
+                            CircleAvatar(
+                              radius: 20,
+                              backgroundColor:
+                                  colors.primary.withValues(alpha: 0.15),
+                              child: Text(
+                                profile.initials,
+                                style: AppTypography.titleMedium.copyWith(
+                                  color: colors.primary,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
                             ),
-                            Text(
-                              firstName,
-                              style: AppTypography.titleMedium
-                                  .copyWith(color: colors.textPrimary),
+                            const SizedBox(width: AppSpacing.sm),
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    '$greeting, $displayName',
+                                    style: AppTypography.titleMedium.copyWith(
+                                      color: colors.textPrimary,
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
+                                  ),
+                                  Text(
+                                    residence.name,
+                                    style: AppTypography.caption.copyWith(
+                                      color: colors.textSecondary,
+                                    ),
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
+                                  ),
+                                ],
+                              ),
                             ),
                           ],
                         ),
-                      ],
+                      ),
                     ),
                     Row(
                       children: [
@@ -229,17 +269,67 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                         Icon(Icons.info_outline,
                             size: 14, color: colors.primary),
                         const SizedBox(width: 6),
-                        Text(
-                          'DEMO MODE • SAMPLE DATA • NO REAL MONEY',
-                          style: AppTypography.caption.copyWith(
-                            color: colors.primary,
-                            fontWeight: FontWeight.bold,
-                            letterSpacing: 0.8,
+                        Flexible(
+                          child: Text(
+                            'DEMO MODE • SAMPLE DATA • NO REAL MONEY',
+                            style: AppTypography.caption.copyWith(
+                              color: colors.primary,
+                              fontWeight: FontWeight.bold,
+                              letterSpacing: 0.8,
+                            ),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
                           ),
                         ),
                       ],
                     ),
                   ),
+
+                // 2.5 Active Roam Compact Home Indicator
+                if (market.isRoamActive) ...[
+                  InkWell(
+                    onTap: () => context.push('/roam'),
+                    borderRadius: AppRadius.smRadius,
+                    child: Container(
+                      margin: const EdgeInsets.only(bottom: AppSpacing.sm),
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 12, vertical: 8),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFF10B981).withValues(alpha: 0.12),
+                        borderRadius: AppRadius.smRadius,
+                        border: Border.all(
+                          color:
+                              const Color(0xFF10B981).withValues(alpha: 0.35),
+                          width: 1,
+                        ),
+                      ),
+                      child: Row(
+                        children: [
+                          Text(
+                            market.activeMarketInfo.flagEmoji,
+                            style: const TextStyle(fontSize: 16),
+                          ),
+                          const SizedBox(width: 8),
+                          Expanded(
+                            child: Text(
+                              '${market.activeMarketInfo.flagEmoji} Roam active • ${market.activeMarketInfo.name}',
+                              style: const TextStyle(
+                                color: Color(0xFF10B981),
+                                fontSize: 12,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                          ),
+                          const Icon(
+                            Icons.chevron_right_rounded,
+                            color: Color(0xFF10B981),
+                            size: 16,
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ],
 
                 // 2. Balance Card (Authoritative Available Balance + Money in Motion)
                 Container(
@@ -321,33 +411,37 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                       Row(
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
-                          Row(
-                            children: [
-                              Text(
-                                'Bitcoin',
-                                style: AppTypography.titleSmall.copyWith(
-                                  color: colors.textPrimary,
-                                  fontWeight: FontWeight.bold,
-                                ),
-                              ),
-                              const SizedBox(width: 6),
-                              Container(
-                                padding: const EdgeInsets.symmetric(
-                                    horizontal: 6, vertical: 2),
-                                decoration: BoxDecoration(
-                                  color: colors.primary.withValues(alpha: 0.12),
-                                  borderRadius: BorderRadius.circular(4),
-                                ),
-                                child: Text(
-                                  'Available to spend',
-                                  style: TextStyle(
-                                    color: colors.primary,
-                                    fontSize: 10,
-                                    fontWeight: FontWeight.w600,
+                          Flexible(
+                            child: Wrap(
+                              crossAxisAlignment: WrapCrossAlignment.center,
+                              spacing: 6,
+                              children: [
+                                Text(
+                                  'Bitcoin',
+                                  style: AppTypography.titleSmall.copyWith(
+                                    color: colors.textPrimary,
+                                    fontWeight: FontWeight.bold,
                                   ),
                                 ),
-                              ),
-                            ],
+                                Container(
+                                  padding: const EdgeInsets.symmetric(
+                                      horizontal: 6, vertical: 2),
+                                  decoration: BoxDecoration(
+                                    color:
+                                        colors.primary.withValues(alpha: 0.12),
+                                    borderRadius: BorderRadius.circular(4),
+                                  ),
+                                  child: Text(
+                                    'Available to spend',
+                                    style: TextStyle(
+                                      color: colors.primary,
+                                      fontSize: 10,
+                                      fontWeight: FontWeight.w600,
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
                           ),
                           IconButton(
                             icon: Icon(
@@ -389,15 +483,19 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                             Row(
                               mainAxisAlignment: MainAxisAlignment.spaceBetween,
                               children: [
-                                Text(
-                                  isBalanceVisible
-                                      ? '${Formatters.formatSatsNumber(spendableSats)} ${isMainnet ? "sats" : "test sats"}'
-                                      : '•••• ${isMainnet ? "sats" : "test sats"}',
-                                  style: AppTypography.titleSmall.copyWith(
-                                    color: colors.primary,
-                                    fontWeight: FontWeight.w700,
+                                Flexible(
+                                  child: Text(
+                                    isBalanceVisible
+                                        ? '${Formatters.formatSatsNumber(spendableSats)} ${isMainnet ? "sats" : "test sats"}'
+                                        : '•••• ${isMainnet ? "sats" : "test sats"}',
+                                    style: AppTypography.titleSmall.copyWith(
+                                      color: colors.primary,
+                                      fontWeight: FontWeight.w700,
+                                    ),
+                                    overflow: TextOverflow.ellipsis,
                                   ),
                                 ),
+                                const SizedBox(width: 8),
                                 Row(
                                   children: [
                                     Text(
@@ -550,75 +648,83 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                     ],
                   ),
                 ),
+                const SizedBox(height: AppSpacing.sm),
+
+                // 2.5 Other Balances (Compact card preserving Bitcoin as primary hero)
+                Container(
+                  padding: const EdgeInsets.symmetric(
+                      horizontal: 14, vertical: 10),
+                  decoration: BoxDecoration(
+                    color: colors.surfaceCard,
+                    borderRadius: AppRadius.mdRadius,
+                    border: Border.all(color: colors.border),
+                  ),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Expanded(
+                        child: Row(
+                          children: [
+                            Icon(Icons.account_balance_wallet_outlined,
+                                size: 16, color: colors.textSecondary),
+                            const SizedBox(width: 8),
+                            Flexible(
+                              child: Text(
+                                demoState.isEnabled
+                                    ? 'Other: USDT \$1,250 • USDC \$750'
+                                    : 'Other: USDT \$0 • USDC \$0',
+                                style: AppTypography.caption.copyWith(
+                                  color: colors.textSecondary,
+                                  fontWeight: FontWeight.w600,
+                                ),
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      InkWell(
+                        onTap: () => context.go('/money'),
+                        borderRadius: BorderRadius.circular(4),
+                        child: Padding(
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 4, vertical: 2),
+                          child: Row(
+                            children: [
+                              Text(
+                                'View Money',
+                                style: AppTypography.caption.copyWith(
+                                  color: colors.primary,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                              Icon(Icons.chevron_right,
+                                  size: 14, color: colors.primary),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
                 const SizedBox(height: AppSpacing.md),
 
-                // 3. Action Rail (Adaptive based on market capabilities)
+                // 3. Action Rail (Adaptive based on market capabilities, horizontally scrollable)
                 SingleChildScrollView(
                   scrollDirection: Axis.horizontal,
                   child: Row(
                     children: [
-                      _buildActionRailItem(
-                        context,
-                        icon: Icons.arrow_upward_rounded,
-                        label: 'Send',
-                        color: colors.primary,
-                        onTap: () => context.push('/send'),
-                      ),
-                      const SizedBox(width: 8),
-                      _buildActionRailItem(
-                        context,
-                        icon: Icons.arrow_downward_rounded,
-                        label: 'Receive',
-                        color: const Color(0xFF10B981),
-                        onTap: () => UnifiedDepositSheet.show(context),
-                      ),
-                      const SizedBox(width: 8),
-                      _buildActionRailItem(
-                        context,
-                        icon: Icons.shield_outlined,
-                        label: 'Protected',
-                        color: colors.protected,
-                        onTap: () => context.push('/protected-send'),
-                      ),
-                      const SizedBox(width: 8),
-                      _buildActionRailItem(
-                        context,
-                        icon: Icons.qr_code_scanner_rounded,
-                        label: 'Scan',
-                        color: const Color(0xFF38BDF8),
-                        onTap: () => context.push('/scan'),
-                      ),
-                      const SizedBox(width: 8),
-                      _buildActionRailItem(
-                        context,
-                        icon: Icons.call_received_rounded,
-                        label: 'Request',
-                        color: const Color(0xFFEC4899),
-                        onTap: () => showModalBottomSheet(
-                          context: context,
-                          isScrollControlled: true,
-                          backgroundColor: Colors.transparent,
-                          builder: (ctx) => const RequestMoneyScreen(),
-                        ),
-                      ),
-                      if (market.capabilities.airtime) ...[
-                        const SizedBox(width: 8),
+                      for (int i = 0; i < actionRailItems.length; i++) ...[
+                        if (i > 0) const SizedBox(width: 8),
                         _buildActionRailItem(
                           context,
-                          icon: Icons.phone_android_rounded,
-                          label: 'Airtime',
-                          color: AppColors.primary,
-                          onTap: () => context.push('/pay/airtime'),
+                          icon: actionRailItems[i].icon,
+                          label: actionRailItems[i].label,
+                          color: actionRailItems[i].color,
+                          onTap: actionRailItems[i].onTap,
                         ),
                       ],
-                      const SizedBox(width: 8),
-                      _buildActionRailItem(
-                        context,
-                        icon: Icons.more_horiz_rounded,
-                        label: 'More',
-                        color: const Color(0xFF94A3B8),
-                        onTap: () => context.go('/pay'),
-                      ),
                     ],
                   ),
                 ),
@@ -759,10 +865,10 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              const Text(
+                              Text(
                                 'Protected Refund Ready',
                                 style: TextStyle(
-                                  color: Colors.white,
+                                  color: colors.textPrimary,
                                   fontSize: 13,
                                   fontWeight: FontWeight.bold,
                                 ),
@@ -770,8 +876,8 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                               const SizedBox(height: 2),
                               Text(
                                 '${Formatters.formatSats(demoState.protectedRefundableSats)} expired locktime can be claimed back.',
-                                style: const TextStyle(
-                                  color: AppColors.darkTextSecondary,
+                                style: TextStyle(
+                                  color: colors.textSecondary,
                                   fontSize: 11,
                                 ),
                               ),
@@ -831,23 +937,23 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                               color: Colors.black, size: 18),
                         ),
                         const SizedBox(width: AppSpacing.sm),
-                        const Expanded(
+                        Expanded(
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
                               Text(
                                 'Payment Processing (Uncertain)',
                                 style: TextStyle(
-                                  color: Colors.white,
+                                  color: colors.textPrimary,
                                   fontSize: 13,
                                   fontWeight: FontWeight.bold,
                                 ),
                               ),
-                              SizedBox(height: 2),
+                              const SizedBox(height: 2),
                               Text(
                                 'Checking status with biller. Please don\'t pay again yet.',
                                 style: TextStyle(
-                                  color: AppColors.darkTextSecondary,
+                                  color: colors.textSecondary,
                                   fontSize: 11,
                                 ),
                               ),
@@ -989,23 +1095,23 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                               color: Colors.white, size: 18),
                         ),
                         const SizedBox(width: AppSpacing.sm),
-                        const Expanded(
+                        Expanded(
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
                               Text(
                                 'eSIM Low Data (250 MB left)',
                                 style: TextStyle(
-                                  color: Colors.white,
+                                  color: colors.textPrimary,
                                   fontSize: 13,
                                   fontWeight: FontWeight.bold,
                                 ),
                               ),
-                              SizedBox(height: 2),
+                              const SizedBox(height: 2),
                               Text(
                                 'Kenya Traveler 3 GB eSIM is running low.',
                                 style: TextStyle(
-                                  color: AppColors.darkTextSecondary,
+                                  color: colors.textSecondary,
                                   fontSize: 11,
                                 ),
                               ),
@@ -1098,10 +1204,12 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    Text(
-                      'Recent Activity',
-                      style: AppTypography.titleMedium
-                          .copyWith(color: colors.textPrimary),
+                    Flexible(
+                      child: Text(
+                        'Recent Activity',
+                        style: AppTypography.titleMedium
+                            .copyWith(color: colors.textPrimary),
+                      ),
                     ),
                     TextButton(
                       onPressed: () => context.go('/activity'),
@@ -1157,6 +1265,253 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     );
   }
 
+  void _showActionCatalogueSheet(BuildContext context) {
+    final colors = context.colors;
+    final items = [
+      {
+        'title': 'Data',
+        'subtitle': 'Internet data bundles',
+        'icon': Icons.wifi_rounded,
+        'color': const Color(0xFF38BDF8),
+        'onTap': () {
+          Navigator.pop(context);
+          context.push('/pay/data');
+        },
+      },
+      {
+        'title': 'Electricity',
+        'subtitle': 'Prepaid meter tokens',
+        'icon': Icons.electric_bolt_rounded,
+        'color': const Color(0xFFFBBF24),
+        'onTap': () {
+          Navigator.pop(context);
+          context.push('/pay/electricity');
+        },
+      },
+      {
+        'title': 'TV',
+        'subtitle': 'Cable & satellite TV',
+        'icon': Icons.tv_rounded,
+        'color': const Color(0xFFA78BFA),
+        'onTap': () {
+          Navigator.pop(context);
+          context.push('/pay/tv');
+        },
+      },
+      {
+        'title': 'Internet',
+        'subtitle': 'Broadband & Wi-Fi',
+        'icon': Icons.router_rounded,
+        'color': const Color(0xFF34D399),
+        'onTap': () {
+          Navigator.pop(context);
+          context.push('/pay/internet');
+        },
+      },
+      {
+        'title': 'Water',
+        'subtitle': 'Utility water bills',
+        'icon': Icons.water_drop_rounded,
+        'color': const Color(0xFF06B6D4),
+        'onTap': () {
+          Navigator.pop(context);
+          context.push('/pay/water');
+        },
+      },
+      {
+        'title': 'Saved Payments',
+        'subtitle': 'Frequent meters & accounts',
+        'icon': Icons.bookmark_border_rounded,
+        'color': const Color(0xFFEC4899),
+        'onTap': () {
+          Navigator.pop(context);
+          context.push('/saved-payments');
+        },
+      },
+      {
+        'title': 'Beneficiaries',
+        'subtitle': 'Contacts & payment details',
+        'icon': Icons.people_outline_rounded,
+        'color': const Color(0xFF10B981),
+        'onTap': () {
+          Navigator.pop(context);
+          context.push('/beneficiaries');
+        },
+      },
+      {
+        'title': 'Cards',
+        'subtitle': 'Virtual Visa & Mastercard',
+        'icon': Icons.credit_card_rounded,
+        'color': const Color(0xFF8B5CF6),
+        'onTap': () {
+          Navigator.pop(context);
+          context.push('/cards');
+        },
+      },
+      {
+        'title': 'Roam',
+        'subtitle': 'Spend like a local when away',
+        'icon': Icons.travel_explore_rounded,
+        'color': const Color(0xFFF97316),
+        'onTap': () {
+          Navigator.pop(context);
+          context.push('/roam');
+        },
+      },
+    ];
+
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: colors.surfaceCard,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(AppRadius.lg)),
+      ),
+      builder: (sheetCtx) {
+        return SafeArea(
+          child: Padding(
+            padding: const EdgeInsets.symmetric(
+              horizontal: AppSpacing.lg,
+              vertical: AppSpacing.md,
+            ),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                Center(
+                  child: Container(
+                    width: 36,
+                    height: 4,
+                    decoration: BoxDecoration(
+                      color: colors.textTertiary.withValues(alpha: 0.3),
+                      borderRadius: BorderRadius.circular(2),
+                    ),
+                  ),
+                ),
+                const SizedBox(height: AppSpacing.md),
+                Text(
+                  'Action Catalogue',
+                  style: AppTypography.titleMedium.copyWith(
+                    color: colors.textPrimary,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                const SizedBox(height: AppSpacing.sm),
+                Flexible(
+                  child: ListView.separated(
+                    shrinkWrap: true,
+                    itemCount: items.length,
+                    separatorBuilder: (_, __) =>
+                        Divider(height: 1, color: colors.divider),
+                    itemBuilder: (context, index) {
+                      final item = items[index];
+                      final color = item['color'] as Color;
+                      return ListTile(
+                        leading: Container(
+                          padding: const EdgeInsets.all(8),
+                          decoration: BoxDecoration(
+                            color: color.withValues(alpha: 0.15),
+                            shape: BoxShape.circle,
+                          ),
+                          child: Icon(item['icon'] as IconData,
+                              color: color, size: 20),
+                        ),
+                        title: Text(
+                          item['title'] as String,
+                          style: TextStyle(
+                            color: colors.textPrimary,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                        subtitle: Text(
+                          item['subtitle'] as String,
+                          style: TextStyle(
+                            color: colors.textTertiary,
+                            fontSize: 12,
+                          ),
+                        ),
+                        trailing:
+                            const Icon(Icons.chevron_right_rounded, size: 18),
+                        onTap: item['onTap'] as VoidCallback,
+                      );
+                    },
+                  ),
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  List<ActionRailItemData> _getActionRailItems(
+      BuildContext context, HanbovaColors colors, UserCountryContext market) {
+    return [
+      ActionRailItemData(
+        id: 'send',
+        label: 'Send',
+        icon: Icons.arrow_upward_rounded,
+        color: colors.primary,
+        onTap: () => context.push('/send'),
+      ),
+      ActionRailItemData(
+        id: 'receive',
+        label: 'Receive',
+        icon: Icons.arrow_downward_rounded,
+        color: const Color(0xFF10B981),
+        onTap: () => UnifiedDepositSheet.show(context),
+      ),
+      ActionRailItemData(
+        id: 'protected',
+        label: 'Protected',
+        icon: Icons.shield_outlined,
+        color: colors.protected,
+        onTap: () => context.push('/protected-send'),
+      ),
+      ActionRailItemData(
+        id: 'scan',
+        label: 'Scan',
+        icon: Icons.qr_code_scanner_rounded,
+        color: const Color(0xFF38BDF8),
+        onTap: () => context.push('/scan'),
+      ),
+      ActionRailItemData(
+        id: 'request',
+        label: 'Request',
+        icon: Icons.call_received_rounded,
+        color: const Color(0xFFEC4899),
+        onTap: () => showModalBottomSheet(
+          context: context,
+          isScrollControlled: true,
+          backgroundColor: Colors.transparent,
+          builder: (ctx) => const RequestMoneyScreen(),
+        ),
+      ),
+      ActionRailItemData(
+        id: 'convert',
+        label: 'Convert',
+        icon: Icons.swap_horiz_rounded,
+        color: const Color(0xFF38BDF8),
+        onTap: () => context.push('/convert'),
+      ),
+      if (market.capabilities.airtime)
+        ActionRailItemData(
+          id: 'airtime',
+          label: 'Airtime',
+          icon: Icons.phone_android_rounded,
+          color: AppColors.primary,
+          onTap: () => context.push('/pay/airtime'),
+        ),
+      ActionRailItemData(
+        id: 'more',
+        label: 'More',
+        icon: Icons.more_horiz_rounded,
+        color: const Color(0xFF94A3B8),
+        onTap: () => _showActionCatalogueSheet(context),
+      ),
+    ];
+  }
+
   Widget _buildActionRailItem(
     BuildContext context, {
     required IconData icon,
@@ -1164,14 +1519,16 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     required Color color,
     required VoidCallback onTap,
   }) {
+    final colors = context.colors;
     return InkWell(
+      key: Key('action_rail_${label.toLowerCase()}'),
       onTap: onTap,
       borderRadius: BorderRadius.circular(14),
       child: Container(
         width: 74,
         padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 4),
         decoration: BoxDecoration(
-          color: AppColors.darkCardBackground,
+          color: colors.surfaceCard,
           borderRadius: BorderRadius.circular(14),
           border: Border.all(
             color: color.withValues(alpha: 0.35),
@@ -1191,8 +1548,8 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
             const SizedBox(height: 6),
             Text(
               label,
-              style: const TextStyle(
-                color: Colors.white,
+              style: TextStyle(
+                color: colors.textPrimary,
                 fontSize: 11,
                 fontWeight: FontWeight.bold,
               ),
@@ -1213,6 +1570,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     required Color color,
     required VoidCallback onTap,
   }) {
+    final colors = context.colors;
     return InkWell(
       onTap: onTap,
       borderRadius: BorderRadius.circular(12),
@@ -1234,8 +1592,8 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
             const SizedBox(height: 6),
             Text(
               label,
-              style: const TextStyle(
-                color: Colors.white,
+              style: TextStyle(
+                color: colors.textPrimary,
                 fontSize: 11,
                 fontWeight: FontWeight.w600,
               ),

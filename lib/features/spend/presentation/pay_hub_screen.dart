@@ -21,13 +21,14 @@ class PayHubScreen extends ConsumerWidget {
   void _showSpendMarketSelector(BuildContext context, WidgetRef ref) {
     final market = ref.read(marketProvider);
     final countries = CountryInfo.supportedCountries;
+    final colors = context.colors;
 
     showModalBottomSheet(
       context: context,
-      backgroundColor: AppColors.darkBackground,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-        side: BorderSide(color: AppColors.darkBorder),
+      backgroundColor: colors.surfaceCard,
+      shape: RoundedRectangleBorder(
+        borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
+        side: BorderSide(color: colors.border),
       ),
       builder: (ctx) {
         return Container(
@@ -36,26 +37,26 @@ class PayHubScreen extends ConsumerWidget {
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const Row(
+              Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
                   Text(
                     'Select Active Market',
                     style: TextStyle(
-                      color: Colors.white,
+                      color: colors.textPrimary,
                       fontSize: 18,
                       fontWeight: FontWeight.bold,
                     ),
                   ),
                   Icon(Icons.flight_takeoff_rounded,
-                      color: AppColors.primary, size: 20),
+                      color: colors.primary, size: 20),
                 ],
               ),
               const SizedBox(height: 6),
-              const Text(
+              Text(
                 'Switch your spending market to pay local bills while traveling. Your legal country of residence remains unchanged.',
                 style: TextStyle(
-                  color: AppColors.darkTextSecondary,
+                  color: colors.textSecondary,
                   fontSize: 12,
                 ),
               ),
@@ -69,27 +70,27 @@ class PayHubScreen extends ConsumerWidget {
                   title: Text(
                     c.name,
                     style: TextStyle(
-                      color: isSelected ? AppColors.primary : Colors.white,
+                      color: isSelected ? colors.primary : colors.textPrimary,
                       fontWeight:
                           isSelected ? FontWeight.bold : FontWeight.normal,
                     ),
                   ),
                   subtitle: Text(
                     'Currency: ${c.defaultCurrency.code}',
-                    style: const TextStyle(
-                      color: AppColors.darkTextSecondary,
+                    style: TextStyle(
+                      color: colors.textSecondary,
                       fontSize: 12,
                     ),
                   ),
                   trailing: isSelected
-                      ? const Icon(Icons.check_circle_rounded,
-                          color: AppColors.primary)
+                      ? Icon(Icons.check_circle_rounded,
+                          color: colors.primary)
                       : null,
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(12),
                   ),
                   tileColor: isSelected
-                      ? AppColors.primary.withValues(alpha: 0.1)
+                      ? colors.primary.withValues(alpha: 0.1)
                       : Colors.transparent,
                   onTap: () {
                     ref.read(marketProvider.notifier).setActiveMarket(c.code);
@@ -105,12 +106,13 @@ class PayHubScreen extends ConsumerWidget {
   }
 
   void _showStablecoinInfoModal(BuildContext context) {
+    final colors = context.colors;
     showModalBottomSheet(
       context: context,
-      backgroundColor: AppColors.darkBackground,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-        side: BorderSide(color: AppColors.darkBorder),
+      backgroundColor: colors.surfaceCard,
+      shape: RoundedRectangleBorder(
+        borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
+        side: BorderSide(color: colors.border),
       ),
       builder: (ctx) {
         return Container(
@@ -131,23 +133,23 @@ class PayHubScreen extends ConsumerWidget {
                         color: AppColors.primary, size: 22),
                   ),
                   const SizedBox(width: 12),
-                  const Expanded(
+                  Expanded(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
                           'Stablecoin Rail',
                           style: TextStyle(
-                            color: Colors.white,
+                            color: colors.textPrimary,
                             fontSize: 18,
                             fontWeight: FontWeight.bold,
                           ),
                         ),
-                        SizedBox(height: 2),
+                        const SizedBox(height: 2),
                         Text(
                           'COMING SOON • PREVIEW',
                           style: TextStyle(
-                            color: AppColors.primary,
+                            color: colors.primary,
                             fontSize: 11,
                             fontWeight: FontWeight.bold,
                             letterSpacing: 0.5,
@@ -159,10 +161,10 @@ class PayHubScreen extends ConsumerWidget {
                 ],
               ),
               const SizedBox(height: 16),
-              const Text(
+              Text(
                 'USD-pegged stablecoin settlement will be supported once compliant custody and on/off-ramp rails are integrated. No live stablecoin balances or transactions are faked.',
                 style: TextStyle(
-                  color: AppColors.darkTextSecondary,
+                  color: colors.textSecondary,
                   fontSize: 13,
                   height: 1.4,
                 ),
@@ -173,7 +175,7 @@ class PayHubScreen extends ConsumerWidget {
                 child: ElevatedButton(
                   onPressed: () => Navigator.of(ctx).pop(),
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: AppColors.primary,
+                    backgroundColor: colors.primary,
                     foregroundColor: Colors.black,
                     padding: const EdgeInsets.symmetric(vertical: 14),
                     shape: RoundedRectangleBorder(
@@ -193,12 +195,13 @@ class PayHubScreen extends ConsumerWidget {
 
   void _showDemoProviderModal(
       BuildContext context, String providerType, String description) {
+    final colors = context.colors;
     showModalBottomSheet(
       context: context,
-      backgroundColor: AppColors.darkBackground,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-        side: BorderSide(color: AppColors.darkBorder),
+      backgroundColor: colors.surfaceCard,
+      shape: RoundedRectangleBorder(
+        borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
+        side: BorderSide(color: colors.border),
       ),
       builder: (ctx) {
         return Container(
@@ -212,11 +215,11 @@ class PayHubScreen extends ConsumerWidget {
                   Container(
                     padding: const EdgeInsets.all(10),
                     decoration: BoxDecoration(
-                      color: AppColors.primary.withValues(alpha: 0.15),
+                      color: colors.primary.withValues(alpha: 0.15),
                       shape: BoxShape.circle,
                     ),
-                    child: const Icon(Icons.info_outline_rounded,
-                        color: AppColors.primary, size: 22),
+                    child: Icon(Icons.info_outline_rounded,
+                        color: colors.primary, size: 22),
                   ),
                   const SizedBox(width: 12),
                   Expanded(
@@ -225,17 +228,17 @@ class PayHubScreen extends ConsumerWidget {
                       children: [
                         Text(
                           '$providerType Transfer',
-                          style: const TextStyle(
-                            color: Colors.white,
+                          style: TextStyle(
+                            color: colors.textPrimary,
                             fontSize: 18,
                             fontWeight: FontWeight.bold,
                           ),
                         ),
                         const SizedBox(height: 2),
-                        const Text(
+                        Text(
                           'DEMO PREVIEW • COMING SOON',
                           style: TextStyle(
-                            color: AppColors.primary,
+                            color: colors.primary,
                             fontSize: 11,
                             fontWeight: FontWeight.bold,
                             letterSpacing: 0.5,
@@ -249,8 +252,8 @@ class PayHubScreen extends ConsumerWidget {
               const SizedBox(height: 16),
               Text(
                 description,
-                style: const TextStyle(
-                  color: AppColors.darkTextSecondary,
+                style: TextStyle(
+                  color: colors.textSecondary,
                   fontSize: 13,
                   height: 1.4,
                 ),
@@ -259,20 +262,20 @@ class PayHubScreen extends ConsumerWidget {
               Container(
                 padding: const EdgeInsets.all(12),
                 decoration: BoxDecoration(
-                  color: AppColors.darkCardBackground,
+                  color: colors.surfaceElevated,
                   borderRadius: BorderRadius.circular(12),
-                  border: Border.all(color: AppColors.darkBorder),
+                  border: Border.all(color: colors.border),
                 ),
-                child: const Row(
+                child: Row(
                   children: [
                     Icon(Icons.shield_outlined,
-                        size: 16, color: AppColors.darkTextSecondary),
-                    SizedBox(width: 8),
+                        size: 16, color: colors.textSecondary),
+                    const SizedBox(width: 8),
                     Expanded(
                       child: Text(
                         'Direct fiat settlement requires local licensed banking partner integration. No real bank accounts are accessible.',
                         style: TextStyle(
-                          color: AppColors.darkTextSecondary,
+                          color: colors.textSecondary,
                           fontSize: 11,
                         ),
                       ),
@@ -286,7 +289,7 @@ class PayHubScreen extends ConsumerWidget {
                 child: ElevatedButton(
                   onPressed: () => Navigator.of(ctx).pop(),
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: AppColors.primary,
+                    backgroundColor: colors.primary,
                     foregroundColor: Colors.black,
                     padding: const EdgeInsets.symmetric(vertical: 14),
                     shape: RoundedRectangleBorder(
@@ -306,20 +309,21 @@ class PayHubScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final colors = context.colors;
     final market = ref.watch(marketProvider);
     final activeMarketInfo = market.activeMarketInfo;
     final caps = market.capabilities;
     final hasLocalServices = caps.hasLocalServices;
 
     return Scaffold(
-      backgroundColor: AppColors.darkBackground,
+      backgroundColor: colors.background,
       appBar: AppBar(
-        backgroundColor: AppColors.darkBackground,
+        backgroundColor: colors.background,
         elevation: 0,
-        title: const Text(
+        title: Text(
           'Pay',
           style: TextStyle(
-            color: Colors.white,
+            color: colors.textPrimary,
             fontSize: 20,
             fontWeight: FontWeight.bold,
           ),
@@ -332,10 +336,10 @@ class PayHubScreen extends ConsumerWidget {
               margin: const EdgeInsets.only(right: 16),
               padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
               decoration: BoxDecoration(
-                color: AppColors.darkCardBackground,
+                color: colors.surfaceCard,
                 borderRadius: BorderRadius.circular(16),
                 border: Border.all(
-                  color: AppColors.primary.withValues(alpha: 0.4),
+                  color: colors.primary.withValues(alpha: 0.4),
                 ),
               ),
               child: Row(
@@ -346,15 +350,15 @@ class PayHubScreen extends ConsumerWidget {
                   const SizedBox(width: 6),
                   Text(
                     activeMarketInfo.code,
-                    style: const TextStyle(
-                      color: Colors.white,
+                    style: TextStyle(
+                      color: colors.textPrimary,
                       fontSize: 13,
                       fontWeight: FontWeight.bold,
                     ),
                   ),
                   const SizedBox(width: 4),
-                  const Icon(Icons.keyboard_arrow_down,
-                      size: 16, color: AppColors.primary),
+                  Icon(Icons.keyboard_arrow_down,
+                      size: 16, color: colors.primary),
                 ],
               ),
             ),
@@ -372,31 +376,33 @@ class PayHubScreen extends ConsumerWidget {
 
   // GLOBAL / UNSUPPORTED MARKET PAY HUB (e.g. US, SN without Roam)
   Widget _buildGlobalMarketPayHub(BuildContext context) {
+    final colors = context.colors;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         // 1. Send Section
-        _buildSectionHeader('Send', 'Peer-to-peer & cross-border transfers'),
+        _buildSectionHeader(
+            context, 'Send', 'Peer-to-peer & cross-border transfers'),
         const SizedBox(height: 12),
         _buildGlobalSendGrid(context),
         const SizedBox(height: 28),
 
         // 2. Wallet Section
-        _buildSectionHeader('Wallet', 'Multi-rail digital balances'),
+        _buildSectionHeader(context, 'Wallet', 'Multi-rail digital balances'),
         const SizedBox(height: 12),
         _buildWalletCards(context),
         const SizedBox(height: 28),
 
         // 3. Local Services Placeholder
         _buildSectionHeader(
-            'Local services', 'Regional utilities and bill payment'),
+            context, 'Local services', 'Regional utilities and bill payment'),
         const SizedBox(height: 12),
         Container(
           padding: const EdgeInsets.all(18),
           decoration: BoxDecoration(
-            color: AppColors.darkCardBackground,
+            color: colors.surfaceCard,
             borderRadius: BorderRadius.circular(16),
-            border: Border.all(color: AppColors.darkBorder),
+            border: Border.all(color: colors.border),
           ),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -406,30 +412,30 @@ class PayHubScreen extends ConsumerWidget {
                   Container(
                     padding: const EdgeInsets.all(10),
                     decoration: BoxDecoration(
-                      color: AppColors.primary.withValues(alpha: 0.15),
+                      color: colors.primary.withValues(alpha: 0.15),
                       shape: BoxShape.circle,
                     ),
-                    child: const Icon(Icons.flight_takeoff_rounded,
-                        color: AppColors.primary, size: 22),
+                    child: Icon(Icons.flight_takeoff_rounded,
+                        color: colors.primary, size: 22),
                   ),
                   const SizedBox(width: 12),
-                  const Expanded(
+                  Expanded(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
                           'Activate Roam for Local Services',
                           style: TextStyle(
-                            color: Colors.white,
+                            color: colors.textPrimary,
                             fontSize: 15,
                             fontWeight: FontWeight.bold,
                           ),
                         ),
-                        SizedBox(height: 2),
+                        const SizedBox(height: 2),
                         Text(
                           'Local airtime, electricity, and bills are available in supported markets.',
                           style: TextStyle(
-                            color: AppColors.darkTextSecondary,
+                            color: colors.textSecondary,
                             fontSize: 12,
                           ),
                         ),
@@ -439,10 +445,10 @@ class PayHubScreen extends ConsumerWidget {
                 ],
               ),
               const SizedBox(height: 16),
-              const Text(
+              Text(
                 'Traveling to Nigeria, Kenya, Ghana, Rwanda, Uganda, Tanzania, or South Africa? Activate Roam to unlock everyday bills with instant Bitcoin settlement.',
                 style: TextStyle(
-                  color: AppColors.darkTextSecondary,
+                  color: colors.textSecondary,
                   fontSize: 12,
                   height: 1.4,
                 ),
@@ -455,8 +461,8 @@ class PayHubScreen extends ConsumerWidget {
                   icon: const Icon(Icons.travel_explore_rounded, size: 18),
                   label: const Text('Explore Supported Markets'),
                   style: OutlinedButton.styleFrom(
-                    foregroundColor: AppColors.primary,
-                    side: const BorderSide(color: AppColors.primary),
+                    foregroundColor: colors.primary,
+                    side: BorderSide(color: colors.primary),
                     padding: const EdgeInsets.symmetric(vertical: 12),
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(12),
@@ -470,7 +476,7 @@ class PayHubScreen extends ConsumerWidget {
         const SizedBox(height: 28),
 
         // Safety Reassurance
-        _buildSafetyReassurance(),
+        _buildSafetyReassurance(context),
         const SizedBox(height: 80),
       ],
     );
@@ -484,49 +490,51 @@ class PayHubScreen extends ConsumerWidget {
       children: [
         // 1. Send Money Section
         _buildSectionHeader(
-            'Send Money', 'Instant peer-to-peer & domestic payouts'),
+            context, 'Send Money', 'Instant peer-to-peer & domestic payouts'),
         const SizedBox(height: 12),
         _buildSupportedSendMoneyGrid(context, caps),
         const SizedBox(height: 24),
 
         // 2. Recent Section
         _buildSectionHeader(
-            'Recent', 'Quick repeat for frequent bills and contacts'),
+            context, 'Recent', 'Quick repeat for frequent bills and contacts'),
         const SizedBox(height: 12),
         _buildPayAgainCarousel(context),
         const SizedBox(height: 28),
 
         // 3. Everyday Bills Section
         if (caps.hasEverydayBills) ...[
-          _buildSectionHeader(
-              'Everyday', 'Instant Bitcoin settlement for local bills'),
+          _buildSectionHeader(context, 'Everyday',
+              'Instant Bitcoin settlement for local bills'),
           const SizedBox(height: 14),
           _buildServicesGrid(context, caps),
           const SizedBox(height: 28),
         ],
 
         // 4. Manage Section
-        _buildSectionHeader(
-            'Manage', 'Payment management, beneficiaries, and cards'),
+        _buildSectionHeader(context, 'Manage',
+            'Payment management, beneficiaries, and cards'),
         const SizedBox(height: 12),
         _buildMoreCards(context, caps),
         const SizedBox(height: 28),
 
         // Safety Reassurance
-        _buildSafetyReassurance(),
+        _buildSafetyReassurance(context),
         const SizedBox(height: 80),
       ],
     );
   }
 
-  Widget _buildSectionHeader(String title, String subtitle) {
+  Widget _buildSectionHeader(
+      BuildContext context, String title, String subtitle) {
+    final colors = context.colors;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
           title,
-          style: const TextStyle(
-            color: Colors.white,
+          style: TextStyle(
+            color: colors.textPrimary,
             fontSize: 17,
             fontWeight: FontWeight.bold,
           ),
@@ -534,8 +542,8 @@ class PayHubScreen extends ConsumerWidget {
         const SizedBox(height: 2),
         Text(
           subtitle,
-          style: const TextStyle(
-            color: AppColors.darkTextSecondary,
+          style: TextStyle(
+            color: colors.textSecondary,
             fontSize: 12,
           ),
         ),
@@ -544,12 +552,13 @@ class PayHubScreen extends ConsumerWidget {
   }
 
   Widget _buildGlobalSendGrid(BuildContext context) {
+    final colors = context.colors;
     final options = [
       {
         'title': 'Bitcoin',
         'subtitle': 'Lightning & On-chain',
         'icon': Icons.bolt_rounded,
-        'color': AppColors.primary,
+        'color': colors.primary,
         'badge': 'Instant',
         'onTap': () => context.push('/send'),
       },
@@ -595,7 +604,7 @@ class PayHubScreen extends ConsumerWidget {
           child: Container(
             padding: const EdgeInsets.all(10),
             decoration: BoxDecoration(
-              color: AppColors.darkCardBackground,
+              color: colors.surfaceCard,
               borderRadius: BorderRadius.circular(14),
               border: Border.all(color: color.withValues(alpha: 0.3)),
             ),
@@ -613,8 +622,8 @@ class PayHubScreen extends ConsumerWidget {
                 const Spacer(),
                 Text(
                   item['title'] as String,
-                  style: const TextStyle(
-                    color: Colors.white,
+                  style: TextStyle(
+                    color: colors.textPrimary,
                     fontSize: 13,
                     fontWeight: FontWeight.bold,
                   ),
@@ -637,11 +646,13 @@ class PayHubScreen extends ConsumerWidget {
   }
 
   Widget _buildWalletCards(BuildContext context) {
+    final colors = context.colors;
     return Column(
       children: [
         _buildListTile(
+          context,
           icon: Icons.currency_bitcoin,
-          iconColor: AppColors.primary,
+          iconColor: colors.primary,
           title: 'Bitcoin',
           subtitle: 'Instant Lightning and self-custodial on-chain sats',
           badgeText: 'Live',
@@ -650,6 +661,7 @@ class PayHubScreen extends ConsumerWidget {
         ),
         const SizedBox(height: 10),
         _buildListTile(
+          context,
           icon: Icons.shield_moon_outlined,
           iconColor: const Color(0xFF8B5CF6),
           title: 'Cashu',
@@ -660,12 +672,13 @@ class PayHubScreen extends ConsumerWidget {
         ),
         const SizedBox(height: 10),
         _buildListTile(
+          context,
           icon: Icons.token_rounded,
           iconColor: const Color(0xFF38BDF8),
           title: 'Stablecoin',
           subtitle: 'Compliant USD-pegged stablecoin rail coming soon',
           badgeText: 'Coming soon',
-          badgeColor: AppColors.primary,
+          badgeColor: colors.primary,
           onTap: () => _showStablecoinInfoModal(context),
         ),
       ],
@@ -674,12 +687,13 @@ class PayHubScreen extends ConsumerWidget {
 
   Widget _buildSupportedSendMoneyGrid(
       BuildContext context, MarketCapabilities caps) {
+    final colors = context.colors;
     final sendOptions = [
       {
         'title': 'Bitcoin',
         'subtitle': 'Lightning & On-chain',
         'icon': Icons.bolt_rounded,
-        'color': AppColors.primary,
+        'color': colors.primary,
         'badge': 'Instant',
         'onTap': () => context.push('/send'),
       },
@@ -753,7 +767,7 @@ class PayHubScreen extends ConsumerWidget {
           child: Container(
             padding: const EdgeInsets.all(12),
             decoration: BoxDecoration(
-              color: AppColors.darkCardBackground,
+              color: colors.surfaceCard,
               borderRadius: BorderRadius.circular(16),
               border: Border.all(
                 color: color.withValues(alpha: 0.3),
@@ -777,19 +791,23 @@ class PayHubScreen extends ConsumerWidget {
                         size: 20,
                       ),
                     ),
-                    Container(
-                      padding: const EdgeInsets.symmetric(
-                          horizontal: 8, vertical: 3),
-                      decoration: BoxDecoration(
-                        color: color.withValues(alpha: 0.15),
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                      child: Text(
-                        item['badge'] as String,
-                        style: TextStyle(
-                          color: color,
-                          fontSize: 10,
-                          fontWeight: FontWeight.bold,
+                    Flexible(
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 6, vertical: 3),
+                        decoration: BoxDecoration(
+                          color: color.withValues(alpha: 0.15),
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        child: Text(
+                          item['badge'] as String,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: TextStyle(
+                            color: color,
+                            fontSize: 10,
+                            fontWeight: FontWeight.bold,
+                          ),
                         ),
                       ),
                     ),
@@ -798,8 +816,8 @@ class PayHubScreen extends ConsumerWidget {
                 const Spacer(),
                 Text(
                   item['title'] as String,
-                  style: const TextStyle(
-                    color: Colors.white,
+                  style: TextStyle(
+                    color: colors.textPrimary,
                     fontSize: 14,
                     fontWeight: FontWeight.bold,
                   ),
@@ -809,8 +827,8 @@ class PayHubScreen extends ConsumerWidget {
                   item['subtitle'] as String,
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
-                  style: const TextStyle(
-                    color: AppColors.darkTextSecondary,
+                  style: TextStyle(
+                    color: colors.textSecondary,
                     fontSize: 10,
                   ),
                 ),
@@ -823,6 +841,7 @@ class PayHubScreen extends ConsumerWidget {
   }
 
   Widget _buildPayAgainCarousel(BuildContext context) {
+    final colors = context.colors;
     final recentItems = [
       {
         'title': 'Mom\'s MTN',
@@ -875,9 +894,9 @@ class PayHubScreen extends ConsumerWidget {
               width: 155,
               padding: const EdgeInsets.all(12),
               decoration: BoxDecoration(
-                color: AppColors.darkCardBackground,
+                color: colors.surfaceCard,
                 borderRadius: BorderRadius.circular(16),
-                border: Border.all(color: AppColors.darkBorder),
+                border: Border.all(color: colors.border),
               ),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -904,8 +923,8 @@ class PayHubScreen extends ConsumerWidget {
                           item['amount'] as String,
                           textAlign: TextAlign.end,
                           overflow: TextOverflow.ellipsis,
-                          style: const TextStyle(
-                            color: Colors.white,
+                          style: TextStyle(
+                            color: colors.textPrimary,
                             fontSize: 12,
                             fontWeight: FontWeight.bold,
                           ),
@@ -918,8 +937,8 @@ class PayHubScreen extends ConsumerWidget {
                     children: [
                       Text(
                         item['title'] as String,
-                        style: const TextStyle(
-                          color: Colors.white,
+                        style: TextStyle(
+                          color: colors.textPrimary,
                           fontSize: 13,
                           fontWeight: FontWeight.bold,
                         ),
@@ -929,8 +948,8 @@ class PayHubScreen extends ConsumerWidget {
                         item['subtitle'] as String,
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
-                        style: const TextStyle(
-                          color: AppColors.darkTextSecondary,
+                        style: TextStyle(
+                          color: colors.textSecondary,
                           fontSize: 11,
                         ),
                       ),
@@ -946,6 +965,7 @@ class PayHubScreen extends ConsumerWidget {
   }
 
   Widget _buildServicesGrid(BuildContext context, MarketCapabilities caps) {
+    final colors = context.colors;
     final services = <Map<String, dynamic>>[];
 
     if (caps.airtime) {
@@ -953,7 +973,7 @@ class PayHubScreen extends ConsumerWidget {
         'title': 'Airtime',
         'desc': 'Instant top-up',
         'icon': Icons.phone_android_rounded,
-        'color': AppColors.primary,
+        'color': colors.primary,
         'onTap': () => Navigator.of(context).push(
               MaterialPageRoute(
                   builder: (context) => const AirtimeFlowScreen()),
@@ -1032,7 +1052,7 @@ class PayHubScreen extends ConsumerWidget {
         crossAxisCount: 2,
         crossAxisSpacing: 12,
         mainAxisSpacing: 12,
-        childAspectRatio: 1.35,
+        childAspectRatio: 1.2,
       ),
       itemCount: services.length,
       itemBuilder: (context, index) {
@@ -1042,11 +1062,11 @@ class PayHubScreen extends ConsumerWidget {
         return GestureDetector(
           onTap: item['onTap'] as VoidCallback,
           child: Container(
-            padding: const EdgeInsets.all(14),
+            padding: const EdgeInsets.all(12),
             decoration: BoxDecoration(
-              color: AppColors.darkCardBackground,
+              color: colors.surfaceCard,
               borderRadius: BorderRadius.circular(16),
-              border: Border.all(color: AppColors.darkBorder),
+              border: Border.all(color: colors.border),
             ),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -1066,8 +1086,8 @@ class PayHubScreen extends ConsumerWidget {
                 const Spacer(),
                 Text(
                   item['title'] as String,
-                  style: const TextStyle(
-                    color: Colors.white,
+                  style: TextStyle(
+                    color: colors.textPrimary,
                     fontSize: 14,
                     fontWeight: FontWeight.bold,
                   ),
@@ -1075,8 +1095,8 @@ class PayHubScreen extends ConsumerWidget {
                 const SizedBox(height: 2),
                 Text(
                   item['desc'] as String,
-                  style: const TextStyle(
-                    color: AppColors.darkTextSecondary,
+                  style: TextStyle(
+                    color: colors.textSecondary,
                     fontSize: 11,
                   ),
                 ),
@@ -1092,8 +1112,9 @@ class PayHubScreen extends ConsumerWidget {
     return Column(
       children: [
         _buildListTile(
+          context,
           icon: Icons.bookmark_added_rounded,
-          iconColor: AppColors.primary,
+          iconColor: context.colors.primary,
           title: 'Saved Payments',
           subtitle: 'Manage saved meters, TV accounts, and recurring bills',
           onTap: () => Navigator.of(context).push(
@@ -1103,6 +1124,7 @@ class PayHubScreen extends ConsumerWidget {
         ),
         const SizedBox(height: 10),
         _buildListTile(
+          context,
           icon: Icons.people_alt_rounded,
           iconColor: const Color(0xFF38BDF8),
           title: 'Beneficiaries',
@@ -1115,6 +1137,7 @@ class PayHubScreen extends ConsumerWidget {
         if (caps.virtualCards) ...[
           const SizedBox(height: 10),
           _buildListTile(
+            context,
             icon: Icons.credit_card_rounded,
             iconColor: const Color(0xFFA78BFA),
             title: 'Cards',
@@ -1128,7 +1151,8 @@ class PayHubScreen extends ConsumerWidget {
     );
   }
 
-  Widget _buildListTile({
+  Widget _buildListTile(
+    BuildContext context, {
     required IconData icon,
     required Color iconColor,
     required String title,
@@ -1137,14 +1161,15 @@ class PayHubScreen extends ConsumerWidget {
     Color? badgeColor,
     required VoidCallback onTap,
   }) {
+    final colors = context.colors;
     return GestureDetector(
       onTap: onTap,
       child: Container(
         padding: const EdgeInsets.all(14),
         decoration: BoxDecoration(
-          color: AppColors.darkCardBackground,
+          color: colors.surfaceCard,
           borderRadius: BorderRadius.circular(14),
-          border: Border.all(color: AppColors.darkBorder),
+          border: Border.all(color: colors.border),
         ),
         child: Row(
           children: [
@@ -1163,8 +1188,8 @@ class PayHubScreen extends ConsumerWidget {
                 children: [
                   Text(
                     title,
-                    style: const TextStyle(
-                      color: Colors.white,
+                    style: TextStyle(
+                      color: colors.textPrimary,
                       fontSize: 14,
                       fontWeight: FontWeight.bold,
                     ),
@@ -1172,8 +1197,8 @@ class PayHubScreen extends ConsumerWidget {
                   const SizedBox(height: 2),
                   Text(
                     subtitle,
-                    style: const TextStyle(
-                      color: AppColors.darkTextSecondary,
+                    style: TextStyle(
+                      color: colors.textSecondary,
                       fontSize: 11,
                     ),
                   ),
@@ -1186,13 +1211,13 @@ class PayHubScreen extends ConsumerWidget {
                 padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
                 decoration: BoxDecoration(
                   color:
-                      (badgeColor ?? AppColors.primary).withValues(alpha: 0.15),
+                      (badgeColor ?? colors.primary).withValues(alpha: 0.15),
                   borderRadius: BorderRadius.circular(6),
                 ),
                 child: Text(
                   badgeText,
                   style: TextStyle(
-                    color: badgeColor ?? AppColors.primary,
+                    color: badgeColor ?? colors.primary,
                     fontSize: 10,
                     fontWeight: FontWeight.bold,
                   ),
@@ -1200,27 +1225,28 @@ class PayHubScreen extends ConsumerWidget {
               ),
             ],
             const SizedBox(width: 4),
-            const Icon(Icons.chevron_right_rounded,
-                color: AppColors.darkTextTertiary, size: 20),
+            Icon(Icons.chevron_right_rounded,
+                color: colors.textTertiary, size: 20),
           ],
         ),
       ),
     );
   }
 
-  Widget _buildSafetyReassurance() {
+  Widget _buildSafetyReassurance(BuildContext context) {
+    final colors = context.colors;
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: AppColors.darkCardBackground,
+        color: colors.surfaceCard,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: AppColors.darkBorder),
+        border: Border.all(color: colors.border),
       ),
-      child: const Row(
+      child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Icon(Icons.lock_outline_rounded, color: AppColors.primary, size: 20),
-          SizedBox(width: 12),
+          Icon(Icons.lock_outline_rounded, color: colors.primary, size: 20),
+          const SizedBox(width: 12),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -1228,16 +1254,16 @@ class PayHubScreen extends ConsumerWidget {
                 Text(
                   '100% Bitcoin Backed',
                   style: TextStyle(
-                    color: Colors.white,
+                    color: colors.textPrimary,
                     fontSize: 14,
                     fontWeight: FontWeight.bold,
                   ),
                 ),
-                SizedBox(height: 4),
+                const SizedBox(height: 4),
                 Text(
                   'Hanbova holds zero local fiat balances. Local airtime, electricity, and utilities are settled on-demand directly from your satoshis.',
                   style: TextStyle(
-                    color: AppColors.darkTextSecondary,
+                    color: colors.textSecondary,
                     fontSize: 12,
                     height: 1.35,
                   ),

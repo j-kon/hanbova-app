@@ -2,6 +2,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 import 'package:qr_flutter/qr_flutter.dart';
 import '../../../core/cashu/cashu_wallet_provider.dart';
 import '../../../core/network/network_environment.dart';
@@ -322,6 +323,41 @@ class _UnifiedDepositSheetState extends ConsumerState<UnifiedDepositSheet>
                 _buildLightningTab(colors),
                 _buildOnChainTab(colors),
                 _buildCashuTokenTab(colors),
+              ],
+            ),
+          ),
+
+          // Stablecoin Deposit Prompt
+          Container(
+            padding: const EdgeInsets.symmetric(
+                horizontal: AppSpacing.md, vertical: 6),
+            decoration: BoxDecoration(
+              color: colors.surfaceCard,
+              border: Border(top: BorderSide(color: colors.border)),
+            ),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Row(
+                  children: [
+                    Icon(Icons.monetization_on_outlined,
+                        size: 16, color: colors.primary),
+                    const SizedBox(width: 8),
+                    Text(
+                      'Depositing USDT or USDC?',
+                      style: AppTypography.caption
+                          .copyWith(color: colors.textSecondary),
+                    ),
+                  ],
+                ),
+                TextButton(
+                  onPressed: () {
+                    Navigator.pop(context);
+                    context.push('/receive');
+                  },
+                  child: const Text('Receive Stablecoins >',
+                      style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
+                ),
               ],
             ),
           ),

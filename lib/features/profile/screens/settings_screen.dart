@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../../core/currency/currency_provider.dart';
+import '../../../core/demo/demo_mode_provider.dart';
 import '../../../core/market/market_provider.dart';
 import '../../../core/security/privacy_provider.dart';
 import '../../../core/theme/app_colors.dart';
@@ -28,6 +29,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
   // Roam preference toggles
   bool _autoSuggestRoam = true;
   bool _dataSavingMode = false;
+  bool _appLockEnabled = true;
 
   void _showAppearanceSheet(BuildContext context) {
     final colors = context.colors;
@@ -67,8 +69,10 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                 ),
                 const SizedBox(height: AppSpacing.sm),
                 ListTile(
-                  title: const Text('System default'),
-                  leading: const Icon(Icons.settings_suggest_outlined),
+                  title: Text('System default',
+                      style: TextStyle(color: colors.textPrimary)),
+                  leading:
+                      Icon(Icons.settings_suggest_outlined, color: colors.textPrimary),
                   trailing: currentTheme == ThemeMode.system
                       ? Icon(Icons.check, color: colors.primary)
                       : null,
@@ -80,8 +84,9 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                   },
                 ),
                 ListTile(
-                  title: const Text('Dark mode'),
-                  leading: const Icon(Icons.dark_mode_outlined),
+                  title: Text('Dark mode',
+                      style: TextStyle(color: colors.textPrimary)),
+                  leading: Icon(Icons.dark_mode_outlined, color: colors.textPrimary),
                   trailing: currentTheme == ThemeMode.dark
                       ? Icon(Icons.check, color: colors.primary)
                       : null,
@@ -93,8 +98,9 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                   },
                 ),
                 ListTile(
-                  title: const Text('Light mode'),
-                  leading: const Icon(Icons.light_mode_outlined),
+                  title: Text('Light mode',
+                      style: TextStyle(color: colors.textPrimary)),
+                  leading: Icon(Icons.light_mode_outlined, color: colors.textPrimary),
                   trailing: currentTheme == ThemeMode.light
                       ? Icon(Icons.check, color: colors.primary)
                       : null,
@@ -163,6 +169,246 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                     },
                   );
                 }),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  void _showRoamPreferencesSheet(BuildContext context) {
+    final colors = context.colors;
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: colors.surfaceCard,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(AppRadius.lg)),
+      ),
+      builder: (sheetCtx) {
+        return StatefulBuilder(
+          builder: (context, setSheetState) {
+            return SafeArea(
+              child: Padding(
+                padding: const EdgeInsets.all(AppSpacing.lg),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    Center(
+                      child: Container(
+                        width: 36,
+                        height: 4,
+                        decoration: BoxDecoration(
+                          color: colors.textTertiary.withValues(alpha: 0.3),
+                          borderRadius: BorderRadius.circular(2),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: AppSpacing.md),
+                    Text(
+                      'Roam Preferences',
+                      style: AppTypography.titleMedium.copyWith(
+                        color: colors.textPrimary,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    const SizedBox(height: AppSpacing.sm),
+                    SwitchListTile(
+                      title: Text(
+                        'Auto-suggest on Arrival',
+                        style: AppTypography.bodyMedium
+                            .copyWith(color: colors.textPrimary),
+                      ),
+                      subtitle: Text(
+                        'Prompt to switch spend market when traveling',
+                        style: AppTypography.caption
+                            .copyWith(color: colors.textTertiary),
+                      ),
+                      value: _autoSuggestRoam,
+                      activeThumbColor: colors.primary,
+                      onChanged: (v) {
+                        setState(() => _autoSuggestRoam = v);
+                        setSheetState(() => _autoSuggestRoam = v);
+                      },
+                    ),
+                    Divider(height: 1, color: colors.divider),
+                    SwitchListTile(
+                      title: Text(
+                        'Data Saving Mode',
+                        style: AppTypography.bodyMedium
+                            .copyWith(color: colors.textPrimary),
+                      ),
+                      subtitle: Text(
+                        'Reduce background refreshes while roaming',
+                        style: AppTypography.caption
+                            .copyWith(color: colors.textTertiary),
+                      ),
+                      value: _dataSavingMode,
+                      activeThumbColor: colors.primary,
+                      onChanged: (v) {
+                        setState(() => _dataSavingMode = v);
+                        setSheetState(() => _dataSavingMode = v);
+                      },
+                    ),
+                  ],
+                ),
+              ),
+            );
+          },
+        );
+      },
+    );
+  }
+
+  void _showWalletsAndAssetsSheet(BuildContext context) {
+    final colors = context.colors;
+    final demoState = ref.read(demoModeProvider);
+
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: colors.surfaceCard,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(AppRadius.lg)),
+      ),
+      builder: (sheetCtx) {
+        return SafeArea(
+          child: Padding(
+            padding: const EdgeInsets.all(AppSpacing.lg),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                Text(
+                  'Wallets & Assets',
+                  style: AppTypography.titleMedium.copyWith(
+                    color: colors.textPrimary,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                const SizedBox(height: 6),
+                Text(
+                  'Configure supported settlement rails, custody, and regional asset access.',
+                  style: AppTypography.caption.copyWith(
+                    color: colors.textSecondary,
+                  ),
+                ),
+                const SizedBox(height: AppSpacing.lg),
+                ListTile(
+                  leading: Container(
+                    padding: const EdgeInsets.all(8),
+                    decoration: const BoxDecoration(
+                      color: Color(0xFFF7931A),
+                      shape: BoxShape.circle,
+                    ),
+                    child: const Icon(Icons.currency_bitcoin_rounded,
+                        color: Colors.white, size: 20),
+                  ),
+                  title: const Text('Bitcoin (BTC)'),
+                  subtitle: const Text('Lightning & Cashu bearer e-cash. Active.'),
+                  trailing: Container(
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFF10B981).withValues(alpha: 0.12),
+                      borderRadius: BorderRadius.circular(4),
+                    ),
+                    child: const Text(
+                      'Active',
+                      style: TextStyle(
+                        color: Color(0xFF10B981),
+                        fontSize: 11,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ),
+                  onTap: () {
+                    Navigator.pop(sheetCtx);
+                    context.push('/money/bitcoin');
+                  },
+                ),
+                const Divider(height: 1),
+                ListTile(
+                  leading: Container(
+                    padding: const EdgeInsets.all(8),
+                    decoration: const BoxDecoration(
+                      color: Color(0xFF26A17B),
+                      shape: BoxShape.circle,
+                    ),
+                    child: const Icon(Icons.attach_money_rounded,
+                        color: Colors.white, size: 20),
+                  ),
+                  title: const Text('Tether USD (USDT)'),
+                  subtitle: Text(demoState.isEnabled
+                      ? 'Demo stablecoin wallet. Active in Demo.'
+                      : 'Multi-rail stablecoin. Provider pending.'),
+                  trailing: Container(
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                    decoration: BoxDecoration(
+                      color: (demoState.isEnabled
+                              ? colors.primary
+                              : const Color(0xFF38BDF8))
+                          .withValues(alpha: 0.12),
+                      borderRadius: BorderRadius.circular(4),
+                    ),
+                    child: Text(
+                      demoState.isEnabled ? 'Active (Demo)' : 'Coming soon',
+                      style: TextStyle(
+                        color: demoState.isEnabled
+                            ? colors.primary
+                            : const Color(0xFF38BDF8),
+                        fontSize: 11,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ),
+                  onTap: () {
+                    Navigator.pop(sheetCtx);
+                    context.push('/money/usdt');
+                  },
+                ),
+                const Divider(height: 1),
+                ListTile(
+                  leading: Container(
+                    padding: const EdgeInsets.all(8),
+                    decoration: const BoxDecoration(
+                      color: Color(0xFF2775CA),
+                      shape: BoxShape.circle,
+                    ),
+                    child: const Icon(Icons.monetization_on_rounded,
+                        color: Colors.white, size: 20),
+                  ),
+                  title: const Text('USD Coin (USDC)'),
+                  subtitle: Text(demoState.isEnabled
+                      ? 'Demo stablecoin wallet. Active in Demo.'
+                      : 'Regulated digital dollar. Provider pending.'),
+                  trailing: Container(
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                    decoration: BoxDecoration(
+                      color: (demoState.isEnabled
+                              ? colors.primary
+                              : const Color(0xFF38BDF8))
+                          .withValues(alpha: 0.12),
+                      borderRadius: BorderRadius.circular(4),
+                    ),
+                    child: Text(
+                      demoState.isEnabled ? 'Active (Demo)' : 'Coming soon',
+                      style: TextStyle(
+                        color: demoState.isEnabled
+                            ? colors.primary
+                            : const Color(0xFF38BDF8),
+                        fontSize: 11,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ),
+                  onTap: () {
+                    Navigator.pop(sheetCtx);
+                    context.push('/money/usdc');
+                  },
+                ),
               ],
             ),
           ),
@@ -408,7 +654,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
           const SizedBox(height: AppSpacing.lg),
 
           // 3. Roam Section
-          _buildSectionHeader(context, 'ROAM MODE'),
+          _buildSectionHeader(context, 'ROAM'),
           _buildSettingsCard(
             context,
             children: [
@@ -442,36 +688,12 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                 onTap: () => context.push('/roam'),
               ),
               _buildDivider(context),
-              SwitchListTile(
-                title: Text(
-                  'Auto-suggest on Arrival',
-                  style: AppTypography.bodyMedium
-                      .copyWith(color: colors.textPrimary),
-                ),
-                subtitle: Text(
-                  'Prompt to switch spend market when traveling',
-                  style: AppTypography.caption
-                      .copyWith(color: colors.textTertiary),
-                ),
-                value: _autoSuggestRoam,
-                activeThumbColor: colors.primary,
-                onChanged: (v) => setState(() => _autoSuggestRoam = v),
-              ),
-              _buildDivider(context),
-              SwitchListTile(
-                title: Text(
-                  'Data Saving Mode',
-                  style: AppTypography.bodyMedium
-                      .copyWith(color: colors.textPrimary),
-                ),
-                subtitle: Text(
-                  'Reduce background refreshes while roaming',
-                  style: AppTypography.caption
-                      .copyWith(color: colors.textTertiary),
-                ),
-                value: _dataSavingMode,
-                activeThumbColor: colors.primary,
-                onChanged: (v) => setState(() => _dataSavingMode = v),
+              _buildSettingTile(
+                context,
+                icon: Icons.tune_rounded,
+                title: 'Roam Preferences',
+                subtitle: 'Auto-suggest on arrival & data saving',
+                onTap: () => _showRoamPreferencesSheet(context),
               ),
             ],
           ),
@@ -592,6 +814,18 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
               ),
               _buildDivider(context),
               SwitchListTile(
+                title: Text('App Lock',
+                    style: AppTypography.bodyMedium
+                        .copyWith(color: colors.textPrimary)),
+                subtitle: Text('Require Face ID / PIN on launch',
+                    style: AppTypography.caption
+                        .copyWith(color: colors.textTertiary)),
+                value: _appLockEnabled,
+                activeThumbColor: colors.primary,
+                onChanged: (v) => setState(() => _appLockEnabled = v),
+              ),
+              _buildDivider(context),
+              SwitchListTile(
                 title: Text('App Switcher Privacy',
                     style: AppTypography.bodyMedium
                         .copyWith(color: colors.textPrimary)),
@@ -612,6 +846,14 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
           _buildSettingsCard(
             context,
             children: [
+              _buildSettingTile(
+                context,
+                icon: Icons.account_balance_wallet_outlined,
+                title: 'Wallets & Assets',
+                subtitle: 'Bitcoin, USDT, USDC configuration',
+                onTap: () => _showWalletsAndAssetsSheet(context),
+              ),
+              _buildDivider(context),
               _buildSettingTile(
                 context,
                 icon: Icons.shield_outlined,
@@ -702,8 +944,13 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
         borderRadius: AppRadius.mdRadius,
         border: Border.all(color: colors.border),
       ),
-      child: Column(
-        children: children,
+      child: Material(
+        color: Colors.transparent,
+        borderRadius: AppRadius.mdRadius,
+        clipBehavior: Clip.antiAlias,
+        child: Column(
+          children: children,
+        ),
       ),
     );
   }

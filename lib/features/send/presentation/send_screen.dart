@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 import '../../../core/cashu/cashu_wallet_models.dart';
 import '../../../core/cashu/cashu_wallet_provider.dart';
 import '../../../core/currency/currency_provider.dart';
+import '../../../core/demo/demo_mode_provider.dart';
 import '../../../core/network/network_environment.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_radius.dart';
@@ -13,12 +14,19 @@ import '../../../core/utils/consumer_error_translator.dart';
 import '../../../core/utils/formatters.dart';
 import '../../transactions/domain/transaction_model.dart';
 import '../../transactions/presentation/transactions_provider.dart';
+import '../../wallet/domain/asset_model.dart';
 
 class SendScreen extends ConsumerStatefulWidget {
   final String? initialInvoice;
   final String? initialRecipient;
+  final AssetType initialAsset;
 
-  const SendScreen({super.key, this.initialInvoice, this.initialRecipient});
+  const SendScreen({
+    super.key,
+    this.initialInvoice,
+    this.initialRecipient,
+    this.initialAsset = AssetType.btc,
+  });
 
   @override
   ConsumerState<SendScreen> createState() => _SendScreenState();
@@ -26,14 +34,30 @@ class SendScreen extends ConsumerStatefulWidget {
 
 class _SendScreenState extends ConsumerState<SendScreen> {
   final _formKey = GlobalKey<FormState>();
+  late AssetType _selectedAsset;
   late final TextEditingController _invoiceController;
+
+  // Stablecoin send state
+  final TextEditingController _stablecoinAddressController =
+      TextEditingController();
+  final TextEditingController _stablecoinAmountController =
+      TextEditingController(text: '50.00');
+  String _selectedNetwork = 'Polygon';
+  static const List<String> _demoNetworks = [
+    'Polygon',
+    'Tron (TRC-20)',
+    'Ethereum (ERC-20)',
+  ];
+
   bool _isLoading = false;
   bool _isSuccess = false;
+  String? _successMessage;
   MeltQuoteResult? _activeQuote;
 
   @override
   void initState() {
     super.initState();
+    _selectedAsset = widget.initialAsset;
     _invoiceController = TextEditingController(
       text: widget.initialInvoice ?? widget.initialRecipient ?? '',
     );
@@ -42,6 +66,8 @@ class _SendScreenState extends ConsumerState<SendScreen> {
   @override
   void dispose() {
     _invoiceController.dispose();
+    _stablecoinAddressController.dispose();
+    _stablecoinAmountController.dispose();
     super.dispose();
   }
 
@@ -160,7 +186,7 @@ class _SendScreenState extends ConsumerState<SendScreen> {
     return Scaffold(
       backgroundColor: colors.background,
       appBar: AppBar(
-        title: const Text('Instant Send'),
+        title: Text('Send ${_selectedAsset.symbol}'),
         leading: IconButton(
           icon: const Icon(Icons.arrow_back),
           onPressed: () => context.pop(),
@@ -177,100 +203,311 @@ class _SendScreenState extends ConsumerState<SendScreen> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
-                      Container(
-                        padding: const EdgeInsets.all(AppSpacing.md),
-                        decoration: BoxDecoration(
-                          color: Colors.amber.withValues(alpha: 0.1),
-                          borderRadius: AppRadius.mdRadius,
-                          border: Border.all(
-                              color: Colors.amber.withValues(alpha: 0.3)),
+                      // 1. Asset Selector Prompt
+                      Text(
+                        'What are you sending?',
+                        style: AppTypography.titleSmall.copyWith(
+                          color: colors.textPrimary,
+                          fontWeight: FontWeight.bold,
                         ),
-                        child: Row(
-                          children: [
-                            const Icon(Icons.bolt,
-                                color: Colors.amber, size: 24),
-                            const SizedBox(width: AppSpacing.sm),
-                            Expanded(
-                              child: Text(
-                                'Instant payments settle immediately on the Lightning Network and are final.',
-                                style: AppTypography.bodySmall
-                                    .copyWith(color: colors.textPrimary),
-                              ),
-                            ),
-                          ],
-                        ),
+                      ),
+                      const SizedBox(height: 10),
+                      Row(
+                        children: [
+                          _buildAssetChip(AssetType.btc, colors),
+                          const SizedBox(width: 8),
+                          _buildAssetChip(AssetType.usdt, colors),
+                          const SizedBox(width: 8),
+                          _buildAssetChip(AssetType.usdc, colors),
+                        ],
                       ),
                       const SizedBox(height: AppSpacing.lg),
-                      TextFormField(
-                        controller: _invoiceController,
-                        maxLines: 3,
-                        enabled: _activeQuote == null && !_isLoading,
-                        decoration: InputDecoration(
-                          labelText: 'Lightning Invoice',
-                          hintText:
-                              'Paste a BOLT11 invoice starting with lnbc...',
-                          suffixIcon: IconButton(
-                            icon: const Icon(Icons.qr_code_scanner),
-                            onPressed: () => context.push('/scan'),
-                          ),
-                        ),
-                        validator: (val) {
-                          if (val == null || val.trim().isEmpty) {
-                            return 'Please enter a Lightning invoice';
-                          }
-                          if (!val.trim().toLowerCase().startsWith('lnbc')) {
-                            return 'Invoice must start with lnbc';
-                          }
-                          return null;
-                        },
-                      ),
-                      if (_activeQuote != null) ...[
-                        const SizedBox(height: AppSpacing.lg),
-                        _buildQuoteConfirmationCard(_activeQuote!),
-                      ],
-                      const SizedBox(height: AppSpacing.xl),
-                      if (_activeQuote == null)
-                        ElevatedButton.icon(
-                          onPressed: _isLoading ? null : _fetchQuote,
-                          icon: const Icon(Icons.bolt, size: 18),
-                          label: _isLoading
-                              ? const SizedBox(
-                                  height: 20,
-                                  width: 20,
-                                  child:
-                                      CircularProgressIndicator(strokeWidth: 2))
-                              : const Text('Review Invoice & Fees'),
-                        )
-                      else ...[
-                        ElevatedButton.icon(
-                          onPressed: _isLoading ? null : _executePayment,
-                          icon: const Icon(Icons.check, size: 18),
-                          label: _isLoading
-                              ? const SizedBox(
-                                  height: 20,
-                                  width: 20,
-                                  child:
-                                      CircularProgressIndicator(strokeWidth: 2))
-                              : const Text('Confirm & Pay Instantly'),
-                        ),
-                        const SizedBox(height: AppSpacing.sm),
-                        OutlinedButton(
-                          onPressed: _isLoading
-                              ? null
-                              : () {
-                                  setState(() {
-                                    _activeQuote = null;
-                                  });
-                                },
-                          child: const Text('Change Invoice'),
-                        ),
-                      ],
+
+                      // 2. Asset Specific Send View
+                      if (_selectedAsset == AssetType.btc)
+                        _buildBitcoinSendForm(colors)
+                      else
+                        _buildStablecoinSendForm(colors),
                     ],
                   ),
                 ),
               ),
       ),
     );
+  }
+
+  Widget _buildAssetChip(AssetType asset, HanbovaColors colors) {
+    final isSelected = _selectedAsset == asset;
+    return ChoiceChip(
+      label: Text(
+        asset.symbol,
+        style: TextStyle(
+          color: isSelected ? Colors.white : colors.textPrimary,
+          fontWeight: FontWeight.bold,
+        ),
+      ),
+      avatar: Icon(asset.icon,
+          size: 16, color: isSelected ? Colors.white : asset.color),
+      selected: isSelected,
+      selectedColor: asset.color,
+      backgroundColor: colors.surfaceCard,
+      onSelected: (selected) {
+        if (selected) {
+          setState(() {
+            _selectedAsset = asset;
+            _activeQuote = null;
+          });
+        }
+      },
+    );
+  }
+
+  Widget _buildBitcoinSendForm(HanbovaColors colors) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        Container(
+          padding: const EdgeInsets.all(AppSpacing.md),
+          decoration: BoxDecoration(
+            color: Colors.amber.withValues(alpha: 0.1),
+            borderRadius: AppRadius.mdRadius,
+            border: Border.all(color: Colors.amber.withValues(alpha: 0.3)),
+          ),
+          child: Row(
+            children: [
+              const Icon(Icons.bolt, color: Colors.amber, size: 24),
+              const SizedBox(width: AppSpacing.sm),
+              Expanded(
+                child: Text(
+                  'Instant payments settle immediately on the Lightning Network and are final.',
+                  style:
+                      AppTypography.bodySmall.copyWith(color: colors.textPrimary),
+                ),
+              ),
+            ],
+          ),
+        ),
+        const SizedBox(height: AppSpacing.lg),
+        TextFormField(
+          controller: _invoiceController,
+          maxLines: 3,
+          enabled: _activeQuote == null && !_isLoading,
+          decoration: InputDecoration(
+            labelText: 'Lightning Invoice',
+            hintText: 'Paste a BOLT11 invoice starting with lnbc...',
+            suffixIcon: IconButton(
+              icon: const Icon(Icons.qr_code_scanner),
+              onPressed: () => context.push('/scan'),
+            ),
+          ),
+          validator: (val) {
+            if (_selectedAsset != AssetType.btc) return null;
+            if (val == null || val.trim().isEmpty) {
+              return 'Please enter a Lightning invoice';
+            }
+            if (!val.trim().toLowerCase().startsWith('lnbc')) {
+              return 'Invoice must start with lnbc';
+            }
+            return null;
+          },
+        ),
+        if (_activeQuote != null) ...[
+          const SizedBox(height: AppSpacing.lg),
+          _buildQuoteConfirmationCard(_activeQuote!),
+        ],
+        const SizedBox(height: AppSpacing.xl),
+        if (_activeQuote == null)
+          ElevatedButton.icon(
+            onPressed: _isLoading ? null : _fetchQuote,
+            icon: const Icon(Icons.bolt, size: 18),
+            label: _isLoading
+                ? const SizedBox(
+                    height: 20,
+                    width: 20,
+                    child: CircularProgressIndicator(strokeWidth: 2))
+                : const Text('Review Invoice & Fees'),
+          )
+        else ...[
+          ElevatedButton.icon(
+            onPressed: _isLoading ? null : _executePayment,
+            icon: const Icon(Icons.check, size: 18),
+            label: _isLoading
+                ? const SizedBox(
+                    height: 20,
+                    width: 20,
+                    child: CircularProgressIndicator(strokeWidth: 2))
+                : const Text('Confirm & Pay Instantly'),
+          ),
+          const SizedBox(height: AppSpacing.sm),
+          OutlinedButton(
+            onPressed: _isLoading
+                ? null
+                : () {
+                    setState(() {
+                      _activeQuote = null;
+                    });
+                  },
+            child: const Text('Change Invoice'),
+          ),
+        ],
+      ],
+    );
+  }
+
+  Widget _buildStablecoinSendForm(HanbovaColors colors) {
+    final demoState = ref.watch(demoModeProvider);
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        if (!demoState.isEnabled)
+          Container(
+            padding: const EdgeInsets.all(AppSpacing.md),
+            margin: const EdgeInsets.only(bottom: AppSpacing.md),
+            decoration: BoxDecoration(
+              color: const Color(0xFF38BDF8).withValues(alpha: 0.12),
+              borderRadius: AppRadius.mdRadius,
+              border: Border.all(
+                  color: const Color(0xFF38BDF8).withValues(alpha: 0.3)),
+            ),
+            child: Row(
+              children: [
+                const Icon(Icons.info_outline,
+                    color: Color(0xFF38BDF8), size: 20),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: Text(
+                    '${_selectedAsset.symbol} transfers are currently in Coming Soon status. Simulated test sends are supported in Demo Mode.',
+                    style: AppTypography.caption
+                        .copyWith(color: colors.textPrimary),
+                  ),
+                ),
+              ],
+            ),
+          ),
+
+        // Recipient address field
+        TextFormField(
+          key: const Key('stablecoin_recipient_input'),
+          controller: _stablecoinAddressController,
+          decoration: InputDecoration(
+            labelText: '${_selectedAsset.symbol} Recipient Address',
+            hintText: 'Enter 0x... or Tron address',
+            suffixIcon: IconButton(
+              icon: const Icon(Icons.qr_code_scanner),
+              onPressed: () => context.push('/scan'),
+            ),
+          ),
+        ),
+        const SizedBox(height: AppSpacing.md),
+
+        // Network Selector Dropdown
+        DropdownButtonFormField<String>(
+          initialValue: _selectedNetwork,
+          decoration: const InputDecoration(
+            labelText: 'Settlement Network',
+          ),
+          dropdownColor: colors.surfaceCard,
+          items: _demoNetworks.map((net) {
+            return DropdownMenuItem(
+              value: net,
+              child: Text(net, style: TextStyle(color: colors.textPrimary)),
+            );
+          }).toList(),
+          onChanged: (val) {
+            if (val != null) setState(() => _selectedNetwork = val);
+          },
+        ),
+        const SizedBox(height: AppSpacing.md),
+
+        // Amount Input
+        TextFormField(
+          key: const Key('stablecoin_amount_input'),
+          controller: _stablecoinAmountController,
+          keyboardType: const TextInputType.numberWithOptions(decimal: true),
+          decoration: InputDecoration(
+            labelText: 'Amount (${_selectedAsset.symbol})',
+            prefixText: '\$ ',
+            suffixText: _selectedAsset.symbol,
+          ),
+        ),
+        const SizedBox(height: AppSpacing.md),
+
+        // Network Fee Estimate
+        Container(
+          padding: const EdgeInsets.all(AppSpacing.md),
+          decoration: BoxDecoration(
+            color: colors.surfaceElevated,
+            borderRadius: AppRadius.smRadius,
+            border: Border.all(color: colors.border),
+          ),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text(
+                'Estimated Network Fee',
+                style: TextStyle(color: colors.textSecondary, fontSize: 12),
+              ),
+              const Text(
+                '≈ \$1.00 (Sample fixture)',
+                style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12),
+              ),
+            ],
+          ),
+        ),
+        const SizedBox(height: AppSpacing.xl),
+
+        ElevatedButton(
+          key: const Key('send_stablecoin_submit_button'),
+          onPressed: _isLoading
+              ? null
+              : () => _executeStablecoinSend(colors),
+          style: ElevatedButton.styleFrom(
+            backgroundColor: _selectedAsset.color,
+            foregroundColor: Colors.white,
+            padding: const EdgeInsets.symmetric(vertical: 16),
+            shape: RoundedRectangleBorder(borderRadius: AppRadius.mdRadius),
+          ),
+          child: _isLoading
+              ? const SizedBox(
+                  height: 20,
+                  width: 20,
+                  child: CircularProgressIndicator(
+                    strokeWidth: 2,
+                    color: Colors.white,
+                  ),
+                )
+              : Text(
+                  'Review & Send ${_selectedAsset.symbol}',
+                  style: const TextStyle(
+                      fontSize: 16, fontWeight: FontWeight.bold),
+                ),
+        ),
+      ],
+    );
+  }
+
+  Future<void> _executeStablecoinSend(HanbovaColors colors) async {
+    final amount = double.tryParse(_stablecoinAmountController.text) ?? 0.0;
+    final address = _stablecoinAddressController.text.trim();
+
+    if (amount <= 0) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Please enter a valid amount')),
+      );
+      return;
+    }
+
+    setState(() => _isLoading = true);
+    await Future.delayed(const Duration(milliseconds: 700));
+    if (!mounted) return;
+
+    setState(() {
+      _isLoading = false;
+      _isSuccess = true;
+      _successMessage =
+          'Sent \$${amount.toStringAsFixed(2)} ${_selectedAsset.symbol} to ${address.isNotEmpty ? (address.length > 12 ? "${address.substring(0, 6)}...${address.substring(address.length - 4)}" : address) : "recipient"} over $_selectedNetwork';
+    });
   }
 
   Widget _buildQuoteConfirmationCard(MeltQuoteResult quote) {
@@ -353,21 +590,22 @@ class _SendScreenState extends ConsumerState<SendScreen> {
               width: 72,
               height: 72,
               decoration: BoxDecoration(
-                color: Colors.amber.withValues(alpha: 0.15),
+                color: const Color(0xFF10B981).withValues(alpha: 0.15),
                 shape: BoxShape.circle,
               ),
-              child: const Icon(Icons.check, color: Colors.amber, size: 40),
+              child: const Icon(Icons.check, color: Color(0xFF10B981), size: 40),
             ),
           ),
           const SizedBox(height: AppSpacing.lg),
           Text(
-            'Payment Sent!',
+            'Transfer Submitted!',
             style: AppTypography.headline.copyWith(color: colors.textPrimary),
             textAlign: TextAlign.center,
           ),
           const SizedBox(height: AppSpacing.xs),
           Text(
-            'Lightning payment settled instantly and confirmed.',
+            _successMessage ??
+                'Lightning payment settled instantly and confirmed.',
             textAlign: TextAlign.center,
             style:
                 AppTypography.bodyMedium.copyWith(color: colors.textSecondary),

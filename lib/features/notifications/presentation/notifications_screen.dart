@@ -20,6 +20,8 @@ class _NotificationsScreenState extends ConsumerState<NotificationsScreen> {
   Widget build(BuildContext context) {
     final demoState = ref.watch(demoModeProvider);
     final privacy = ref.watch(privacyProvider);
+    final colors = context.colors;
+    final isDark = context.isDark;
 
     final allNotifs = demoState.demoNotifications;
     final filtered = _selectedCategory == 'All'
@@ -30,14 +32,14 @@ class _NotificationsScreenState extends ConsumerState<NotificationsScreen> {
             .toList();
 
     return Scaffold(
-      backgroundColor: AppColors.darkBackground,
+      backgroundColor: colors.background,
       appBar: AppBar(
-        backgroundColor: AppColors.darkBackground,
+        backgroundColor: colors.background,
         elevation: 0,
-        title: const Text(
+        title: Text(
           'Notifications Centre',
           style: TextStyle(
-            color: Colors.white,
+            color: colors.textPrimary,
             fontSize: 20,
             fontWeight: FontWeight.bold,
           ),
@@ -47,15 +49,15 @@ class _NotificationsScreenState extends ConsumerState<NotificationsScreen> {
             onPressed: () {
               ref.read(demoModeProvider.notifier).markAllNotificationsRead();
               ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(
-                  content: Text('All notifications marked as read'),
-                  backgroundColor: AppColors.primary,
+                SnackBar(
+                  content: const Text('All notifications marked as read'),
+                  backgroundColor: colors.primary,
                 ),
               );
             },
-            child: const Text(
+            child: Text(
               'Mark all read',
-              style: TextStyle(color: AppColors.primary, fontSize: 13),
+              style: TextStyle(color: colors.primary, fontSize: 13),
             ),
           ),
         ],
@@ -83,15 +85,19 @@ class _NotificationsScreenState extends ConsumerState<NotificationsScreen> {
                     label: Text(
                       cat,
                       style: TextStyle(
-                        color: isSelected ? Colors.black : Colors.white,
+                        color: isSelected
+                            ? (isDark ? Colors.black : Colors.white)
+                            : colors.textPrimary,
                         fontWeight:
                             isSelected ? FontWeight.bold : FontWeight.normal,
                         fontSize: 12,
                       ),
                     ),
                     selected: isSelected,
-                    selectedColor: AppColors.primary,
-                    backgroundColor: AppColors.darkCardBackground,
+                    selectedColor: colors.primary,
+                    backgroundColor: colors.surfaceCard,
+                    side: BorderSide(
+                        color: isSelected ? colors.primary : colors.border),
                     onSelected: (val) {
                       if (val) {
                         setState(() => _selectedCategory = cat);
@@ -112,23 +118,22 @@ class _NotificationsScreenState extends ConsumerState<NotificationsScreen> {
                         Icon(
                           Icons.notifications_none_outlined,
                           size: 64,
-                          color: AppColors.darkTextSecondary
-                              .withValues(alpha: 0.5),
+                          color: colors.textTertiary,
                         ),
                         const SizedBox(height: 16),
-                        const Text(
+                        Text(
                           'No Notifications',
                           style: TextStyle(
-                            color: Colors.white,
+                            color: colors.textPrimary,
                             fontSize: 18,
                             fontWeight: FontWeight.bold,
                           ),
                         ),
                         const SizedBox(height: 8),
-                        const Text(
+                        Text(
                           'You\'re all caught up on financial updates.',
                           style: TextStyle(
-                            color: AppColors.darkTextSecondary,
+                            color: colors.textSecondary,
                             fontSize: 13,
                           ),
                         ),
@@ -151,6 +156,7 @@ class _NotificationsScreenState extends ConsumerState<NotificationsScreen> {
   }
 
   Widget _buildNotificationCard(AppNotificationItem notif, bool hideAmounts) {
+    final colors = context.colors;
     final (icon, color) = _getCategoryVisuals(notif.category);
     final timeStr = DateFormat('MMM d, h:mm a').format(notif.createdAt);
 
@@ -164,13 +170,13 @@ class _NotificationsScreenState extends ConsumerState<NotificationsScreen> {
         padding: const EdgeInsets.all(14),
         decoration: BoxDecoration(
           color: notif.isRead
-              ? AppColors.darkCardBackground
-              : const Color(0xFF1E293B),
+              ? colors.surfaceCard
+              : colors.surfaceElevated,
           borderRadius: BorderRadius.circular(14),
           border: Border.all(
             color: notif.isRead
-                ? AppColors.darkBorder
-                : AppColors.primary.withValues(alpha: 0.4),
+                ? colors.border
+                : colors.primary.withValues(alpha: 0.4),
           ),
         ),
         child: Row(
@@ -192,19 +198,23 @@ class _NotificationsScreenState extends ConsumerState<NotificationsScreen> {
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      Text(
-                        notif.title,
-                        style: TextStyle(
-                          color: Colors.white,
-                          fontSize: 14,
-                          fontWeight:
-                              notif.isRead ? FontWeight.w600 : FontWeight.bold,
+                      Expanded(
+                        child: Text(
+                          notif.title,
+                          style: TextStyle(
+                            color: colors.textPrimary,
+                            fontSize: 14,
+                            fontWeight: notif.isRead
+                                ? FontWeight.w600
+                                : FontWeight.bold,
+                          ),
                         ),
                       ),
+                      const SizedBox(width: 8),
                       Text(
                         timeStr,
-                        style: const TextStyle(
-                          color: AppColors.darkTextSecondary,
+                        style: TextStyle(
+                          color: colors.textSecondary,
                           fontSize: 11,
                         ),
                       ),
@@ -213,8 +223,8 @@ class _NotificationsScreenState extends ConsumerState<NotificationsScreen> {
                   const SizedBox(height: 4),
                   Text(
                     notif.body,
-                    style: const TextStyle(
-                      color: AppColors.darkTextSecondary,
+                    style: TextStyle(
+                      color: colors.textSecondary,
                       fontSize: 12,
                       height: 1.3,
                     ),
@@ -254,7 +264,7 @@ class _NotificationsScreenState extends ConsumerState<NotificationsScreen> {
       case 'security':
         return (Icons.lock_outline, const Color(0xFFEF4444));
       default:
-        return (Icons.notifications_outlined, AppColors.primary);
+        return (Icons.notifications_outlined, context.colors.primary);
     }
   }
 }
