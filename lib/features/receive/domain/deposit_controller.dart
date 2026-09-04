@@ -5,6 +5,7 @@ import '../../../core/cashu/cashu_wallet_models.dart';
 import '../../../core/cashu/cashu_wallet_provider.dart';
 import '../../../core/cashu/cashu_wallet_service.dart';
 import '../../../core/cashu/wallet_policy.dart';
+import '../../../core/errors/user_facing_error.dart';
 import '../../../core/network/network_environment.dart';
 
 enum DepositPhase {
@@ -96,7 +97,7 @@ final class DepositController extends ChangeNotifier {
         _setState(DepositState(
           phase: DepositPhase.failed,
           amountSats: amountSats,
-          message: error.toString(),
+          message: UserFacingErrorMapper.from(error).message,
         ));
       }
       rethrow;
@@ -173,7 +174,7 @@ final class DepositController extends ChangeNotifier {
           phase: DepositPhase.failed,
           amountSats: amountSats,
           quote: quote,
-          message: error.toString(),
+          message: UserFacingErrorMapper.from(error).message,
         ));
       }
       rethrow;

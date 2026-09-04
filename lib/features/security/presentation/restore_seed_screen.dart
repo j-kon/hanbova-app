@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../../core/crypto/mnemonic_service.dart';
+import '../../../core/errors/app_failure.dart';
+import '../../../core/errors/user_facing_error.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_radius.dart';
 import '../../../core/theme/app_spacing.dart';
@@ -142,16 +144,20 @@ class _RestoreSeedScreenState extends ConsumerState<RestoreSeedScreen> {
       setState(() => _isRestoring = false);
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text(failure.message),
+          content: Text(
+            UserFacingErrorMapper.from(
+              AppFailure(message: 'Wallet restore failed', code: failure.code),
+            ).message,
+          ),
           backgroundColor: Colors.redAccent,
         ),
       );
-    } catch (_) {
+    } catch (error) {
       if (!mounted) return;
       setState(() => _isRestoring = false);
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Wallet restore could not be completed.'),
+        SnackBar(
+          content: Text(UserFacingErrorMapper.from(error).message),
           backgroundColor: Colors.redAccent,
         ),
       );

@@ -4,9 +4,9 @@ import '../../../core/cashu/cashu_wallet_provider.dart';
 import '../../../core/cashu/wallet_policy.dart';
 import '../../../core/crypto/crypto_identity_service.dart';
 import '../../../core/crypto/encrypted_envelope_service.dart';
+import '../../../core/errors/user_facing_error.dart';
 import '../../../core/network/network_environment.dart';
 import '../../../core/notifications/in_app_notification.dart';
-import '../../../core/utils/consumer_error_translator.dart';
 import '../../../core/utils/formatters.dart';
 import '../../../core/wallet/wallet_context.dart';
 import '../../auth/providers/auth_provider.dart';
@@ -120,7 +120,7 @@ class ProtectedSendNotifier extends StateNotifier<ProtectedSendState> {
     } catch (e) {
       state = state.copyWith(
         isLoading: false,
-        errorMessage: ConsumerErrorTranslator.translate(e),
+        errorMessage: UserFacingErrorMapper.from(e).message,
       );
       return false;
     }
@@ -358,7 +358,7 @@ class ProtectedSendNotifier extends StateNotifier<ProtectedSendState> {
           );
       return true;
     } catch (e) {
-      final cleanMsg = ConsumerErrorTranslator.translate(e);
+      final cleanMsg = UserFacingErrorMapper.from(e).message;
       state = state.copyWith(isLoading: false, errorMessage: cleanMsg);
       return false;
     }
@@ -478,7 +478,7 @@ class ProtectedSendNotifier extends StateNotifier<ProtectedSendState> {
       state = state.copyWith(isLoading: false);
       return true;
     } catch (e) {
-      final cleanMsg = ConsumerErrorTranslator.translate(e);
+      final cleanMsg = UserFacingErrorMapper.from(e).message;
       state = state.copyWith(isLoading: false, errorMessage: cleanMsg);
       return false;
     }

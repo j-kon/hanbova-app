@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -67,21 +68,14 @@ class ApiClient {
     }
   }
 
-  String _formatNetworkError(dynamic e) {
-    final str = e.toString();
-    if (str.contains('Connection reset by peer') ||
-        str.contains('Broken pipe') ||
-        str.contains('SocketException') ||
-        str.contains('Failed host lookup')) {
-      return 'Unable to connect to server. Please check your network connection.';
-    }
-    if (str.contains('TimeoutException')) {
-      return 'Server request timed out. Please try again.';
-    }
-    return str
-        .replaceAll('Exception:', '')
-        .replaceAll('ClientException:', '')
-        .trim();
+  AppFailure _networkFailure(Object error) {
+    return AppFailure(
+      message: error is TimeoutException
+          ? 'Network request timed out'
+          : 'Network request failed',
+      code: error is TimeoutException ? 'request_timeout' : 'network_error',
+      originalError: error,
+    );
   }
 
   Future<Map<String, dynamic>> get(String path) async {
@@ -94,7 +88,7 @@ class ApiClient {
       return _handleResponse(response);
     } catch (e) {
       if (e is AppFailure) rethrow;
-      throw AppFailure(message: _formatNetworkError(e), originalError: e);
+      throw _networkFailure(e);
     }
   }
 
@@ -113,7 +107,7 @@ class ApiClient {
       return _handleResponse(response);
     } catch (e) {
       if (e is AppFailure) rethrow;
-      throw AppFailure(message: _formatNetworkError(e), originalError: e);
+      throw _networkFailure(e);
     }
   }
 
@@ -132,7 +126,7 @@ class ApiClient {
       return _handleResponse(response);
     } catch (e) {
       if (e is AppFailure) rethrow;
-      throw AppFailure(message: _formatNetworkError(e), originalError: e);
+      throw _networkFailure(e);
     }
   }
 
@@ -146,7 +140,7 @@ class ApiClient {
       return _handleResponse(response);
     } catch (e) {
       if (e is AppFailure) rethrow;
-      throw AppFailure(message: _formatNetworkError(e), originalError: e);
+      throw _networkFailure(e);
     }
   }
 
@@ -165,11 +159,18 @@ class ApiClient {
 
     try {
       final errorJson = jsonDecode(response.body);
-      final message =
-          errorJson['message'] ?? errorJson['error'] ?? 'Request failed';
+      final rawCode = errorJson['code'] ??
+          errorJson['error_code'] ??
+          errorJson['error'] ??
+          status.toString();
+      final candidate = rawCode.toString();
+      final safeCode = RegExp(r'^[a-zA-Z0-9_.-]{1,64}$').hasMatch(candidate)
+          ? candidate
+          : status.toString();
       throw AppFailure(
-        message: message.toString(),
-        code: errorJson['error']?.toString() ?? status.toString(),
+        message: 'Request failed',
+        code: safeCode,
+        originalError: errorJson,
       );
     } catch (e) {
       if (e is AppFailure) rethrow;

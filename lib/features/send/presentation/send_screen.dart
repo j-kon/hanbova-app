@@ -7,7 +7,7 @@ import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_radius.dart';
 import '../../../core/theme/app_spacing.dart';
 import '../../../core/theme/app_typography.dart';
-import '../../../core/utils/consumer_error_translator.dart';
+import '../../../core/errors/user_facing_error.dart';
 import '../../wallet/domain/asset_model.dart';
 import '../domain/instant_send_controller.dart';
 import 'instant_send_review.dart';
@@ -89,7 +89,7 @@ class _SendScreenState extends ConsumerState<SendScreen> {
     } catch (e) {
       if (!mounted) return;
       setState(() => _isLoading = false);
-      final friendlyMessage = ConsumerErrorTranslator.translate(e);
+      final friendlyMessage = UserFacingErrorMapper.from(e).message;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(friendlyMessage),
@@ -117,7 +117,7 @@ class _SendScreenState extends ConsumerState<SendScreen> {
     } catch (e) {
       if (!mounted) return;
       setState(() => _isLoading = false);
-      final friendlyMessage = ConsumerErrorTranslator.translate(e);
+      final friendlyMessage = UserFacingErrorMapper.from(e).message;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(friendlyMessage),

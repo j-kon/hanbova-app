@@ -8,6 +8,7 @@ import '../../../core/cashu/cashu_wallet_models.dart';
 import '../../../core/cashu/cashu_wallet_provider.dart';
 import '../../../core/cashu/cashu_wallet_service.dart';
 import '../../../core/cashu/wallet_policy.dart';
+import '../../../core/errors/user_facing_error.dart';
 import '../../../core/network/network_environment.dart';
 import '../../../core/wallet/wallet_context.dart';
 import '../../transactions/domain/transaction_model.dart';
@@ -107,7 +108,7 @@ final class InstantSendController extends ChangeNotifier {
     } catch (error) {
       _setState(InstantSendState(
         phase: InstantSendPhase.failed,
-        message: error.toString(),
+        message: UserFacingErrorMapper.from(error).message,
       ));
       rethrow;
     }
@@ -165,7 +166,7 @@ final class InstantSendController extends ChangeNotifier {
       _setState(InstantSendState(
         phase: InstantSendPhase.failed,
         review: review,
-        message: error.toString(),
+        message: UserFacingErrorMapper.from(error).message,
       ));
       rethrow;
     } finally {
