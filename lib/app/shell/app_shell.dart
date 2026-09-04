@@ -219,46 +219,60 @@ class _IosNavItem extends StatelessWidget {
     final activeColor = colors.primary;
     final inactiveColor = colors.textTertiary;
 
-    return InkWell(
-      onTap: onTap,
-      borderRadius: BorderRadius.circular(18),
-      splashColor: activeColor.withValues(alpha: 0.1),
-      highlightColor: Colors.transparent,
-      child: AnimatedContainer(
-        duration: const Duration(milliseconds: 200),
-        curve: Curves.easeInOut,
-        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-        decoration: BoxDecoration(
-          color: isSelected
-              ? activeColor.withValues(alpha: isDark ? 0.16 : 0.09)
-              : Colors.transparent,
-          borderRadius: BorderRadius.circular(16),
-        ),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            AnimatedScale(
-              scale: isSelected ? 1.08 : 1.0,
-              duration: const Duration(milliseconds: 200),
-              curve: Curves.easeOutBack,
-              child: Icon(
-                isSelected ? activeIcon : icon,
-                color: isSelected ? activeColor : inactiveColor,
-                size: 22,
+    return Semantics(
+      button: true,
+      excludeSemantics: true,
+      selected: isSelected,
+      label: label,
+      child: SizedBox(
+        width: 52,
+        height: 52,
+        child: InkWell(
+          onTap: onTap,
+          borderRadius: BorderRadius.circular(18),
+          splashColor: activeColor.withValues(alpha: 0.1),
+          highlightColor: Colors.transparent,
+          child: AnimatedContainer(
+            duration: const Duration(milliseconds: 200),
+            curve: Curves.easeInOut,
+            padding: const EdgeInsets.symmetric(horizontal: 6),
+            decoration: BoxDecoration(
+              color: isSelected
+                  ? activeColor.withValues(alpha: isDark ? 0.16 : 0.09)
+                  : Colors.transparent,
+              borderRadius: BorderRadius.circular(16),
+            ),
+            child: FittedBox(
+              fit: BoxFit.scaleDown,
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  AnimatedScale(
+                    scale: isSelected ? 1.08 : 1.0,
+                    duration: const Duration(milliseconds: 200),
+                    curve: Curves.easeOutBack,
+                    child: Icon(
+                      isSelected ? activeIcon : icon,
+                      color: isSelected ? activeColor : inactiveColor,
+                      size: 22,
+                    ),
+                  ),
+                  const SizedBox(height: 3),
+                  Text(
+                    label,
+                    style: AppTypography.labelSmall.copyWith(
+                      color: isSelected ? activeColor : inactiveColor,
+                      fontSize: 10.5,
+                      fontWeight:
+                          isSelected ? FontWeight.w600 : FontWeight.w500,
+                      letterSpacing: -0.1,
+                    ),
+                  ),
+                ],
               ),
             ),
-            const SizedBox(height: 3),
-            Text(
-              label,
-              style: AppTypography.labelSmall.copyWith(
-                color: isSelected ? activeColor : inactiveColor,
-                fontSize: 10.5,
-                fontWeight: isSelected ? FontWeight.w600 : FontWeight.w500,
-                letterSpacing: -0.1,
-              ),
-            ),
-          ],
+          ),
         ),
       ),
     );
