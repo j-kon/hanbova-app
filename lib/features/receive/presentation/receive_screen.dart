@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -5,12 +7,12 @@ import 'package:go_router/go_router.dart';
 import 'package:qr_flutter/qr_flutter.dart';
 import '../../../core/cashu/cashu_wallet_provider.dart';
 import '../../../core/currency/currency_provider.dart';
-import '../../../core/lightning/lightning_service.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_radius.dart';
 import '../../../core/theme/app_spacing.dart';
 import '../../../core/theme/app_typography.dart';
 import '../../../core/utils/formatters.dart';
+import '../domain/deposit_controller.dart';
 import '../../transactions/domain/transaction_model.dart';
 import '../../transactions/presentation/transactions_provider.dart';
 
@@ -29,10 +31,7 @@ class _ReceiveScreenState extends ConsumerState<ReceiveScreen> {
   late AssetType _selectedAsset;
   String _selectedNetwork = 'Polygon';
   final _amountController = TextEditingController(text: '10000');
-  String _generatedInvoice = '';
-  String? _quoteId;
-  bool _isGenerating = false;
-  bool _isChecking = false;
+  Timer? _quoteDebounce;
 
   static const Map<String, String> _stablecoinAddresses = {
     'Polygon': '0x71C63B2945D771F524A1a73B5B84F09069d45eA7',
@@ -44,83 +43,49 @@ class _ReceiveScreenState extends ConsumerState<ReceiveScreen> {
   void initState() {
     super.initState();
     _selectedAsset = widget.initialAsset;
-    _generateInvoice();
   }
 
   @override
   void dispose() {
+    _quoteDebounce?.cancel();
     _amountController.dispose();
     super.dispose();
   }
 
   Future<void> _generateInvoice() async {
-    final sats = int.tryParse(_amountController.text.trim()) ?? 10000;
-    setState(() {
-      _isGenerating = true;
-      _generatedInvoice = '';
-      _quoteId = null;
-    });
-
-    try {
-      final cashuWallet = ref.read(cashuWalletServiceProvider);
-      if (cashuWallet != null) {
-        final quote = await cashuWallet.createMintQuote(sats);
-        if (mounted) {
-          setState(() {
-            _quoteId = quote.quoteId;
-            _generatedInvoice = quote.bolt11Invoice;
-            _isGenerating = false;
-          });
-        }
-      } else {
-        final lightningService = ref.read(lightningServiceProvider);
-        final invoice = await lightningService.createInvoice(
-          amountSats: sats,
-          description: 'Hanbova Lightning Receive ($sats sats)',
-        );
-        if (mounted && invoice.bolt11.isNotEmpty) {
-          setState(() {
-            _generatedInvoice = invoice.bolt11;
-            _isGenerating = false;
-          });
-        }
-      }
-    } catch (e) {
-      if (mounted) {
-        setState(() => _isGenerating = false);
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Failed to generate receive invoice: $e'),
-            backgroundColor: Colors.redAccent,
-          ),
-        );
-      }
+    final sats = int.tryParse(_amountController.text.trim());
+    if (sats == null || sats <= 0) {
+      ref.read(depositControllerProvider).reset();
+      return;
     }
+    try {
+      await ref.read(depositControllerProvider).createQuote(sats);
+    } catch (_) {}
+  }
+
+  void _scheduleInvoice(String value) {
+    _quoteDebounce?.cancel();
+    ref.read(depositControllerProvider).reset();
+    if ((int.tryParse(value.trim()) ?? 0) <= 0) return;
+    _quoteDebounce = Timer(
+      const Duration(milliseconds: 400),
+      _generateInvoice,
+    );
   }
 
   Future<void> _checkAndMint() async {
-    if (_quoteId == null || _quoteId!.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('No active mint quote to check')),
-      );
-      return;
-    }
-
-    setState(() => _isChecking = true);
     final messenger = ScaffoldMessenger.of(context);
 
     try {
-      final cashuWallet = ref.read(cashuWalletServiceProvider);
-      if (cashuWallet == null) {
-        throw StateError('Cashu wallet not initialized');
-      }
-
-      final minted = await cashuWallet.mintQuote(_quoteId!);
+      final controller = ref.read(depositControllerProvider);
+      final quoteId = controller.state.quote?.quoteId;
+      final minted = await controller.checkAndMint();
+      if (minted == null || quoteId == null) return;
       ref.invalidate(cashuBalanceProvider);
 
       await ref.read(transactionsProvider.notifier).addTransaction(
             TransactionModel(
-              id: 'mint_${DateTime.now().millisecondsSinceEpoch}',
+              id: 'mint_$quoteId',
               type: TransactionType.instantReceive,
               status: TransactionStatus.completed,
               amountSats: minted,
@@ -139,17 +104,7 @@ class _ReceiveScreenState extends ConsumerState<ReceiveScreen> {
         );
         context.go('/home');
       }
-    } catch (e) {
-      if (mounted) {
-        setState(() => _isChecking = false);
-        messenger.showSnackBar(
-          SnackBar(
-            content: Text('Mint quote not paid or verification failed: $e'),
-            backgroundColor: Colors.redAccent,
-          ),
-        );
-      }
-    }
+    } catch (_) {}
   }
 
   @override
@@ -232,6 +187,10 @@ class _ReceiveScreenState extends ConsumerState<ReceiveScreen> {
   Widget _buildBitcoinReceiveView(HanbovaColors colors) {
     final currency = ref.watch(currencyProvider);
     final currentSats = int.tryParse(_amountController.text.trim()) ?? 0;
+    final deposit = ref.watch(depositControllerProvider).state;
+    final generatedInvoice = deposit.quote?.bolt11Invoice ?? '';
+    final isGenerating = deposit.phase == DepositPhase.loading;
+    final isChecking = deposit.phase == DepositPhase.checking;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -245,7 +204,19 @@ class _ReceiveScreenState extends ConsumerState<ReceiveScreen> {
             suffixText: currency.format(currentSats),
             prefixIcon: const Icon(Icons.currency_bitcoin_rounded),
           ),
-          onChanged: (_) => _generateInvoice(),
+          onChanged: _scheduleInvoice,
+        ),
+        const SizedBox(height: AppSpacing.sm),
+        ElevatedButton.icon(
+          onPressed: isGenerating ? null : _generateInvoice,
+          icon: isGenerating
+              ? const SizedBox(
+                  width: 18,
+                  height: 18,
+                  child: CircularProgressIndicator(strokeWidth: 2),
+                )
+              : const Icon(Icons.qr_code_2_rounded),
+          label: const Text('Generate Lightning Invoice'),
         ),
         const SizedBox(height: AppSpacing.lg),
 
@@ -268,15 +239,15 @@ class _ReceiveScreenState extends ConsumerState<ReceiveScreen> {
                   color: Colors.white,
                   borderRadius: AppRadius.mdRadius,
                 ),
-                child: _isGenerating
+                child: isGenerating
                     ? const SizedBox(
                         width: 32,
                         height: 32,
                         child: CircularProgressIndicator(strokeWidth: 2),
                       )
-                    : _generatedInvoice.isNotEmpty
+                    : generatedInvoice.isNotEmpty
                         ? QrImageView(
-                            data: _generatedInvoice,
+                            data: generatedInvoice,
                             version: QrVersions.auto,
                             size: 200,
                           )
@@ -290,8 +261,8 @@ class _ReceiveScreenState extends ConsumerState<ReceiveScreen> {
               const SizedBox(height: AppSpacing.md),
               Text(
                 'Lightning Invoice (NUT-04)',
-                style:
-                    AppTypography.titleSmall.copyWith(color: colors.textPrimary),
+                style: AppTypography.titleSmall
+                    .copyWith(color: colors.textPrimary),
               ),
               const SizedBox(height: 4),
               Text(
@@ -300,7 +271,7 @@ class _ReceiveScreenState extends ConsumerState<ReceiveScreen> {
                     .copyWith(color: colors.textSecondary),
                 textAlign: TextAlign.center,
               ),
-              if (_generatedInvoice.isNotEmpty) ...[
+              if (generatedInvoice.isNotEmpty) ...[
                 const SizedBox(height: AppSpacing.md),
                 Container(
                   padding:
@@ -310,9 +281,9 @@ class _ReceiveScreenState extends ConsumerState<ReceiveScreen> {
                     borderRadius: AppRadius.xsRadius,
                   ),
                   child: SelectableText(
-                    _generatedInvoice.length > 36
-                        ? '${_generatedInvoice.substring(0, 32)}...'
-                        : _generatedInvoice,
+                    generatedInvoice.length > 36
+                        ? '${generatedInvoice.substring(0, 32)}...'
+                        : generatedInvoice,
                     style: AppTypography.bodySmall.copyWith(
                       fontFamily: 'monospace',
                       color: colors.textTertiary,
@@ -326,7 +297,7 @@ class _ReceiveScreenState extends ConsumerState<ReceiveScreen> {
                     TextButton.icon(
                       onPressed: () {
                         Clipboard.setData(
-                            ClipboardData(text: _generatedInvoice));
+                            ClipboardData(text: generatedInvoice));
                         ScaffoldMessenger.of(context).showSnackBar(
                           const SnackBar(
                               content: Text('Invoice copied to clipboard')),
@@ -343,10 +314,10 @@ class _ReceiveScreenState extends ConsumerState<ReceiveScreen> {
         ),
         const SizedBox(height: AppSpacing.xl),
 
-        if (_quoteId != null)
+        if (deposit.quote != null && deposit.phase != DepositPhase.minted)
           ElevatedButton.icon(
-            onPressed: _isChecking ? null : _checkAndMint,
-            icon: _isChecking
+            onPressed: isChecking ? null : _checkAndMint,
+            icon: isChecking
                 ? const SizedBox(
                     width: 18,
                     height: 18,
@@ -355,6 +326,19 @@ class _ReceiveScreenState extends ConsumerState<ReceiveScreen> {
                 : const Icon(Icons.check_circle_outline, size: 18),
             label: const Text('Check Payment & Mint Ecash'),
           ),
+        if (deposit.message != null) ...[
+          const SizedBox(height: AppSpacing.sm),
+          Text(
+            deposit.message!,
+            style: AppTypography.bodySmall.copyWith(
+              color: deposit.phase == DepositPhase.failed ||
+                      deposit.phase == DepositPhase.expired
+                  ? colors.error
+                  : colors.textSecondary,
+            ),
+            textAlign: TextAlign.center,
+          ),
+        ],
       ],
     );
   }
