@@ -11,7 +11,9 @@ import '../../../core/theme/app_typography.dart';
 import '../../../core/utils/formatters.dart';
 import '../../auth/providers/auth_provider.dart';
 import '../domain/protected_payment_intent.dart';
+import '../domain/protected_send_draft.dart';
 import 'protected_send_provider.dart';
+import 'protected_send_review.dart';
 
 class ProtectedSendScreen extends ConsumerStatefulWidget {
   const ProtectedSendScreen({super.key});
@@ -71,9 +73,9 @@ class _ProtectedSendScreenState extends ConsumerState<ProtectedSendScreen> {
 
     setState(() => _isSubmitting = true);
     try {
-      await ref.read(protectedSendProvider.notifier).createProtectedPayment(
+      await ref.read(protectedSendProvider.notifier).prepareDraft(
+            username: recipient,
             amountSats: amountSats,
-            recipientIdentifier: recipient,
             description: description,
             expirationSeconds: _selectedExpirationSeconds,
           );
@@ -81,6 +83,16 @@ class _ProtectedSendScreenState extends ConsumerState<ProtectedSendScreen> {
       if (mounted) {
         setState(() => _isSubmitting = false);
       }
+    }
+  }
+
+  Future<void> _confirmDraft(ProtectedSendDraft draft) async {
+    if (_isSubmitting) return;
+    setState(() => _isSubmitting = true);
+    try {
+      await ref.read(protectedSendProvider.notifier).confirmDraft(draft);
+    } finally {
+      if (mounted) setState(() => _isSubmitting = false);
     }
   }
 
@@ -104,7 +116,16 @@ class _ProtectedSendScreenState extends ConsumerState<ProtectedSendScreen> {
       body: SafeArea(
         child: state.createdIntent != null
             ? _buildSuccessReceipt(state.createdIntent!)
-            : _buildForm(state),
+            : state.preparedDraft != null
+                ? ProtectedSendReview(
+                    draft: state.preparedDraft!,
+                    isSubmitting: state.isLoading || _isSubmitting,
+                    errorMessage: state.errorMessage,
+                    onConfirm: () => _confirmDraft(state.preparedDraft!),
+                    onEdit: () =>
+                        ref.read(protectedSendProvider.notifier).clearDraft(),
+                  )
+                : _buildForm(state),
       ),
     );
   }
@@ -151,8 +172,8 @@ class _ProtectedSendScreenState extends ConsumerState<ProtectedSendScreen> {
             TextFormField(
               controller: _recipientController,
               decoration: InputDecoration(
-                labelText: 'Recipient',
-                hintText: '@username, phone, or email',
+                labelText: 'Hanbova username',
+                hintText: '@username',
                 suffixIcon: IconButton(
                   icon: const Icon(Icons.qr_code_scanner),
                   onPressed: () => context.push('/scan'),
@@ -282,7 +303,7 @@ class _ProtectedSendScreenState extends ConsumerState<ProtectedSendScreen> {
                       height: 20,
                       width: 20,
                       child: CircularProgressIndicator(strokeWidth: 2))
-                  : const Text('Lock & Send Protected'),
+                  : const Text('Review Protected Payment'),
             ),
           ],
         ),
