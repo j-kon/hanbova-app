@@ -30,7 +30,6 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
   // Roam preference toggles
   bool _autoSuggestRoam = true;
   bool _dataSavingMode = false;
-  bool _appLockEnabled = true;
 
   void _showAppearanceSheet(BuildContext context) {
     final colors = context.colors;
@@ -806,30 +805,29 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                     .setHideNotificationAmounts(v),
               ),
               _buildDivider(context),
-              SwitchListTile(
-                title: Text('Biometrics for Sensitive Actions',
+              ListTile(
+                contentPadding: const EdgeInsets.symmetric(horizontal: 16),
+                title: Text('Biometric confirmation',
                     style: AppTypography.bodyMedium
                         .copyWith(color: colors.textPrimary)),
-                subtitle: Text('Require Face ID / Touch ID before sending',
+                subtitle: Text(
+                    'Required to reveal or replace your recovery phrase',
                     style: AppTypography.caption
                         .copyWith(color: colors.textTertiary)),
-                value: privacy.requireBiometricForSensitive,
-                activeThumbColor: colors.primary,
-                onChanged: (v) => ref
-                    .read(privacyProvider.notifier)
-                    .setRequireBiometricForSensitive(v),
+                trailing:
+                    Icon(Icons.fingerprint_rounded, color: colors.primary),
               ),
               _buildDivider(context),
-              SwitchListTile(
+              ListTile(
+                contentPadding: const EdgeInsets.symmetric(horizontal: 16),
                 title: Text('App Lock',
                     style: AppTypography.bodyMedium
                         .copyWith(color: colors.textPrimary)),
-                subtitle: Text('Require Face ID / PIN on launch',
+                subtitle: Text('Not available in this build',
                     style: AppTypography.caption
                         .copyWith(color: colors.textTertiary)),
-                value: _appLockEnabled,
-                activeThumbColor: colors.primary,
-                onChanged: (v) => setState(() => _appLockEnabled = v),
+                trailing:
+                    Icon(Icons.schedule_rounded, color: colors.textTertiary),
               ),
               _buildDivider(context),
               SwitchListTile(
