@@ -144,44 +144,51 @@ class _CenterActionButtonState extends State<_CenterActionButton> {
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
-    return GestureDetector(
-      onTapDown: (_) => setState(() => _isPressed = true),
-      onTapUp: (_) {
-        setState(() => _isPressed = false);
-        widget.onTap();
-      },
-      onTapCancel: () => setState(() => _isPressed = false),
-      child: AnimatedScale(
-        scale: _isPressed ? 0.90 : 1.0,
-        duration: const Duration(milliseconds: 120),
-        curve: Curves.easeInOut,
-        child: Container(
-          width: 50,
-          height: 50,
-          decoration: BoxDecoration(
-            shape: BoxShape.circle,
-            gradient: const LinearGradient(
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
-              colors: [
-                AppColors.orangeLight,
-                AppColors.bitcoinOrange,
-              ],
-            ),
-            boxShadow: [
-              BoxShadow(
-                color: AppColors.bitcoinOrange
-                    .withValues(alpha: isDark ? 0.45 : 0.35),
-                blurRadius: 12,
-                offset: const Offset(0, 4),
+    return Semantics(
+      key: const Key('center-pay-button'),
+      button: true,
+      label: 'Pay',
+      child: SizedBox(
+        width: 56,
+        height: 56,
+        child: InkResponse(
+          onTap: widget.onTap,
+          onHighlightChanged: (pressed) => setState(() => _isPressed = pressed),
+          radius: 28,
+          containedInkWell: true,
+          highlightShape: BoxShape.circle,
+          child: AnimatedScale(
+            scale: _isPressed ? 0.90 : 1.0,
+            duration: const Duration(milliseconds: 120),
+            curve: Curves.easeInOut,
+            child: Container(
+              margin: const EdgeInsets.all(3),
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                gradient: const LinearGradient(
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                  colors: [
+                    AppColors.orangeLight,
+                    AppColors.bitcoinOrange,
+                  ],
+                ),
+                boxShadow: [
+                  BoxShadow(
+                    color: AppColors.bitcoinOrange
+                        .withValues(alpha: isDark ? 0.45 : 0.35),
+                    blurRadius: 12,
+                    offset: const Offset(0, 4),
+                  ),
+                ],
               ),
-            ],
-          ),
-          child: const Center(
-            child: Icon(
-              Icons.swap_horiz_rounded,
-              color: AppColors.charcoal,
-              size: 26,
+              child: const Center(
+                child: Icon(
+                  Icons.swap_horiz_rounded,
+                  color: AppColors.charcoal,
+                  size: 26,
+                ),
+              ),
             ),
           ),
         ),
