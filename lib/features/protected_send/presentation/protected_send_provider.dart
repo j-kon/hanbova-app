@@ -1,13 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/cashu/cashu_wallet_provider.dart';
-import '../../../core/cashu/cashu_wallet_storage.dart';
 import '../../../core/crypto/crypto_identity_service.dart';
 import '../../../core/crypto/encrypted_envelope_service.dart';
 import '../../../core/network/network_environment.dart';
 import '../../../core/notifications/in_app_notification.dart';
 import '../../../core/utils/consumer_error_translator.dart';
 import '../../../core/utils/formatters.dart';
+import '../../../core/wallet/wallet_context.dart';
 import '../../auth/providers/auth_provider.dart';
 import '../../protected/data/protected_message_service.dart';
 import '../../transactions/domain/transaction_model.dart';
@@ -329,15 +329,21 @@ class ProtectedSendNotifier extends StateNotifier<ProtectedSendState> {
         throw StateError('Recipient $display could not be found');
       }
 
+      final walletContext = _ref.read(activeWalletContextKeyProvider);
+      if (walletContext == null || walletContext.userId != authState.user!.id) {
+        throw StateError('The active wallet context is unavailable.');
+      }
       final config = _ref.read(activeNetworkConfigProvider);
+      if (config.network != walletContext.network ||
+          config.storagePrefix != walletContext.storagePrefix) {
+        throw StateError('The active wallet context changed.');
+      }
 
       // Load the existing escrow record from client storage (no new token minted or locked)
-      final storage = CashuWalletStorage();
-      final escrow = await storage.getEscrowRecord(
-        authState.user!.id,
-        config.network,
+      final storage = _ref.read(cashuWalletStorageProvider);
+      final escrow = await storage.getEscrowRecordForContext(
+        walletContext,
         canonicalPaymentId,
-        storagePrefix: config.storagePrefix,
       );
       if (escrow == null) {
         throw StateError(
@@ -368,6 +374,10 @@ class ProtectedSendNotifier extends StateNotifier<ProtectedSendState> {
         envelope: envelope,
         recipientTransportPubkeyHex: recipientProfile.transportEncryptionPubkey,
       );
+
+      if (_ref.read(activeWalletContextKeyProvider) != walletContext) {
+        throw StateError('The active wallet context changed.');
+      }
 
       await _messageService.sendProtectedMessage(
         recipientUsername: recipientProfile.username,

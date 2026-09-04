@@ -81,6 +81,8 @@ class TransactionsNotifier extends StateNotifier<TransactionsState> {
     required this.walletKey,
   }) : super(TransactionsState());
 
+  bool get isStale => state.isStale;
+
   String _requireWalletKey() {
     final key = walletKey;
     if (key == null || key.isEmpty) {

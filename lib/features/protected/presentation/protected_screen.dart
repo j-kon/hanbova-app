@@ -1,4 +1,3 @@
-import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -38,38 +37,9 @@ class _ProtectedScreenState extends ConsumerState<ProtectedScreen> {
   bool _isSearchVisible = false;
   String _searchQuery = '';
   final TextEditingController _searchController = TextEditingController();
-  Timer? _timer;
-
-  @override
-  void initState() {
-    super.initState();
-    _syncInbox();
-    _timer = Timer.periodic(const Duration(seconds: 2), (_) {
-      if (mounted) {
-        _syncInbox();
-        setState(() {});
-      }
-    });
-  }
-
-  Future<void> _syncInbox() async {
-    final authState = ref.read(authProvider);
-    if (authState.user == null) return;
-    try {
-      final messageService = ref.read(protectedMessageServiceProvider);
-      final intentRepo = ref.read(paymentIntentRepositoryProvider);
-      final inbox = await messageService.getInbox();
-      if (!mounted) return;
-      await ref.read(transactionsProvider.notifier).syncIncomingMessages(
-            inbox: inbox,
-            getIntentDetails: (id) => intentRepo.getPaymentIntent(id),
-          );
-    } catch (_) {}
-  }
 
   @override
   void dispose() {
-    _timer?.cancel();
     _searchController.dispose();
     super.dispose();
   }

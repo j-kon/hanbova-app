@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import '../network/network_environment.dart';
+import '../wallet/wallet_context.dart';
 import 'cashu_wallet_models.dart';
 
 class CashuWalletStorage {
@@ -95,6 +96,18 @@ class CashuWalletStorage {
     } catch (_) {
       return null;
     }
+  }
+
+  Future<ProtectedEscrowRecord?> getEscrowRecordForContext(
+    WalletContextKey context,
+    String paymentId,
+  ) {
+    return getEscrowRecord(
+      context.userId,
+      context.network,
+      paymentId,
+      storagePrefix: context.storagePrefix,
+    );
   }
 
   /// Clears wallet proofs and escrows for a given user & network (e.g. on wallet reset).

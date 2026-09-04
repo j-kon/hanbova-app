@@ -1,25 +1,19 @@
-import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../../core/cashu/cashu_wallet_models.dart';
 import '../../../core/cashu/cashu_wallet_provider.dart';
-import '../../../core/crypto/crypto_identity_service.dart';
 import '../../../core/currency/balance_visibility_provider.dart';
 import '../../../core/currency/currency_provider.dart';
 import '../../../core/network/network_environment.dart';
-import '../../../core/networking/api_client.dart';
-import '../../../core/notifications/in_app_notification.dart';
+import '../../../core/sync/wallet_sync_coordinator.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_radius.dart';
 import '../../../core/theme/app_shadows.dart';
 import '../../../core/theme/app_spacing.dart';
 import '../../../core/theme/app_typography.dart';
 import '../../../core/utils/formatters.dart';
-import '../../../core/wallet/wallet_context.dart';
 import '../../auth/providers/auth_provider.dart';
-import '../../protected/data/protected_message_service.dart';
-import '../../protected_send/data/payment_intent_repository.dart';
 import '../../security/presentation/mainnet_safety_dialog.dart';
 import '../../transactions/domain/transaction_model.dart';
 import '../../transactions/presentation/transactions_provider.dart';
@@ -56,83 +50,11 @@ class HomeScreen extends ConsumerStatefulWidget {
 }
 
 class _HomeScreenState extends ConsumerState<HomeScreen> {
-  Timer? _syncTimer;
-  String? _syncedContextId;
-
   String _getGreeting() {
     final hour = DateTime.now().hour;
     if (hour < 12) return 'Good morning';
     if (hour < 17) return 'Good afternoon';
     return 'Good evening';
-  }
-
-  @override
-  void initState() {
-    super.initState();
-    _syncInbox();
-    _syncTimer = Timer.periodic(const Duration(seconds: 2), (_) {
-      if (mounted) {
-        _syncInbox();
-      }
-    });
-  }
-
-  @override
-  void dispose() {
-    _syncTimer?.cancel();
-    super.dispose();
-  }
-
-  Future<void> _syncInbox() async {
-    final authState = ref.read(authProvider);
-    final walletContext = ref.read(activeWalletContextKeyProvider);
-    if (authState.user == null || walletContext == null) return;
-    try {
-      if (_syncedContextId != walletContext.storageId) {
-        final identity =
-            await ref.read(cryptoIdentityProvider.notifier).requireIdentity();
-        final apiClient = ref.read(apiClientProvider);
-        await ref.read(cryptoIdentityProvider.notifier).publishPublicKeys(
-              apiClient: apiClient,
-              identity: identity,
-            );
-        _syncedContextId = walletContext.storageId;
-      }
-      final messageService = ref.read(protectedMessageServiceProvider);
-      final intentRepo = ref.read(paymentIntentRepositoryProvider);
-      final inbox = await messageService.getInbox();
-      if (!mounted) return;
-      final newTxs =
-          await ref.read(transactionsProvider.notifier).syncIncomingMessages(
-                inbox: inbox,
-                getIntentDetails: (id) => intentRepo.getPaymentIntent(id),
-              );
-      if (newTxs.isNotEmpty && mounted) {
-        final newest = newTxs.first;
-        ref.read(inAppNotificationProvider.notifier).show(
-              title: 'Protected Payment Received!',
-              message:
-                  '${Formatters.formatSats(newest.amountSats)} waiting from ${newest.recipientOrSender}',
-              icon: Icons.shield_outlined,
-              type: InAppNotificationType.incoming,
-              onTap: () {
-                context.push('/claim');
-              },
-            );
-      }
-
-      // Sync full payment intent history (sent & received)
-      try {
-        final intents = await intentRepo.getPaymentIntents();
-        if (mounted) {
-          await ref.read(transactionsProvider.notifier).syncPaymentIntents(
-                intents: intents,
-                currentUserId: authState.user!.id,
-                currentUsername: authState.user!.username,
-              );
-        }
-      } catch (_) {}
-    } catch (_) {}
   }
 
   @override
@@ -177,9 +99,9 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
         child: RefreshIndicator(
           onRefresh: () async {
             ref.invalidate(cashuBalanceProvider);
-            await ref.read(transactionsProvider.notifier).reconcile(
-                  sync: _syncInbox,
-                );
+            try {
+              await ref.read(walletSyncCoordinatorProvider)?.syncNow();
+            } catch (_) {}
           },
           child: SingleChildScrollView(
             physics: const AlwaysScrollableScrollPhysics(),
