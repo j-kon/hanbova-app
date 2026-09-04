@@ -93,17 +93,14 @@ class NetworkConfig {
     maxSendSats: 5000, // Strict pilot limit in sats
   );
 
-  static NetworkConfig fromNetwork(HanbovaNetwork net,
-      {bool pilotActive = false}) {
+  static NetworkConfig fromNetwork(HanbovaNetwork net) {
     switch (net) {
       case HanbovaNetwork.local:
         return local;
       case HanbovaNetwork.cashuTest:
         return cashuTest;
       case HanbovaNetwork.mainnet:
-        return (isMainnetPilotBuild || pilotActive)
-            ? mainnetPilot
-            : mainnetLocked;
+        return isMainnetPilotBuild ? mainnetPilot : mainnetLocked;
     }
   }
 }
@@ -113,16 +110,11 @@ final networkEnvironmentProvider =
   return NetworkEnvironmentNotifier();
 });
 
-/// Tracks whether developer has activated the explicit Mainnet Pilot mode in runtime
-final mainnetPilotOverrideProvider = StateProvider<bool>((ref) {
-  return NetworkConfig.isMainnetPilotBuild;
-});
-
-/// Centralized active network configuration watching environment and pilot overrides
+/// Centralized active network configuration. Mainnet availability is fixed at
+/// compile time and cannot be changed by runtime provider state.
 final activeNetworkConfigProvider = Provider<NetworkConfig>((ref) {
   final net = ref.watch(networkEnvironmentProvider);
-  final pilotActive = ref.watch(mainnetPilotOverrideProvider);
-  return NetworkConfig.fromNetwork(net, pilotActive: pilotActive);
+  return NetworkConfig.fromNetwork(net);
 });
 
 class NetworkEnvironmentNotifier extends StateNotifier<HanbovaNetwork> {
@@ -165,9 +157,8 @@ class NetworkEnvironmentNotifier extends StateNotifier<HanbovaNetwork> {
     } catch (_) {}
   }
 
-  Future<void> setNetwork(HanbovaNetwork net,
-      {bool pilotOverride = false}) async {
-    final config = NetworkConfig.fromNetwork(net, pilotActive: pilotOverride);
+  Future<void> setNetwork(HanbovaNetwork net) async {
+    final config = NetworkConfig.fromNetwork(net);
     if (!config.isEnabled) {
       // Mainnet is locked
       return;

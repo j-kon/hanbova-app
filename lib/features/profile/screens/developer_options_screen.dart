@@ -55,6 +55,17 @@ class _DeveloperOptionsScreenState
   void _onSelectNetwork(HanbovaNetwork selectedNet, HanbovaNetwork currentNet) {
     if (selectedNet == currentNet) return;
 
+    if (selectedNet == HanbovaNetwork.mainnet &&
+        !NetworkConfig.isMainnetPilotBuild) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Mainnet is unavailable in this build.'),
+          backgroundColor: Colors.redAccent,
+        ),
+      );
+      return;
+    }
+
     if (selectedNet == HanbovaNetwork.mainnet) {
       showDialog(
         context: context,
@@ -90,11 +101,10 @@ class _DeveloperOptionsScreenState
             ElevatedButton(
               onPressed: () {
                 Navigator.pop(ctx);
-                ref.read(mainnetPilotOverrideProvider.notifier).state = true;
                 ref.read(selectedMintUrlProvider.notifier).state = null;
                 ref
                     .read(networkEnvironmentProvider.notifier)
-                    .setNetwork(HanbovaNetwork.mainnet, pilotOverride: true);
+                    .setNetwork(HanbovaNetwork.mainnet);
                 ref.invalidate(cashuBalanceProvider);
                 ScaffoldMessenger.of(context).showSnackBar(
                   const SnackBar(

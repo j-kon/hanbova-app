@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../features/auth/providers/auth_provider.dart';
@@ -80,6 +81,10 @@ final appRouterProvider = Provider<GoRouter>((ref) {
       final authState = ref.read(authProvider);
       final isAuth = authState.isAuthenticated;
       final location = state.uri.path;
+
+      if (location == '/developer-options' && !kDebugMode) {
+        return '/settings';
+      }
 
       final isAuthRoute = location == '/splash' ||
           location == '/welcome' ||

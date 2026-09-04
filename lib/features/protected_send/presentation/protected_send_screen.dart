@@ -57,9 +57,7 @@ class _ProtectedSendScreenState extends ConsumerState<ProtectedSendScreen> {
     final recipient = _recipientController.text.trim();
     final description = _descriptionController.text.trim();
 
-    final network = ref.read(networkEnvironmentProvider);
-    final isPilot = ref.read(mainnetPilotOverrideProvider);
-    final config = NetworkConfig.fromNetwork(network, pilotActive: isPilot);
+    final config = ref.read(activeNetworkConfigProvider);
     if (amountSats > config.maxSendSats) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(

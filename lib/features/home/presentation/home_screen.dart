@@ -86,9 +86,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
         : (user?.firstName.isNotEmpty == true ? user!.firstName : 'Jaykon');
 
     final currentNetwork = ref.watch(networkEnvironmentProvider);
-    final isPilotActive = ref.watch(mainnetPilotOverrideProvider);
-    final netConfig =
-        NetworkConfig.fromNetwork(currentNetwork, pilotActive: isPilotActive);
+    final netConfig = ref.watch(activeNetworkConfigProvider);
     final isMainnet = currentNetwork == HanbovaNetwork.mainnet;
 
     final actionRailItems = _getActionRailItems(context, colors, market);

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../../core/currency/currency_provider.dart';
@@ -71,8 +72,8 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                 ListTile(
                   title: Text('System default',
                       style: TextStyle(color: colors.textPrimary)),
-                  leading:
-                      Icon(Icons.settings_suggest_outlined, color: colors.textPrimary),
+                  leading: Icon(Icons.settings_suggest_outlined,
+                      color: colors.textPrimary),
                   trailing: currentTheme == ThemeMode.system
                       ? Icon(Icons.check, color: colors.primary)
                       : null,
@@ -86,7 +87,8 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                 ListTile(
                   title: Text('Dark mode',
                       style: TextStyle(color: colors.textPrimary)),
-                  leading: Icon(Icons.dark_mode_outlined, color: colors.textPrimary),
+                  leading:
+                      Icon(Icons.dark_mode_outlined, color: colors.textPrimary),
                   trailing: currentTheme == ThemeMode.dark
                       ? Icon(Icons.check, color: colors.primary)
                       : null,
@@ -100,7 +102,8 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                 ListTile(
                   title: Text('Light mode',
                       style: TextStyle(color: colors.textPrimary)),
-                  leading: Icon(Icons.light_mode_outlined, color: colors.textPrimary),
+                  leading: Icon(Icons.light_mode_outlined,
+                      color: colors.textPrimary),
                   trailing: currentTheme == ThemeMode.light
                       ? Icon(Icons.check, color: colors.primary)
                       : null,
@@ -305,7 +308,8 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                         color: Colors.white, size: 20),
                   ),
                   title: const Text('Bitcoin (BTC)'),
-                  subtitle: const Text('Lightning & Cashu bearer e-cash. Active.'),
+                  subtitle:
+                      const Text('Lightning & Cashu bearer e-cash. Active.'),
                   trailing: Container(
                     padding:
                         const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
@@ -519,29 +523,32 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                 ),
                 Center(
                   child: GestureDetector(
-                    onTap: () {
-                      _developerTapCount++;
-                      if (_developerTapCount >= 7) {
-                        _developerTapCount = 0;
-                        Navigator.pop(sheetCtx);
-                        context.push('/developer-options');
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(
-                            content: Text('Developer Options Unlocked! 🛠️'),
-                            backgroundColor: Color(0xFF10B981),
-                          ),
-                        );
-                      } else if (_developerTapCount >= 4) {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          SnackBar(
-                            content: Text(
-                              'You are ${7 - _developerTapCount} steps away from Developer Options.',
-                            ),
-                            duration: const Duration(milliseconds: 600),
-                          ),
-                        );
-                      }
-                    },
+                    onTap: kDebugMode
+                        ? () {
+                            _developerTapCount++;
+                            if (_developerTapCount >= 7) {
+                              _developerTapCount = 0;
+                              Navigator.pop(sheetCtx);
+                              context.push('/developer-options');
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                const SnackBar(
+                                  content:
+                                      Text('Developer Options Unlocked! 🛠️'),
+                                  backgroundColor: Color(0xFF10B981),
+                                ),
+                              );
+                            } else if (_developerTapCount >= 4) {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                SnackBar(
+                                  content: Text(
+                                    'You are ${7 - _developerTapCount} steps away from Developer Options.',
+                                  ),
+                                  duration: const Duration(milliseconds: 600),
+                                ),
+                              );
+                            }
+                          }
+                        : null,
                     child: Padding(
                       padding: const EdgeInsets.symmetric(vertical: 4),
                       child: Text(
