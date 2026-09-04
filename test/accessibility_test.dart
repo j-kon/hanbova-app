@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:flutter/semantics.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:go_router/go_router.dart';
 import 'package:hanbova_app/app/shell/app_shell.dart';
@@ -44,6 +43,6 @@ void main() {
     expect(tester.getSize(button).width, greaterThanOrEqualTo(48));
     final semantics = tester.getSemantics(button);
     expect(semantics.label, 'Pay');
-    expect(semantics.hasFlag(SemanticsFlag.isButton), isTrue);
+    expect(semantics.flagsCollection.isButton, isTrue);
   });
 }

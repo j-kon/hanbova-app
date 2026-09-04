@@ -408,8 +408,7 @@ void main() {
       expect(find.text('Pay Again'), findsWidgets);
     });
 
-    testWidgets(
-        'NotificationsScreen renders notifications list and filter tags',
+    testWidgets('NotificationsScreen renders an honest empty state',
         (tester) async {
       tester.view.physicalSize = const Size(1200, 2400);
       tester.view.devicePixelRatio = 1.0;
@@ -425,9 +424,9 @@ void main() {
       );
       await tester.pumpAndSettle();
 
-      expect(find.text('Notifications Centre'), findsOneWidget);
-      expect(find.text('Mark all read'), findsOneWidget);
-      expect(find.text('Bitcoin Received'), findsOneWidget);
+      expect(find.text('Notifications'), findsOneWidget);
+      expect(find.text('No notifications yet'), findsOneWidget);
+      expect(find.text('Bitcoin Received'), findsNothing);
     });
   });
 }
