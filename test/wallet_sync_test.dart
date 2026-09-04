@@ -25,6 +25,23 @@ void main() {
     coordinator.dispose();
   });
 
+  test('start defers the initial sync until provider construction completes',
+      () async {
+    var calls = 0;
+    final coordinator = WalletSyncCoordinator(
+      runSync: () async {
+        calls++;
+      },
+    );
+
+    coordinator.start();
+    expect(calls, 0);
+
+    await Future<void>.delayed(Duration.zero);
+    expect(calls, 1);
+    coordinator.dispose();
+  });
+
   test('failed sync backs off and a later success restores the interval',
       () async {
     var shouldFail = true;

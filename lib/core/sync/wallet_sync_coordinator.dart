@@ -96,7 +96,12 @@ final class WalletSyncCoordinator extends ChangeNotifier
   void start() {
     if (_started) return;
     _started = true;
-    unawaited(syncNow().catchError((_) {}));
+    // Let Riverpod finish constructing this coordinator before the initial
+    // sync can publish transaction state. Starting synchronously here causes
+    // a provider-build mutation assertion during app startup.
+    Future<void>.microtask(() {
+      if (_started) unawaited(syncNow().catchError((_) {}));
+    });
   }
 
   void _scheduleNext() {
