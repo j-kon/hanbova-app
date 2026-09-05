@@ -6,6 +6,7 @@ import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_radius.dart';
 import '../../../core/theme/app_spacing.dart';
 import '../../../core/theme/app_typography.dart';
+import '../../auth/providers/auth_provider.dart';
 import '../providers/profile_provider.dart';
 
 class ProfileScreen extends ConsumerWidget {
@@ -344,9 +345,12 @@ class ProfileScreen extends ConsumerWidget {
                           child: const Text('Cancel'),
                         ),
                         TextButton(
-                          onPressed: () {
+                          onPressed: () async {
                             Navigator.pop(dialogCtx);
-                            context.go('/auth/welcome');
+                            await ref.read(authProvider.notifier).logout();
+                            if (context.mounted) {
+                              context.go('/welcome');
+                            }
                           },
                           child: Text(
                             'Sign Out',

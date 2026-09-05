@@ -82,14 +82,27 @@ final appRouterProvider = Provider<GoRouter>((ref) {
       final isAuth = authState.isAuthenticated;
       final location = state.uri.path;
 
+      if (location == '/auth/welcome') {
+        return '/welcome';
+      }
+      if (location == '/auth/login') {
+        return '/login';
+      }
+      if (location == '/auth/signup') {
+        return '/signup';
+      }
+
       if (location == '/developer-options' && !kDebugMode) {
         return '/settings';
       }
 
       final isAuthRoute = location == '/splash' ||
           location == '/welcome' ||
+          location == '/auth/welcome' ||
           location == '/login' ||
+          location == '/auth/login' ||
           location == '/signup' ||
+          location == '/auth/signup' ||
           location == '/forgot-password' ||
           location == '/reset-password' ||
           location == '/wallet-setup';
@@ -99,12 +112,16 @@ final appRouterProvider = Provider<GoRouter>((ref) {
         return '/welcome';
       }
 
-      if (isAuth && location == '/login') {
+      if (isAuth && (location == '/login' || location == '/auth/login')) {
         return safePostLoginPath(state.uri);
       }
 
       // If authenticated and on another entry page, redirect to home.
-      if (isAuth && (location == '/welcome' || location == '/signup')) {
+      if (isAuth &&
+          (location == '/welcome' ||
+              location == '/auth/welcome' ||
+              location == '/signup' ||
+              location == '/auth/signup')) {
         return '/home';
       }
 
@@ -126,14 +143,26 @@ final appRouterProvider = Provider<GoRouter>((ref) {
         },
       ),
       GoRoute(
+        path: '/auth/welcome',
+        redirect: (context, state) => '/welcome',
+      ),
+      GoRoute(
         path: '/signup',
         builder: (context, state) => const SignUpScreen(),
+      ),
+      GoRoute(
+        path: '/auth/signup',
+        redirect: (context, state) => '/signup',
       ),
       GoRoute(
         path: '/login',
         builder: (context, state) => SignInScreen(
           postLoginPath: safePostLoginPath(state.uri),
         ),
+      ),
+      GoRoute(
+        path: '/auth/login',
+        redirect: (context, state) => '/login',
       ),
       GoRoute(
         path: '/forgot-password',

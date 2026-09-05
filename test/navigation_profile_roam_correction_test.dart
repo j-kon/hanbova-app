@@ -233,6 +233,7 @@ void main() {
       expect(find.text('Money & Balances'), findsOneWidget);
       expect(find.text('Your Bitcoin balance'), findsOneWidget);
       expect(find.text('Available to spend'), findsOneWidget);
+      await tester.scrollUntilVisible(find.text('Money in motion'), 200);
       expect(find.text('Money in motion'), findsOneWidget);
       expect(find.text('Protected payments'), findsOneWidget);
       await tester.scrollUntilVisible(find.text('Pending'), 200);
