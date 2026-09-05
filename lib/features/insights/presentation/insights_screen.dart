@@ -31,6 +31,7 @@ class _InsightsScreenState extends ConsumerState<InsightsScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final colors = context.colors;
     final currency = ref.watch(currencyProvider);
     final privacy = ref.watch(privacyProvider);
     final demoState = ref.watch(demoModeProvider);
@@ -42,14 +43,15 @@ class _InsightsScreenState extends ConsumerState<InsightsScreen> {
     final int totalFeesSats = 1250;
 
     return Scaffold(
-      backgroundColor: AppColors.darkBackground,
+      backgroundColor: colors.background,
       appBar: AppBar(
-        backgroundColor: AppColors.darkBackground,
+        backgroundColor: colors.background,
         elevation: 0,
-        title: const Text(
+        iconTheme: IconThemeData(color: colors.textPrimary),
+        title: Text(
           'Financial Insights',
           style: TextStyle(
-            color: Colors.white,
+            color: colors.textPrimary,
             fontSize: 20,
             fontWeight: FontWeight.bold,
           ),
@@ -64,22 +66,22 @@ class _InsightsScreenState extends ConsumerState<InsightsScreen> {
               margin: const EdgeInsets.only(bottom: 12),
               padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
               decoration: BoxDecoration(
-                color: AppColors.primary.withValues(alpha: 0.15),
+                color: colors.primary.withValues(alpha: 0.15),
                 borderRadius: BorderRadius.circular(10),
                 border: Border.all(
-                  color: AppColors.primary.withValues(alpha: 0.4),
+                  color: colors.primary.withValues(alpha: 0.4),
                 ),
               ),
-              child: const Row(
+              child: Row(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  Icon(Icons.info_outline, size: 16, color: AppColors.primary),
-                  SizedBox(width: 8),
+                  Icon(Icons.info_outline, size: 16, color: colors.primary),
+                  const SizedBox(width: 8),
                   Flexible(
                     child: Text(
                       'DEMO MODE • SAMPLE DATA • NO REAL MONEY',
                       style: TextStyle(
-                        color: AppColors.primary,
+                        color: colors.primary,
                         fontSize: 11,
                         fontWeight: FontWeight.bold,
                         letterSpacing: 0.8,
@@ -103,15 +105,20 @@ class _InsightsScreenState extends ConsumerState<InsightsScreen> {
                     label: Text(
                       period.label,
                       style: TextStyle(
-                        color: isSelected ? Colors.black : Colors.white,
+                        color: isSelected
+                            ? AppColors.charcoal
+                            : colors.textPrimary,
                         fontWeight:
                             isSelected ? FontWeight.bold : FontWeight.normal,
                         fontSize: 12,
                       ),
                     ),
                     selected: isSelected,
-                    selectedColor: AppColors.primary,
-                    backgroundColor: AppColors.darkCardBackground,
+                    selectedColor: colors.primary,
+                    backgroundColor: colors.surfaceCard,
+                    side: BorderSide(
+                      color: isSelected ? colors.primary : colors.border,
+                    ),
                     onSelected: (val) {
                       if (val) {
                         setState(() => _selectedPeriod = period);
@@ -136,6 +143,7 @@ class _InsightsScreenState extends ConsumerState<InsightsScreen> {
                   isHidden: privacy.isBalanceHidden,
                   color: const Color(0xFF10B981),
                   icon: Icons.arrow_downward_rounded,
+                  colors: colors,
                 ),
               ),
               const SizedBox(width: 12),
@@ -147,6 +155,7 @@ class _InsightsScreenState extends ConsumerState<InsightsScreen> {
                   isHidden: privacy.isBalanceHidden,
                   color: const Color(0xFFEF4444),
                   icon: Icons.arrow_upward_rounded,
+                  colors: colors,
                 ),
               ),
             ],
@@ -167,6 +176,7 @@ class _InsightsScreenState extends ConsumerState<InsightsScreen> {
                       : const Color(0xFFEF4444),
                   icon: Icons.swap_vert_rounded,
                   isNetFlow: true,
+                  colors: colors,
                 ),
               ),
               const SizedBox(width: 12),
@@ -176,8 +186,9 @@ class _InsightsScreenState extends ConsumerState<InsightsScreen> {
                   satsAmount: totalFeesSats,
                   currency: currency,
                   isHidden: privacy.isBalanceHidden,
-                  color: AppColors.primary,
+                  color: colors.primary,
                   icon: Icons.receipt_long_outlined,
+                  colors: colors,
                 ),
               ),
             ],
@@ -186,19 +197,19 @@ class _InsightsScreenState extends ConsumerState<InsightsScreen> {
           const SizedBox(height: 24),
 
           // Multi-Asset Allocation (Requirement 24)
-          const Text(
+          Text(
             'Asset Allocation',
             style: TextStyle(
-              color: Colors.white,
+              color: colors.textPrimary,
               fontSize: 16,
               fontWeight: FontWeight.bold,
             ),
           ),
           const SizedBox(height: 8),
-          const Text(
+          Text(
             'Portfolio distribution across Bitcoin and digital dollar stablecoins.',
             style: TextStyle(
-              color: AppColors.darkTextSecondary,
+              color: colors.textSecondary,
               fontSize: 12,
             ),
           ),
@@ -214,10 +225,10 @@ class _InsightsScreenState extends ConsumerState<InsightsScreen> {
           const SizedBox(height: 24),
 
           // Spending by Category
-          const Text(
+          Text(
             'Spending by Category',
             style: TextStyle(
-              color: Colors.white,
+              color: colors.textPrimary,
               fontSize: 16,
               fontWeight: FontWeight.bold,
             ),
@@ -282,19 +293,19 @@ class _InsightsScreenState extends ConsumerState<InsightsScreen> {
           const SizedBox(height: 24),
 
           // Spending by Country / Market
-          const Text(
+          Text(
             'Spending by Country / Spend Market',
             style: TextStyle(
-              color: Colors.white,
+              color: colors.textPrimary,
               fontSize: 16,
               fontWeight: FontWeight.bold,
             ),
           ),
           const SizedBox(height: 8),
-          const Text(
+          Text(
             'Aggregated spend based on merchant and biller countries visited or paid.',
             style: TextStyle(
-              color: AppColors.darkTextSecondary,
+              color: colors.textSecondary,
               fontSize: 12,
             ),
           ),
@@ -331,19 +342,19 @@ class _InsightsScreenState extends ConsumerState<InsightsScreen> {
           const SizedBox(height: 24),
 
           // Spending by Currency
-          const Text(
+          Text(
             'Currencies Used in Spend',
             style: TextStyle(
-              color: Colors.white,
+              color: colors.textPrimary,
               fontSize: 16,
               fontWeight: FontWeight.bold,
             ),
           ),
           const SizedBox(height: 8),
-          const Text(
+          Text(
             'Converted on-demand from Bitcoin satoshis. Hanbova holds 100% sats.',
             style: TextStyle(
-              color: AppColors.darkTextSecondary,
+              color: colors.textSecondary,
               fontSize: 12,
             ),
           ),
@@ -371,14 +382,16 @@ class _InsightsScreenState extends ConsumerState<InsightsScreen> {
     required Color color,
     required IconData icon,
     bool isNetFlow = false,
+    HanbovaColors? colors,
   }) {
+    final themeColors = colors ?? context.colors;
     final prefix = isNetFlow && satsAmount > 0 ? '+' : '';
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: AppColors.darkCardBackground,
+        color: themeColors.surfaceCard,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: AppColors.darkBorder),
+        border: Border.all(color: themeColors.border),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -391,8 +404,8 @@ class _InsightsScreenState extends ConsumerState<InsightsScreen> {
                   title,
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
-                  style: const TextStyle(
-                    color: AppColors.darkTextSecondary,
+                  style: TextStyle(
+                    color: themeColors.textSecondary,
                     fontSize: 12,
                     fontWeight: FontWeight.w600,
                   ),
@@ -420,8 +433,8 @@ class _InsightsScreenState extends ConsumerState<InsightsScreen> {
             isHidden ? '≈ ••••' : '≈ ${currency.format(satsAmount)}',
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
-            style: const TextStyle(
-              color: AppColors.darkTextSecondary,
+            style: TextStyle(
+              color: themeColors.textSecondary,
               fontSize: 11,
             ),
           ),
@@ -439,13 +452,14 @@ class _InsightsScreenState extends ConsumerState<InsightsScreen> {
     required IconData icon,
     required Color color,
   }) {
+    final colors = context.colors;
     return Container(
       margin: const EdgeInsets.only(bottom: 8),
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-        color: AppColors.darkCardBackground,
+        color: colors.surfaceCard,
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: AppColors.darkBorder.withValues(alpha: 0.5)),
+        border: Border.all(color: colors.border.withValues(alpha: 0.5)),
       ),
       child: Row(
         children: [
@@ -464,16 +478,16 @@ class _InsightsScreenState extends ConsumerState<InsightsScreen> {
               children: [
                 Text(
                   name,
-                  style: const TextStyle(
-                    color: Colors.white,
+                  style: TextStyle(
+                    color: colors.textPrimary,
                     fontSize: 13,
                     fontWeight: FontWeight.w600,
                   ),
                 ),
                 Text(
                   percent,
-                  style: const TextStyle(
-                    color: AppColors.darkTextSecondary,
+                  style: TextStyle(
+                    color: colors.textSecondary,
                     fontSize: 11,
                   ),
                 ),
@@ -487,16 +501,16 @@ class _InsightsScreenState extends ConsumerState<InsightsScreen> {
                 isHidden
                     ? '•••• sats'
                     : '${_numberFormat.format(satsAmount)} sats',
-                style: const TextStyle(
-                  color: Colors.white,
+                style: TextStyle(
+                  color: colors.textPrimary,
                   fontSize: 13,
                   fontWeight: FontWeight.bold,
                 ),
               ),
               Text(
                 isHidden ? '≈ ••••' : '≈ ${currency.format(satsAmount)}',
-                style: const TextStyle(
-                  color: AppColors.darkTextSecondary,
+                style: TextStyle(
+                  color: colors.textSecondary,
                   fontSize: 11,
                 ),
               ),
@@ -516,13 +530,14 @@ class _InsightsScreenState extends ConsumerState<InsightsScreen> {
     required FiatCurrency currency,
     required bool isHidden,
   }) {
+    final colors = context.colors;
     return Container(
       margin: const EdgeInsets.only(bottom: 8),
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-        color: AppColors.darkCardBackground,
+        color: colors.surfaceCard,
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: AppColors.darkBorder),
+        border: Border.all(color: colors.border),
       ),
       child: Row(
         children: [
@@ -534,8 +549,8 @@ class _InsightsScreenState extends ConsumerState<InsightsScreen> {
               children: [
                 Text(
                   countryName,
-                  style: const TextStyle(
-                    color: Colors.white,
+                  style: TextStyle(
+                    color: colors.textPrimary,
                     fontSize: 14,
                     fontWeight: FontWeight.bold,
                   ),
@@ -543,7 +558,7 @@ class _InsightsScreenState extends ConsumerState<InsightsScreen> {
                 Text(
                   'Local: $localAmount',
                   style: TextStyle(
-                    color: AppColors.primary.withValues(alpha: 0.9),
+                    color: colors.primary.withValues(alpha: 0.9),
                     fontSize: 12,
                     fontWeight: FontWeight.w500,
                   ),
@@ -558,8 +573,8 @@ class _InsightsScreenState extends ConsumerState<InsightsScreen> {
                 isHidden
                     ? '•••• sats'
                     : '${_numberFormat.format(satsAmount)} sats',
-                style: const TextStyle(
-                  color: Colors.white,
+                style: TextStyle(
+                  color: colors.textPrimary,
                   fontSize: 13,
                   fontWeight: FontWeight.bold,
                 ),
@@ -568,8 +583,8 @@ class _InsightsScreenState extends ConsumerState<InsightsScreen> {
                 isHidden
                     ? 'Home: ••••'
                     : 'Home: ${currency.format(satsAmount)}',
-                style: const TextStyle(
-                  color: AppColors.darkTextSecondary,
+                style: TextStyle(
+                  color: colors.textSecondary,
                   fontSize: 11,
                 ),
               ),
@@ -582,20 +597,22 @@ class _InsightsScreenState extends ConsumerState<InsightsScreen> {
 
   Widget _buildCurrencyUsageRow(
       String title, String localSpend, String satsUsed) {
+    final colors = context.colors;
     return Container(
       margin: const EdgeInsets.only(bottom: 6),
       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
       decoration: BoxDecoration(
-        color: AppColors.darkCardBackground,
+        color: colors.surfaceCard,
         borderRadius: BorderRadius.circular(10),
+        border: Border.all(color: colors.border),
       ),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
           Text(
             title,
-            style: const TextStyle(
-              color: Colors.white,
+            style: TextStyle(
+              color: colors.textPrimary,
               fontSize: 12,
               fontWeight: FontWeight.w600,
             ),
@@ -604,8 +621,8 @@ class _InsightsScreenState extends ConsumerState<InsightsScreen> {
             children: [
               Text(
                 localSpend,
-                style: const TextStyle(
-                  color: AppColors.primary,
+                style: TextStyle(
+                  color: colors.primary,
                   fontSize: 12,
                   fontWeight: FontWeight.bold,
                 ),
@@ -613,8 +630,8 @@ class _InsightsScreenState extends ConsumerState<InsightsScreen> {
               const SizedBox(width: 8),
               Text(
                 '($satsUsed)',
-                style: const TextStyle(
-                  color: AppColors.darkTextSecondary,
+                style: TextStyle(
+                  color: colors.textSecondary,
                   fontSize: 11,
                 ),
               ),
@@ -626,6 +643,7 @@ class _InsightsScreenState extends ConsumerState<InsightsScreen> {
   }
 
   Widget _buildAssetAllocationCard(bool isDemo, bool isHidden) {
+    final colors = context.colors;
     // In demo mode: BTC 37%, USDT 39%, USDC 24%
     // In normal mode: BTC 100%, USDT 0%, USDC 0%
     final btcPct = isDemo ? 37 : 100;
@@ -635,9 +653,9 @@ class _InsightsScreenState extends ConsumerState<InsightsScreen> {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: AppColors.darkCardBackground,
+        color: colors.surfaceCard,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: AppColors.darkBorder),
+        border: Border.all(color: colors.border),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -645,10 +663,10 @@ class _InsightsScreenState extends ConsumerState<InsightsScreen> {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              const Text(
+              Text(
                 'Total Portfolio Holdings',
                 style: TextStyle(
-                  color: AppColors.darkTextSecondary,
+                  color: colors.textSecondary,
                   fontSize: 12,
                 ),
               ),
@@ -658,8 +676,8 @@ class _InsightsScreenState extends ConsumerState<InsightsScreen> {
                   isDemo
                       ? (isHidden ? '••••••' : '≈ \$3,170.00 USD')
                       : (isHidden ? '••••••' : '100% Bitcoin'),
-                  style: const TextStyle(
-                    color: Colors.white,
+                  style: TextStyle(
+                    color: colors.textPrimary,
                     fontSize: 13,
                     fontWeight: FontWeight.bold,
                   ),
@@ -708,18 +726,21 @@ class _InsightsScreenState extends ConsumerState<InsightsScreen> {
                 label: 'Bitcoin (BTC)',
                 pct: '$btcPct%',
                 value: isHidden ? '••••' : (isDemo ? '1.8M sats' : 'Active'),
+                colors: colors,
               ),
               _buildAllocationLegendItem(
                 color: const Color(0xFF26A17B),
                 label: 'Tether (USDT)',
                 pct: '$usdtPct%',
                 value: isHidden ? '••••' : (isDemo ? '\$1,250' : '\$0'),
+                colors: colors,
               ),
               _buildAllocationLegendItem(
                 color: const Color(0xFF2775CA),
                 label: 'USD Coin (USDC)',
                 pct: '$usdcPct%',
                 value: isHidden ? '••••' : (isDemo ? '\$750' : '\$0'),
+                colors: colors,
               ),
             ],
           ),
@@ -733,6 +754,7 @@ class _InsightsScreenState extends ConsumerState<InsightsScreen> {
     required String label,
     required String pct,
     required String value,
+    required HanbovaColors colors,
   }) {
     return Row(
       mainAxisSize: MainAxisSize.min,
@@ -751,16 +773,16 @@ class _InsightsScreenState extends ConsumerState<InsightsScreen> {
           children: [
             Text(
               '$label $pct',
-              style: const TextStyle(
-                color: Colors.white,
+              style: TextStyle(
+                color: colors.textPrimary,
                 fontSize: 11,
                 fontWeight: FontWeight.w600,
               ),
             ),
             Text(
               value,
-              style: const TextStyle(
-                color: AppColors.darkTextSecondary,
+              style: TextStyle(
+                color: colors.textSecondary,
                 fontSize: 10,
               ),
             ),
@@ -771,12 +793,13 @@ class _InsightsScreenState extends ConsumerState<InsightsScreen> {
   }
 
   Widget _buildConversionActivityCard(bool isDemo, bool isHidden) {
+    final colors = context.colors;
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: AppColors.darkCardBackground,
+        color: colors.surfaceCard,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: AppColors.darkBorder),
+        border: Border.all(color: colors.border),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -784,17 +807,17 @@ class _InsightsScreenState extends ConsumerState<InsightsScreen> {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              const Expanded(
+              Expanded(
                 child: Row(
                   children: [
-                    Icon(Icons.swap_horiz_rounded,
+                    const Icon(Icons.swap_horiz_rounded,
                         color: Color(0xFF38BDF8), size: 18),
-                    SizedBox(width: 8),
+                    const SizedBox(width: 8),
                     Flexible(
                       child: Text(
                         'Conversion Activity',
                         style: TextStyle(
-                          color: Colors.white,
+                          color: colors.textPrimary,
                           fontSize: 14,
                           fontWeight: FontWeight.bold,
                         ),
@@ -829,8 +852,8 @@ class _InsightsScreenState extends ConsumerState<InsightsScreen> {
                     ? '••••••'
                     : 'Converted volume: \$1,450.00 • Active pairs: BTC/USDT, USDT/USDC • Spread savings: ≈ 2.4% vs local OTC')
                 : 'No conversion history yet. Use Convert on Home to swap between BTC, USDT, and USDC.',
-            style: const TextStyle(
-              color: AppColors.darkTextSecondary,
+            style: TextStyle(
+              color: colors.textSecondary,
               fontSize: 12,
               height: 1.35,
             ),

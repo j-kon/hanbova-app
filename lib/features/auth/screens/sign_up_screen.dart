@@ -192,15 +192,14 @@ class _SignUpScreenState extends ConsumerState<SignUpScreen> {
   }
 
   Widget _buildStepDot(int stepIndex) {
+    final colors = context.colors;
     final isActive = _currentStep >= stepIndex;
     final isCurrent = _currentStep == stepIndex;
     return Container(
       width: isCurrent ? 20 : 8,
       height: 8,
       decoration: BoxDecoration(
-        color: isActive
-            ? AppColors.primary
-            : AppColors.darkBorder.withValues(alpha: 0.5),
+        color: isActive ? colors.primary : colors.border.withValues(alpha: 0.5),
         borderRadius: BorderRadius.circular(4),
       ),
     );
@@ -471,24 +470,25 @@ class _SignUpScreenState extends ConsumerState<SignUpScreen> {
         // Search Bar
         Container(
           decoration: BoxDecoration(
-            color: AppColors.darkSurfaceCard,
+            color: colors.surfaceCard,
             borderRadius: AppRadius.mdRadius,
-            border: Border.all(color: AppColors.darkBorder),
+            border: Border.all(color: colors.border),
           ),
           child: TextField(
             key: const Key('countrySearchField'),
             controller: _countrySearchController,
-            style: const TextStyle(color: Colors.white),
+            style: TextStyle(color: colors.textPrimary),
             decoration: InputDecoration(
               hintText: 'Search countries',
-              hintStyle: const TextStyle(color: AppColors.darkTextSecondary),
-              prefixIcon: const Icon(Icons.search, color: AppColors.primary),
+              hintStyle: TextStyle(color: colors.textSecondary),
+              prefixIcon: Icon(Icons.search, color: colors.primary),
               border: InputBorder.none,
               contentPadding: const EdgeInsets.symmetric(
                   horizontal: AppSpacing.md, vertical: 14),
               suffixIcon: _countrySearchQuery.isNotEmpty
                   ? IconButton(
-                      icon: const Icon(Icons.clear, size: 18),
+                      icon: Icon(Icons.clear,
+                          size: 18, color: colors.textSecondary),
                       onPressed: () {
                         _countrySearchController.clear();
                         setState(() => _countrySearchQuery = '');
@@ -507,13 +507,13 @@ class _SignUpScreenState extends ConsumerState<SignUpScreen> {
               ? Center(
                   child: Text(
                     'No countries found for "$_countrySearchQuery"',
-                    style: const TextStyle(color: AppColors.darkTextSecondary),
+                    style: TextStyle(color: colors.textSecondary),
                   ),
                 )
               : ListView.separated(
                   itemCount: filteredCountries.length,
-                  separatorBuilder: (_, __) => const Divider(
-                    color: AppColors.darkBorder,
+                  separatorBuilder: (_, __) => Divider(
+                    color: colors.border,
                     height: 1,
                   ),
                   itemBuilder: (context, index) {
@@ -530,7 +530,8 @@ class _SignUpScreenState extends ConsumerState<SignUpScreen> {
                       title: Text(
                         c.name,
                         style: TextStyle(
-                          color: isSelected ? AppColors.primary : Colors.white,
+                          color:
+                              isSelected ? colors.primary : colors.textPrimary,
                           fontWeight:
                               isSelected ? FontWeight.bold : FontWeight.w500,
                           fontSize: 15,
@@ -538,16 +539,16 @@ class _SignUpScreenState extends ConsumerState<SignUpScreen> {
                       ),
                       subtitle: Text(
                         '${c.code} • ${c.defaultCurrency.code}',
-                        style: const TextStyle(
-                          color: AppColors.darkTextSecondary,
+                        style: TextStyle(
+                          color: colors.textSecondary,
                           fontSize: 12,
                         ),
                       ),
                       trailing: isSelected
-                          ? const Icon(Icons.check_circle_rounded,
-                              color: AppColors.primary)
-                          : const Icon(Icons.chevron_right_rounded,
-                              color: AppColors.darkTextTertiary),
+                          ? Icon(Icons.check_circle_rounded,
+                              color: colors.primary)
+                          : Icon(Icons.chevron_right_rounded,
+                              color: colors.textSecondary),
                       onTap: () => _onCountrySelected(c.code),
                     );
                   },
@@ -610,9 +611,9 @@ class _SignUpScreenState extends ConsumerState<SignUpScreen> {
         Container(
           padding: const EdgeInsets.all(AppSpacing.lg),
           decoration: BoxDecoration(
-            color: AppColors.darkSurfaceCard,
+            color: colors.surfaceCard,
             borderRadius: AppRadius.lgRadius,
-            border: Border.all(color: AppColors.darkBorder),
+            border: Border.all(color: colors.border),
           ),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -700,15 +701,16 @@ class _SignUpScreenState extends ConsumerState<SignUpScreen> {
 
   Widget _buildFeatureRow(
       BuildContext context, IconData icon, String title, String subtitle) {
+    final colors = context.colors;
     return Row(
       children: [
         Container(
           padding: const EdgeInsets.all(8),
           decoration: BoxDecoration(
-            color: AppColors.primary.withValues(alpha: 0.15),
+            color: colors.primary.withValues(alpha: 0.15),
             shape: BoxShape.circle,
           ),
-          child: Icon(icon, color: AppColors.primary, size: 20),
+          child: Icon(icon, color: colors.primary, size: 20),
         ),
         const SizedBox(width: 14),
         Expanded(
@@ -717,8 +719,8 @@ class _SignUpScreenState extends ConsumerState<SignUpScreen> {
             children: [
               Text(
                 title,
-                style: const TextStyle(
-                  color: Colors.white,
+                style: TextStyle(
+                  color: colors.textPrimary,
                   fontSize: 14,
                   fontWeight: FontWeight.bold,
                 ),
@@ -726,8 +728,8 @@ class _SignUpScreenState extends ConsumerState<SignUpScreen> {
               const SizedBox(height: 2),
               Text(
                 subtitle,
-                style: const TextStyle(
-                  color: AppColors.darkTextSecondary,
+                style: TextStyle(
+                  color: colors.textSecondary,
                   fontSize: 12,
                 ),
               ),

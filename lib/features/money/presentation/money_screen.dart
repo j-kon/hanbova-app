@@ -8,6 +8,9 @@ import 'package:hanbova_app/core/theme/app_colors.dart';
 import 'package:hanbova_app/features/pending/presentation/pending_centre_screen.dart';
 import 'package:hanbova_app/features/protected/presentation/protected_screen.dart';
 import 'package:intl/intl.dart';
+import '../../../core/cashu/cashu_wallet_provider.dart';
+import '../../../core/widgets/hanbova_rate_card.dart';
+import '../../home/presentation/home_balance_card.dart';
 
 final _numberFormat = NumberFormat('#,##0', 'en_US');
 
@@ -17,16 +20,28 @@ class MoneyScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final colors = context.colors;
-    final isDark = context.isDark;
 
     final currency = ref.watch(currencyProvider);
     final demoState = ref.watch(demoModeProvider);
     final privacy = ref.watch(privacyProvider);
 
-    final totalSats = demoState.totalBalanceSats;
-    final availableSats = demoState.availableBalanceSats;
-    final protectedSats = demoState.protectedTotalSats;
-    final pendingSats = demoState.pendingBalanceSats;
+    final walletBalance = ref.watch(cashuBalanceProvider);
+    final String? balanceStatus = !demoState.isEnabled &&
+            (walletBalance.isLoading ||
+                walletBalance.hasError ||
+                !walletBalance.hasValue)
+        ? (walletBalance.hasError ? 'Balance unavailable' : 'Updating balance…')
+        : null;
+    final availableSats = demoState.isEnabled
+        ? demoState.availableBalanceSats
+        : walletBalance.valueOrNull?.spendableSats ?? 0;
+    final protectedSats = demoState.isEnabled
+        ? demoState.protectedTotalSats
+        : walletBalance.valueOrNull?.lockedEscrowSats ?? 0;
+    final pendingSats = demoState.isEnabled ? demoState.pendingBalanceSats : 0;
+    final totalSats = demoState.isEnabled
+        ? demoState.totalBalanceSats
+        : availableSats + protectedSats;
 
     return Scaffold(
       backgroundColor: colors.background,
@@ -93,133 +108,39 @@ class MoneyScreen extends ConsumerWidget {
               ),
             ),
 
-          // Primary Authoritative Bitcoin Balance Card
-          Container(
-            padding: const EdgeInsets.all(24),
-            decoration: BoxDecoration(
-              gradient: LinearGradient(
-                colors: isDark
-                    ? const [Color(0xFF1E293B), Color(0xFF0F172A)]
-                    : [colors.surfaceCard, colors.surfaceElevated],
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
-              ),
-              borderRadius: BorderRadius.circular(20),
-              border: Border.all(
-                color: colors.primary.withValues(alpha: isDark ? 0.3 : 0.45),
-                width: 1.5,
-              ),
-              boxShadow: [
-                BoxShadow(
-                  color: isDark
-                      ? Colors.black.withValues(alpha: 0.3)
-                      : AppColors.charcoal.withValues(alpha: 0.05),
-                  blurRadius: 16,
-                  offset: const Offset(0, 4),
-                ),
-              ],
-            ),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Flexible(
-                      child: Text(
-                        'BITCOIN BALANCE',
-                        style: TextStyle(
-                          color: colors.textSecondary,
-                          fontSize: 12,
-                          fontWeight: FontWeight.w600,
-                          letterSpacing: 1.1,
-                        ),
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                    ),
-                    Container(
-                      padding: const EdgeInsets.symmetric(
-                          horizontal: 8, vertical: 4),
-                      decoration: BoxDecoration(
-                        color: const Color(0xFF10B981).withValues(alpha: 0.15),
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                      child: const Row(
-                        children: [
-                          Icon(Icons.check_circle_outline,
-                              size: 14, color: Color(0xFF10B981)),
-                          SizedBox(width: 4),
-                          Text(
-                            'Available to spend',
-                            style: TextStyle(
-                              color: Color(0xFF10B981),
-                              fontSize: 11,
-                              fontWeight: FontWeight.w600,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 12),
-                Text(
-                  privacy.isBalanceHidden
-                      ? '•••••• sats'
-                      : '${_numberFormat.format(availableSats)} sats',
-                  style: TextStyle(
-                    color: colors.textPrimary,
-                    fontSize: 32,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-                const SizedBox(height: 6),
-                Text(
-                  privacy.isBalanceHidden
-                      ? '≈ ••••••'
-                      : '≈ ${currency.format(availableSats)}',
-                  style: TextStyle(
-                    color: colors.primary.withValues(alpha: 0.9),
-                    fontSize: 18,
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
-                const SizedBox(height: 16),
-                Container(
-                  padding: const EdgeInsets.all(12),
-                  decoration: BoxDecoration(
-                    color: isDark
-                        ? Colors.black.withValues(alpha: 0.3)
-                        : colors.surfaceCard.withValues(alpha: 0.7),
-                    borderRadius: BorderRadius.circular(12),
-                    border: Border.all(color: colors.border),
-                  ),
-                  child: Row(
-                    children: [
-                      Icon(Icons.account_balance_wallet_outlined,
-                          size: 16, color: colors.textSecondary),
-                      const SizedBox(width: 8),
-                      Expanded(
-                        child: Text(
-                          'Authoritative spendable wallet balance ready for instant payments and transfers.',
-                          style: TextStyle(
-                            color: colors.textSecondary,
-                            fontSize: 11,
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ],
-            ),
+          HomeBalanceCard(
+            title: 'Your Bitcoin balance',
+            showMotion: false,
+            amount: privacy.isBalanceHidden
+                ? '•••••• sats'
+                : '${_numberFormat.format(availableSats)} sats',
+            sats: privacy.isBalanceHidden
+                ? '≈ ••••••'
+                : '≈ ${currency.format(availableSats)}',
+            protectedAmount: '',
+            pendingAmount: '',
+            environmentLabel:
+                demoState.isEnabled ? '' : 'Available in your wallet',
+            isHidden: privacy.isBalanceHidden,
+            isLoading: !demoState.isEnabled && walletBalance.isLoading,
+            hasError: !demoState.isEnabled && walletBalance.hasError,
+            onRetry: () => ref.invalidate(cashuBalanceProvider),
+            onToggleVisibility: () =>
+                ref.read(privacyProvider.notifier).toggleBalanceHidden(),
+            onProtected: () {},
+            onPending: () {},
           ),
+          const SizedBox(height: 16),
 
+          // Live Hanbova Platform Settlement Rate
+          const HanbovaRateCard(),
           const SizedBox(height: 24),
 
           // Assets Section
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          Wrap(
+            spacing: 12,
+            runSpacing: 8,
+            crossAxisAlignment: WrapCrossAlignment.center,
             children: [
               Text(
                 'Assets',
@@ -256,16 +177,23 @@ class MoneyScreen extends ConsumerWidget {
             icon: Icons.currency_bitcoin_rounded,
             iconColor: const Color(0xFFF7931A),
             name: 'Bitcoin',
-            subtitle: demoState.isEnabled
-                ? '1,800,000 sats available'
-                : '${_numberFormat.format(availableSats)} sats available',
-            amountDisplay: privacy.isBalanceHidden
-                ? '•••• sats'
-                : '${_numberFormat.format(availableSats)} sats',
-            fiatEstimate: privacy.isBalanceHidden
-                ? '••••'
-                : '≈ ${currency.format(availableSats)}',
-            stateBadge: 'Active',
+            subtitle: balanceStatus == null
+                ? 'Available for payments'
+                : 'Check your wallet connection',
+            amountDisplay: balanceStatus ??
+                (privacy.isBalanceHidden
+                    ? '•••• sats'
+                    : '${_numberFormat.format(availableSats)} sats'),
+            fiatEstimate: balanceStatus != null
+                ? null
+                : privacy.isBalanceHidden
+                    ? '••••'
+                    : '≈ ${currency.format(availableSats)}',
+            stateBadge: balanceStatus == null
+                ? 'Active'
+                : walletBalance.hasError
+                    ? 'Unavailable'
+                    : 'Updating',
             badgeColor: const Color(0xFF10B981),
             onTap: () => context.push('/money/bitcoin'),
             colors: colors,
@@ -279,12 +207,14 @@ class MoneyScreen extends ConsumerWidget {
             iconColor: const Color(0xFF26A17B),
             name: 'USDT',
             subtitle: demoState.isEnabled
-                ? '\$1,250.00 • Stablecoin wallet'
-                : 'Stablecoin wallet • Coming soon',
+                ? 'Sample stablecoin balance'
+                : 'Coming soon',
             amountDisplay: demoState.isEnabled
                 ? (privacy.isBalanceHidden ? '••••' : '\$1,250.00')
                 : '\$0.00',
-            fiatEstimate: demoState.isEnabled ? '1,250.00 USDT' : null,
+            fiatEstimate: demoState.isEnabled && !privacy.isBalanceHidden
+                ? '1,250.00 USDT'
+                : null,
             stateBadge: demoState.isEnabled ? 'Demo' : 'Coming soon',
             badgeColor:
                 demoState.isEnabled ? colors.primary : const Color(0xFF38BDF8),
@@ -300,12 +230,14 @@ class MoneyScreen extends ConsumerWidget {
             iconColor: const Color(0xFF2775CA),
             name: 'USDC',
             subtitle: demoState.isEnabled
-                ? '\$750.00 • Stablecoin wallet'
-                : 'Stablecoin wallet • Coming soon',
+                ? 'Sample stablecoin balance'
+                : 'Coming soon',
             amountDisplay: demoState.isEnabled
                 ? (privacy.isBalanceHidden ? '••••' : '\$750.00')
                 : '\$0.00',
-            fiatEstimate: demoState.isEnabled ? '750.00 USDC' : null,
+            fiatEstimate: demoState.isEnabled && !privacy.isBalanceHidden
+                ? '750.00 USDC'
+                : null,
             stateBadge: demoState.isEnabled ? 'Demo' : 'Coming soon',
             badgeColor:
                 demoState.isEnabled ? colors.primary : const Color(0xFF38BDF8),
@@ -338,9 +270,9 @@ class MoneyScreen extends ConsumerWidget {
           _buildBreakdownCard(
             context,
             title: 'Protected payments',
-            subtitle:
-                'Locked in conditional protection (${_numberFormat.format(demoState.protectedWaitingSats)} sats waiting, ${_numberFormat.format(demoState.protectedRefundableSats)} sats refundable)',
+            subtitle: 'Waiting for a claim or eligible for a refund',
             satsAmount: protectedSats,
+            amountStatus: balanceStatus,
             currency: currency,
             isHidden: privacy.isBalanceHidden,
             icon: Icons.shield_outlined,
@@ -360,8 +292,11 @@ class MoneyScreen extends ConsumerWidget {
           _buildBreakdownCard(
             context,
             title: 'Pending',
-            subtitle: '1 processing payment, 1 uncertain verification',
+            subtitle: demoState.isEnabled
+                ? 'Sample payments awaiting confirmation'
+                : 'Check payments awaiting confirmation',
             satsAmount: pendingSats,
+            amountStatus: demoState.isEnabled ? null : 'Check payment status',
             currency: currency,
             isHidden: privacy.isBalanceHidden,
             icon: Icons.hourglass_top_rounded,
@@ -395,9 +330,11 @@ class MoneyScreen extends ConsumerWidget {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        privacy.isBalanceHidden
-                            ? 'Portfolio Total: •••••• sats'
-                            : 'Portfolio Total: ${_numberFormat.format(totalSats)} sats (≈ ${currency.format(totalSats)})',
+                        balanceStatus != null
+                            ? 'Portfolio Total: $balanceStatus'
+                            : privacy.isBalanceHidden
+                                ? 'Portfolio Total: •••••• sats'
+                                : 'Portfolio Total: ${_numberFormat.format(totalSats)} sats (≈ ${currency.format(totalSats)})',
                         style: TextStyle(
                           color: colors.textPrimary,
                           fontSize: 13,
@@ -406,7 +343,7 @@ class MoneyScreen extends ConsumerWidget {
                       ),
                       const SizedBox(height: 2),
                       Text(
-                        'Total combines Available (${_numberFormat.format(availableSats)} sats) + Protected (${_numberFormat.format(protectedSats)} sats) + Pending (${_numberFormat.format(pendingSats)} sats). Only Available is immediately spendable.',
+                        'Only your available balance can be spent. Protected funds are shown separately.',
                         style: TextStyle(
                           color: colors.textSecondary,
                           fontSize: 11,
@@ -552,9 +489,7 @@ class MoneyScreen extends ConsumerWidget {
                 label: Text(
                   '${fc.code} (${fc.symbol.trim()})',
                   style: TextStyle(
-                    color: isSelected
-                        ? (isDark ? Colors.black : Colors.white)
-                        : colors.textPrimary,
+                    color: isSelected ? AppColors.charcoal : colors.textPrimary,
                     fontWeight:
                         isSelected ? FontWeight.bold : FontWeight.normal,
                   ),
@@ -585,6 +520,7 @@ class MoneyScreen extends ConsumerWidget {
     required String title,
     required String subtitle,
     required int satsAmount,
+    String? amountStatus,
     required FiatCurrency currency,
     required bool isHidden,
     required IconData icon,
@@ -593,114 +529,46 @@ class MoneyScreen extends ConsumerWidget {
     VoidCallback? onAction,
   }) {
     final colors = context.colors;
-
     return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: colors.surfaceCard,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: colors.border),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              Container(
-                padding: const EdgeInsets.all(8),
-                decoration: BoxDecoration(
-                  color: iconColor.withValues(alpha: 0.15),
-                  shape: BoxShape.circle,
-                ),
-                child: Icon(icon, color: iconColor, size: 20),
-              ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      title,
-                      style: TextStyle(
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+            color: colors.surfaceCard,
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(color: colors.border)),
+        child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+          Row(children: [
+            Icon(icon, color: colors.textSecondary, size: 22),
+            const SizedBox(width: 10),
+            Expanded(
+                child: Text(title,
+                    style: TextStyle(
                         color: colors.textPrimary,
-                        fontSize: 15,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                    const SizedBox(height: 2),
-                    Text(
-                      subtitle,
-                      style: TextStyle(
-                        color: colors.textSecondary,
-                        fontSize: 11,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 12),
-          Divider(color: colors.divider, height: 1),
-          const SizedBox(height: 12),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      isHidden
-                          ? '•••• sats'
-                          : '${_numberFormat.format(satsAmount)} sats',
-                      style: TextStyle(
-                        color: colors.textPrimary,
-                        fontSize: 18,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                    Text(
-                      isHidden ? '≈ ••••' : '≈ ${currency.format(satsAmount)}',
-                      style: TextStyle(
-                        color: colors.textSecondary,
-                        fontSize: 12,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              if (actionLabel != null && onAction != null)
-                TextButton(
-                  onPressed: onAction,
-                  style: TextButton.styleFrom(
-                    foregroundColor: colors.primary,
-                    padding:
-                        const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                    backgroundColor: colors.primary.withValues(alpha: 0.1),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(8),
-                    ),
-                  ),
-                  child: Row(
-                    children: [
-                      Text(
-                        actionLabel,
-                        style: const TextStyle(
-                          fontSize: 12,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                      const SizedBox(width: 4),
-                      const Icon(Icons.chevron_right, size: 16),
-                    ],
-                  ),
-                ),
-            ],
-          ),
-        ],
-      ),
-    );
+                        fontSize: 16,
+                        fontWeight: FontWeight.w600))),
+          ]),
+          const SizedBox(height: 8),
+          Text(subtitle,
+              style: TextStyle(color: colors.textSecondary, fontSize: 13)),
+          const SizedBox(height: 16),
+          Text(
+              amountStatus ??
+                  (isHidden
+                      ? '•••• sats'
+                      : '${_numberFormat.format(satsAmount)} sats'),
+              style: TextStyle(
+                  color: colors.textPrimary,
+                  fontSize: 22,
+                  fontWeight: FontWeight.w600)),
+          if (amountStatus == null) ...[
+            const SizedBox(height: 4),
+            Text(isHidden ? '≈ ••••' : '≈ ${currency.format(satsAmount)}',
+                style: TextStyle(color: colors.textSecondary, fontSize: 13)),
+          ],
+          if (actionLabel != null && onAction != null) ...[
+            const SizedBox(height: 12),
+            TextButton(onPressed: onAction, child: Text(actionLabel)),
+          ],
+        ]));
   }
 
   Widget _buildAssetRow(
@@ -717,103 +585,64 @@ class MoneyScreen extends ConsumerWidget {
     required HanbovaColors colors,
   }) {
     return InkWell(
-      onTap: onTap,
-      borderRadius: BorderRadius.circular(16),
-      child: Container(
-        padding: const EdgeInsets.all(16),
-        decoration: BoxDecoration(
-          color: colors.surfaceCard,
-          borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: colors.border),
-        ),
-        child: Row(
-          children: [
-            Container(
-              padding: const EdgeInsets.all(10),
-              decoration: BoxDecoration(
-                color: iconColor.withValues(alpha: 0.15),
-                shape: BoxShape.circle,
-              ),
-              child: Icon(icon, color: iconColor, size: 22),
-            ),
-            const SizedBox(width: 14),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Wrap(
-                    crossAxisAlignment: WrapCrossAlignment.center,
-                    spacing: 6,
-                    runSpacing: 2,
-                    children: [
-                      Text(
-                        name,
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(16),
+        child: Container(
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+                color: colors.surfaceCard,
+                borderRadius: BorderRadius.circular(16),
+                border: Border.all(color: colors.border)),
+            child: Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
+              Container(
+                  padding: const EdgeInsets.all(10),
+                  decoration: BoxDecoration(
+                      color: colors.surfaceElevated, shape: BoxShape.circle),
+                  child: Icon(icon, color: colors.textPrimary, size: 22)),
+              const SizedBox(width: 12),
+              Expanded(
+                  child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                    Wrap(
+                        spacing: 8,
+                        runSpacing: 6,
+                        crossAxisAlignment: WrapCrossAlignment.center,
+                        children: [
+                          Text(name,
+                              style: TextStyle(
+                                  color: colors.textPrimary,
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.w600)),
+                          Container(
+                              padding: const EdgeInsets.symmetric(
+                                  horizontal: 8, vertical: 3),
+                              decoration: BoxDecoration(
+                                  color: colors.surfaceElevated,
+                                  borderRadius: BorderRadius.circular(8)),
+                              child: Text(stateBadge,
+                                  style: TextStyle(
+                                      color: colors.textSecondary,
+                                      fontSize: 12))),
+                        ]),
+                    const SizedBox(height: 6),
+                    Text(subtitle,
                         style: TextStyle(
-                          color: colors.textPrimary,
-                          fontWeight: FontWeight.bold,
-                          fontSize: 15,
-                        ),
-                      ),
-                      Container(
-                        padding: const EdgeInsets.symmetric(
-                            horizontal: 6, vertical: 2),
-                        decoration: BoxDecoration(
-                          color: badgeColor.withValues(alpha: 0.12),
-                          borderRadius: BorderRadius.circular(4),
-                        ),
-                        child: Text(
-                          stateBadge,
+                            color: colors.textSecondary, fontSize: 12)),
+                    const SizedBox(height: 12),
+                    Text(amountDisplay,
+                        style: TextStyle(
+                            color: colors.textPrimary,
+                            fontSize: 18,
+                            fontWeight: FontWeight.w600)),
+                    if (fiatEstimate != null) ...[
+                      const SizedBox(height: 4),
+                      Text(fiatEstimate,
                           style: TextStyle(
-                            color: badgeColor,
-                            fontSize: 10,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                      ),
+                              color: colors.textSecondary, fontSize: 12)),
                     ],
-                  ),
-                  const SizedBox(height: 2),
-                  Text(
-                    subtitle,
-                    style: TextStyle(
-                      color: colors.textSecondary,
-                      fontSize: 12,
-                    ),
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                ],
-              ),
-            ),
-            const SizedBox(width: 10),
-            Column(
-              crossAxisAlignment: CrossAxisAlignment.end,
-              children: [
-                Text(
-                  amountDisplay,
-                  style: TextStyle(
-                    color: colors.textPrimary,
-                    fontWeight: FontWeight.bold,
-                    fontSize: 14,
-                  ),
-                ),
-                if (fiatEstimate != null) ...[
-                  const SizedBox(height: 2),
-                  Text(
-                    fiatEstimate,
-                    style: TextStyle(
-                      color: colors.textSecondary,
-                      fontSize: 11,
-                    ),
-                  ),
-                ],
-              ],
-            ),
-            const SizedBox(width: 6),
-            Icon(Icons.chevron_right, size: 18, color: colors.textTertiary),
-          ],
-        ),
-      ),
-    );
+                  ])),
+              Icon(Icons.chevron_right, size: 18, color: colors.textSecondary),
+            ])));
   }
 }

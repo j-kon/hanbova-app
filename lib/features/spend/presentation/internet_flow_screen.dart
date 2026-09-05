@@ -279,20 +279,21 @@ class _InternetFlowScreenState extends ConsumerState<InternetFlowScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final colors = context.colors;
     final market = ref.watch(marketProvider);
     final countryCode = market.spendCountry.toUpperCase();
     final providerList = _providers[countryCode] ?? _providers['NG']!;
     final currencySymbol = _getCurrencySymbol(countryCode);
 
     return Scaffold(
-      backgroundColor: AppColors.darkBackground,
+      backgroundColor: colors.background,
       appBar: AppBar(
-        backgroundColor: AppColors.darkBackground,
+        backgroundColor: colors.background,
         elevation: 0,
-        title: const Text(
+        title: Text(
           'Internet & Wi-Fi',
           style: TextStyle(
-            color: Colors.white,
+            color: colors.textPrimary,
             fontSize: 18,
             fontWeight: FontWeight.bold,
           ),
@@ -300,12 +301,11 @@ class _InternetFlowScreenState extends ConsumerState<InternetFlowScreen> {
         actions: [
           TextButton.icon(
             onPressed: () => context.go('/activity?query=Internet'),
-            icon: const Icon(Icons.history_rounded,
-                size: 18, color: AppColors.primary),
-            label: const Text(
+            icon: Icon(Icons.history_rounded, size: 18, color: colors.primary),
+            label: Text(
               'History',
               style: TextStyle(
-                color: AppColors.primary,
+                color: colors.primary,
                 fontSize: 13,
                 fontWeight: FontWeight.bold,
               ),
@@ -320,13 +320,13 @@ class _InternetFlowScreenState extends ConsumerState<InternetFlowScreen> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             // Repeat-first: Saved Accounts
-            const Row(
+            Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 Text(
                   'Saved Internet Accounts',
                   style: TextStyle(
-                    color: Colors.white,
+                    color: colors.textPrimary,
                     fontSize: 16,
                     fontWeight: FontWeight.bold,
                   ),
@@ -334,7 +334,7 @@ class _InternetFlowScreenState extends ConsumerState<InternetFlowScreen> {
                 Text(
                   'Repeat Pay',
                   style: TextStyle(
-                    color: AppColors.primary,
+                    color: colors.primary,
                     fontSize: 12,
                     fontWeight: FontWeight.w600,
                   ),
@@ -352,11 +352,10 @@ class _InternetFlowScreenState extends ConsumerState<InternetFlowScreen> {
                 margin: const EdgeInsets.only(bottom: 12),
                 padding: const EdgeInsets.all(14),
                 decoration: BoxDecoration(
-                  color: AppColors.darkCardBackground,
+                  color: colors.surfaceCard,
                   borderRadius: BorderRadius.circular(16),
                   border: Border.all(
-                    color:
-                        isSelected ? AppColors.primary : AppColors.darkBorder,
+                    color: isSelected ? colors.primary : colors.border,
                     width: isSelected ? 1.5 : 1.0,
                   ),
                 ),
@@ -378,8 +377,8 @@ class _InternetFlowScreenState extends ConsumerState<InternetFlowScreen> {
                         children: [
                           Text(
                             acc['title'] as String,
-                            style: const TextStyle(
-                              color: Colors.white,
+                            style: TextStyle(
+                              color: colors.textPrimary,
                               fontSize: 14,
                               fontWeight: FontWeight.bold,
                             ),
@@ -387,16 +386,16 @@ class _InternetFlowScreenState extends ConsumerState<InternetFlowScreen> {
                           const SizedBox(height: 2),
                           Text(
                             '${acc['providerName']} • ${acc['accountNumber']}',
-                            style: const TextStyle(
-                              color: AppColors.darkTextSecondary,
+                            style: TextStyle(
+                              color: colors.textSecondary,
                               fontSize: 12,
                             ),
                           ),
                           const SizedBox(height: 2),
                           Text(
                             '$currencySymbol ${Formatters.formatSatsNumber((acc['fiatAmount'] as double).round())} (${acc['planName']})',
-                            style: const TextStyle(
-                              color: AppColors.primary,
+                            style: TextStyle(
+                              color: colors.primary,
                               fontSize: 11,
                               fontWeight: FontWeight.w600,
                             ),
@@ -407,8 +406,8 @@ class _InternetFlowScreenState extends ConsumerState<InternetFlowScreen> {
                     ElevatedButton(
                       onPressed: () => _handlePaySaved(acc, countryCode),
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: AppColors.primary,
-                        foregroundColor: Colors.black,
+                        backgroundColor: colors.primary,
+                        foregroundColor: AppColors.charcoal,
                         padding: const EdgeInsets.symmetric(
                             horizontal: 14, vertical: 8),
                         minimumSize: Size.zero,
@@ -431,23 +430,23 @@ class _InternetFlowScreenState extends ConsumerState<InternetFlowScreen> {
             }),
 
             const SizedBox(height: 20),
-            const Divider(color: AppColors.darkBorder),
+            Divider(color: colors.border),
             const SizedBox(height: 16),
 
             // Structured Form: Add Internet Account
-            const Text(
+            Text(
               'Pay Another Internet Account',
               style: TextStyle(
-                color: Colors.white,
+                color: colors.textPrimary,
                 fontSize: 16,
                 fontWeight: FontWeight.bold,
               ),
             ),
             const SizedBox(height: 4),
-            const Text(
+            Text(
               'Select provider and enter account or customer reference number',
               style: TextStyle(
-                color: AppColors.darkTextSecondary,
+                color: colors.textSecondary,
                 fontSize: 12,
               ),
             ),
@@ -468,11 +467,10 @@ class _InternetFlowScreenState extends ConsumerState<InternetFlowScreen> {
                       decoration: BoxDecoration(
                         color: isSelected
                             ? p.brandColor.withValues(alpha: 0.15)
-                            : AppColors.darkCardBackground,
+                            : colors.surfaceCard,
                         borderRadius: BorderRadius.circular(12),
                         border: Border.all(
-                          color:
-                              isSelected ? p.brandColor : AppColors.darkBorder,
+                          color: isSelected ? p.brandColor : colors.border,
                           width: isSelected ? 1.5 : 1,
                         ),
                       ),
@@ -480,13 +478,16 @@ class _InternetFlowScreenState extends ConsumerState<InternetFlowScreen> {
                         children: [
                           Icon(Icons.router_rounded,
                               size: 16,
-                              color:
-                                  isSelected ? p.brandColor : Colors.white70),
+                              color: isSelected
+                                  ? p.brandColor
+                                  : colors.textSecondary),
                           const SizedBox(width: 6),
                           Text(
                             p.name,
                             style: TextStyle(
-                              color: isSelected ? Colors.white : Colors.white70,
+                              color: isSelected
+                                  ? colors.textPrimary
+                                  : colors.textSecondary,
                               fontSize: 12,
                               fontWeight: isSelected
                                   ? FontWeight.bold
@@ -503,10 +504,10 @@ class _InternetFlowScreenState extends ConsumerState<InternetFlowScreen> {
             const SizedBox(height: 16),
 
             // Account Number Input
-            const Text(
+            Text(
               'Account / Customer ID',
               style: TextStyle(
-                color: Colors.white,
+                color: colors.textPrimary,
                 fontSize: 13,
                 fontWeight: FontWeight.w600,
               ),
@@ -515,27 +516,27 @@ class _InternetFlowScreenState extends ConsumerState<InternetFlowScreen> {
             TextField(
               controller: _accountController,
               keyboardType: TextInputType.number,
-              style: const TextStyle(color: Colors.white, fontSize: 15),
+              style: TextStyle(color: colors.textPrimary, fontSize: 15),
               decoration: InputDecoration(
                 hintText: 'e.g. 0192837465',
-                hintStyle: const TextStyle(color: AppColors.darkTextSecondary),
+                hintStyle: TextStyle(color: colors.textSecondary),
                 filled: true,
-                fillColor: AppColors.darkCardBackground,
-                prefixIcon: const Icon(Icons.badge_outlined,
-                    color: AppColors.primary, size: 20),
+                fillColor: colors.surfaceCard,
+                prefixIcon:
+                    Icon(Icons.badge_outlined, color: colors.primary, size: 20),
                 contentPadding:
                     const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
                 border: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(12),
-                  borderSide: const BorderSide(color: AppColors.darkBorder),
+                  borderSide: BorderSide(color: colors.border),
                 ),
                 enabledBorder: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(12),
-                  borderSide: const BorderSide(color: AppColors.darkBorder),
+                  borderSide: BorderSide(color: colors.border),
                 ),
                 focusedBorder: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(12),
-                  borderSide: const BorderSide(color: AppColors.primary),
+                  borderSide: BorderSide(color: colors.primary),
                 ),
               ),
             ),
@@ -544,8 +545,8 @@ class _InternetFlowScreenState extends ConsumerState<InternetFlowScreen> {
             // Amount Input
             Text(
               'Amount ($currencySymbol)',
-              style: const TextStyle(
-                color: Colors.white,
+              style: TextStyle(
+                color: colors.textPrimary,
                 fontSize: 13,
                 fontWeight: FontWeight.w600,
               ),
@@ -555,31 +556,31 @@ class _InternetFlowScreenState extends ConsumerState<InternetFlowScreen> {
               controller: _amountController,
               keyboardType: TextInputType.number,
               onChanged: (_) => setState(() {}),
-              style: const TextStyle(
-                  color: Colors.white,
+              style: TextStyle(
+                  color: colors.textPrimary,
                   fontSize: 18,
                   fontWeight: FontWeight.bold),
               decoration: InputDecoration(
                 prefixText: '$currencySymbol ',
-                prefixStyle: const TextStyle(
-                    color: Colors.white,
+                prefixStyle: TextStyle(
+                    color: colors.textPrimary,
                     fontSize: 18,
                     fontWeight: FontWeight.bold),
                 filled: true,
-                fillColor: AppColors.darkCardBackground,
+                fillColor: colors.surfaceCard,
                 contentPadding:
                     const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
                 border: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(12),
-                  borderSide: const BorderSide(color: AppColors.darkBorder),
+                  borderSide: BorderSide(color: colors.border),
                 ),
                 enabledBorder: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(12),
-                  borderSide: const BorderSide(color: AppColors.darkBorder),
+                  borderSide: BorderSide(color: colors.border),
                 ),
                 focusedBorder: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(12),
-                  borderSide: const BorderSide(color: AppColors.primary),
+                  borderSide: BorderSide(color: colors.primary),
                 ),
               ),
             ),
@@ -589,20 +590,20 @@ class _InternetFlowScreenState extends ConsumerState<InternetFlowScreen> {
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
               decoration: BoxDecoration(
-                color: AppColors.primary.withValues(alpha: 0.1),
+                color: colors.primary.withValues(alpha: 0.1),
                 borderRadius: BorderRadius.circular(10),
                 border: Border.all(
-                  color: AppColors.primary.withValues(alpha: 0.3),
+                  color: colors.primary.withValues(alpha: 0.3),
                 ),
               ),
               child: Row(
                 children: [
-                  const Icon(Icons.bolt, color: AppColors.primary, size: 16),
+                  Icon(Icons.bolt, color: colors.primary, size: 16),
                   const SizedBox(width: 6),
                   Text(
                     'Estimated Bitcoin cost: ${Formatters.formatSats(_calculateSats(double.tryParse(_amountController.text.trim()) ?? 0, countryCode))}',
-                    style: const TextStyle(
-                      color: AppColors.primary,
+                    style: TextStyle(
+                      color: colors.primary,
                       fontSize: 12,
                       fontWeight: FontWeight.w600,
                     ),
@@ -618,8 +619,8 @@ class _InternetFlowScreenState extends ConsumerState<InternetFlowScreen> {
               child: ElevatedButton(
                 onPressed: () => _handlePayNew(countryCode),
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: AppColors.primary,
-                  foregroundColor: Colors.black,
+                  backgroundColor: colors.primary,
+                  foregroundColor: AppColors.charcoal,
                   padding: const EdgeInsets.symmetric(vertical: 16),
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(14),

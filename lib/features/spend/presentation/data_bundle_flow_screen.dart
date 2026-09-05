@@ -214,17 +214,18 @@ class _DataBundleFlowScreenState extends ConsumerState<DataBundleFlowScreen>
 
   @override
   Widget build(BuildContext context) {
+    final colors = context.colors;
     final currency = ref.watch(currencyProvider);
 
     return Scaffold(
-      backgroundColor: AppColors.darkBackground,
+      backgroundColor: colors.background,
       appBar: AppBar(
-        backgroundColor: AppColors.darkBackground,
+        backgroundColor: colors.background,
         elevation: 0,
-        title: const Text(
+        title: Text(
           'Buy Data Bundles',
           style: TextStyle(
-            color: Colors.white,
+            color: colors.textPrimary,
             fontSize: 18,
             fontWeight: FontWeight.bold,
           ),
@@ -232,12 +233,11 @@ class _DataBundleFlowScreenState extends ConsumerState<DataBundleFlowScreen>
         actions: [
           TextButton.icon(
             onPressed: () => context.go('/activity?query=Data'),
-            icon: const Icon(Icons.history_rounded,
-                size: 18, color: AppColors.primary),
-            label: const Text(
+            icon: Icon(Icons.history_rounded, size: 18, color: colors.primary),
+            label: Text(
               'History',
               style: TextStyle(
-                color: AppColors.primary,
+                color: colors.primary,
                 fontSize: 13,
                 fontWeight: FontWeight.bold,
               ),
@@ -258,23 +258,22 @@ class _DataBundleFlowScreenState extends ConsumerState<DataBundleFlowScreen>
                 TextField(
                   controller: _phoneController,
                   keyboardType: TextInputType.phone,
-                  style: const TextStyle(color: Colors.white, fontSize: 15),
+                  style: TextStyle(color: colors.textPrimary, fontSize: 15),
                   decoration: InputDecoration(
                     filled: true,
-                    fillColor: AppColors.darkCardBackground,
-                    prefixIcon: const Icon(Icons.phone_android,
-                        color: AppColors.darkTextSecondary, size: 20),
+                    fillColor: colors.surfaceCard,
+                    prefixIcon: Icon(Icons.phone_android,
+                        color: colors.textSecondary, size: 20),
                     hintText: 'Recipient phone number',
-                    hintStyle:
-                        const TextStyle(color: AppColors.darkTextSecondary),
+                    hintStyle: TextStyle(color: colors.textSecondary),
                     contentPadding: const EdgeInsets.symmetric(vertical: 12),
                     border: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(12),
-                      borderSide: const BorderSide(color: AppColors.darkBorder),
+                      borderSide: BorderSide(color: colors.border),
                     ),
                     enabledBorder: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(12),
-                      borderSide: const BorderSide(color: AppColors.darkBorder),
+                      borderSide: BorderSide(color: colors.border),
                     ),
                   ),
                 ),
@@ -292,20 +291,21 @@ class _DataBundleFlowScreenState extends ConsumerState<DataBundleFlowScreen>
                           padding: const EdgeInsets.symmetric(vertical: 8),
                           decoration: BoxDecoration(
                             color: isSelected
-                                ? AppColors.primary
-                                : AppColors.darkCardBackground,
+                                ? colors.primary
+                                : colors.surfaceCard,
                             borderRadius: BorderRadius.circular(10),
                             border: Border.all(
-                              color: isSelected
-                                  ? AppColors.primary
-                                  : AppColors.darkBorder,
+                              color:
+                                  isSelected ? colors.primary : colors.border,
                             ),
                           ),
                           alignment: Alignment.center,
                           child: Text(
                             op,
                             style: TextStyle(
-                              color: isSelected ? Colors.black : Colors.white,
+                              color: isSelected
+                                  ? AppColors.charcoal
+                                  : colors.textPrimary,
                               fontSize: 12,
                               fontWeight: FontWeight.bold,
                             ),
@@ -322,10 +322,10 @@ class _DataBundleFlowScreenState extends ConsumerState<DataBundleFlowScreen>
           // Tab Bar
           TabBar(
             controller: _tabController,
-            indicatorColor: AppColors.primary,
+            indicatorColor: colors.primary,
             indicatorWeight: 3,
-            labelColor: AppColors.primary,
-            unselectedLabelColor: AppColors.darkTextSecondary,
+            labelColor: colors.primary,
+            unselectedLabelColor: colors.textSecondary,
             labelStyle:
                 const TextStyle(fontWeight: FontWeight.bold, fontSize: 13),
             tabs: const [
@@ -352,6 +352,7 @@ class _DataBundleFlowScreenState extends ConsumerState<DataBundleFlowScreen>
   }
 
   Widget _buildPackageList(String category, dynamic currency) {
+    final colors = context.colors;
     final packages = _allPackages
         .where((p) =>
             p.category == category &&
@@ -359,10 +360,10 @@ class _DataBundleFlowScreenState extends ConsumerState<DataBundleFlowScreen>
         .toList();
 
     if (packages.isEmpty) {
-      return const Center(
+      return Center(
         child: Text(
           'No packages available in this category',
-          style: TextStyle(color: AppColors.darkTextSecondary),
+          style: TextStyle(color: colors.textSecondary),
         ),
       );
     }
@@ -378,20 +379,19 @@ class _DataBundleFlowScreenState extends ConsumerState<DataBundleFlowScreen>
           margin: const EdgeInsets.only(bottom: 12),
           padding: const EdgeInsets.all(16),
           decoration: BoxDecoration(
-            color: AppColors.darkCardBackground,
+            color: colors.surfaceCard,
             borderRadius: BorderRadius.circular(14),
-            border: Border.all(color: AppColors.darkBorder),
+            border: Border.all(color: colors.border),
           ),
           child: Row(
             children: [
               Container(
                 padding: const EdgeInsets.all(10),
                 decoration: BoxDecoration(
-                  color: AppColors.primary.withValues(alpha: 0.15),
+                  color: colors.primary.withValues(alpha: 0.15),
                   borderRadius: BorderRadius.circular(10),
                 ),
-                child:
-                    const Icon(Icons.wifi, color: AppColors.primary, size: 22),
+                child: Icon(Icons.wifi, color: colors.primary, size: 22),
               ),
               const SizedBox(width: 14),
               Expanded(
@@ -400,8 +400,8 @@ class _DataBundleFlowScreenState extends ConsumerState<DataBundleFlowScreen>
                   children: [
                     Text(
                       pkg.allowance,
-                      style: const TextStyle(
-                        color: Colors.white,
+                      style: TextStyle(
+                        color: colors.textPrimary,
                         fontSize: 16,
                         fontWeight: FontWeight.bold,
                       ),
@@ -409,8 +409,8 @@ class _DataBundleFlowScreenState extends ConsumerState<DataBundleFlowScreen>
                     const SizedBox(height: 2),
                     Text(
                       'Valid for ${pkg.validity}',
-                      style: const TextStyle(
-                        color: AppColors.darkTextSecondary,
+                      style: TextStyle(
+                        color: colors.textSecondary,
                         fontSize: 12,
                       ),
                     ),
@@ -422,8 +422,8 @@ class _DataBundleFlowScreenState extends ConsumerState<DataBundleFlowScreen>
                 children: [
                   Text(
                     '₦${NumberFormat('#,##0').format(pkg.fiatPrice)}',
-                    style: const TextStyle(
-                      color: Colors.white,
+                    style: TextStyle(
+                      color: colors.textPrimary,
                       fontSize: 15,
                       fontWeight: FontWeight.bold,
                     ),
@@ -431,8 +431,8 @@ class _DataBundleFlowScreenState extends ConsumerState<DataBundleFlowScreen>
                   const SizedBox(height: 2),
                   Text(
                     '≈ ${Formatters.formatSats(sats)}',
-                    style: const TextStyle(
-                      color: AppColors.primary,
+                    style: TextStyle(
+                      color: colors.primary,
                       fontSize: 11,
                       fontWeight: FontWeight.w600,
                     ),
@@ -443,8 +443,8 @@ class _DataBundleFlowScreenState extends ConsumerState<DataBundleFlowScreen>
               ElevatedButton(
                 onPressed: () => _purchasePackage(pkg),
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: AppColors.primary,
-                  foregroundColor: Colors.black,
+                  backgroundColor: colors.primary,
+                  foregroundColor: AppColors.charcoal,
                   padding:
                       const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
                   minimumSize: Size.zero,

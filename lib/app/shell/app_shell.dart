@@ -1,4 +1,3 @@
-import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import '../../core/theme/app_colors.dart';
@@ -23,107 +22,67 @@ class AppShell extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final colors = context.colors;
-    final isDark = context.isDark;
     final selectedIndex = navigationShell.currentIndex;
 
     return Scaffold(
       backgroundColor: colors.background,
-      body: Stack(
-        children: [
-          // 1. Full-screen scrolling screen content
-          Positioned.fill(
-            child: navigationShell,
-          ),
-
-          // 2. Floating iOS Frosted Glass Navbar (Truly transparent surroundings)
-          Positioned(
-            left: 16,
-            right: 16,
-            bottom: 16,
-            child: Container(
-              decoration: BoxDecoration(
-                borderRadius: BorderRadius.circular(28),
-                boxShadow: [
-                  BoxShadow(
-                    color: isDark
-                        ? Colors.black.withValues(alpha: 0.45)
-                        : AppColors.charcoal.withValues(alpha: 0.08),
-                    blurRadius: 24,
-                    offset: const Offset(0, 8),
-                    spreadRadius: -2,
-                  ),
-                ],
-              ),
-              child: ClipRRect(
-                borderRadius: BorderRadius.circular(28),
-                child: BackdropFilter(
-                  filter: ImageFilter.blur(sigmaX: 20, sigmaY: 20),
-                  child: Container(
-                    height: 68,
-                    padding:
-                        const EdgeInsets.symmetric(horizontal: 4, vertical: 6),
-                    decoration: BoxDecoration(
-                      color: colors.surfaceCard
-                          .withValues(alpha: isDark ? 0.88 : 0.92),
-                      borderRadius: BorderRadius.circular(28),
-                      border: Border.all(
-                        color: colors.border.withValues(alpha: 0.8),
-                        width: 1,
-                      ),
-                    ),
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                      children: [
-                        // 1. Home
-                        _IosNavItem(
+      body: navigationShell,
+      bottomNavigationBar: MediaQuery.viewInsetsOf(context).bottom > 0
+          ? null
+          : SafeArea(
+              top: false,
+              minimum: const EdgeInsets.fromLTRB(12, 8, 12, 12),
+              child: Container(
+                key: const Key('main-navigation'),
+                padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 8),
+                decoration: BoxDecoration(
+                  color: colors.surfaceCard,
+                  borderRadius: BorderRadius.circular(24),
+                  border: Border.all(color: colors.border),
+                ),
+                child: Row(children: [
+                  Expanded(
+                      child: _IosNavItem(
                           icon: Icons.home_outlined,
                           activeIcon: Icons.home_rounded,
                           label: 'Home',
                           isSelected: selectedIndex == 0,
-                          onTap: () => _onTap(context, 0),
-                        ),
-
-                        // 2. Activity
-                        _IosNavItem(
+                          onTap: () => _onTap(context, 0))),
+                  Expanded(
+                      child: _IosNavItem(
                           icon: Icons.receipt_long_outlined,
                           activeIcon: Icons.receipt_long_rounded,
                           label: 'Activity',
                           isSelected: selectedIndex == 2,
-                          onTap: () => _onTap(context, 2),
-                        ),
-
-                        // 3. Middle Action Button (Quick Action Hub)
-                        _CenterActionButton(
-                          key: const Key('navbar_center_action_button'),
-                          onTap: () => PayActionSheet.show(context),
-                        ),
-
-                        // 4. Money (Balances, Protected, Pending, Insights, Statements)
-                        _IosNavItem(
+                          onTap: () => _onTap(context, 2))),
+                  Expanded(
+                      child: Column(mainAxisSize: MainAxisSize.min, children: [
+                    _CenterActionButton(
+                        key: const Key('navbar_center_action_button'),
+                        onTap: () => PayActionSheet.show(context)),
+                    const SizedBox(height: 2),
+                    ExcludeSemantics(
+                        child: Text('Pay',
+                            style: AppTypography.labelSmall
+                                .copyWith(color: colors.textPrimary))),
+                  ])),
+                  Expanded(
+                      child: _IosNavItem(
                           icon: Icons.account_balance_wallet_outlined,
                           activeIcon: Icons.account_balance_wallet_rounded,
                           label: 'Money',
                           isSelected: selectedIndex == 3,
-                          onTap: () => _onTap(context, 3),
-                        ),
-
-                        // 5. Profile (Identity, Account, Settings)
-                        _IosNavItem(
+                          onTap: () => _onTap(context, 3))),
+                  Expanded(
+                      child: _IosNavItem(
                           icon: Icons.person_outline_rounded,
                           activeIcon: Icons.person_rounded,
                           label: 'Profile',
                           isSelected: selectedIndex == 4,
-                          onTap: () => _onTap(context, 4),
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
+                          onTap: () => _onTap(context, 4))),
+                ]),
               ),
             ),
-          ),
-        ],
-      ),
     );
   }
 }
@@ -217,7 +176,7 @@ class _IosNavItem extends StatelessWidget {
     final colors = context.colors;
     final isDark = context.isDark;
     final activeColor = colors.primary;
-    final inactiveColor = colors.textTertiary;
+    final inactiveColor = colors.textSecondary;
 
     return Semantics(
       button: true,

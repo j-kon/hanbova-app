@@ -31,7 +31,8 @@ class PayHubScreen extends ConsumerWidget {
         side: BorderSide(color: colors.border),
       ),
       builder: (ctx) {
-        return Container(
+        return SafeArea(
+            child: SingleChildScrollView(
           padding: const EdgeInsets.all(20),
           child: Column(
             mainAxisSize: MainAxisSize.min,
@@ -40,14 +41,15 @@ class PayHubScreen extends ConsumerWidget {
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  Text(
+                  Expanded(
+                      child: Text(
                     'Select Active Market',
                     style: TextStyle(
                       color: colors.textPrimary,
                       fontSize: 18,
                       fontWeight: FontWeight.bold,
                     ),
-                  ),
+                  )),
                   Icon(Icons.flight_takeoff_rounded,
                       color: colors.primary, size: 20),
                 ],
@@ -99,7 +101,7 @@ class PayHubScreen extends ConsumerWidget {
               }),
             ],
           ),
-        );
+        ));
       },
     );
   }

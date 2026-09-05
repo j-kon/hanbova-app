@@ -53,27 +53,29 @@ class _EsimScreenState extends ConsumerState<EsimScreen>
 
   @override
   Widget build(BuildContext context) {
+    final colors = context.colors;
     final market = ref.watch(marketProvider);
     final spendCountry = market.spendCountryInfo;
 
     return Scaffold(
-      backgroundColor: AppColors.darkBackground,
+      backgroundColor: colors.background,
       appBar: AppBar(
-        backgroundColor: AppColors.darkBackground,
+        backgroundColor: colors.background,
         elevation: 0,
-        title: const Text(
+        iconTheme: IconThemeData(color: colors.textPrimary),
+        title: Text(
           'Travel Connectivity (eSIM)',
           style: TextStyle(
-            color: Colors.white,
+            color: colors.textPrimary,
             fontSize: 20,
             fontWeight: FontWeight.bold,
           ),
         ),
         bottom: TabBar(
           controller: _tabController,
-          indicatorColor: AppColors.primary,
-          labelColor: AppColors.primary,
-          unselectedLabelColor: AppColors.darkTextSecondary,
+          indicatorColor: colors.primary,
+          labelColor: colors.primary,
+          unselectedLabelColor: colors.textSecondary,
           tabs: const [
             Tab(text: 'Browse Plans'),
             Tab(text: 'My eSIMs'),
@@ -81,20 +83,22 @@ class _EsimScreenState extends ConsumerState<EsimScreen>
         ),
       ),
       body: _isLoading
-          ? const Center(
-              child: CircularProgressIndicator(color: AppColors.primary),
+          ? Center(
+              child: CircularProgressIndicator(color: colors.primary),
             )
           : TabBarView(
               controller: _tabController,
               children: [
-                _buildBrowseTab(spendCountry.name, spendCountry.flagEmoji),
-                _buildMyEsimsTab(),
+                _buildBrowseTab(
+                    spendCountry.name, spendCountry.flagEmoji, colors),
+                _buildMyEsimsTab(colors),
               ],
             ),
     );
   }
 
-  Widget _buildBrowseTab(String countryName, String flagEmoji) {
+  Widget _buildBrowseTab(
+      String countryName, String flagEmoji, HanbovaColors colors) {
     return ListView(
       padding: const EdgeInsets.all(20),
       children: [
@@ -102,20 +106,19 @@ class _EsimScreenState extends ConsumerState<EsimScreen>
         Container(
           padding: const EdgeInsets.all(12),
           decoration: BoxDecoration(
-            color: AppColors.primary.withValues(alpha: 0.1),
+            color: colors.primary.withValues(alpha: 0.1),
             borderRadius: BorderRadius.circular(12),
-            border:
-                Border.all(color: AppColors.primary.withValues(alpha: 0.25)),
+            border: Border.all(color: colors.primary.withValues(alpha: 0.25)),
           ),
-          child: const Row(
+          child: Row(
             children: [
-              Icon(Icons.shield_outlined, color: AppColors.primary, size: 18),
-              SizedBox(width: 8),
+              Icon(Icons.shield_outlined, color: colors.primary, size: 18),
+              const SizedBox(width: 8),
               Expanded(
                 child: Text(
                   'SIMULATION ENVIRONMENT: Travel data plans and QR provisioning operate in safe pilot mode.',
                   style: TextStyle(
-                    color: Colors.white70,
+                    color: colors.textSecondary,
                     fontSize: 11,
                   ),
                 ),
@@ -127,8 +130,8 @@ class _EsimScreenState extends ConsumerState<EsimScreen>
 
         Text(
           'Available Plans for $flagEmoji $countryName',
-          style: const TextStyle(
-            color: Colors.white,
+          style: TextStyle(
+            color: colors.textPrimary,
             fontSize: 16,
             fontWeight: FontWeight.bold,
           ),
@@ -136,29 +139,29 @@ class _EsimScreenState extends ConsumerState<EsimScreen>
         const SizedBox(height: 12),
 
         if (_packages.isEmpty)
-          const Padding(
-            padding: EdgeInsets.symmetric(vertical: 40),
+          Padding(
+            padding: const EdgeInsets.symmetric(vertical: 40),
             child: Center(
               child: Text(
                 'No eSIM plans available for this country currently.',
-                style: TextStyle(color: AppColors.darkTextSecondary),
+                style: TextStyle(color: colors.textSecondary),
               ),
             ),
           )
         else
-          ..._packages.map((p) => _buildPackageCard(p)),
+          ..._packages.map((p) => _buildPackageCard(p, colors)),
       ],
     );
   }
 
-  Widget _buildPackageCard(EsimPackage pkg) {
+  Widget _buildPackageCard(EsimPackage pkg, HanbovaColors colors) {
     return Container(
       margin: const EdgeInsets.only(bottom: 14),
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: AppColors.darkSurfaceCard,
+        color: colors.surfaceCard,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: AppColors.darkBorder),
+        border: Border.all(color: colors.border),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -168,8 +171,8 @@ class _EsimScreenState extends ConsumerState<EsimScreen>
               Expanded(
                 child: Text(
                   pkg.name,
-                  style: const TextStyle(
-                    color: Colors.white,
+                  style: TextStyle(
+                    color: colors.textPrimary,
                     fontSize: 16,
                     fontWeight: FontWeight.bold,
                   ),
@@ -181,13 +184,13 @@ class _EsimScreenState extends ConsumerState<EsimScreen>
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
                 decoration: BoxDecoration(
-                  color: AppColors.primary.withValues(alpha: 0.15),
+                  color: colors.primary.withValues(alpha: 0.15),
                   borderRadius: BorderRadius.circular(8),
                 ),
                 child: Text(
                   '${pkg.priceSats} sats',
-                  style: const TextStyle(
-                    color: AppColors.primary,
+                  style: TextStyle(
+                    color: colors.primary,
                     fontWeight: FontWeight.bold,
                     fontSize: 13,
                   ),
@@ -198,11 +201,12 @@ class _EsimScreenState extends ConsumerState<EsimScreen>
           const SizedBox(height: 8),
           Row(
             children: [
-              _buildMetaPill(Icons.data_usage, pkg.formattedData),
+              _buildMetaPill(Icons.data_usage, pkg.formattedData, colors),
               const SizedBox(width: 8),
-              _buildMetaPill(Icons.timer_outlined, '${pkg.validityDays} Days'),
+              _buildMetaPill(
+                  Icons.timer_outlined, '${pkg.validityDays} Days', colors),
               const SizedBox(width: 8),
-              _buildMetaPill(Icons.speed, pkg.networkSpeed),
+              _buildMetaPill(Icons.speed, pkg.networkSpeed, colors),
             ],
           ),
           const SizedBox(height: 12),
@@ -211,15 +215,15 @@ class _EsimScreenState extends ConsumerState<EsimScreen>
             children: [
               Text(
                 '≈ \$${pkg.priceFiat.toStringAsFixed(2)} ${pkg.currency}',
-                style: const TextStyle(
-                  color: AppColors.darkTextSecondary,
+                style: TextStyle(
+                  color: colors.textSecondary,
                   fontSize: 12,
                 ),
               ),
               ElevatedButton(
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: AppColors.primary,
-                  foregroundColor: Colors.black,
+                  backgroundColor: colors.primary,
+                  foregroundColor: AppColors.charcoal,
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(12),
                   ),
@@ -239,22 +243,23 @@ class _EsimScreenState extends ConsumerState<EsimScreen>
     );
   }
 
-  Widget _buildMetaPill(IconData icon, String text) {
+  Widget _buildMetaPill(IconData icon, String text, HanbovaColors colors) {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
       decoration: BoxDecoration(
-        color: AppColors.darkSurface,
+        color: colors.surfaceElevated,
         borderRadius: BorderRadius.circular(8),
+        border: Border.all(color: colors.border),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(icon, color: AppColors.darkTextSecondary, size: 13),
+          Icon(icon, color: colors.textSecondary, size: 13),
           const SizedBox(width: 4),
           Text(
             text,
-            style: const TextStyle(
-              color: Colors.white70,
+            style: TextStyle(
+              color: colors.textPrimary,
               fontSize: 11,
               fontWeight: FontWeight.w600,
             ),
@@ -264,31 +269,30 @@ class _EsimScreenState extends ConsumerState<EsimScreen>
     );
   }
 
-  Widget _buildMyEsimsTab() {
+  Widget _buildMyEsimsTab(HanbovaColors colors) {
     if (_myProfiles.isEmpty) {
-      return const Center(
+      return Center(
         child: Padding(
-          padding: EdgeInsets.all(32),
+          padding: const EdgeInsets.all(32),
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
               Icon(Icons.sim_card_outlined,
-                  size: 54, color: AppColors.darkTextSecondary),
-              SizedBox(height: 16),
+                  size: 54, color: colors.textSecondary.withValues(alpha: 0.5)),
+              const SizedBox(height: 16),
               Text(
                 'No Active eSIMs',
                 style: TextStyle(
-                  color: Colors.white,
+                  color: colors.textPrimary,
                   fontSize: 18,
                   fontWeight: FontWeight.bold,
                 ),
               ),
-              SizedBox(height: 8),
+              const SizedBox(height: 8),
               Text(
                 'Browse available plans to activate high-speed travel roaming with Bitcoin.',
                 textAlign: TextAlign.center,
-                style:
-                    TextStyle(color: AppColors.darkTextSecondary, fontSize: 13),
+                style: TextStyle(color: colors.textSecondary, fontSize: 13),
               ),
             ],
           ),
@@ -301,19 +305,19 @@ class _EsimScreenState extends ConsumerState<EsimScreen>
       itemCount: _myProfiles.length,
       itemBuilder: (context, index) {
         final prof = _myProfiles[index];
-        return _buildProfileCard(prof);
+        return _buildProfileCard(prof, colors);
       },
     );
   }
 
-  Widget _buildProfileCard(EsimProfile prof) {
+  Widget _buildProfileCard(EsimProfile prof, HanbovaColors colors) {
     return Container(
       margin: const EdgeInsets.only(bottom: 16),
       padding: const EdgeInsets.all(18),
       decoration: BoxDecoration(
-        color: AppColors.darkSurfaceCard,
+        color: colors.surfaceCard,
         borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: AppColors.darkBorder),
+        border: Border.all(color: colors.border),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -323,8 +327,8 @@ class _EsimScreenState extends ConsumerState<EsimScreen>
               Expanded(
                 child: Text(
                   prof.packageName,
-                  style: const TextStyle(
-                    color: Colors.white,
+                  style: TextStyle(
+                    color: colors.textPrimary,
                     fontSize: 16,
                     fontWeight: FontWeight.bold,
                   ),
@@ -358,12 +362,11 @@ class _EsimScreenState extends ConsumerState<EsimScreen>
             children: [
               Text(
                 'Data: ${prof.formattedRemaining} remaining',
-                style: const TextStyle(color: Colors.white70, fontSize: 13),
+                style: TextStyle(color: colors.textPrimary, fontSize: 13),
               ),
               Text(
                 'Total: ${(prof.dataAllowanceMb / 1024).toStringAsFixed(0)} GB',
-                style: const TextStyle(
-                    color: AppColors.darkTextSecondary, fontSize: 12),
+                style: TextStyle(color: colors.textSecondary, fontSize: 12),
               ),
             ],
           ),
@@ -372,8 +375,8 @@ class _EsimScreenState extends ConsumerState<EsimScreen>
             borderRadius: BorderRadius.circular(6),
             child: LinearProgressIndicator(
               value: prof.dataRemainingFraction,
-              backgroundColor: AppColors.darkSurface,
-              color: AppColors.primary,
+              backgroundColor: colors.surfaceElevated,
+              color: colors.primary,
               minHeight: 8,
             ),
           ),
@@ -384,26 +387,25 @@ class _EsimScreenState extends ConsumerState<EsimScreen>
           Container(
             padding: const EdgeInsets.all(10),
             decoration: BoxDecoration(
-              color: AppColors.darkSurface,
+              color: colors.surfaceElevated,
               borderRadius: BorderRadius.circular(10),
+              border: Border.all(color: colors.border),
             ),
             child: Row(
               children: [
-                const Icon(Icons.tag,
-                    color: AppColors.darkTextSecondary, size: 16),
+                Icon(Icons.tag, color: colors.textSecondary, size: 16),
                 const SizedBox(width: 8),
                 Expanded(
                   child: Text(
                     'ICCID: ${prof.iccid}',
-                    style: const TextStyle(
-                        color: Colors.white70,
+                    style: TextStyle(
+                        color: colors.textPrimary,
                         fontSize: 12,
                         fontFamily: 'monospace'),
                   ),
                 ),
                 IconButton(
-                  icon: const Icon(Icons.copy,
-                      color: AppColors.primary, size: 16),
+                  icon: Icon(Icons.copy, color: colors.primary, size: 16),
                   onPressed: () {
                     Clipboard.setData(ClipboardData(text: prof.iccid));
                     ScaffoldMessenger.of(context).showSnackBar(
@@ -424,8 +426,8 @@ class _EsimScreenState extends ConsumerState<EsimScreen>
               Expanded(
                 child: OutlinedButton.icon(
                   style: OutlinedButton.styleFrom(
-                    foregroundColor: Colors.white,
-                    side: const BorderSide(color: AppColors.darkBorder),
+                    foregroundColor: colors.textPrimary,
+                    side: BorderSide(color: colors.border),
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(12),
                     ),
@@ -438,8 +440,8 @@ class _EsimScreenState extends ConsumerState<EsimScreen>
               const SizedBox(width: 10),
               ElevatedButton.icon(
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: AppColors.primary,
-                  foregroundColor: Colors.black,
+                  backgroundColor: colors.primary,
+                  foregroundColor: AppColors.charcoal,
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(12),
                   ),
@@ -456,46 +458,50 @@ class _EsimScreenState extends ConsumerState<EsimScreen>
   }
 
   void _showPurchaseDialog(EsimPackage pkg) {
+    final colors = context.colors;
     final market = ref.read(marketProvider);
     showDialog(
       context: context,
       builder: (ctx) {
         return AlertDialog(
-          backgroundColor: AppColors.darkSurface,
+          backgroundColor: colors.surfaceCard,
           shape:
               RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-          title: const Text(
+          title: Text(
             'Confirm eSIM Purchase',
-            style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+            style: TextStyle(
+                color: colors.textPrimary, fontWeight: FontWeight.bold),
           ),
           content: Column(
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text('Plan: ${pkg.name}',
-                  style: const TextStyle(color: Colors.white70)),
+                  style: TextStyle(color: colors.textSecondary)),
               const SizedBox(height: 6),
               Text('Data Allowance: ${pkg.formattedData}',
-                  style: const TextStyle(color: Colors.white70)),
+                  style: TextStyle(color: colors.textSecondary)),
               const SizedBox(height: 6),
               Text('Validity: ${pkg.validityDays} Days',
-                  style: const TextStyle(color: Colors.white70)),
+                  style: TextStyle(color: colors.textSecondary)),
               const SizedBox(height: 12),
               Container(
                 padding: const EdgeInsets.all(12),
                 decoration: BoxDecoration(
-                  color: AppColors.darkSurfaceCard,
+                  color: colors.surfaceElevated,
                   borderRadius: BorderRadius.circular(12),
+                  border: Border.all(color: colors.border),
                 ),
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    const Text('Total (Sats):',
+                    Text('Total (Sats):',
                         style: TextStyle(
-                            color: Colors.white, fontWeight: FontWeight.bold)),
+                            color: colors.textPrimary,
+                            fontWeight: FontWeight.bold)),
                     Text('${pkg.priceSats} sats',
-                        style: const TextStyle(
-                            color: AppColors.primary,
+                        style: TextStyle(
+                            color: colors.primary,
                             fontWeight: FontWeight.bold,
                             fontSize: 16)),
                   ],
@@ -506,12 +512,13 @@ class _EsimScreenState extends ConsumerState<EsimScreen>
           actions: [
             TextButton(
               onPressed: () => Navigator.of(ctx).pop(),
-              child: const Text('Cancel', style: TextStyle(color: Colors.grey)),
+              child:
+                  Text('Cancel', style: TextStyle(color: colors.textSecondary)),
             ),
             ElevatedButton(
               style: ElevatedButton.styleFrom(
-                backgroundColor: AppColors.primary,
-                foregroundColor: Colors.black,
+                backgroundColor: colors.primary,
+                foregroundColor: AppColors.charcoal,
                 shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(10)),
               ),
@@ -564,47 +571,50 @@ class _EsimScreenState extends ConsumerState<EsimScreen>
   }
 
   void _showTopupDialog(EsimProfile prof) {
+    final colors = context.colors;
     final market = ref.read(marketProvider);
     showDialog(
       context: context,
       builder: (ctx) {
         return AlertDialog(
-          backgroundColor: AppColors.darkSurface,
+          backgroundColor: colors.surfaceCard,
           shape:
               RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-          title: const Text('Top Up eSIM Data',
-              style:
-                  TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+          title: Text('Top Up eSIM Data',
+              style: TextStyle(
+                  color: colors.textPrimary, fontWeight: FontWeight.bold)),
           content: Column(
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text('Profile: ${prof.packageName}',
-                  style: const TextStyle(color: Colors.white70)),
+                  style: TextStyle(color: colors.textSecondary)),
               const SizedBox(height: 6),
               Text('ICCID: ${prof.iccid}',
-                  style: const TextStyle(
-                      color: Colors.white54,
+                  style: TextStyle(
+                      color: colors.textSecondary,
                       fontFamily: 'monospace',
                       fontSize: 12)),
               const SizedBox(height: 12),
-              const Text('Add 3 GB High-Speed Roaming Data',
+              Text('Add 3 GB High-Speed Roaming Data',
                   style: TextStyle(
-                      color: Colors.white, fontWeight: FontWeight.w600)),
+                      color: colors.textPrimary, fontWeight: FontWeight.w600)),
               const SizedBox(height: 6),
               Container(
                 padding: const EdgeInsets.all(12),
                 decoration: BoxDecoration(
-                  color: AppColors.darkSurfaceCard,
+                  color: colors.surfaceElevated,
                   borderRadius: BorderRadius.circular(12),
+                  border: Border.all(color: colors.border),
                 ),
-                child: const Row(
+                child: Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    Text('Price:', style: TextStyle(color: Colors.white70)),
+                    Text('Price:',
+                        style: TextStyle(color: colors.textSecondary)),
                     Text('15,000 sats',
                         style: TextStyle(
-                            color: AppColors.primary,
+                            color: colors.primary,
                             fontWeight: FontWeight.bold,
                             fontSize: 16)),
                   ],
@@ -615,12 +625,13 @@ class _EsimScreenState extends ConsumerState<EsimScreen>
           actions: [
             TextButton(
               onPressed: () => Navigator.of(ctx).pop(),
-              child: const Text('Cancel', style: TextStyle(color: Colors.grey)),
+              child:
+                  Text('Cancel', style: TextStyle(color: colors.textSecondary)),
             ),
             ElevatedButton(
               style: ElevatedButton.styleFrom(
-                backgroundColor: AppColors.primary,
-                foregroundColor: Colors.black,
+                backgroundColor: colors.primary,
+                foregroundColor: AppColors.charcoal,
               ),
               onPressed: () async {
                 final messenger = ScaffoldMessenger.of(context);
@@ -652,9 +663,10 @@ class _EsimScreenState extends ConsumerState<EsimScreen>
   }
 
   void _showInstallationSheet(EsimProfile prof) {
+    final colors = context.colors;
     showModalBottomSheet(
       context: context,
-      backgroundColor: AppColors.darkSurface,
+      backgroundColor: colors.surfaceCard,
       isScrollControlled: true,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
@@ -666,18 +678,17 @@ class _EsimScreenState extends ConsumerState<EsimScreen>
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const Text(
+              Text(
                 'eSIM Installation Guide',
                 style: TextStyle(
-                    color: Colors.white,
+                    color: colors.textPrimary,
                     fontSize: 20,
                     fontWeight: FontWeight.bold),
               ),
               const SizedBox(height: 8),
-              const Text(
+              Text(
                 'Scan the QR code or manually enter the activation code on your device.',
-                style:
-                    TextStyle(color: AppColors.darkTextSecondary, fontSize: 13),
+                style: TextStyle(color: colors.textSecondary, fontSize: 13),
               ),
               const SizedBox(height: 20),
 
@@ -711,31 +722,32 @@ class _EsimScreenState extends ConsumerState<EsimScreen>
               Container(
                 padding: const EdgeInsets.all(12),
                 decoration: BoxDecoration(
-                  color: AppColors.darkSurfaceCard,
+                  color: colors.surfaceElevated,
                   borderRadius: BorderRadius.circular(12),
+                  border: Border.all(color: colors.border),
                 ),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const Text('SM-DP+ Address',
+                    Text('SM-DP+ Address',
                         style: TextStyle(
-                            color: AppColors.darkTextSecondary, fontSize: 11)),
+                            color: colors.textSecondary, fontSize: 11)),
                     Text(prof.smdpAddress,
-                        style: const TextStyle(
-                            color: Colors.white,
+                        style: TextStyle(
+                            color: colors.textPrimary,
                             fontSize: 13,
                             fontFamily: 'monospace')),
                     const SizedBox(height: 8),
-                    const Text('Activation Code (LPA String)',
+                    Text('Activation Code (LPA String)',
                         style: TextStyle(
-                            color: AppColors.darkTextSecondary, fontSize: 11)),
+                            color: colors.textSecondary, fontSize: 11)),
                     Row(
                       children: [
                         Expanded(
                           child: Text(
                             prof.qrCodeData,
-                            style: const TextStyle(
-                                color: Colors.white,
+                            style: TextStyle(
+                                color: colors.textPrimary,
                                 fontSize: 12,
                                 fontFamily: 'monospace'),
                             maxLines: 1,
@@ -743,8 +755,8 @@ class _EsimScreenState extends ConsumerState<EsimScreen>
                           ),
                         ),
                         IconButton(
-                          icon: const Icon(Icons.copy,
-                              color: AppColors.primary, size: 18),
+                          icon:
+                              Icon(Icons.copy, color: colors.primary, size: 18),
                           onPressed: () {
                             Clipboard.setData(
                                 ClipboardData(text: prof.qrCodeData));
@@ -761,12 +773,10 @@ class _EsimScreenState extends ConsumerState<EsimScreen>
               ),
 
               const SizedBox(height: 16),
-              const Text(
+              Text(
                 'Instructions:\n• iOS: Settings → Cellular → Add eSIM → Use QR Code\n• Android: Settings → Network & internet → SIMs → Add eSIM',
                 style: TextStyle(
-                    color: AppColors.darkTextSecondary,
-                    fontSize: 12,
-                    height: 1.4),
+                    color: colors.textSecondary, fontSize: 12, height: 1.4),
               ),
               const SizedBox(height: 20),
             ],

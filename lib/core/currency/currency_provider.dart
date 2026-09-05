@@ -62,6 +62,31 @@ enum FiatCurrency {
 
   const FiatCurrency(this.code, this.symbol);
 
+  String get currencyName {
+    switch (this) {
+      case FiatCurrency.ngn:
+        return 'Nigerian Naira';
+      case FiatCurrency.usd:
+        return 'US Dollar';
+      case FiatCurrency.kes:
+        return 'Kenyan Shilling';
+      case FiatCurrency.ghs:
+        return 'Ghanaian Cedi';
+      case FiatCurrency.rwf:
+        return 'Rwandan Franc';
+      case FiatCurrency.ugx:
+        return 'Ugandan Shilling';
+      case FiatCurrency.tzs:
+        return 'Tanzanian Shilling';
+      case FiatCurrency.zar:
+        return 'South African Rand';
+      case FiatCurrency.eur:
+        return 'Euro';
+      case FiatCurrency.gbp:
+        return 'British Pound';
+    }
+  }
+
   double satsToFiat(int sats,
       [ExchangeRateProvider rateProvider =
           const DevelopmentExchangeRateProvider()]) {

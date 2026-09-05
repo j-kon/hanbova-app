@@ -128,50 +128,124 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
     showModalBottomSheet(
       context: context,
       backgroundColor: colors.surfaceCard,
+      isScrollControlled: true,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(AppRadius.lg)),
       ),
       builder: (sheetCtx) {
         return SafeArea(
-          child: Padding(
-            padding: const EdgeInsets.all(AppSpacing.lg),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                Center(
-                  child: Container(
-                    width: 36,
-                    height: 4,
-                    decoration: BoxDecoration(
-                      color: colors.textTertiary.withValues(alpha: 0.3),
-                      borderRadius: BorderRadius.circular(2),
+          child: ConstrainedBox(
+            constraints: BoxConstraints(
+              maxHeight: MediaQuery.of(sheetCtx).size.height * 0.75,
+            ),
+            child: Padding(
+              padding: const EdgeInsets.fromLTRB(
+                AppSpacing.lg,
+                AppSpacing.md,
+                AppSpacing.lg,
+                AppSpacing.lg,
+              ),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  Center(
+                    child: Container(
+                      width: 36,
+                      height: 4,
+                      decoration: BoxDecoration(
+                        color: colors.textTertiary.withValues(alpha: 0.3),
+                        borderRadius: BorderRadius.circular(2),
+                      ),
                     ),
                   ),
-                ),
-                const SizedBox(height: AppSpacing.md),
-                Text(
-                  'Display Currency',
-                  style: AppTypography.titleMedium.copyWith(
-                    color: colors.textPrimary,
-                    fontWeight: FontWeight.bold,
+                  const SizedBox(height: AppSpacing.md),
+                  Text(
+                    'Display Currency',
+                    style: AppTypography.titleMedium.copyWith(
+                      color: colors.textPrimary,
+                      fontWeight: FontWeight.bold,
+                    ),
                   ),
-                ),
-                const SizedBox(height: AppSpacing.sm),
-                ...FiatCurrency.values.map((fc) {
-                  final isSelected = fc == currentCurrency;
-                  return ListTile(
-                    title: Text('${fc.name} (${fc.code})'),
-                    trailing: isSelected
-                        ? Icon(Icons.check, color: colors.primary)
-                        : null,
-                    onTap: () {
-                      ref.read(marketProvider.notifier).setDisplayCurrency(fc);
-                      Navigator.pop(sheetCtx);
-                    },
-                  );
-                }),
-              ],
+                  const SizedBox(height: 4),
+                  Text(
+                    'Choose reference currency for converted prices and portfolio views.',
+                    style: TextStyle(
+                      color: colors.textSecondary,
+                      fontSize: 12,
+                    ),
+                  ),
+                  const SizedBox(height: AppSpacing.md),
+                  Flexible(
+                    child: ListView.separated(
+                      shrinkWrap: true,
+                      itemCount: FiatCurrency.values.length,
+                      separatorBuilder: (_, __) => Divider(
+                        height: 1,
+                        color: colors.border.withValues(alpha: 0.5),
+                      ),
+                      itemBuilder: (context, index) {
+                        final fc = FiatCurrency.values[index];
+                        final isSelected = fc == currentCurrency;
+                        return ListTile(
+                          contentPadding: const EdgeInsets.symmetric(
+                            horizontal: 4,
+                            vertical: 2,
+                          ),
+                          leading: Container(
+                            width: 38,
+                            height: 38,
+                            decoration: BoxDecoration(
+                              color: isSelected
+                                  ? colors.primary.withValues(alpha: 0.15)
+                                  : colors.surfaceElevated,
+                              shape: BoxShape.circle,
+                              border: Border.all(
+                                color:
+                                    isSelected ? colors.primary : colors.border,
+                              ),
+                            ),
+                            alignment: Alignment.center,
+                            child: Text(
+                              fc.symbol.trim(),
+                              style: TextStyle(
+                                color: isSelected
+                                    ? colors.primary
+                                    : colors.textPrimary,
+                                fontWeight: FontWeight.bold,
+                                fontSize: 13,
+                              ),
+                            ),
+                          ),
+                          title: Text(
+                            '${fc.code} • ${fc.currencyName}',
+                            style: TextStyle(
+                              color: isSelected
+                                  ? colors.primary
+                                  : colors.textPrimary,
+                              fontWeight: isSelected
+                                  ? FontWeight.bold
+                                  : FontWeight.w500,
+                              fontSize: 14,
+                            ),
+                          ),
+                          trailing: isSelected
+                              ? Icon(Icons.check_circle_rounded,
+                                  color: colors.primary)
+                              : null,
+                          onTap: () {
+                            ref
+                                .read(marketProvider.notifier)
+                                .setDisplayCurrency(fc);
+                            ref.read(currencyProvider.notifier).setCurrency(fc);
+                            Navigator.pop(sheetCtx);
+                          },
+                        );
+                      },
+                    ),
+                  ),
+                ],
+              ),
             ),
           ),
         );
@@ -270,12 +344,13 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
     showModalBottomSheet(
       context: context,
       backgroundColor: colors.surfaceCard,
+      isScrollControlled: true,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(AppRadius.lg)),
       ),
       builder: (sheetCtx) {
         return SafeArea(
-          child: Padding(
+          child: SingleChildScrollView(
             padding: const EdgeInsets.all(AppSpacing.lg),
             child: Column(
               mainAxisSize: MainAxisSize.min,

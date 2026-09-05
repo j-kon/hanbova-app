@@ -312,6 +312,7 @@ class _AirtimeFlowScreenState extends ConsumerState<AirtimeFlowScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final colors = context.colors;
     final market = ref.watch(marketProvider);
     final countryCode = market.spendCountry.toUpperCase();
     final operators =
@@ -322,14 +323,14 @@ class _AirtimeFlowScreenState extends ConsumerState<AirtimeFlowScreen> {
     final currentSats = _calculateSats(currentAmount, countryCode);
 
     return Scaffold(
-      backgroundColor: AppColors.darkBackground,
+      backgroundColor: colors.background,
       appBar: AppBar(
-        backgroundColor: AppColors.darkBackground,
+        backgroundColor: colors.background,
         elevation: 0,
-        title: const Text(
+        title: Text(
           'Buy Airtime',
           style: TextStyle(
-            color: Colors.white,
+            color: colors.textPrimary,
             fontSize: 18,
             fontWeight: FontWeight.bold,
           ),
@@ -337,12 +338,11 @@ class _AirtimeFlowScreenState extends ConsumerState<AirtimeFlowScreen> {
         actions: [
           TextButton.icon(
             onPressed: () => context.go('/activity?query=Airtime'),
-            icon: const Icon(Icons.history_rounded,
-                size: 18, color: AppColors.primary),
-            label: const Text(
+            icon: Icon(Icons.history_rounded, size: 18, color: colors.primary),
+            label: Text(
               'History',
               style: TextStyle(
-                color: AppColors.primary,
+                color: colors.primary,
                 fontSize: 13,
                 fontWeight: FontWeight.bold,
               ),
@@ -360,9 +360,9 @@ class _AirtimeFlowScreenState extends ConsumerState<AirtimeFlowScreen> {
             Container(
               padding: const EdgeInsets.all(4),
               decoration: BoxDecoration(
-                color: AppColors.darkCardBackground,
+                color: colors.surfaceCard,
                 borderRadius: BorderRadius.circular(14),
-                border: Border.all(color: AppColors.darkBorder),
+                border: Border.all(color: colors.border),
               ),
               child: Row(
                 children: [
@@ -388,10 +388,10 @@ class _AirtimeFlowScreenState extends ConsumerState<AirtimeFlowScreen> {
 
             // Recent Recipients Chips (When in Recent mode)
             if (_recipientMode == AirtimeRecipientMode.recent) ...[
-              const Text(
+              Text(
                 'Recent Recipients',
                 style: TextStyle(
-                  color: Colors.white,
+                  color: colors.textPrimary,
                   fontSize: 13,
                   fontWeight: FontWeight.w600,
                 ),
@@ -413,13 +413,11 @@ class _AirtimeFlowScreenState extends ConsumerState<AirtimeFlowScreen> {
                             horizontal: 12, vertical: 8),
                         decoration: BoxDecoration(
                           color: isSelected
-                              ? AppColors.primary.withValues(alpha: 0.15)
-                              : AppColors.darkCardBackground,
+                              ? colors.primary.withValues(alpha: 0.15)
+                              : colors.surfaceCard,
                           borderRadius: BorderRadius.circular(12),
                           border: Border.all(
-                            color: isSelected
-                                ? AppColors.primary
-                                : AppColors.darkBorder,
+                            color: isSelected ? colors.primary : colors.border,
                             width: isSelected ? 1.5 : 1,
                           ),
                         ),
@@ -428,11 +426,11 @@ class _AirtimeFlowScreenState extends ConsumerState<AirtimeFlowScreen> {
                             CircleAvatar(
                               radius: 12,
                               backgroundColor:
-                                  AppColors.primary.withValues(alpha: 0.2),
+                                  colors.primary.withValues(alpha: 0.2),
                               child: Text(
                                 rec['name']![0],
-                                style: const TextStyle(
-                                  color: AppColors.primary,
+                                style: TextStyle(
+                                  color: colors.primary,
                                   fontSize: 11,
                                   fontWeight: FontWeight.bold,
                                 ),
@@ -446,16 +444,16 @@ class _AirtimeFlowScreenState extends ConsumerState<AirtimeFlowScreen> {
                                   rec['name']!,
                                   style: TextStyle(
                                     color: isSelected
-                                        ? Colors.white
-                                        : Colors.white70,
+                                        ? colors.primary
+                                        : colors.textPrimary,
                                     fontSize: 12,
                                     fontWeight: FontWeight.bold,
                                   ),
                                 ),
                                 Text(
                                   '${rec['operator']} • ${rec['phone']}',
-                                  style: const TextStyle(
-                                    color: AppColors.darkTextSecondary,
+                                  style: TextStyle(
+                                    color: colors.textSecondary,
                                     fontSize: 10,
                                   ),
                                 ),
@@ -475,10 +473,10 @@ class _AirtimeFlowScreenState extends ConsumerState<AirtimeFlowScreen> {
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                const Text(
+                Text(
                   'Phone Number',
                   style: TextStyle(
-                    color: Colors.white,
+                    color: colors.textPrimary,
                     fontSize: 13,
                     fontWeight: FontWeight.w600,
                   ),
@@ -489,15 +487,14 @@ class _AirtimeFlowScreenState extends ConsumerState<AirtimeFlowScreen> {
                       _phoneController.text = '+234 809 999 0000';
                       setState(() {});
                     },
-                    child: const Row(
+                    child: Row(
                       children: [
-                        Icon(Icons.contacts,
-                            size: 14, color: AppColors.primary),
-                        SizedBox(width: 4),
+                        Icon(Icons.contacts, size: 14, color: colors.primary),
+                        const SizedBox(width: 4),
                         Text(
                           'Contacts',
                           style: TextStyle(
-                            color: AppColors.primary,
+                            color: colors.primary,
                             fontSize: 12,
                             fontWeight: FontWeight.bold,
                           ),
@@ -511,37 +508,37 @@ class _AirtimeFlowScreenState extends ConsumerState<AirtimeFlowScreen> {
             TextField(
               controller: _phoneController,
               keyboardType: TextInputType.phone,
-              style: const TextStyle(color: Colors.white, fontSize: 16),
+              style: TextStyle(color: colors.textPrimary, fontSize: 16),
               decoration: InputDecoration(
                 hintText: '+234 800 000 0000',
-                hintStyle: const TextStyle(color: AppColors.darkTextSecondary),
+                hintStyle: TextStyle(color: colors.textSecondary),
                 filled: true,
-                fillColor: AppColors.darkCardBackground,
-                prefixIcon: const Icon(Icons.phone_iphone_rounded,
-                    color: AppColors.primary, size: 20),
+                fillColor: colors.surfaceCard,
+                prefixIcon: Icon(Icons.phone_iphone_rounded,
+                    color: colors.primary, size: 20),
                 contentPadding:
                     const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
                 border: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(12),
-                  borderSide: const BorderSide(color: AppColors.darkBorder),
+                  borderSide: BorderSide(color: colors.border),
                 ),
                 enabledBorder: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(12),
-                  borderSide: const BorderSide(color: AppColors.darkBorder),
+                  borderSide: BorderSide(color: colors.border),
                 ),
                 focusedBorder: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(12),
-                  borderSide: const BorderSide(color: AppColors.primary),
+                  borderSide: BorderSide(color: colors.primary),
                 ),
               ),
             ),
             const SizedBox(height: 20),
 
             // 2. Operator Network Selector
-            const Text(
+            Text(
               'Select Operator Network',
               style: TextStyle(
-                color: Colors.white,
+                color: colors.textPrimary,
                 fontSize: 13,
                 fontWeight: FontWeight.w600,
               ),
@@ -559,11 +556,10 @@ class _AirtimeFlowScreenState extends ConsumerState<AirtimeFlowScreen> {
                       decoration: BoxDecoration(
                         color: isSelected
                             ? op.brandColor.withValues(alpha: 0.18)
-                            : AppColors.darkCardBackground,
+                            : colors.surfaceCard,
                         borderRadius: BorderRadius.circular(12),
                         border: Border.all(
-                          color:
-                              isSelected ? op.brandColor : AppColors.darkBorder,
+                          color: isSelected ? op.brandColor : colors.border,
                           width: isSelected ? 1.5 : 1,
                         ),
                       ),
@@ -581,7 +577,9 @@ class _AirtimeFlowScreenState extends ConsumerState<AirtimeFlowScreen> {
                           Text(
                             op.name,
                             style: TextStyle(
-                              color: isSelected ? Colors.white : Colors.white70,
+                              color: isSelected
+                                  ? colors.textPrimary
+                                  : colors.textSecondary,
                               fontSize: 12,
                               fontWeight: isSelected
                                   ? FontWeight.bold
@@ -598,10 +596,10 @@ class _AirtimeFlowScreenState extends ConsumerState<AirtimeFlowScreen> {
             const SizedBox(height: 20),
 
             // 3. Amount Presets
-            const Text(
+            Text(
               'Select Amount',
               style: TextStyle(
-                color: Colors.white,
+                color: colors.textPrimary,
                 fontSize: 13,
                 fontWeight: FontWeight.w600,
               ),
@@ -619,20 +617,18 @@ class _AirtimeFlowScreenState extends ConsumerState<AirtimeFlowScreen> {
                         horizontal: 16, vertical: 10),
                     decoration: BoxDecoration(
                       color: isSelected
-                          ? AppColors.primary.withValues(alpha: 0.15)
-                          : AppColors.darkCardBackground,
+                          ? colors.primary.withValues(alpha: 0.15)
+                          : colors.surfaceCard,
                       borderRadius: BorderRadius.circular(12),
                       border: Border.all(
-                        color: isSelected
-                            ? AppColors.primary
-                            : AppColors.darkBorder,
+                        color: isSelected ? colors.primary : colors.border,
                         width: isSelected ? 1.5 : 1,
                       ),
                     ),
                     child: Text(
                       '$currencySymbol ${Formatters.formatSatsNumber(p)}',
                       style: TextStyle(
-                        color: isSelected ? AppColors.primary : Colors.white,
+                        color: isSelected ? colors.primary : colors.textPrimary,
                         fontSize: 13,
                         fontWeight:
                             isSelected ? FontWeight.bold : FontWeight.w500,
@@ -647,8 +643,8 @@ class _AirtimeFlowScreenState extends ConsumerState<AirtimeFlowScreen> {
             // Custom Amount Input
             Text(
               'Custom Amount ($currencySymbol)',
-              style: const TextStyle(
-                color: Colors.white,
+              style: TextStyle(
+                color: colors.textPrimary,
                 fontSize: 13,
                 fontWeight: FontWeight.w600,
               ),
@@ -662,32 +658,32 @@ class _AirtimeFlowScreenState extends ConsumerState<AirtimeFlowScreen> {
                   _selectedPresetAmount = int.tryParse(val);
                 });
               },
-              style: const TextStyle(
-                color: Colors.white,
+              style: TextStyle(
+                color: colors.textPrimary,
                 fontSize: 18,
                 fontWeight: FontWeight.bold,
               ),
               decoration: InputDecoration(
                 prefixText: '$currencySymbol ',
-                prefixStyle: const TextStyle(
-                    color: Colors.white,
+                prefixStyle: TextStyle(
+                    color: colors.textPrimary,
                     fontSize: 18,
                     fontWeight: FontWeight.bold),
                 filled: true,
-                fillColor: AppColors.darkCardBackground,
+                fillColor: colors.surfaceCard,
                 contentPadding:
                     const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
                 border: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(12),
-                  borderSide: const BorderSide(color: AppColors.darkBorder),
+                  borderSide: BorderSide(color: colors.border),
                 ),
                 enabledBorder: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(12),
-                  borderSide: const BorderSide(color: AppColors.darkBorder),
+                  borderSide: BorderSide(color: colors.border),
                 ),
                 focusedBorder: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(12),
-                  borderSide: const BorderSide(color: AppColors.primary),
+                  borderSide: BorderSide(color: colors.primary),
                 ),
               ),
             ),
@@ -697,20 +693,20 @@ class _AirtimeFlowScreenState extends ConsumerState<AirtimeFlowScreen> {
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
               decoration: BoxDecoration(
-                color: AppColors.primary.withValues(alpha: 0.1),
+                color: colors.primary.withValues(alpha: 0.1),
                 borderRadius: BorderRadius.circular(10),
                 border: Border.all(
-                  color: AppColors.primary.withValues(alpha: 0.3),
+                  color: colors.primary.withValues(alpha: 0.3),
                 ),
               ),
               child: Row(
                 children: [
-                  const Icon(Icons.bolt, color: AppColors.primary, size: 16),
+                  Icon(Icons.bolt, color: colors.primary, size: 16),
                   const SizedBox(width: 6),
                   Text(
                     'Estimated Bitcoin cost: ${Formatters.formatSats(currentSats)}',
-                    style: const TextStyle(
-                      color: AppColors.primary,
+                    style: TextStyle(
+                      color: colors.primary,
                       fontSize: 12,
                       fontWeight: FontWeight.w600,
                     ),
@@ -726,8 +722,8 @@ class _AirtimeFlowScreenState extends ConsumerState<AirtimeFlowScreen> {
               child: ElevatedButton(
                 onPressed: () => _handleContinueToPay(countryCode),
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: AppColors.primary,
-                  foregroundColor: Colors.black,
+                  backgroundColor: colors.primary,
+                  foregroundColor: AppColors.charcoal,
                   padding: const EdgeInsets.symmetric(vertical: 16),
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(14),
@@ -751,6 +747,7 @@ class _AirtimeFlowScreenState extends ConsumerState<AirtimeFlowScreen> {
   }
 
   Widget _buildSegment(String label, AirtimeRecipientMode mode, IconData icon) {
+    final colors = context.colors;
     final isSelected = _recipientMode == mode;
     return Expanded(
       child: GestureDetector(
@@ -758,7 +755,7 @@ class _AirtimeFlowScreenState extends ConsumerState<AirtimeFlowScreen> {
         child: Container(
           padding: const EdgeInsets.symmetric(vertical: 8),
           decoration: BoxDecoration(
-            color: isSelected ? AppColors.primary : Colors.transparent,
+            color: isSelected ? colors.primary : Colors.transparent,
             borderRadius: BorderRadius.circular(10),
           ),
           child: Row(
@@ -767,14 +764,13 @@ class _AirtimeFlowScreenState extends ConsumerState<AirtimeFlowScreen> {
               Icon(
                 icon,
                 size: 14,
-                color: isSelected ? Colors.black : AppColors.darkTextSecondary,
+                color: isSelected ? AppColors.charcoal : colors.textSecondary,
               ),
               const SizedBox(width: 4),
               Text(
                 label,
                 style: TextStyle(
-                  color:
-                      isSelected ? Colors.black : AppColors.darkTextSecondary,
+                  color: isSelected ? AppColors.charcoal : colors.textSecondary,
                   fontSize: 12,
                   fontWeight: isSelected ? FontWeight.bold : FontWeight.w600,
                 ),

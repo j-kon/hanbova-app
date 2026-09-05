@@ -8,6 +8,7 @@ import '../../../core/theme/app_radius.dart';
 import '../../../core/theme/app_spacing.dart';
 import '../../../core/theme/app_typography.dart';
 import '../../../core/utils/formatters.dart';
+import '../../../core/widgets/hanbova_rate_card.dart';
 import '../../wallet/domain/asset_model.dart';
 
 class ConversionFlowScreen extends ConsumerStatefulWidget {
@@ -637,6 +638,10 @@ class _ConversionFlowScreenState extends ConsumerState<ConversionFlowScreen> {
                 ],
               ),
             ),
+            const SizedBox(height: AppSpacing.md),
+
+            // Hanbova Platform Settlement Rate
+            const HanbovaRateCard(),
             const SizedBox(height: AppSpacing.md),
 
             // From Asset Container

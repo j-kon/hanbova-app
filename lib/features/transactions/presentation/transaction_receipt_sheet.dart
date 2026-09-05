@@ -33,6 +33,7 @@ class TransactionReceiptSheet extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colors = context.colors;
     final numFormat = NumberFormat('#,###');
     final dateStr =
         DateFormat('MMMM d, yyyy • h:mm a').format(transaction.createdAt);
@@ -42,9 +43,9 @@ class TransactionReceiptSheet extends StatelessWidget {
 
     return Container(
       padding: const EdgeInsets.fromLTRB(24, 16, 24, 32),
-      decoration: const BoxDecoration(
-        color: AppColors.darkCardBackground,
-        borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
+      decoration: BoxDecoration(
+        color: colors.surfaceCard,
+        borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
       ),
       child: Column(
         mainAxisSize: MainAxisSize.min,
@@ -54,7 +55,7 @@ class TransactionReceiptSheet extends StatelessWidget {
             width: 40,
             height: 4,
             decoration: BoxDecoration(
-              color: AppColors.darkBorder,
+              color: colors.border,
               borderRadius: BorderRadius.circular(2),
             ),
           ),
@@ -73,8 +74,8 @@ class TransactionReceiptSheet extends StatelessWidget {
 
           Text(
             typeTitle,
-            style: const TextStyle(
-              color: AppColors.darkTextSecondary,
+            style: TextStyle(
+              color: colors.textSecondary,
               fontSize: 13,
               fontWeight: FontWeight.w600,
             ),
@@ -83,8 +84,8 @@ class TransactionReceiptSheet extends StatelessWidget {
 
           Text(
             '${numFormat.format(transaction.amountSats)} sats',
-            style: const TextStyle(
-              color: Colors.white,
+            style: TextStyle(
+              color: colors.textPrimary,
               fontSize: 26,
               fontWeight: FontWeight.bold,
             ),
@@ -92,7 +93,7 @@ class TransactionReceiptSheet extends StatelessWidget {
           Text(
             '≈ ${currency.format(transaction.amountSats)}',
             style: TextStyle(
-              color: AppColors.primary.withValues(alpha: 0.9),
+              color: colors.primary,
               fontSize: 14,
               fontWeight: FontWeight.w600,
             ),
@@ -128,17 +129,20 @@ class TransactionReceiptSheet extends StatelessWidget {
           ),
 
           const SizedBox(height: 20),
-          const Divider(color: AppColors.darkBorder),
+          Divider(color: colors.border),
           const SizedBox(height: 14),
 
           // Receipt Breakdown Items
           _buildReceiptRow('Transaction ID', transaction.id,
               isCopyable: true, context: context),
-          _buildReceiptRow('Date & Time', dateStr),
+          _buildReceiptRow('Date & Time', dateStr, context: context),
           _buildReceiptRow(
-              'Recipient / Description', transaction.recipientOrSender),
-          _buildReceiptRow('Network Fee', '${transaction.feeSats ?? 0} sats'),
-          _buildReceiptRow('Underlying Asset', 'Bitcoin (100% Sats)'),
+              'Recipient / Description', transaction.recipientOrSender,
+              context: context),
+          _buildReceiptRow('Network Fee', '${transaction.feeSats ?? 0} sats',
+              context: context),
+          _buildReceiptRow('Underlying Asset', 'Bitcoin (100% Sats)',
+              context: context),
 
           if (transaction.type == TransactionType.electricity &&
               transaction.recipientOrSender.contains('Electricity')) ...[
@@ -146,7 +150,7 @@ class TransactionReceiptSheet extends StatelessWidget {
             Container(
               padding: const EdgeInsets.all(12),
               decoration: BoxDecoration(
-                color: const Color(0xFF1E293B),
+                color: colors.surfaceElevated,
                 borderRadius: BorderRadius.circular(10),
                 border: Border.all(
                     color: const Color(0xFFEAB308).withValues(alpha: 0.4)),
@@ -154,18 +158,17 @@ class TransactionReceiptSheet extends StatelessWidget {
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  const Column(
+                  Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text('Prepaid Electricity Token',
                           style: TextStyle(
-                              color: AppColors.darkTextSecondary,
-                              fontSize: 11)),
-                      SizedBox(height: 2),
+                              color: colors.textSecondary, fontSize: 11)),
+                      const SizedBox(height: 2),
                       Text(
                         '4819-2049-1829-4019-3918',
                         style: TextStyle(
-                          color: Colors.white,
+                          color: colors.textPrimary,
                           fontSize: 13,
                           fontWeight: FontWeight.bold,
                           fontFamily: 'Courier',
@@ -174,15 +177,14 @@ class TransactionReceiptSheet extends StatelessWidget {
                     ],
                   ),
                   IconButton(
-                    icon: const Icon(Icons.copy,
-                        size: 16, color: AppColors.primary),
+                    icon: Icon(Icons.copy, size: 16, color: colors.primary),
                     onPressed: () {
                       Clipboard.setData(const ClipboardData(
                           text: '4819-2049-1829-4019-3918'));
                       ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(
-                          content: Text('Token copied to clipboard!'),
-                          backgroundColor: AppColors.primary,
+                        SnackBar(
+                          content: const Text('Token copied to clipboard!'),
+                          backgroundColor: colors.primary,
                         ),
                       );
                     },
@@ -202,7 +204,7 @@ class TransactionReceiptSheet extends StatelessWidget {
               icon: const Icon(Icons.help_outline, size: 18),
               label: const Text('Need help with this transaction?'),
               style: TextButton.styleFrom(
-                foregroundColor: AppColors.darkTextSecondary,
+                foregroundColor: colors.textSecondary,
               ),
             ),
           ),
@@ -212,7 +214,8 @@ class TransactionReceiptSheet extends StatelessWidget {
   }
 
   Widget _buildReceiptRow(String label, String value,
-      {bool isCopyable = false, BuildContext? context}) {
+      {bool isCopyable = false, required BuildContext context}) {
+    final colors = context.colors;
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 5),
       child: Row(
@@ -220,8 +223,8 @@ class TransactionReceiptSheet extends StatelessWidget {
         children: [
           Text(
             label,
-            style: const TextStyle(
-              color: AppColors.darkTextSecondary,
+            style: TextStyle(
+              color: colors.textSecondary,
               fontSize: 12,
             ),
           ),
@@ -229,26 +232,25 @@ class TransactionReceiptSheet extends StatelessWidget {
             children: [
               Text(
                 value.length > 28 ? '${value.substring(0, 25)}...' : value,
-                style: const TextStyle(
-                  color: Colors.white,
+                style: TextStyle(
+                  color: colors.textPrimary,
                   fontSize: 12,
                   fontWeight: FontWeight.w600,
                 ),
               ),
-              if (isCopyable && context != null) ...[
+              if (isCopyable) ...[
                 const SizedBox(width: 4),
                 GestureDetector(
                   onTap: () {
                     Clipboard.setData(ClipboardData(text: value));
                     ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(
-                        content: Text('Copied to clipboard!'),
-                        backgroundColor: AppColors.primary,
+                      SnackBar(
+                        content: const Text('Copied to clipboard!'),
+                        backgroundColor: colors.primary,
                       ),
                     );
                   },
-                  child: const Icon(Icons.copy,
-                      size: 13, color: AppColors.primary),
+                  child: Icon(Icons.copy, size: 13, color: colors.primary),
                 ),
               ],
             ],
@@ -343,60 +345,62 @@ class TransactionReceiptSheet extends StatelessWidget {
     showModalBottomSheet(
       context: context,
       backgroundColor: Colors.transparent,
-      builder: (ctx) => Container(
-        padding: const EdgeInsets.all(24),
-        decoration: const BoxDecoration(
-          color: AppColors.darkCardBackground,
-          borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
-        ),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            const Text(
-              'Need Help with Transaction',
-              style: TextStyle(
-                color: Colors.white,
-                fontSize: 18,
-                fontWeight: FontWeight.bold,
+      builder: (ctx) {
+        final helpColors = ctx.colors;
+        return Container(
+          padding: const EdgeInsets.all(24),
+          decoration: BoxDecoration(
+            color: helpColors.surfaceCard,
+            borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                'Need Help with Transaction',
+                style: TextStyle(
+                  color: helpColors.textPrimary,
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold,
+                ),
               ),
-            ),
-            const SizedBox(height: 8),
-            const Text(
-              'Select an issue category below to get transaction support.',
-              style:
-                  TextStyle(color: AppColors.darkTextSecondary, fontSize: 13),
-            ),
-            const SizedBox(height: 16),
-            _buildHelpOption(
-                ctx, 'Payment not received by merchant / recipient'),
-            _buildHelpOption(ctx, 'Meter token not generating electricity'),
-            _buildHelpOption(ctx, 'eSIM QR code not scanning or activating'),
-            _buildHelpOption(
-                ctx, 'Protected payment protection window dispute'),
-            _buildHelpOption(ctx, 'Other general transaction inquiry'),
-            const SizedBox(height: 10),
-          ],
-        ),
-      ),
+              const SizedBox(height: 8),
+              Text(
+                'Select an issue category below to get transaction support.',
+                style: TextStyle(color: helpColors.textSecondary, fontSize: 13),
+              ),
+              const SizedBox(height: 16),
+              _buildHelpOption(
+                  ctx, 'Payment not received by merchant / recipient'),
+              _buildHelpOption(ctx, 'Meter token not generating electricity'),
+              _buildHelpOption(ctx, 'eSIM QR code not scanning or activating'),
+              _buildHelpOption(
+                  ctx, 'Protected payment protection window dispute'),
+              _buildHelpOption(ctx, 'Other general transaction inquiry'),
+              const SizedBox(height: 10),
+            ],
+          ),
+        );
+      },
     );
   }
 
   Widget _buildHelpOption(BuildContext context, String text) {
+    final helpColors = context.colors;
     return ListTile(
       contentPadding: EdgeInsets.zero,
-      leading:
-          const Icon(Icons.support_agent_outlined, color: AppColors.primary),
-      title:
-          Text(text, style: const TextStyle(color: Colors.white, fontSize: 13)),
-      trailing: const Icon(Icons.chevron_right,
-          color: AppColors.darkTextSecondary, size: 18),
+      leading: Icon(Icons.support_agent_outlined, color: helpColors.primary),
+      title: Text(text,
+          style: TextStyle(color: helpColors.textPrimary, fontSize: 13)),
+      trailing:
+          Icon(Icons.chevron_right, color: helpColors.textSecondary, size: 18),
       onTap: () {
         Navigator.pop(context);
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text('Support ticket opened: "$text"'),
-            backgroundColor: AppColors.primary,
+            backgroundColor: helpColors.primary,
           ),
         );
       },

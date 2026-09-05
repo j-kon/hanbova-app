@@ -4,6 +4,24 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:hanbova_app/core/sync/wallet_sync_coordinator.dart';
 
 void main() {
+  for (final fail in [false, true]) {
+    test(
+        'in-flight sync may ${fail ? 'fail' : 'finish'} after disposal without notifying',
+        () async {
+      final gate = Completer<void>();
+      final coordinator = WalletSyncCoordinator(runSync: () => gate.future);
+      final future = coordinator.syncNow();
+      final expectation =
+          expectLater(future, fail ? throwsStateError : completes);
+      coordinator.dispose();
+      if (fail) {
+        gate.completeError(StateError('offline'));
+      } else {
+        gate.complete();
+      }
+      await expectation;
+    });
+  }
   test('coordinator never overlaps sync requests', () async {
     final gate = Completer<void>();
     var calls = 0;

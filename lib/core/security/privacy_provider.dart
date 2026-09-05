@@ -42,6 +42,7 @@ class PrivacyNotifier extends StateNotifier<PrivacySettings> {
   static const _keyAppSwitcher = 'privacy_hide_app_switcher';
   static const _keyNotifAmounts = 'privacy_hide_notif_amounts';
   static const _keyBiometric = 'privacy_biometric_sensitive';
+  bool _balanceChanged = false;
 
   PrivacyNotifier() : super(const PrivacySettings()) {
     _loadSettings();
@@ -50,12 +51,18 @@ class PrivacyNotifier extends StateNotifier<PrivacySettings> {
   Future<void> _loadSettings() async {
     try {
       final bal = await _storage.read(key: _keyBalanceHidden);
+      final legacyVisible = bal == null
+          ? await _storage.read(key: 'hanbova_balance_visible')
+          : null;
       final switcher = await _storage.read(key: _keyAppSwitcher);
       final notif = await _storage.read(key: _keyNotifAmounts);
       final bio = await _storage.read(key: _keyBiometric);
 
+      if (!mounted) return;
       state = state.copyWith(
-        isBalanceHidden: bal == 'true',
+        isBalanceHidden: _balanceChanged
+            ? state.isBalanceHidden
+            : bal == 'true' || (bal == null && legacyVisible == 'false'),
         hideInAppSwitcher: switcher != 'false',
         hideNotificationAmounts: notif == 'true',
         requireBiometricForSensitive: bio != 'false',
@@ -64,12 +71,14 @@ class PrivacyNotifier extends StateNotifier<PrivacySettings> {
   }
 
   Future<void> toggleBalanceHidden() async {
+    _balanceChanged = true;
     final next = !state.isBalanceHidden;
     state = state.copyWith(isBalanceHidden: next);
     await _storage.write(key: _keyBalanceHidden, value: next.toString());
   }
 
   Future<void> setBalanceHidden(bool hidden) async {
+    _balanceChanged = true;
     state = state.copyWith(isBalanceHidden: hidden);
     await _storage.write(key: _keyBalanceHidden, value: hidden.toString());
   }

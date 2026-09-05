@@ -5,9 +5,9 @@ import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_radius.dart';
 import '../../../core/theme/app_spacing.dart';
 import '../../../core/theme/app_typography.dart';
-import '../../../core/utils/formatters.dart';
-import '../../auth/providers/auth_provider.dart';
-import '../../protected_send/data/payment_intent_repository.dart';
+import '../../../core/security/privacy_provider.dart';
+import '../../../core/sync/wallet_sync_coordinator.dart';
+import 'activity_transaction_tile.dart';
 import '../domain/activity_export_service.dart';
 import '../domain/transaction_model.dart';
 import 'transaction_details_screen.dart';
@@ -45,25 +45,15 @@ class _TransactionsScreenState extends ConsumerState<TransactionsScreen> {
   DateTimeRange? _filterDateRange;
   RangeValues? _filterAmountRange;
 
-  @override
-  void initState() {
-    super.initState();
-    _fetchTransactions();
-  }
+  bool _refreshFailed = false;
 
   Future<void> _fetchTransactions() async {
-    final authState = ref.read(authProvider);
-    if (authState.user == null) return;
     try {
-      final intentRepo = ref.read(paymentIntentRepositoryProvider);
-      final intents = await intentRepo.getPaymentIntents();
-      if (!mounted) return;
-      await ref.read(transactionsProvider.notifier).syncPaymentIntents(
-            intents: intents,
-            currentUserId: authState.user!.id,
-            currentUsername: authState.user!.username,
-          );
-    } catch (_) {}
+      await ref.read(walletSyncCoordinatorProvider)?.syncNow();
+      if (mounted) setState(() => _refreshFailed = false);
+    } catch (_) {
+      if (mounted) setState(() => _refreshFailed = true);
+    }
   }
 
   @override
@@ -432,6 +422,7 @@ class _TransactionsScreenState extends ConsumerState<TransactionsScreen> {
               ),
         actions: [
           IconButton(
+            tooltip: _isSearchVisible ? 'Close search' : 'Search activity',
             icon: Icon(_isSearchVisible ? Icons.close : Icons.search,
                 color: colors.textPrimary),
             onPressed: () {
@@ -466,6 +457,23 @@ class _TransactionsScreenState extends ConsumerState<TransactionsScreen> {
       ),
       body: Column(
         children: [
+          if (_refreshFailed || allTransactions.isStale)
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16),
+              child: Row(children: [
+                Icon(Icons.cloud_off_outlined, color: colors.textSecondary),
+                const SizedBox(width: 8),
+                Expanded(
+                    child: Text(
+                        'Showing saved activity. Refresh to check the latest status.',
+                        style: AppTypography.bodySmall
+                            .copyWith(color: colors.textSecondary))),
+                TextButton(
+                    onPressed: _fetchTransactions, child: const Text('Retry')),
+              ]),
+            ),
+          if (allTransactions.isSyncing)
+            const LinearProgressIndicator(minHeight: 2),
           // Quick Filter Bar
           SingleChildScrollView(
             scrollDirection: Axis.horizontal,
@@ -493,10 +501,11 @@ class _TransactionsScreenState extends ConsumerState<TransactionsScreen> {
               child: transactions.isEmpty
                   ? _buildEmptyState()
                   : ListView.separated(
+                      physics: const AlwaysScrollableScrollPhysics(),
                       padding: const EdgeInsets.all(AppSpacing.md),
                       itemCount: transactions.length,
                       separatorBuilder: (_, __) =>
-                          const SizedBox(height: AppSpacing.sm),
+                          Divider(height: 1, color: colors.divider),
                       itemBuilder: (context, index) {
                         final tx = transactions[index];
                         return _buildTransactionItem(context, tx);
@@ -511,7 +520,6 @@ class _TransactionsScreenState extends ConsumerState<TransactionsScreen> {
 
   Widget _buildQuickFilterChip(String label, QuickFilter filter) {
     final colors = context.colors;
-    final isDark = context.isDark;
     final isSelected = _selectedQuickFilter == filter;
     return Padding(
       padding: const EdgeInsets.only(right: 8),
@@ -519,9 +527,7 @@ class _TransactionsScreenState extends ConsumerState<TransactionsScreen> {
         label: Text(
           label,
           style: TextStyle(
-            color: isSelected
-                ? (isDark ? Colors.black : Colors.white)
-                : colors.textPrimary,
+            color: isSelected ? AppColors.charcoal : colors.textPrimary,
             fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
             fontSize: 12,
           ),
@@ -540,217 +546,78 @@ class _TransactionsScreenState extends ConsumerState<TransactionsScreen> {
 
   Widget _buildEmptyState() {
     final colors = context.colors;
-    return Center(
-      child: Padding(
-        padding: const EdgeInsets.all(32),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(Icons.receipt_long_outlined,
-                color: colors.textTertiary, size: 54),
-            const SizedBox(height: 16),
-            Text(
-              'No transactions found',
-              style: TextStyle(
-                  color: colors.textPrimary,
-                  fontSize: 16,
-                  fontWeight: FontWeight.bold),
-            ),
-            const SizedBox(height: 8),
-            Text(
-              _searchQuery.isNotEmpty || _selectedQuickFilter != QuickFilter.all
-                  ? 'Try adjusting your search or filters.'
-                  : 'Your Bitcoin payments, protected sends, utility bills, and travel activity will appear here.',
-              textAlign: TextAlign.center,
-              style: TextStyle(color: colors.textSecondary, fontSize: 13),
-            ),
-          ],
-        ),
-      ),
-    );
+    final filtered = _searchQuery.isNotEmpty ||
+        _selectedQuickFilter != QuickFilter.all ||
+        _filterStatus != null ||
+        _filterCountry != null ||
+        _filterDateRange != null ||
+        _filterAmountRange != null;
+    return LayoutBuilder(
+        builder: (context, constraints) => ListView(
+              physics: const AlwaysScrollableScrollPhysics(),
+              children: [
+                ConstrainedBox(
+                    constraints:
+                        BoxConstraints(minHeight: constraints.maxHeight),
+                    child: Padding(
+                        padding: const EdgeInsets.all(32),
+                        child: Column(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Icon(
+                                  filtered
+                                      ? Icons.search_off
+                                      : Icons.receipt_long_outlined,
+                                  color: colors.textSecondary,
+                                  size: 48),
+                              const SizedBox(height: 16),
+                              Text(
+                                  filtered
+                                      ? 'No matching payments'
+                                      : 'Your activity starts here',
+                                  style: AppTypography.titleMedium
+                                      .copyWith(color: colors.textPrimary),
+                                  textAlign: TextAlign.center),
+                              const SizedBox(height: 8),
+                              Text(
+                                  filtered
+                                      ? 'Try another search or clear your filters.'
+                                      : 'Payments will appear here with their latest status. Pull down to refresh.',
+                                  textAlign: TextAlign.center,
+                                  style: AppTypography.bodyMedium
+                                      .copyWith(color: colors.textSecondary)),
+                              const SizedBox(height: 16),
+                              TextButton.icon(
+                                  onPressed: filtered
+                                      ? () => setState(() {
+                                            _selectedQuickFilter =
+                                                QuickFilter.all;
+                                            _searchQuery = '';
+                                            _searchController.clear();
+                                            _filterStatus = null;
+                                            _filterCountry = null;
+                                            _filterDateRange = null;
+                                            _filterAmountRange = null;
+                                          })
+                                      : _fetchTransactions,
+                                  icon: Icon(filtered
+                                      ? Icons.filter_alt_off_outlined
+                                      : Icons.refresh),
+                                  label: Text(filtered
+                                      ? 'Clear filters'
+                                      : 'Refresh activity')),
+                            ]))),
+              ],
+            ));
   }
 
   Widget _buildTransactionItem(BuildContext context, TransactionModel tx) {
-    final colors = context.colors;
-    final currency = ref.watch(currencyProvider);
-
-    IconData icon;
-    Color iconColor;
-    Color iconBg;
-
-    switch (tx.type) {
-      case TransactionType.bitcoinReceived:
-      case TransactionType.instantReceive:
-      case TransactionType.protectedClaim:
-      case TransactionType.cardRefund:
-        icon = Icons.arrow_downward;
-        iconColor = AppColors.success;
-        iconBg = AppColors.success.withValues(alpha: 0.15);
-        break;
-      case TransactionType.bitcoinSent:
-      case TransactionType.instantSend:
-      case TransactionType.bankPayout:
-      case TransactionType.mobileMoneyPayout:
-        icon = Icons.arrow_upward;
-        iconColor = AppColors.danger;
-        iconBg = AppColors.danger.withValues(alpha: 0.15);
-        break;
-      case TransactionType.protectedPayment:
-      case TransactionType.protectedSend:
-        icon = Icons.shield_outlined;
-        iconColor = AppColors.primary;
-        iconBg = AppColors.primary.withValues(alpha: 0.15);
-        break;
-      case TransactionType.protectedRefund:
-        icon = Icons.replay;
-        iconColor = AppColors.primary;
-        iconBg = AppColors.primary.withValues(alpha: 0.15);
-        break;
-      case TransactionType.airtime:
-        icon = Icons.phone_android;
-        iconColor = Colors.lightBlueAccent;
-        iconBg = Colors.lightBlueAccent.withValues(alpha: 0.15);
-        break;
-      case TransactionType.data:
-        icon = Icons.wifi;
-        iconColor = Colors.cyanAccent;
-        iconBg = Colors.cyanAccent.withValues(alpha: 0.15);
-        break;
-      case TransactionType.electricity:
-        icon = Icons.bolt;
-        iconColor = Colors.amberAccent;
-        iconBg = Colors.amberAccent.withValues(alpha: 0.15);
-        break;
-      case TransactionType.water:
-        icon = Icons.water_drop;
-        iconColor = Colors.tealAccent;
-        iconBg = Colors.tealAccent.withValues(alpha: 0.15);
-        break;
-      case TransactionType.tv:
-        icon = Icons.tv;
-        iconColor = Colors.purpleAccent;
-        iconBg = Colors.purpleAccent.withValues(alpha: 0.15);
-        break;
-      case TransactionType.internet:
-        icon = Icons.router;
-        iconColor = Colors.orangeAccent;
-        iconBg = Colors.orangeAccent.withValues(alpha: 0.15);
-        break;
-      case TransactionType.esimPurchase:
-      case TransactionType.esimTopup:
-        icon = Icons.sim_card_outlined;
-        iconColor = Colors.pinkAccent;
-        iconBg = Colors.pinkAccent.withValues(alpha: 0.15);
-        break;
-      case TransactionType.cardFunding:
-      case TransactionType.cardPayment:
-        icon = Icons.credit_card;
-        iconColor = Colors.indigoAccent;
-        iconBg = Colors.indigoAccent.withValues(alpha: 0.15);
-        break;
-      case TransactionType.usdtSent:
-      case TransactionType.usdtReceived:
-        icon = Icons.attach_money_rounded;
-        iconColor = const Color(0xFF26A17B);
-        iconBg = const Color(0xFF26A17B).withValues(alpha: 0.15);
-        break;
-      case TransactionType.usdcSent:
-      case TransactionType.usdcReceived:
-        icon = Icons.monetization_on_rounded;
-        iconColor = const Color(0xFF2775CA);
-        iconBg = const Color(0xFF2775CA).withValues(alpha: 0.15);
-        break;
-      case TransactionType.btcToUsdtConversion:
-      case TransactionType.btcToUsdcConversion:
-      case TransactionType.usdtToBtcConversion:
-      case TransactionType.usdcToBtcConversion:
-      case TransactionType.usdtToUsdcConversion:
-      case TransactionType.usdcToUsdtConversion:
-        icon = Icons.swap_horiz_rounded;
-        iconColor = const Color(0xFF38BDF8);
-        iconBg = const Color(0xFF38BDF8).withValues(alpha: 0.15);
-        break;
-    }
-
-    return InkWell(
-      onTap: () {
-        Navigator.of(context).push(
-          MaterialPageRoute(
-            builder: (_) => TransactionDetailsScreen(transaction: tx),
-          ),
-        );
-      },
-      borderRadius: BorderRadius.circular(16),
-      child: Container(
-        padding: const EdgeInsets.all(14),
-        decoration: BoxDecoration(
-          color: colors.surfaceCard,
-          borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: colors.border),
-        ),
-        child: Row(
-          children: [
-            Container(
-              padding: const EdgeInsets.all(10),
-              decoration: BoxDecoration(
-                color: iconBg,
-                borderRadius: BorderRadius.circular(12),
-              ),
-              child: Icon(icon, color: iconColor, size: 20),
-            ),
-            const SizedBox(width: 12),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    tx.displayTitle,
-                    style: TextStyle(
-                      color: colors.textPrimary,
-                      fontSize: 14,
-                      fontWeight: FontWeight.bold,
-                    ),
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                  const SizedBox(height: 2),
-                  Text(
-                    '${tx.recipientOrSender} • ${Formatters.formatDate(tx.createdAt)}',
-                    style: TextStyle(
-                      color: colors.textSecondary,
-                      fontSize: 12,
-                    ),
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                ],
-              ),
-            ),
-            const SizedBox(width: 8),
-            Column(
-              crossAxisAlignment: CrossAxisAlignment.end,
-              children: [
-                Text(
-                  '${tx.isOutgoing ? '-' : '+'}${Formatters.formatSats(tx.amountSats)}',
-                  style: TextStyle(
-                    color: tx.isOutgoing ? colors.textPrimary : colors.incoming,
-                    fontSize: 14,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-                const SizedBox(height: 2),
-                Text(
-                  currency.format(tx.amountSats),
-                  style: TextStyle(
-                    color: colors.textSecondary,
-                    fontSize: 11,
-                  ),
-                ),
-              ],
-            ),
-          ],
-        ),
-      ),
+    return ActivityTransactionTile(
+      transaction: tx,
+      currency: ref.watch(currencyProvider),
+      hideAmounts: ref.watch(privacyProvider).isBalanceHidden,
+      onTap: () => Navigator.of(context).push(MaterialPageRoute(
+          builder: (_) => TransactionDetailsScreen(transaction: tx))),
     );
   }
 }

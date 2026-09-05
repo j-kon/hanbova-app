@@ -3,13 +3,14 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../../core/cashu/cashu_wallet_models.dart';
 import '../../../core/cashu/cashu_wallet_provider.dart';
-import '../../../core/currency/balance_visibility_provider.dart';
+import '../../../core/security/privacy_provider.dart';
+import 'home_balance_card.dart';
+import '../../transactions/presentation/activity_transaction_tile.dart';
 import '../../../core/currency/currency_provider.dart';
 import '../../../core/network/network_environment.dart';
 import '../../../core/sync/wallet_sync_coordinator.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_radius.dart';
-import '../../../core/theme/app_shadows.dart';
 import '../../../core/theme/app_spacing.dart';
 import '../../../core/theme/app_typography.dart';
 import '../../../core/utils/formatters.dart';
@@ -21,6 +22,8 @@ import '../../wallet/presentation/unified_deposit_sheet.dart';
 import '../../../core/demo/demo_mode_provider.dart';
 import '../../../core/market/country_model.dart';
 import '../../../core/market/market_provider.dart';
+import '../../../core/widgets/hanbova_rate_card.dart';
+import '../../../core/rates/hanbova_rate_provider.dart';
 import '../../profile/providers/profile_provider.dart';
 import '../../request_money/presentation/request_money_screen.dart';
 
@@ -61,22 +64,32 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
   Widget build(BuildContext context) {
     final colors = context.colors;
     final user = ref.watch(currentUserProvider);
-    final isBalanceVisible = ref.watch(balanceVisibilityProvider);
+    final isBalanceVisible = !ref.watch(privacyProvider).isBalanceHidden;
     final currency = ref.watch(currencyProvider);
     final transactions = ref.watch(transactionsProvider);
     final demoState = ref.watch(demoModeProvider);
     final market = ref.watch(marketProvider);
     final cashuBalanceAsync = ref.watch(cashuBalanceProvider);
-    final cashuBalance = cashuBalanceAsync.value ??
+    final cashuBalance = cashuBalanceAsync.valueOrNull ??
         const CashuWalletBalance(spendableSats: 0, lockedEscrowSats: 0);
+    final String? balanceStatus = !demoState.isEnabled &&
+            (cashuBalanceAsync.isLoading ||
+                cashuBalanceAsync.hasError ||
+                !cashuBalanceAsync.hasValue)
+        ? (cashuBalanceAsync.hasError ? 'Unavailable' : 'Updating…')
+        : null;
 
     final incomingClaimable = transactions
         .where((t) =>
             t.type == TransactionType.protectedClaim &&
             t.status == TransactionStatus.claimable)
         .toList();
-    final protectedSats = cashuBalance.lockedEscrowSats;
-    final spendableSats = cashuBalance.spendableSats;
+    final protectedSats = demoState.isEnabled
+        ? demoState.protectedTotalSats
+        : cashuBalance.lockedEscrowSats;
+    final spendableSats = demoState.isEnabled
+        ? demoState.availableBalanceSats
+        : cashuBalance.spendableSats;
 
     final profile = ref.watch(profileProvider);
     final residence = profile.residenceCountryInfo;
@@ -97,6 +110,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
         child: RefreshIndicator(
           onRefresh: () async {
             ref.invalidate(cashuBalanceProvider);
+            ref.read(hanbovaRateProvider.notifier).refresh();
             try {
               await ref.read(walletSyncCoordinatorProvider)?.syncNow();
             } catch (_) {}
@@ -179,6 +193,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                     Row(
                       children: [
                         IconButton(
+                          tooltip: 'Notifications',
                           icon: Icon(Icons.notifications_none_rounded,
                               color: colors.textPrimary),
                           onPressed: () => context.push('/notifications'),
@@ -270,403 +285,98 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                   ),
                 ],
 
-                // 2. Balance Card (Authoritative Available Balance + Money in Motion)
-                Container(
-                  padding: const EdgeInsets.all(AppSpacing.lg),
-                  decoration: BoxDecoration(
-                    color: colors.surfaceCard,
-                    borderRadius: AppRadius.lgRadius,
-                    border: Border.all(color: colors.border, width: 1),
-                    boxShadow: AppShadows.card(context),
-                  ),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      InkWell(
-                        onTap: () {
-                          if (!isMainnet) {
-                            MainnetSafetyDialog.show(context);
-                          }
-                        },
-                        borderRadius: AppRadius.xsRadius,
-                        child: Container(
-                          margin: const EdgeInsets.only(bottom: AppSpacing.sm),
-                          padding: const EdgeInsets.symmetric(
-                              horizontal: 8, vertical: 4),
-                          decoration: BoxDecoration(
-                            color: (isMainnet
-                                    ? (netConfig.isPilot
-                                        ? Colors.amber
-                                        : colors.success)
-                                    : colors.gold)
-                                .withValues(alpha: 0.12),
-                            borderRadius: AppRadius.xsRadius,
-                            border: Border.all(
-                              color: (isMainnet
-                                      ? (netConfig.isPilot
-                                          ? Colors.amber
-                                          : colors.success)
-                                      : colors.gold)
-                                  .withValues(alpha: 0.3),
-                            ),
-                          ),
-                          child: Row(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              Icon(
-                                isMainnet
-                                    ? (netConfig.isPilot
-                                        ? Icons.warning_amber_rounded
-                                        : Icons.verified_user)
-                                    : Icons.science_outlined,
-                                color: isMainnet
-                                    ? (netConfig.isPilot
-                                        ? Colors.amber
-                                        : colors.success)
-                                    : colors.gold,
-                                size: 14,
-                              ),
-                              const SizedBox(width: 4),
-                              Text(
-                                isMainnet
-                                    ? (netConfig.isPilot
-                                        ? 'PILOT DEMO • Max 10k sats • Real Bitcoin'
-                                        : 'MAINNET (LOCKED)')
-                                    : 'TEST MODE • No monetary value',
-                                style: AppTypography.labelSmall.copyWith(
-                                  color: isMainnet
-                                      ? (netConfig.isPilot
-                                          ? Colors.amber
-                                          : colors.success)
-                                      : colors.gold,
-                                  fontSize: 10,
-                                  fontWeight: FontWeight.w700,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                      ),
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          Flexible(
-                            child: Wrap(
-                              crossAxisAlignment: WrapCrossAlignment.center,
-                              spacing: 6,
-                              children: [
-                                Text(
-                                  'Bitcoin',
-                                  style: AppTypography.titleSmall.copyWith(
-                                    color: colors.textPrimary,
-                                    fontWeight: FontWeight.bold,
-                                  ),
-                                ),
-                                Container(
-                                  padding: const EdgeInsets.symmetric(
-                                      horizontal: 6, vertical: 2),
-                                  decoration: BoxDecoration(
-                                    color:
-                                        colors.primary.withValues(alpha: 0.12),
-                                    borderRadius: BorderRadius.circular(4),
-                                  ),
-                                  child: Text(
-                                    'Available to spend',
-                                    style: TextStyle(
-                                      color: colors.primary,
-                                      fontSize: 10,
-                                      fontWeight: FontWeight.w600,
-                                    ),
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                          IconButton(
-                            icon: Icon(
-                              isBalanceVisible
-                                  ? Icons.visibility_outlined
-                                  : Icons.visibility_off_outlined,
-                              color: colors.textTertiary,
-                              size: 20,
-                            ),
-                            padding: EdgeInsets.zero,
-                            constraints: const BoxConstraints(),
-                            onPressed: () => ref
-                                .read(balanceVisibilityProvider.notifier)
-                                .toggle(),
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: AppSpacing.xs),
-
-                      InkWell(
-                        onTap: () => context.push('/money'),
-                        borderRadius: AppRadius.smRadius,
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            // Spendable Fiat display (Authoritative)
-                            Text(
-                              isBalanceVisible
-                                  ? currency.format(spendableSats)
-                                  : '••••••••',
-                              style: AppTypography.display.copyWith(
-                                color: colors.textPrimary,
-                                fontWeight: FontWeight.w800,
-                              ),
-                            ),
-                            const SizedBox(height: 2),
-
-                            // Spendable Sats display (Authoritative)
-                            Row(
-                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                              children: [
-                                Flexible(
-                                  child: Text(
-                                    isBalanceVisible
-                                        ? '${Formatters.formatSatsNumber(spendableSats)} ${isMainnet ? "sats" : "test sats"}'
-                                        : '•••• ${isMainnet ? "sats" : "test sats"}',
-                                    style: AppTypography.titleSmall.copyWith(
-                                      color: colors.primary,
-                                      fontWeight: FontWeight.w700,
-                                    ),
-                                    overflow: TextOverflow.ellipsis,
-                                  ),
-                                ),
-                                const SizedBox(width: 8),
-                                Row(
-                                  children: [
-                                    Text(
-                                      'Balances Hub',
-                                      style: TextStyle(
-                                        color: colors.primary,
-                                        fontSize: 11,
-                                        fontWeight: FontWeight.bold,
-                                      ),
-                                    ),
-                                    Icon(
-                                      Icons.chevron_right,
-                                      size: 14,
-                                      color: colors.primary,
-                                    ),
-                                  ],
-                                ),
-                              ],
-                            ),
-                          ],
-                        ),
-                      ),
-                      const SizedBox(height: AppSpacing.md),
-
-                      // Divider & Money in Motion Section
-                      Divider(color: colors.divider),
-                      const SizedBox(height: AppSpacing.xs),
-
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          Text(
-                            'Money in motion',
-                            style: AppTypography.caption.copyWith(
-                              color: colors.textTertiary,
-                              fontWeight: FontWeight.w600,
-                            ),
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 6),
-
-                      Row(
-                        children: [
-                          Expanded(
-                            child: InkWell(
-                              onTap: () => context.push('/protected'),
-                              borderRadius: BorderRadius.circular(8),
-                              child: Container(
-                                padding: const EdgeInsets.symmetric(
-                                    horizontal: 10, vertical: 8),
-                                decoration: BoxDecoration(
-                                  color:
-                                      colors.protected.withValues(alpha: 0.08),
-                                  borderRadius: BorderRadius.circular(8),
-                                  border: Border.all(
-                                    color:
-                                        colors.protected.withValues(alpha: 0.2),
-                                  ),
-                                ),
-                                child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    Row(
-                                      children: [
-                                        Icon(Icons.shield_outlined,
-                                            size: 13, color: colors.protected),
-                                        const SizedBox(width: 4),
-                                        Text(
-                                          'Protected',
-                                          style: AppTypography.caption.copyWith(
-                                            color: colors.protected,
-                                            fontWeight: FontWeight.w600,
-                                          ),
-                                        ),
-                                      ],
-                                    ),
-                                    const SizedBox(height: 3),
-                                    Text(
-                                      isBalanceVisible
-                                          ? Formatters.formatSats(protectedSats)
-                                          : '••••',
-                                      style: AppTypography.titleSmall.copyWith(
-                                        color: colors.textPrimary,
-                                        fontWeight: FontWeight.bold,
-                                        fontSize: 13,
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                              ),
-                            ),
-                          ),
-                          const SizedBox(width: 8),
-                          Expanded(
-                            child: InkWell(
-                              onTap: () => context.push('/pending'),
-                              borderRadius: BorderRadius.circular(8),
-                              child: Container(
-                                padding: const EdgeInsets.symmetric(
-                                    horizontal: 10, vertical: 8),
-                                decoration: BoxDecoration(
-                                  color:
-                                      AppColors.warning.withValues(alpha: 0.08),
-                                  borderRadius: BorderRadius.circular(8),
-                                  border: Border.all(
-                                    color: AppColors.warning
-                                        .withValues(alpha: 0.2),
-                                  ),
-                                ),
-                                child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    Row(
-                                      children: [
-                                        const Icon(Icons.hourglass_top_rounded,
-                                            size: 13, color: AppColors.warning),
-                                        const SizedBox(width: 4),
-                                        const Text(
-                                          'Pending',
-                                          style: TextStyle(
-                                            color: AppColors.warning,
-                                            fontSize: 11,
-                                            fontWeight: FontWeight.w600,
-                                          ),
-                                        ),
-                                      ],
-                                    ),
-                                    const SizedBox(height: 3),
-                                    Text(
-                                      isBalanceVisible
-                                          ? Formatters.formatSats(
-                                              demoState.isEnabled
-                                                  ? demoState.pendingBalanceSats
-                                                  : 0)
-                                          : '••••',
-                                      style: AppTypography.titleSmall.copyWith(
-                                        color: colors.textPrimary,
-                                        fontWeight: FontWeight.bold,
-                                        fontSize: 13,
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ],
-                  ),
+                HomeBalanceCard(
+                  amount: isBalanceVisible
+                      ? currency.format(spendableSats)
+                      : '••••••',
+                  sats: isBalanceVisible
+                      ? '${Formatters.formatSatsNumber(spendableSats)} ${isMainnet ? "sats" : "test sats"}'
+                      : '•••• sats',
+                  protectedAmount: balanceStatus ??
+                      (isBalanceVisible
+                          ? Formatters.formatSats(protectedSats)
+                          : '••••'),
+                  pendingAmount: !demoState.isEnabled
+                      ? 'Check status'
+                      : isBalanceVisible
+                          ? Formatters.formatSats(demoState.pendingBalanceSats)
+                          : '••••',
+                  environmentLabel: demoState.isEnabled
+                      ? ''
+                      : isMainnet
+                          ? (netConfig.isPilot
+                              ? 'Pilot · Real Bitcoin · 10,000 sats limit'
+                              : 'Mainnet locked')
+                          : 'Test mode · No monetary value',
+                  isHidden: !isBalanceVisible,
+                  isLoading:
+                      !demoState.isEnabled && cashuBalanceAsync.isLoading,
+                  hasError: !demoState.isEnabled && cashuBalanceAsync.hasError,
+                  onRetry: () => ref.invalidate(cashuBalanceProvider),
+                  onToggleVisibility: () =>
+                      ref.read(privacyProvider.notifier).toggleBalanceHidden(),
+                  onProtected: () => context.push('/protected'),
+                  onPending: () => context.push('/pending'),
+                  onEnvironment: () => MainnetSafetyDialog.show(context),
                 ),
                 const SizedBox(height: AppSpacing.sm),
 
-                // 2.5 Other Balances (Compact card preserving Bitcoin as primary hero)
-                Container(
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-                  decoration: BoxDecoration(
-                    color: colors.surfaceCard,
-                    borderRadius: AppRadius.mdRadius,
-                    border: Border.all(color: colors.border),
-                  ),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Expanded(
-                        child: Row(
-                          children: [
-                            Icon(Icons.account_balance_wallet_outlined,
-                                size: 16, color: colors.textSecondary),
-                            const SizedBox(width: 8),
-                            Flexible(
-                              child: Text(
-                                demoState.isEnabled
-                                    ? 'Other: USDT \$1,250 • USDC \$750'
-                                    : 'Other: USDT \$0 • USDC \$0',
-                                style: AppTypography.caption.copyWith(
-                                  color: colors.textSecondary,
-                                  fontWeight: FontWeight.w600,
-                                ),
-                                overflow: TextOverflow.ellipsis,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                      const SizedBox(width: 8),
-                      InkWell(
-                        onTap: () => context.go('/money'),
-                        borderRadius: BorderRadius.circular(4),
-                        child: Padding(
-                          padding: const EdgeInsets.symmetric(
-                              horizontal: 4, vertical: 2),
-                          child: Row(
-                            children: [
-                              Text(
-                                'View Money',
-                                style: AppTypography.caption.copyWith(
-                                  color: colors.primary,
-                                  fontWeight: FontWeight.bold,
-                                ),
-                              ),
-                              Icon(Icons.chevron_right,
-                                  size: 14, color: colors.primary),
-                            ],
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
+                ListTile(
+                  contentPadding: const EdgeInsets.symmetric(horizontal: 4),
+                  onTap: () => context.go('/money'),
+                  leading: Icon(Icons.account_balance_wallet_outlined,
+                      color: colors.textSecondary),
+                  title: Text('View Money',
+                      style: AppTypography.bodyMedium
+                          .copyWith(color: colors.textPrimary)),
+                  subtitle: Text(
+                      !isBalanceVisible
+                          ? 'USDT •••• · USDC ••••'
+                          : demoState.isEnabled
+                              ? 'Other: USDT \$1,250 • USDC \$750'
+                              : 'Other assets · Coming soon',
+                      style: AppTypography.bodySmall
+                          .copyWith(color: colors.textSecondary)),
+                  trailing:
+                      Icon(Icons.chevron_right, color: colors.textSecondary),
                 ),
                 const SizedBox(height: AppSpacing.md),
 
-                // 3. Action Rail (Adaptive based on market capabilities, horizontally scrollable)
-                SingleChildScrollView(
-                  scrollDirection: Axis.horizontal,
-                  child: Row(
-                    children: [
-                      for (int i = 0; i < actionRailItems.length; i++) ...[
-                        if (i > 0) const SizedBox(width: 8),
-                        _buildActionRailItem(
-                          context,
-                          icon: actionRailItems[i].icon,
-                          label: actionRailItems[i].label,
-                          color: actionRailItems[i].color,
-                          onTap: actionRailItems[i].onTap,
-                        ),
-                      ],
-                    ],
-                  ),
-                ),
+                // Keep the four main payment actions visible at phone widths.
+                LayoutBuilder(builder: (context, constraints) {
+                  final largeText =
+                      MediaQuery.textScalerOf(context).scale(14) > 21;
+                  final columns =
+                      largeText || constraints.maxWidth < 300 ? 2 : 4;
+                  return Wrap(spacing: 8, runSpacing: 8, children: [
+                    for (final item in actionRailItems.take(4))
+                      SizedBox(
+                          width: (constraints.maxWidth - 8 * (columns - 1)) /
+                              columns,
+                          child: _buildActionRailItem(context,
+                              icon: item.icon,
+                              label: item.label,
+                              color: item.color,
+                              onTap: item.onTap)),
+                  ]);
+                }),
+                const SizedBox(height: 8),
+                Wrap(spacing: 8, runSpacing: 4, children: [
+                  for (final item in actionRailItems.skip(4))
+                    TextButton.icon(
+                      key: Key('action_rail_${item.label.toLowerCase()}'),
+                      onPressed: item.onTap,
+                      icon: Icon(item.icon, size: 18),
+                      label: Text(item.label),
+                      style: TextButton.styleFrom(
+                          foregroundColor: colors.textSecondary,
+                          minimumSize: const Size(48, 48)),
+                    ),
+                ]),
+                const SizedBox(height: AppSpacing.md),
+
+                // 3.4 Live Hanbova Platform Rate
+                const HanbovaRateCard(),
                 const SizedBox(height: AppSpacing.md),
 
                 // 3.5 Quick Pay Services (Rendered only when active market supports everyday bills)
@@ -681,8 +391,9 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        Wrap(
+                          spacing: 12,
+                          crossAxisAlignment: WrapCrossAlignment.center,
                           children: [
                             Text(
                               'Quick Pay',
@@ -695,8 +406,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                               onPressed: () => context.go('/pay'),
                               style: TextButton.styleFrom(
                                 padding: EdgeInsets.zero,
-                                minimumSize: Size.zero,
-                                tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                                minimumSize: const Size(48, 48),
                               ),
                               child: const Text('All Bills'),
                             ),
@@ -982,7 +692,9 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                         ),
                         const SizedBox(height: AppSpacing.xs),
                         Text(
-                          '${Formatters.formatSats(incomingClaimable.first.amountSats)} waiting from ${incomingClaimable.first.recipientOrSender}',
+                          isBalanceVisible
+                              ? '${Formatters.formatSats(incomingClaimable.first.amountSats)} waiting from ${incomingClaimable.first.recipientOrSender}'
+                              : 'Payment waiting from ${incomingClaimable.first.recipientOrSender}',
                           style: AppTypography.bodySmall.copyWith(
                             color: colors.textSecondary,
                           ),
@@ -1192,7 +904,12 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                   ...transactions.take(4).map(
                         (tx) => Padding(
                           padding: const EdgeInsets.only(bottom: AppSpacing.xs),
-                          child: _TransactionCard(tx: tx),
+                          child: ActivityTransactionTile(
+                              transaction: tx,
+                              currency: currency,
+                              hideAmounts: !isBalanceVisible,
+                              onTap: () =>
+                                  context.push('/activity/details', extra: tx)),
                         ),
                       ),
                 const SizedBox(height: 90),
@@ -1538,124 +1255,6 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
               ),
             ),
           ],
-        ),
-      ),
-    );
-  }
-}
-
-class _TransactionCard extends ConsumerWidget {
-  final TransactionModel tx;
-
-  const _TransactionCard({required this.tx});
-
-  @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final colors = context.colors;
-    final currency = ref.watch(currencyProvider);
-
-    IconData icon;
-    Color iconColor;
-    String prefix;
-
-    switch (tx.type) {
-      case TransactionType.instantSend:
-        icon = Icons.arrow_upward;
-        iconColor = colors.outgoing;
-        prefix = '-';
-        break;
-      case TransactionType.instantReceive:
-        icon = Icons.arrow_downward;
-        iconColor = colors.incoming;
-        prefix = '+';
-        break;
-      case TransactionType.protectedSend:
-        icon = Icons.shield_outlined;
-        iconColor = colors.protected;
-        prefix = '-';
-        break;
-      case TransactionType.protectedClaim:
-        icon = Icons.check_circle_outline;
-        iconColor = colors.incoming;
-        prefix = '+';
-        break;
-      case TransactionType.protectedRefund:
-        icon = Icons.replay;
-        iconColor = colors.success;
-        prefix = '+';
-        break;
-      default:
-        icon = tx.isOutgoing ? Icons.arrow_upward : Icons.arrow_downward;
-        iconColor = tx.isOutgoing ? colors.outgoing : colors.incoming;
-        prefix = tx.isOutgoing ? '-' : '+';
-        break;
-    }
-
-    return Material(
-      color: colors.surfaceCard,
-      borderRadius: AppRadius.mdRadius,
-      child: InkWell(
-        onTap: () => context.push('/activity/details', extra: tx),
-        borderRadius: AppRadius.mdRadius,
-        child: Container(
-          padding: const EdgeInsets.symmetric(
-              horizontal: AppSpacing.md, vertical: AppSpacing.sm),
-          decoration: BoxDecoration(
-            borderRadius: AppRadius.mdRadius,
-            border: Border.all(color: colors.border, width: 1),
-          ),
-          child: Row(
-            children: [
-              Container(
-                width: 36,
-                height: 36,
-                decoration: BoxDecoration(
-                  color: iconColor.withValues(alpha: 0.12),
-                  borderRadius: AppRadius.smRadius,
-                ),
-                child: Icon(icon, color: iconColor, size: 18),
-              ),
-              const SizedBox(width: AppSpacing.sm),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      tx.recipientOrSender,
-                      style: AppTypography.titleSmall
-                          .copyWith(color: colors.textPrimary, fontSize: 14),
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                    const SizedBox(height: 2),
-                    Text(
-                      Formatters.formatDate(tx.createdAt),
-                      style: AppTypography.bodySmall
-                          .copyWith(color: colors.textTertiary, fontSize: 11),
-                    ),
-                  ],
-                ),
-              ),
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.end,
-                children: [
-                  Text(
-                    '$prefix${Formatters.formatSats(tx.amountSats)}',
-                    style: AppTypography.titleSmall.copyWith(
-                      color:
-                          tx.isOutgoing ? colors.textPrimary : colors.success,
-                      fontWeight: FontWeight.w700,
-                    ),
-                  ),
-                  const SizedBox(height: 2),
-                  Text(
-                    currency.format(tx.amountSats),
-                    style: AppTypography.bodySmall
-                        .copyWith(color: colors.textTertiary, fontSize: 11),
-                  ),
-                ],
-              ),
-            ],
-          ),
         ),
       ),
     );

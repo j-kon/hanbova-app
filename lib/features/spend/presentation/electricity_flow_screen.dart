@@ -212,15 +212,16 @@ class _ElectricityFlowScreenState extends ConsumerState<ElectricityFlowScreen> {
     final amount = double.tryParse(_amountController.text) ?? 0.0;
     final estimatedSats = currency.fiatToSats(amount);
 
+    final colors = context.colors;
     return Scaffold(
-      backgroundColor: AppColors.darkBackground,
+      backgroundColor: colors.background,
       appBar: AppBar(
-        backgroundColor: AppColors.darkBackground,
+        backgroundColor: colors.background,
         elevation: 0,
-        title: const Text(
+        title: Text(
           'Pay Electricity',
           style: TextStyle(
-            color: Colors.white,
+            color: colors.textPrimary,
             fontSize: 18,
             fontWeight: FontWeight.bold,
           ),
@@ -228,12 +229,11 @@ class _ElectricityFlowScreenState extends ConsumerState<ElectricityFlowScreen> {
         actions: [
           TextButton.icon(
             onPressed: () => context.go('/activity?query=Electricity'),
-            icon: const Icon(Icons.history_rounded,
-                size: 18, color: AppColors.primary),
-            label: const Text(
+            icon: Icon(Icons.history_rounded, size: 18, color: colors.primary),
+            label: Text(
               'History',
               style: TextStyle(
-                color: AppColors.primary,
+                color: colors.primary,
                 fontSize: 13,
                 fontWeight: FontWeight.bold,
               ),
@@ -249,10 +249,10 @@ class _ElectricityFlowScreenState extends ConsumerState<ElectricityFlowScreen> {
           children: [
             // Saved Meter vs New Meter Toggle
             if (relevantSaved.isNotEmpty) ...[
-              const Text(
+              Text(
                 'Select Saved Meter',
                 style: TextStyle(
-                  color: AppColors.darkTextSecondary,
+                  color: colors.textPrimary,
                   fontSize: 13,
                   fontWeight: FontWeight.w600,
                 ),
@@ -268,13 +268,11 @@ class _ElectricityFlowScreenState extends ConsumerState<ElectricityFlowScreen> {
                     padding: const EdgeInsets.all(14),
                     decoration: BoxDecoration(
                       color: isSelected
-                          ? AppColors.primary.withValues(alpha: 0.15)
-                          : AppColors.darkCardBackground,
+                          ? colors.primary.withValues(alpha: 0.15)
+                          : colors.surfaceCard,
                       borderRadius: BorderRadius.circular(14),
                       border: Border.all(
-                        color: isSelected
-                            ? AppColors.primary
-                            : AppColors.darkBorder,
+                        color: isSelected ? colors.primary : colors.border,
                         width: isSelected ? 1.5 : 1,
                       ),
                     ),
@@ -283,11 +281,11 @@ class _ElectricityFlowScreenState extends ConsumerState<ElectricityFlowScreen> {
                         Container(
                           padding: const EdgeInsets.all(8),
                           decoration: BoxDecoration(
-                            color: AppColors.primary.withValues(alpha: 0.2),
+                            color: colors.primary.withValues(alpha: 0.2),
                             shape: BoxShape.circle,
                           ),
-                          child: const Icon(Icons.electric_meter_rounded,
-                              color: AppColors.primary, size: 20),
+                          child: Icon(Icons.electric_meter_rounded,
+                              color: colors.primary, size: 20),
                         ),
                         const SizedBox(width: 12),
                         Expanded(
@@ -296,8 +294,8 @@ class _ElectricityFlowScreenState extends ConsumerState<ElectricityFlowScreen> {
                             children: [
                               Text(
                                 sm.customerName,
-                                style: const TextStyle(
-                                  color: Colors.white,
+                                style: TextStyle(
+                                  color: colors.textPrimary,
                                   fontSize: 14,
                                   fontWeight: FontWeight.bold,
                                 ),
@@ -305,8 +303,8 @@ class _ElectricityFlowScreenState extends ConsumerState<ElectricityFlowScreen> {
                               const SizedBox(height: 2),
                               Text(
                                 '${sm.discoName} • ${sm.meterNumber}',
-                                style: const TextStyle(
-                                  color: AppColors.darkTextSecondary,
+                                style: TextStyle(
+                                  color: colors.textSecondary,
                                   fontSize: 12,
                                 ),
                               ),
@@ -314,8 +312,8 @@ class _ElectricityFlowScreenState extends ConsumerState<ElectricityFlowScreen> {
                           ),
                         ),
                         if (isSelected)
-                          const Icon(Icons.check_circle_rounded,
-                              color: AppColors.primary, size: 20),
+                          Icon(Icons.check_circle_rounded,
+                              color: colors.primary, size: 20),
                       ],
                     ),
                   ),
@@ -333,8 +331,8 @@ class _ElectricityFlowScreenState extends ConsumerState<ElectricityFlowScreen> {
                 icon: const Icon(Icons.add, size: 18),
                 label: const Text('Use a Different Meter Number'),
                 style: OutlinedButton.styleFrom(
-                  foregroundColor: Colors.white,
-                  side: const BorderSide(color: AppColors.darkBorder),
+                  foregroundColor: colors.textPrimary,
+                  side: BorderSide(color: colors.border),
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(10),
                   ),
@@ -345,10 +343,10 @@ class _ElectricityFlowScreenState extends ConsumerState<ElectricityFlowScreen> {
 
             // If new meter or editing
             if (!_useSavedMeter || relevantSaved.isEmpty) ...[
-              const Text(
+              Text(
                 'Select Distribution Company (DISCO)',
                 style: TextStyle(
-                  color: AppColors.darkTextSecondary,
+                  color: colors.textPrimary,
                   fontSize: 13,
                   fontWeight: FontWeight.w600,
                 ),
@@ -357,9 +355,9 @@ class _ElectricityFlowScreenState extends ConsumerState<ElectricityFlowScreen> {
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 14),
                 decoration: BoxDecoration(
-                  color: AppColors.darkCardBackground,
+                  color: colors.surfaceCard,
                   borderRadius: BorderRadius.circular(12),
-                  border: Border.all(color: AppColors.darkBorder),
+                  border: Border.all(color: colors.border),
                 ),
                 child: DropdownButtonHideUnderline(
                   child: DropdownButton<String>(
@@ -367,8 +365,8 @@ class _ElectricityFlowScreenState extends ConsumerState<ElectricityFlowScreen> {
                         ? _selectedDisco
                         : discos.first,
                     isExpanded: true,
-                    dropdownColor: AppColors.darkCardBackground,
-                    style: const TextStyle(color: Colors.white, fontSize: 14),
+                    dropdownColor: colors.surfaceCard,
+                    style: TextStyle(color: colors.textPrimary, fontSize: 14),
                     items: discos.map((d) {
                       return DropdownMenuItem(value: d, child: Text(d));
                     }).toList(),
@@ -379,10 +377,10 @@ class _ElectricityFlowScreenState extends ConsumerState<ElectricityFlowScreen> {
                 ),
               ),
               const SizedBox(height: 16),
-              const Text(
+              Text(
                 'Meter / Account Number',
                 style: TextStyle(
-                  color: AppColors.darkTextSecondary,
+                  color: colors.textPrimary,
                   fontSize: 13,
                   fontWeight: FontWeight.w600,
                 ),
@@ -391,18 +389,21 @@ class _ElectricityFlowScreenState extends ConsumerState<ElectricityFlowScreen> {
               TextField(
                 controller: _meterController,
                 keyboardType: TextInputType.number,
-                style: const TextStyle(color: Colors.white, fontSize: 15),
+                style: TextStyle(color: colors.textPrimary, fontSize: 15),
                 decoration: InputDecoration(
                   filled: true,
-                  fillColor: AppColors.darkCardBackground,
-                  prefixIcon: const Icon(Icons.numbers,
-                      color: AppColors.darkTextSecondary, size: 20),
+                  fillColor: colors.surfaceCard,
+                  prefixIcon: Icon(Icons.numbers,
+                      color: colors.textSecondary, size: 20),
                   hintText: 'Enter 11-digit meter number',
-                  hintStyle:
-                      const TextStyle(color: AppColors.darkTextSecondary),
+                  hintStyle: TextStyle(color: colors.textSecondary),
                   border: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(12),
-                    borderSide: const BorderSide(color: AppColors.darkBorder),
+                    borderSide: BorderSide(color: colors.border),
+                  ),
+                  enabledBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    borderSide: BorderSide(color: colors.border),
                   ),
                 ),
               ),
@@ -410,10 +411,10 @@ class _ElectricityFlowScreenState extends ConsumerState<ElectricityFlowScreen> {
             ],
 
             // Amount Presets
-            const Text(
+            Text(
               'Select Amount',
               style: TextStyle(
-                color: AppColors.darkTextSecondary,
+                color: colors.textPrimary,
                 fontSize: 13,
                 fontWeight: FontWeight.w600,
               ),
@@ -433,18 +434,17 @@ class _ElectricityFlowScreenState extends ConsumerState<ElectricityFlowScreen> {
                       _amountController.text = preset.toString();
                     });
                   },
-                  selectedColor: AppColors.primary,
-                  backgroundColor: AppColors.darkCardBackground,
+                  selectedColor: colors.primary,
+                  backgroundColor: colors.surfaceCard,
                   labelStyle: TextStyle(
-                    color: isSelected ? Colors.black : Colors.white,
+                    color: isSelected ? AppColors.charcoal : colors.textPrimary,
                     fontWeight: FontWeight.bold,
                     fontSize: 13,
                   ),
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(10),
                     side: BorderSide(
-                      color:
-                          isSelected ? AppColors.primary : AppColors.darkBorder,
+                      color: isSelected ? colors.primary : colors.border,
                     ),
                   ),
                 );
@@ -461,25 +461,29 @@ class _ElectricityFlowScreenState extends ConsumerState<ElectricityFlowScreen> {
                   _selectedPreset = int.tryParse(val);
                 });
               },
-              style: const TextStyle(
-                color: Colors.white,
+              style: TextStyle(
+                color: colors.textPrimary,
                 fontSize: 20,
                 fontWeight: FontWeight.bold,
               ),
               decoration: InputDecoration(
                 filled: true,
-                fillColor: AppColors.darkCardBackground,
+                fillColor: colors.surfaceCard,
                 prefixText: '$sym ',
-                prefixStyle: const TextStyle(
-                  color: AppColors.primary,
+                prefixStyle: TextStyle(
+                  color: colors.primary,
                   fontSize: 20,
                   fontWeight: FontWeight.bold,
                 ),
                 hintText: 'Recharge amount',
-                hintStyle: const TextStyle(color: AppColors.darkTextSecondary),
+                hintStyle: TextStyle(color: colors.textSecondary),
                 border: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(12),
-                  borderSide: const BorderSide(color: AppColors.darkBorder),
+                  borderSide: BorderSide(color: colors.border),
+                ),
+                enabledBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(12),
+                  borderSide: BorderSide(color: colors.border),
                 ),
               ),
             ),
@@ -489,17 +493,17 @@ class _ElectricityFlowScreenState extends ConsumerState<ElectricityFlowScreen> {
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
               decoration: BoxDecoration(
-                color: AppColors.primary.withValues(alpha: 0.1),
+                color: colors.primary.withValues(alpha: 0.1),
                 borderRadius: BorderRadius.circular(8),
               ),
               child: Row(
                 children: [
-                  const Icon(Icons.bolt, color: AppColors.primary, size: 16),
+                  Icon(Icons.bolt, color: colors.primary, size: 16),
                   const SizedBox(width: 6),
                   Text(
                     'Bitcoin Cost: ≈ ${Formatters.formatSats(estimatedSats)}',
-                    style: const TextStyle(
-                      color: AppColors.primary,
+                    style: TextStyle(
+                      color: colors.primary,
                       fontSize: 12,
                       fontWeight: FontWeight.w600,
                     ),
@@ -513,20 +517,20 @@ class _ElectricityFlowScreenState extends ConsumerState<ElectricityFlowScreen> {
             Container(
               padding: const EdgeInsets.all(14),
               decoration: BoxDecoration(
-                color: AppColors.darkCardBackground,
+                color: colors.surfaceCard,
                 borderRadius: BorderRadius.circular(12),
-                border: Border.all(color: AppColors.darkBorder),
+                border: Border.all(color: colors.border),
               ),
-              child: const Row(
+              child: Row(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Icon(Icons.token_rounded, color: AppColors.primary, size: 20),
-                  SizedBox(width: 10),
+                  Icon(Icons.token_rounded, color: colors.primary, size: 20),
+                  const SizedBox(width: 10),
                   Expanded(
                     child: Text(
                       'Your 20-digit prepaid recharge token is generated instantly upon payment, displayed on your receipt, and saved to Activity.',
                       style: TextStyle(
-                        color: AppColors.darkTextSecondary,
+                        color: colors.textSecondary,
                         fontSize: 12,
                         height: 1.35,
                       ),
@@ -543,8 +547,8 @@ class _ElectricityFlowScreenState extends ConsumerState<ElectricityFlowScreen> {
               child: ElevatedButton(
                 onPressed: amount > 0 ? _proceedToConfirmation : null,
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: AppColors.primary,
-                  foregroundColor: Colors.black,
+                  backgroundColor: colors.primary,
+                  foregroundColor: AppColors.charcoal,
                   padding: const EdgeInsets.symmetric(vertical: 16),
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(14),

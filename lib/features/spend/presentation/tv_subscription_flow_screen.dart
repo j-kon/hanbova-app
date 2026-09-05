@@ -213,6 +213,7 @@ class _TvSubscriptionFlowScreenState
 
   @override
   Widget build(BuildContext context) {
+    final colors = context.colors;
     final currency = ref.watch(currencyProvider);
     final bouquets = _allBouquets
         .where((b) =>
@@ -220,14 +221,14 @@ class _TvSubscriptionFlowScreenState
         .toList();
 
     return Scaffold(
-      backgroundColor: AppColors.darkBackground,
+      backgroundColor: colors.background,
       appBar: AppBar(
-        backgroundColor: AppColors.darkBackground,
+        backgroundColor: colors.background,
         elevation: 0,
-        title: const Text(
+        title: Text(
           'TV Subscription',
           style: TextStyle(
-            color: Colors.white,
+            color: colors.textPrimary,
             fontSize: 18,
             fontWeight: FontWeight.bold,
           ),
@@ -235,12 +236,11 @@ class _TvSubscriptionFlowScreenState
         actions: [
           TextButton.icon(
             onPressed: () => context.go('/activity?query=TV'),
-            icon: const Icon(Icons.history_rounded,
-                size: 18, color: AppColors.primary),
-            label: const Text(
+            icon: Icon(Icons.history_rounded, size: 18, color: colors.primary),
+            label: Text(
               'History',
               style: TextStyle(
-                color: AppColors.primary,
+                color: colors.primary,
                 fontSize: 13,
                 fontWeight: FontWeight.bold,
               ),
@@ -255,10 +255,10 @@ class _TvSubscriptionFlowScreenState
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             // Provider Selector
-            const Text(
+            Text(
               'Select Provider',
               style: TextStyle(
-                color: AppColors.darkTextSecondary,
+                color: colors.textPrimary,
                 fontSize: 13,
                 fontWeight: FontWeight.w600,
               ),
@@ -283,21 +283,19 @@ class _TvSubscriptionFlowScreenState
                       margin: const EdgeInsets.symmetric(horizontal: 3),
                       padding: const EdgeInsets.symmetric(vertical: 10),
                       decoration: BoxDecoration(
-                        color: isSelected
-                            ? AppColors.primary
-                            : AppColors.darkCardBackground,
+                        color: isSelected ? colors.primary : colors.surfaceCard,
                         borderRadius: BorderRadius.circular(10),
                         border: Border.all(
-                          color: isSelected
-                              ? AppColors.primary
-                              : AppColors.darkBorder,
+                          color: isSelected ? colors.primary : colors.border,
                         ),
                       ),
                       alignment: Alignment.center,
                       child: Text(
                         p,
                         style: TextStyle(
-                          color: isSelected ? Colors.black : Colors.white,
+                          color: isSelected
+                              ? AppColors.charcoal
+                              : colors.textPrimary,
                           fontSize: 12,
                           fontWeight: FontWeight.bold,
                         ),
@@ -310,10 +308,10 @@ class _TvSubscriptionFlowScreenState
             const SizedBox(height: 20),
 
             // Smartcard Number
-            const Text(
+            Text(
               'Smartcard / IUC Number',
               style: TextStyle(
-                color: AppColors.darkTextSecondary,
+                color: colors.textPrimary,
                 fontSize: 13,
                 fontWeight: FontWeight.w600,
               ),
@@ -322,27 +320,31 @@ class _TvSubscriptionFlowScreenState
             TextField(
               controller: _smartcardController,
               keyboardType: TextInputType.number,
-              style: const TextStyle(color: Colors.white, fontSize: 16),
+              style: TextStyle(color: colors.textPrimary, fontSize: 16),
               decoration: InputDecoration(
                 filled: true,
-                fillColor: AppColors.darkCardBackground,
-                prefixIcon: const Icon(Icons.credit_card_rounded,
-                    color: AppColors.darkTextSecondary, size: 20),
+                fillColor: colors.surfaceCard,
+                prefixIcon: Icon(Icons.credit_card_rounded,
+                    color: colors.textSecondary, size: 20),
                 hintText: 'Enter 10-digit smartcard number',
-                hintStyle: const TextStyle(color: AppColors.darkTextSecondary),
+                hintStyle: TextStyle(color: colors.textSecondary),
                 border: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(12),
-                  borderSide: const BorderSide(color: AppColors.darkBorder),
+                  borderSide: BorderSide(color: colors.border),
+                ),
+                enabledBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(12),
+                  borderSide: BorderSide(color: colors.border),
                 ),
               ),
             ),
             const SizedBox(height: 24),
 
             // Bouquet Selection
-            const Text(
+            Text(
               'Select Bouquet / Package',
               style: TextStyle(
-                color: AppColors.darkTextSecondary,
+                color: colors.textPrimary,
                 fontSize: 13,
                 fontWeight: FontWeight.w600,
               ),
@@ -359,12 +361,11 @@ class _TvSubscriptionFlowScreenState
                   padding: const EdgeInsets.all(14),
                   decoration: BoxDecoration(
                     color: isSelected
-                        ? AppColors.primary.withValues(alpha: 0.15)
-                        : AppColors.darkCardBackground,
+                        ? colors.primary.withValues(alpha: 0.15)
+                        : colors.surfaceCard,
                     borderRadius: BorderRadius.circular(12),
                     border: Border.all(
-                      color:
-                          isSelected ? AppColors.primary : AppColors.darkBorder,
+                      color: isSelected ? colors.primary : colors.border,
                       width: isSelected ? 1.5 : 1,
                     ),
                   ),
@@ -373,11 +374,10 @@ class _TvSubscriptionFlowScreenState
                       Container(
                         padding: const EdgeInsets.all(8),
                         decoration: BoxDecoration(
-                          color: AppColors.primary.withValues(alpha: 0.15),
+                          color: colors.primary.withValues(alpha: 0.15),
                           shape: BoxShape.circle,
                         ),
-                        child: const Icon(Icons.tv,
-                            color: AppColors.primary, size: 18),
+                        child: Icon(Icons.tv, color: colors.primary, size: 18),
                       ),
                       const SizedBox(width: 12),
                       Expanded(
@@ -386,8 +386,8 @@ class _TvSubscriptionFlowScreenState
                           children: [
                             Text(
                               b.name,
-                              style: const TextStyle(
-                                color: Colors.white,
+                              style: TextStyle(
+                                color: colors.textPrimary,
                                 fontSize: 14,
                                 fontWeight: FontWeight.bold,
                               ),
@@ -395,8 +395,8 @@ class _TvSubscriptionFlowScreenState
                             const SizedBox(height: 2),
                             Text(
                               b.channelsCount,
-                              style: const TextStyle(
-                                color: AppColors.darkTextSecondary,
+                              style: TextStyle(
+                                color: colors.textSecondary,
                                 fontSize: 12,
                               ),
                             ),
@@ -408,8 +408,8 @@ class _TvSubscriptionFlowScreenState
                         children: [
                           Text(
                             '₦${NumberFormat('#,##0').format(b.fiatPrice)}',
-                            style: const TextStyle(
-                              color: Colors.white,
+                            style: TextStyle(
+                              color: colors.textPrimary,
                               fontSize: 14,
                               fontWeight: FontWeight.bold,
                             ),
@@ -417,8 +417,8 @@ class _TvSubscriptionFlowScreenState
                           const SizedBox(height: 2),
                           Text(
                             '≈ ${Formatters.formatSats(sats)}',
-                            style: const TextStyle(
-                              color: AppColors.primary,
+                            style: TextStyle(
+                              color: colors.primary,
                               fontSize: 11,
                               fontWeight: FontWeight.w600,
                             ),
@@ -427,8 +427,8 @@ class _TvSubscriptionFlowScreenState
                       ),
                       const SizedBox(width: 8),
                       if (isSelected)
-                        const Icon(Icons.check_circle_rounded,
-                            color: AppColors.primary, size: 20),
+                        Icon(Icons.check_circle_rounded,
+                            color: colors.primary, size: 20),
                     ],
                   ),
                 ),
@@ -443,8 +443,8 @@ class _TvSubscriptionFlowScreenState
                 onPressed:
                     _selectedBouquet != null ? _proceedToConfirmation : null,
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: AppColors.primary,
-                  foregroundColor: Colors.black,
+                  backgroundColor: colors.primary,
+                  foregroundColor: AppColors.charcoal,
                   padding: const EdgeInsets.symmetric(vertical: 16),
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(14),

@@ -10,20 +10,22 @@ class StatementsScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final colors = context.colors;
     final demoState = ref.watch(demoModeProvider);
     final currency = ref.watch(currencyProvider);
     final statements = demoState.demoStatements;
     final numFormat = NumberFormat('#,###');
 
     return Scaffold(
-      backgroundColor: AppColors.darkBackground,
+      backgroundColor: colors.background,
       appBar: AppBar(
-        backgroundColor: AppColors.darkBackground,
+        backgroundColor: colors.background,
         elevation: 0,
-        title: const Text(
+        iconTheme: IconThemeData(color: colors.textPrimary),
+        title: Text(
           'Hanbova Activity Statements',
           style: TextStyle(
-            color: Colors.white,
+            color: colors.textPrimary,
             fontSize: 20,
             fontWeight: FontWeight.bold,
           ),
@@ -37,24 +39,29 @@ class StatementsScreen extends ConsumerWidget {
               margin: const EdgeInsets.fromLTRB(20, 8, 20, 4),
               padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
               decoration: BoxDecoration(
-                color: AppColors.primary.withValues(alpha: 0.15),
+                color: colors.primary.withValues(alpha: 0.15),
                 borderRadius: BorderRadius.circular(10),
                 border: Border.all(
-                  color: AppColors.primary.withValues(alpha: 0.4),
+                  color: colors.primary.withValues(alpha: 0.4),
                 ),
               ),
-              child: const Row(
+              child: Row(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  Icon(Icons.info_outline, size: 16, color: AppColors.primary),
-                  SizedBox(width: 8),
-                  Text(
-                    'DEMO MODE • SAMPLE DATA • NO REAL MONEY',
-                    style: TextStyle(
-                      color: AppColors.primary,
-                      fontSize: 11,
-                      fontWeight: FontWeight.bold,
-                      letterSpacing: 0.8,
+                  Icon(Icons.info_outline, size: 16, color: colors.primary),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: FittedBox(
+                      fit: BoxFit.scaleDown,
+                      child: Text(
+                        'DEMO MODE • SAMPLE DATA • NO REAL MONEY',
+                        style: TextStyle(
+                          color: colors.primary,
+                          fontSize: 11,
+                          fontWeight: FontWeight.bold,
+                          letterSpacing: 0.8,
+                        ),
+                      ),
                     ),
                   ),
                 ],
@@ -69,23 +76,22 @@ class StatementsScreen extends ConsumerWidget {
                         Icon(
                           Icons.description_outlined,
                           size: 64,
-                          color: AppColors.darkTextSecondary
-                              .withValues(alpha: 0.5),
+                          color: colors.textSecondary.withValues(alpha: 0.5),
                         ),
                         const SizedBox(height: 16),
-                        const Text(
+                        Text(
                           'No Statements Yet',
                           style: TextStyle(
-                            color: Colors.white,
+                            color: colors.textPrimary,
                             fontSize: 18,
                             fontWeight: FontWeight.bold,
                           ),
                         ),
                         const SizedBox(height: 8),
-                        const Text(
+                        Text(
                           'Monthly statements will appear here after your first billing cycle.',
                           style: TextStyle(
-                            color: AppColors.darkTextSecondary,
+                            color: colors.textSecondary,
                             fontSize: 13,
                           ),
                         ),
@@ -102,9 +108,9 @@ class StatementsScreen extends ConsumerWidget {
                         margin: const EdgeInsets.only(bottom: 14),
                         padding: const EdgeInsets.all(16),
                         decoration: BoxDecoration(
-                          color: AppColors.darkCardBackground,
+                          color: colors.surfaceCard,
                           borderRadius: BorderRadius.circular(16),
-                          border: Border.all(color: AppColors.darkBorder),
+                          border: Border.all(color: colors.border),
                         ),
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
@@ -112,42 +118,49 @@ class StatementsScreen extends ConsumerWidget {
                             Row(
                               mainAxisAlignment: MainAxisAlignment.spaceBetween,
                               children: [
-                                Row(
-                                  children: [
-                                    Container(
-                                      padding: const EdgeInsets.all(8),
-                                      decoration: BoxDecoration(
-                                        color: AppColors.primary
-                                            .withValues(alpha: 0.15),
-                                        shape: BoxShape.circle,
+                                Expanded(
+                                  child: Row(
+                                    children: [
+                                      Container(
+                                        padding: const EdgeInsets.all(8),
+                                        decoration: BoxDecoration(
+                                          color: colors.primary
+                                              .withValues(alpha: 0.15),
+                                          shape: BoxShape.circle,
+                                        ),
+                                        child: Icon(
+                                            Icons.calendar_today_outlined,
+                                            color: colors.primary,
+                                            size: 18),
                                       ),
-                                      child: const Icon(
-                                          Icons.calendar_today_outlined,
-                                          color: AppColors.primary,
-                                          size: 18),
-                                    ),
-                                    const SizedBox(width: 10),
-                                    Text(
-                                      stmt.monthLabel,
-                                      style: const TextStyle(
-                                        color: Colors.white,
-                                        fontSize: 16,
-                                        fontWeight: FontWeight.bold,
+                                      const SizedBox(width: 10),
+                                      Expanded(
+                                        child: Text(
+                                          stmt.monthLabel,
+                                          style: TextStyle(
+                                            color: colors.textPrimary,
+                                            fontSize: 16,
+                                            fontWeight: FontWeight.bold,
+                                          ),
+                                          overflow: TextOverflow.ellipsis,
+                                        ),
                                       ),
-                                    ),
-                                  ],
+                                    ],
+                                  ),
                                 ),
+                                const SizedBox(width: 8),
                                 Container(
                                   padding: const EdgeInsets.symmetric(
                                       horizontal: 8, vertical: 3),
                                   decoration: BoxDecoration(
-                                    color: AppColors.darkBorder,
+                                    color: colors.surfaceElevated,
                                     borderRadius: BorderRadius.circular(6),
+                                    border: Border.all(color: colors.border),
                                   ),
                                   child: Text(
                                     '${stmt.transactionCount} transactions',
-                                    style: const TextStyle(
-                                      color: AppColors.darkTextSecondary,
+                                    style: TextStyle(
+                                      color: colors.textSecondary,
                                       fontSize: 11,
                                     ),
                                   ),
@@ -155,34 +168,38 @@ class StatementsScreen extends ConsumerWidget {
                               ],
                             ),
                             const SizedBox(height: 14),
-                            const Divider(
-                                color: AppColors.darkBorder, height: 1),
+                            Divider(color: colors.border, height: 1),
                             const SizedBox(height: 12),
 
                             // Statement Rows
                             _buildStatementRow(
                                 'Opening Balance',
                                 '${numFormat.format(stmt.openingBalanceSats)} sats',
-                                currency.format(stmt.openingBalanceSats)),
+                                currency.format(stmt.openingBalanceSats),
+                                colors: colors),
                             _buildStatementRow(
                                 'Money In',
                                 '+${numFormat.format(stmt.moneyInSats)} sats',
                                 currency.format(stmt.moneyInSats),
-                                color: const Color(0xFF10B981)),
+                                color: const Color(0xFF10B981),
+                                colors: colors),
                             _buildStatementRow(
                                 'Money Out',
                                 '-${numFormat.format(stmt.moneyOutSats)} sats',
                                 currency.format(stmt.moneyOutSats),
-                                color: const Color(0xFFEF4444)),
+                                color: const Color(0xFFEF4444),
+                                colors: colors),
                             _buildStatementRow(
                                 'Fees',
                                 '-${numFormat.format(stmt.feesSats)} sats',
-                                currency.format(stmt.feesSats)),
+                                currency.format(stmt.feesSats),
+                                colors: colors),
                             _buildStatementRow(
                                 'Closing Balance',
                                 '${numFormat.format(stmt.closingBalanceSats)} sats',
                                 currency.format(stmt.closingBalanceSats),
-                                isBold: true),
+                                isBold: true,
+                                colors: colors),
 
                             const SizedBox(height: 14),
 
@@ -200,9 +217,8 @@ class StatementsScreen extends ConsumerWidget {
                                     label: const Text('Export CSV',
                                         style: TextStyle(fontSize: 12)),
                                     style: OutlinedButton.styleFrom(
-                                      foregroundColor: Colors.white,
-                                      side: const BorderSide(
-                                          color: AppColors.darkBorder),
+                                      foregroundColor: colors.textPrimary,
+                                      side: BorderSide(color: colors.border),
                                       shape: RoundedRectangleBorder(
                                         borderRadius: BorderRadius.circular(8),
                                       ),
@@ -222,8 +238,8 @@ class StatementsScreen extends ConsumerWidget {
                                     label: const Text('Download PDF',
                                         style: TextStyle(fontSize: 12)),
                                     style: ElevatedButton.styleFrom(
-                                      backgroundColor: AppColors.primary,
-                                      foregroundColor: Colors.black,
+                                      backgroundColor: colors.primary,
+                                      foregroundColor: AppColors.charcoal,
                                       shape: RoundedRectangleBorder(
                                         borderRadius: BorderRadius.circular(8),
                                       ),
@@ -244,26 +260,30 @@ class StatementsScreen extends ConsumerWidget {
   }
 
   Widget _buildStatementRow(String label, String satsStr, String fiatStr,
-      {Color? color, bool isBold = false}) {
+      {Color? color, bool isBold = false, required HanbovaColors colors}) {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 3),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          Text(
-            label,
-            style: TextStyle(
-              color: isBold ? Colors.white : AppColors.darkTextSecondary,
-              fontSize: 12,
-              fontWeight: isBold ? FontWeight.bold : FontWeight.normal,
+          Expanded(
+            child: Text(
+              label,
+              style: TextStyle(
+                color: isBold ? colors.textPrimary : colors.textSecondary,
+                fontSize: 12,
+                fontWeight: isBold ? FontWeight.bold : FontWeight.normal,
+              ),
             ),
           ),
+          const SizedBox(width: 8),
           Row(
+            mainAxisSize: MainAxisSize.min,
             children: [
               Text(
                 satsStr,
                 style: TextStyle(
-                  color: color ?? (isBold ? Colors.white : Colors.white),
+                  color: color ?? colors.textPrimary,
                   fontSize: 12,
                   fontWeight: isBold ? FontWeight.bold : FontWeight.w600,
                 ),
@@ -271,8 +291,8 @@ class StatementsScreen extends ConsumerWidget {
               const SizedBox(width: 6),
               Text(
                 '($fiatStr)',
-                style: const TextStyle(
-                  color: AppColors.darkTextSecondary,
+                style: TextStyle(
+                  color: colors.textSecondary,
                   fontSize: 11,
                 ),
               ),
@@ -284,23 +304,22 @@ class StatementsScreen extends ConsumerWidget {
   }
 
   void _showExportDialog(BuildContext context, String month, String format) {
+    final colors = context.colors;
     if (format == 'PDF') {
       showDialog(
         context: context,
         builder: (ctx) => AlertDialog(
-          backgroundColor: AppColors.darkCardBackground,
-          title: const Text('PDF Export Coming Soon',
-              style: TextStyle(color: Colors.white)),
+          backgroundColor: colors.surfaceCard,
+          title: Text('PDF Export Coming Soon',
+              style: TextStyle(color: colors.textPrimary)),
           content: Text(
             'Official PDF statement rendering for $month will be supported in an upcoming release. Please use CSV export for full statement records today.',
-            style: const TextStyle(
-                color: AppColors.darkTextSecondary, fontSize: 13),
+            style: TextStyle(color: colors.textSecondary, fontSize: 13),
           ),
           actions: [
             TextButton(
               onPressed: () => Navigator.pop(ctx),
-              child: const Text('Close',
-                  style: TextStyle(color: AppColors.primary)),
+              child: Text('Close', style: TextStyle(color: colors.primary)),
             ),
             ElevatedButton(
               onPressed: () {
@@ -308,8 +327,8 @@ class StatementsScreen extends ConsumerWidget {
                 _showExportDialog(context, month, 'CSV');
               },
               style: ElevatedButton.styleFrom(
-                backgroundColor: AppColors.primary,
-                foregroundColor: Colors.black,
+                backgroundColor: colors.primary,
+                foregroundColor: AppColors.charcoal,
               ),
               child: const Text('Export as CSV Instead'),
             ),
@@ -322,19 +341,17 @@ class StatementsScreen extends ConsumerWidget {
     showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
-        backgroundColor: AppColors.darkCardBackground,
+        backgroundColor: colors.surfaceCard,
         title: Text('Activity Statement ($format)',
-            style: const TextStyle(color: Colors.white)),
+            style: TextStyle(color: colors.textPrimary)),
         content: Text(
           'Exporting verified activity statement for $month in $format format with genuine Bitcoin satoshi totals.',
-          style:
-              const TextStyle(color: AppColors.darkTextSecondary, fontSize: 13),
+          style: TextStyle(color: colors.textSecondary, fontSize: 13),
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx),
-            child:
-                const Text('Close', style: TextStyle(color: AppColors.primary)),
+            child: Text('Close', style: TextStyle(color: colors.primary)),
           ),
           ElevatedButton(
             onPressed: () {
@@ -348,8 +365,8 @@ class StatementsScreen extends ConsumerWidget {
               );
             },
             style: ElevatedButton.styleFrom(
-              backgroundColor: AppColors.primary,
-              foregroundColor: Colors.black,
+              backgroundColor: colors.primary,
+              foregroundColor: AppColors.charcoal,
             ),
             child: const Text('Download CSV'),
           ),

@@ -28,6 +28,7 @@ class _RequestMoneyScreenState extends ConsumerState<RequestMoneyScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final colors = context.colors;
     final currency = ref.watch(currencyProvider);
     final numFormat = NumberFormat('#,###');
 
@@ -43,14 +44,15 @@ class _RequestMoneyScreenState extends ConsumerState<RequestMoneyScreen> {
     }
 
     return Scaffold(
-      backgroundColor: AppColors.darkBackground,
+      backgroundColor: colors.background,
       appBar: AppBar(
-        backgroundColor: AppColors.darkBackground,
+        backgroundColor: colors.background,
         elevation: 0,
-        title: const Text(
+        iconTheme: IconThemeData(color: colors.textPrimary),
+        title: Text(
           'Request Money',
           style: TextStyle(
-            color: Colors.white,
+            color: colors.textPrimary,
             fontSize: 20,
             fontWeight: FontWeight.bold,
           ),
@@ -64,9 +66,9 @@ class _RequestMoneyScreenState extends ConsumerState<RequestMoneyScreen> {
             Container(
               padding: const EdgeInsets.all(20),
               decoration: BoxDecoration(
-                color: AppColors.darkCardBackground,
+                color: colors.surfaceCard,
                 borderRadius: BorderRadius.circular(16),
-                border: Border.all(color: AppColors.darkBorder),
+                border: Border.all(color: colors.border),
               ),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -74,10 +76,10 @@ class _RequestMoneyScreenState extends ConsumerState<RequestMoneyScreen> {
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      const Text(
+                      Text(
                         'REQUEST AMOUNT',
                         style: TextStyle(
-                          color: AppColors.darkTextSecondary,
+                          color: colors.textSecondary,
                           fontSize: 12,
                           fontWeight: FontWeight.w600,
                           letterSpacing: 1.1,
@@ -91,7 +93,7 @@ class _RequestMoneyScreenState extends ConsumerState<RequestMoneyScreen> {
                           });
                         },
                         style: TextButton.styleFrom(
-                          foregroundColor: AppColors.primary,
+                          foregroundColor: colors.primary,
                           padding: const EdgeInsets.symmetric(
                               horizontal: 8, vertical: 4),
                         ),
@@ -106,25 +108,25 @@ class _RequestMoneyScreenState extends ConsumerState<RequestMoneyScreen> {
                     controller: _amountController,
                     keyboardType:
                         const TextInputType.numberWithOptions(decimal: true),
-                    style: const TextStyle(
-                      color: Colors.white,
+                    style: TextStyle(
+                      color: colors.textPrimary,
                       fontSize: 32,
                       fontWeight: FontWeight.bold,
                     ),
                     decoration: InputDecoration(
                       hintText: '0',
                       hintStyle: TextStyle(
-                        color: Colors.white.withValues(alpha: 0.3),
+                        color: colors.textSecondary.withValues(alpha: 0.4),
                       ),
                       prefixText: _isFiatMode ? '${currency.symbol} ' : '',
-                      prefixStyle: const TextStyle(
-                        color: AppColors.primary,
+                      prefixStyle: TextStyle(
+                        color: colors.primary,
                         fontSize: 30,
                         fontWeight: FontWeight.bold,
                       ),
                       suffixText: _isFiatMode ? currency.code : 'sats',
-                      suffixStyle: const TextStyle(
-                        color: AppColors.darkTextSecondary,
+                      suffixStyle: TextStyle(
+                        color: colors.textSecondary,
                         fontSize: 18,
                       ),
                       border: InputBorder.none,
@@ -132,14 +134,14 @@ class _RequestMoneyScreenState extends ConsumerState<RequestMoneyScreen> {
                     onChanged: (_) => setState(() {}),
                   ),
                   if (calculatedSats > 0) ...[
-                    const Divider(color: AppColors.darkBorder),
+                    Divider(color: colors.border),
                     const SizedBox(height: 6),
                     Text(
                       _isFiatMode
                           ? '≈ ${numFormat.format(calculatedSats)} sats (underlying asset)'
                           : '≈ ${currency.format(calculatedSats)} reference',
-                      style: const TextStyle(
-                        color: AppColors.primary,
+                      style: TextStyle(
+                        color: colors.primary,
                         fontSize: 13,
                         fontWeight: FontWeight.w600,
                       ),
@@ -155,17 +157,17 @@ class _RequestMoneyScreenState extends ConsumerState<RequestMoneyScreen> {
             Container(
               padding: const EdgeInsets.all(16),
               decoration: BoxDecoration(
-                color: AppColors.darkCardBackground,
+                color: colors.surfaceCard,
                 borderRadius: BorderRadius.circular(16),
-                border: Border.all(color: AppColors.darkBorder),
+                border: Border.all(color: colors.border),
               ),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Text(
+                  Text(
                     'WHAT IS THIS FOR? (OPTIONAL)',
                     style: TextStyle(
-                      color: AppColors.darkTextSecondary,
+                      color: colors.textSecondary,
                       fontSize: 11,
                       fontWeight: FontWeight.w600,
                       letterSpacing: 1.1,
@@ -174,10 +176,10 @@ class _RequestMoneyScreenState extends ConsumerState<RequestMoneyScreen> {
                   const SizedBox(height: 6),
                   TextField(
                     controller: _noteController,
-                    style: const TextStyle(color: Colors.white),
-                    decoration: const InputDecoration(
+                    style: TextStyle(color: colors.textPrimary),
+                    decoration: InputDecoration(
                       hintText: 'e.g. Dinner split, freelance invoice',
-                      hintStyle: TextStyle(color: AppColors.darkTextSecondary),
+                      hintStyle: TextStyle(color: colors.textSecondary),
                       border: InputBorder.none,
                     ),
                   ),
@@ -200,8 +202,8 @@ class _RequestMoneyScreenState extends ConsumerState<RequestMoneyScreen> {
                       }
                     : null,
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: AppColors.primary,
-                  foregroundColor: Colors.black,
+                  backgroundColor: colors.primary,
+                  foregroundColor: AppColors.charcoal,
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(14),
                   ),
@@ -217,16 +219,16 @@ class _RequestMoneyScreenState extends ConsumerState<RequestMoneyScreen> {
             Container(
               padding: const EdgeInsets.all(24),
               decoration: BoxDecoration(
-                color: AppColors.darkCardBackground,
+                color: colors.surfaceCard,
                 borderRadius: BorderRadius.circular(20),
-                border: Border.all(color: AppColors.darkBorder),
+                border: Border.all(color: colors.border),
               ),
               child: Column(
                 children: [
-                  const Text(
+                  Text(
                     'Scan to Pay with Bitcoin / Lightning',
                     style: TextStyle(
-                      color: Colors.white,
+                      color: colors.textPrimary,
                       fontSize: 16,
                       fontWeight: FontWeight.bold,
                     ),
@@ -234,8 +236,8 @@ class _RequestMoneyScreenState extends ConsumerState<RequestMoneyScreen> {
                   const SizedBox(height: 4),
                   Text(
                     '${numFormat.format(calculatedSats)} sats (≈ ${currency.format(calculatedSats)})',
-                    style: const TextStyle(
-                      color: AppColors.primary,
+                    style: TextStyle(
+                      color: colors.primary,
                       fontSize: 14,
                       fontWeight: FontWeight.w600,
                     ),
@@ -244,8 +246,8 @@ class _RequestMoneyScreenState extends ConsumerState<RequestMoneyScreen> {
                     const SizedBox(height: 4),
                     Text(
                       '"${_noteController.text.trim()}"',
-                      style: const TextStyle(
-                        color: AppColors.darkTextSecondary,
+                      style: TextStyle(
+                        color: colors.textSecondary,
                         fontSize: 12,
                         fontStyle: FontStyle.italic,
                       ),
@@ -278,17 +280,18 @@ class _RequestMoneyScreenState extends ConsumerState<RequestMoneyScreen> {
                             Clipboard.setData(
                                 ClipboardData(text: _generatedInvoice!));
                             ScaffoldMessenger.of(context).showSnackBar(
-                              const SnackBar(
-                                content: Text('Invoice copied to clipboard!'),
-                                backgroundColor: AppColors.primary,
+                              SnackBar(
+                                content:
+                                    const Text('Invoice copied to clipboard!'),
+                                backgroundColor: colors.primary,
                               ),
                             );
                           },
                           icon: const Icon(Icons.copy_rounded, size: 16),
                           label: const Text('Copy Link'),
                           style: OutlinedButton.styleFrom(
-                            foregroundColor: Colors.white,
-                            side: const BorderSide(color: AppColors.darkBorder),
+                            foregroundColor: colors.textPrimary,
+                            side: BorderSide(color: colors.border),
                             shape: RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(10),
                             ),
@@ -309,8 +312,8 @@ class _RequestMoneyScreenState extends ConsumerState<RequestMoneyScreen> {
                           icon: const Icon(Icons.share_rounded, size: 16),
                           label: const Text('Share'),
                           style: ElevatedButton.styleFrom(
-                            backgroundColor: AppColors.primary,
-                            foregroundColor: Colors.black,
+                            backgroundColor: colors.primary,
+                            foregroundColor: AppColors.charcoal,
                             shape: RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(10),
                             ),
@@ -330,8 +333,8 @@ class _RequestMoneyScreenState extends ConsumerState<RequestMoneyScreen> {
                         _noteController.clear();
                       });
                     },
-                    child: const Text('Create New Request',
-                        style: TextStyle(color: AppColors.darkTextSecondary)),
+                    child: Text('Create New Request',
+                        style: TextStyle(color: colors.textSecondary)),
                   ),
                 ],
               ),

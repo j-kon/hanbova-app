@@ -84,15 +84,18 @@ class _SpendScreenState extends ConsumerState<SpendScreen> {
             b.countryCode.toUpperCase() == spendCountry.code.toUpperCase())
         .toList();
 
+    final colors = context.colors;
+
     return Scaffold(
-      backgroundColor: AppColors.darkBackground,
+      backgroundColor: colors.background,
       appBar: AppBar(
-        backgroundColor: AppColors.darkBackground,
+        backgroundColor: colors.background,
         elevation: 0,
-        title: const Text(
+        iconTheme: IconThemeData(color: colors.textPrimary),
+        title: Text(
           'Everyday Spend & Bills',
           style: TextStyle(
-            color: Colors.white,
+            color: colors.textPrimary,
             fontSize: 20,
             fontWeight: FontWeight.bold,
           ),
@@ -102,13 +105,13 @@ class _SpendScreenState extends ConsumerState<SpendScreen> {
             margin: const EdgeInsets.only(right: 16),
             padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
             decoration: BoxDecoration(
-              color: AppColors.primary.withValues(alpha: 0.15),
+              color: colors.primary.withValues(alpha: 0.15),
               borderRadius: BorderRadius.circular(16),
             ),
             child: Text(
               '${spendCountry.flagEmoji} ${spendCountry.code}',
-              style: const TextStyle(
-                color: AppColors.primary,
+              style: TextStyle(
+                color: colors.primary,
                 fontWeight: FontWeight.bold,
                 fontSize: 13,
               ),
@@ -125,20 +128,20 @@ class _SpendScreenState extends ConsumerState<SpendScreen> {
             Container(
               padding: const EdgeInsets.all(12),
               decoration: BoxDecoration(
-                color: AppColors.primary.withValues(alpha: 0.1),
+                color: colors.primary.withValues(alpha: 0.1),
                 borderRadius: BorderRadius.circular(12),
-                border: Border.all(
-                    color: AppColors.primary.withValues(alpha: 0.25)),
+                border:
+                    Border.all(color: colors.primary.withValues(alpha: 0.25)),
               ),
-              child: const Row(
+              child: Row(
                 children: [
-                  Icon(Icons.shield_outlined,
-                      color: AppColors.primary, size: 18),
-                  SizedBox(width: 8),
+                  Icon(Icons.shield_outlined, color: colors.primary, size: 18),
+                  const SizedBox(width: 8),
                   Expanded(
                     child: Text(
                       'SIMULATION ENVIRONMENT: Everyday utility bill payments and top-ups operate in safe pilot mode.',
-                      style: TextStyle(color: Colors.white70, fontSize: 11),
+                      style:
+                          TextStyle(color: colors.textSecondary, fontSize: 11),
                     ),
                   ),
                 ],
@@ -148,10 +151,10 @@ class _SpendScreenState extends ConsumerState<SpendScreen> {
 
             // Recent Billers / Pay Again (if any)
             if (relevantSavedBillers.isNotEmpty) ...[
-              const Text(
+              Text(
                 'Recent & Saved Billers',
                 style: TextStyle(
-                  color: Colors.white,
+                  color: colors.textPrimary,
                   fontSize: 16,
                   fontWeight: FontWeight.bold,
                 ),
@@ -172,9 +175,9 @@ class _SpendScreenState extends ConsumerState<SpendScreen> {
                         width: 200,
                         padding: const EdgeInsets.all(12),
                         decoration: BoxDecoration(
-                          color: AppColors.darkSurfaceCard,
+                          color: colors.surfaceCard,
                           borderRadius: BorderRadius.circular(14),
-                          border: Border.all(color: AppColors.darkBorder),
+                          border: Border.all(color: colors.border),
                         ),
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
@@ -188,8 +191,8 @@ class _SpendScreenState extends ConsumerState<SpendScreen> {
                                 Expanded(
                                   child: Text(
                                     sb.billerName,
-                                    style: const TextStyle(
-                                      color: Colors.white,
+                                    style: TextStyle(
+                                      color: colors.textPrimary,
                                       fontSize: 13,
                                       fontWeight: FontWeight.bold,
                                     ),
@@ -202,8 +205,8 @@ class _SpendScreenState extends ConsumerState<SpendScreen> {
                             const SizedBox(height: 4),
                             Text(
                               sb.accountReference,
-                              style: const TextStyle(
-                                color: AppColors.darkTextSecondary,
+                              style: TextStyle(
+                                color: colors.textSecondary,
                                 fontSize: 11,
                                 fontFamily: 'monospace',
                               ),
@@ -211,10 +214,10 @@ class _SpendScreenState extends ConsumerState<SpendScreen> {
                               overflow: TextOverflow.ellipsis,
                             ),
                             const SizedBox(height: 4),
-                            const Text(
+                            Text(
                               'Tap to Pay Again',
                               style: TextStyle(
-                                color: AppColors.primary,
+                                color: colors.primary,
                                 fontSize: 10,
                                 fontWeight: FontWeight.bold,
                               ),
@@ -231,17 +234,16 @@ class _SpendScreenState extends ConsumerState<SpendScreen> {
 
             Text(
               'Pay Bills in ${spendCountry.name}',
-              style: const TextStyle(
-                color: Colors.white,
+              style: TextStyle(
+                color: colors.textPrimary,
                 fontSize: 17,
                 fontWeight: FontWeight.bold,
               ),
             ),
             const SizedBox(height: 6),
-            const Text(
+            Text(
               'Select a utility or digital service to pay with Bitcoin.',
-              style:
-                  TextStyle(color: AppColors.darkTextSecondary, fontSize: 13),
+              style: TextStyle(color: colors.textSecondary, fontSize: 13),
             ),
             const SizedBox(height: 18),
 
@@ -264,9 +266,9 @@ class _SpendScreenState extends ConsumerState<SpendScreen> {
                   child: Container(
                     padding: const EdgeInsets.all(16),
                     decoration: BoxDecoration(
-                      color: AppColors.darkSurfaceCard,
+                      color: colors.surfaceCard,
                       borderRadius: BorderRadius.circular(16),
-                      border: Border.all(color: AppColors.darkBorder),
+                      border: Border.all(color: colors.border),
                     ),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
@@ -277,8 +279,8 @@ class _SpendScreenState extends ConsumerState<SpendScreen> {
                         const SizedBox(height: 10),
                         Text(
                           service.title,
-                          style: const TextStyle(
-                            color: Colors.white,
+                          style: TextStyle(
+                            color: colors.textPrimary,
                             fontWeight: FontWeight.bold,
                             fontSize: 15,
                           ),
@@ -292,8 +294,7 @@ class _SpendScreenState extends ConsumerState<SpendScreen> {
 
             if (_isLoadingBillers) ...[
               const SizedBox(height: 30),
-              const Center(
-                  child: CircularProgressIndicator(color: AppColors.primary)),
+              Center(child: CircularProgressIndicator(color: colors.primary)),
             ],
           ],
         ),
@@ -344,9 +345,10 @@ class _SpendScreenState extends ConsumerState<SpendScreen> {
   }
 
   void _showBillerPickerSheet(BillServiceType service, List<Biller> billers) {
+    final colors = context.colors;
     showModalBottomSheet(
       context: context,
-      backgroundColor: AppColors.darkSurface,
+      backgroundColor: colors.surfaceCard,
       isScrollControlled: true,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
@@ -364,8 +366,8 @@ class _SpendScreenState extends ConsumerState<SpendScreen> {
                   const SizedBox(width: 8),
                   Text(
                     'Select ${service.title} Provider',
-                    style: const TextStyle(
-                      color: Colors.white,
+                    style: TextStyle(
+                      color: colors.textPrimary,
                       fontSize: 18,
                       fontWeight: FontWeight.bold,
                     ),
@@ -374,11 +376,11 @@ class _SpendScreenState extends ConsumerState<SpendScreen> {
               ),
               const SizedBox(height: 16),
               if (billers.isEmpty)
-                const Padding(
-                  padding: EdgeInsets.symmetric(vertical: 20),
+                Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 20),
                   child: Text(
                     'No providers available for this service in the selected country.',
-                    style: TextStyle(color: AppColors.darkTextSecondary),
+                    style: TextStyle(color: colors.textSecondary),
                   ),
                 )
               else
@@ -386,8 +388,8 @@ class _SpendScreenState extends ConsumerState<SpendScreen> {
                   child: ListView.separated(
                     shrinkWrap: true,
                     itemCount: billers.length,
-                    separatorBuilder: (_, __) => const Divider(
-                      color: AppColors.darkBorder,
+                    separatorBuilder: (_, __) => Divider(
+                      color: colors.border,
                       height: 1,
                     ),
                     itemBuilder: (context, index) {
@@ -396,21 +398,21 @@ class _SpendScreenState extends ConsumerState<SpendScreen> {
                         contentPadding: EdgeInsets.zero,
                         title: Text(
                           biller.name,
-                          style: const TextStyle(
-                            color: Colors.white,
+                          style: TextStyle(
+                            color: colors.textPrimary,
                             fontWeight: FontWeight.bold,
                           ),
                         ),
                         subtitle: Text(
                           'Requires ${biller.accountReferenceLabel} (e.g. ${biller.accountReferenceExample})',
-                          style: const TextStyle(
-                            color: AppColors.darkTextSecondary,
+                          style: TextStyle(
+                            color: colors.textSecondary,
                             fontSize: 12,
                           ),
                         ),
-                        trailing: const Icon(
+                        trailing: Icon(
                           Icons.chevron_right,
-                          color: AppColors.darkTextSecondary,
+                          color: colors.textSecondary,
                         ),
                         onTap: () {
                           Navigator.of(ctx).pop();
@@ -428,6 +430,7 @@ class _SpendScreenState extends ConsumerState<SpendScreen> {
   }
 
   void _showPaymentFormSheet(Biller biller, {String? initialAccount}) {
+    final colors = context.colors;
     final accountController = TextEditingController(
       text: initialAccount ?? biller.accountReferenceExample,
     );
@@ -440,7 +443,7 @@ class _SpendScreenState extends ConsumerState<SpendScreen> {
 
     showModalBottomSheet(
       context: context,
-      backgroundColor: AppColors.darkSurface,
+      backgroundColor: colors.surfaceCard,
       isScrollControlled: true,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
@@ -448,6 +451,7 @@ class _SpendScreenState extends ConsumerState<SpendScreen> {
       builder: (ctx) {
         return StatefulBuilder(
           builder: (context, setModalState) {
+            final modalColors = context.colors;
             final market = ref.read(marketProvider);
             return Padding(
               padding: EdgeInsets.only(
@@ -462,8 +466,8 @@ class _SpendScreenState extends ConsumerState<SpendScreen> {
                 children: [
                   Text(
                     biller.name,
-                    style: const TextStyle(
-                      color: Colors.white,
+                    style: TextStyle(
+                      color: modalColors.textPrimary,
                       fontSize: 20,
                       fontWeight: FontWeight.bold,
                     ),
@@ -473,33 +477,39 @@ class _SpendScreenState extends ConsumerState<SpendScreen> {
                   // Account Reference Input
                   Text(
                     biller.accountReferenceLabel,
-                    style: const TextStyle(color: Colors.white70, fontSize: 13),
+                    style: TextStyle(
+                        color: modalColors.textSecondary, fontSize: 13),
                   ),
                   const SizedBox(height: 6),
                   TextField(
                     controller: accountController,
-                    style: const TextStyle(color: Colors.white),
+                    style: TextStyle(color: modalColors.textPrimary),
                     decoration: InputDecoration(
                       filled: true,
-                      fillColor: AppColors.darkSurfaceCard,
+                      fillColor: modalColors.surfaceElevated,
                       hintText: biller.accountReferenceExample,
-                      hintStyle: const TextStyle(color: Colors.white30),
+                      hintStyle: TextStyle(
+                          color:
+                              modalColors.textSecondary.withValues(alpha: 0.5)),
                       border: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(12),
-                        borderSide:
-                            const BorderSide(color: AppColors.darkBorder),
+                        borderSide: BorderSide(color: modalColors.border),
+                      ),
+                      enabledBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
+                        borderSide: BorderSide(color: modalColors.border),
                       ),
                       suffixIcon: IconButton(
                         icon: isValidating
-                            ? const SizedBox(
+                            ? SizedBox(
                                 width: 16,
                                 height: 16,
                                 child: CircularProgressIndicator(
                                   strokeWidth: 2,
-                                  color: AppColors.primary,
+                                  color: modalColors.primary,
                                 ),
                               )
-                            : const Icon(Icons.check, color: AppColors.primary),
+                            : Icon(Icons.check, color: modalColors.primary),
                         onPressed: () async {
                           setModalState(() => isValidating = true);
                           final serviceApi = ref.read(billsServiceProvider);
@@ -546,21 +556,28 @@ class _SpendScreenState extends ConsumerState<SpendScreen> {
                   // Amount in Fiat
                   Text(
                     'Amount (${market.displayCurrency.code})',
-                    style: const TextStyle(color: Colors.white70, fontSize: 13),
+                    style: TextStyle(
+                        color: modalColors.textSecondary, fontSize: 13),
                   ),
                   const SizedBox(height: 6),
                   TextField(
                     controller: amountController,
                     keyboardType: TextInputType.number,
-                    style: const TextStyle(color: Colors.white),
+                    style: TextStyle(color: modalColors.textPrimary),
                     decoration: InputDecoration(
                       filled: true,
-                      fillColor: AppColors.darkSurfaceCard,
+                      fillColor: modalColors.surfaceElevated,
                       hintText: '500',
+                      hintStyle: TextStyle(
+                          color:
+                              modalColors.textSecondary.withValues(alpha: 0.5)),
                       border: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(12),
-                        borderSide:
-                            const BorderSide(color: AppColors.darkBorder),
+                        borderSide: BorderSide(color: modalColors.border),
+                      ),
+                      enabledBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
+                        borderSide: BorderSide(color: modalColors.border),
                       ),
                     ),
                   ),
@@ -572,23 +589,24 @@ class _SpendScreenState extends ConsumerState<SpendScreen> {
                     Container(
                       padding: const EdgeInsets.all(12),
                       decoration: BoxDecoration(
-                        color: AppColors.darkSurfaceCard,
+                        color: modalColors.surfaceElevated,
                         borderRadius: BorderRadius.circular(12),
                         border: Border.all(
-                            color: AppColors.primary.withValues(alpha: 0.3)),
+                            color: modalColors.primary.withValues(alpha: 0.3)),
                       ),
                       child: Column(
                         children: [
                           Row(
                             mainAxisAlignment: MainAxisAlignment.spaceBetween,
                             children: [
-                              const Text('Estimated Bitcoin Sats:',
+                              Text('Estimated Bitcoin Sats:',
                                   style: TextStyle(
-                                      color: Colors.white70, fontSize: 13)),
+                                      color: modalColors.textSecondary,
+                                      fontSize: 13)),
                               Text(
                                 '${quote!.amountSats} sats',
-                                style: const TextStyle(
-                                  color: AppColors.primary,
+                                style: TextStyle(
+                                  color: modalColors.primary,
                                   fontWeight: FontWeight.bold,
                                   fontSize: 15,
                                 ),
@@ -599,13 +617,16 @@ class _SpendScreenState extends ConsumerState<SpendScreen> {
                           Row(
                             mainAxisAlignment: MainAxisAlignment.spaceBetween,
                             children: [
-                              const Text('Network / Settlement Fee:',
+                              Text('Network / Settlement Fee:',
                                   style: TextStyle(
-                                      color: Colors.white54, fontSize: 12)),
+                                      color: modalColors.textSecondary
+                                          .withValues(alpha: 0.7),
+                                      fontSize: 12)),
                               Text(
                                 '${quote!.feeSats} sats',
-                                style: const TextStyle(
-                                    color: Colors.white70, fontSize: 12),
+                                style: TextStyle(
+                                    color: modalColors.textSecondary,
+                                    fontSize: 12),
                               ),
                             ],
                           ),
@@ -619,13 +640,14 @@ class _SpendScreenState extends ConsumerState<SpendScreen> {
                       children: [
                         Checkbox(
                           value: saveBillerForFuture,
-                          activeColor: AppColors.primary,
+                          activeColor: modalColors.primary,
                           onChanged: (v) => setModalState(
                               () => saveBillerForFuture = v ?? true),
                         ),
-                        const Text(
+                        Text(
                           'Save biller for quick payments',
-                          style: TextStyle(color: Colors.white70, fontSize: 13),
+                          style: TextStyle(
+                              color: modalColors.textSecondary, fontSize: 13),
                         ),
                       ],
                     ),
@@ -639,8 +661,8 @@ class _SpendScreenState extends ConsumerState<SpendScreen> {
                         Expanded(
                           child: ElevatedButton(
                             style: ElevatedButton.styleFrom(
-                              backgroundColor: AppColors.primary,
-                              foregroundColor: Colors.black,
+                              backgroundColor: modalColors.primary,
+                              foregroundColor: AppColors.charcoal,
                               shape: RoundedRectangleBorder(
                                   borderRadius: BorderRadius.circular(12)),
                               padding: const EdgeInsets.symmetric(vertical: 14),
@@ -674,7 +696,7 @@ class _SpendScreenState extends ConsumerState<SpendScreen> {
                                     width: 18,
                                     child: CircularProgressIndicator(
                                       strokeWidth: 2,
-                                      color: Colors.black,
+                                      color: AppColors.charcoal,
                                     ),
                                   )
                                 : const Text('Get Quote',
@@ -687,7 +709,7 @@ class _SpendScreenState extends ConsumerState<SpendScreen> {
                           child: ElevatedButton(
                             style: ElevatedButton.styleFrom(
                               backgroundColor: AppColors.success,
-                              foregroundColor: Colors.black,
+                              foregroundColor: Colors.white,
                               shape: RoundedRectangleBorder(
                                   borderRadius: BorderRadius.circular(12)),
                               padding: const EdgeInsets.symmetric(vertical: 14),
@@ -724,30 +746,31 @@ class _SpendScreenState extends ConsumerState<SpendScreen> {
       context: context,
       barrierDismissible: false,
       builder: (ctx) {
+        final dialogColors = ctx.colors;
         return AlertDialog(
-          backgroundColor: AppColors.darkSurfaceCard,
+          backgroundColor: dialogColors.surfaceCard,
           shape:
               RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-          content: const Padding(
-            padding: EdgeInsets.symmetric(vertical: 20),
+          content: Padding(
+            padding: const EdgeInsets.symmetric(vertical: 20),
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-                CircularProgressIndicator(color: AppColors.primary),
-                SizedBox(height: 20),
+                CircularProgressIndicator(color: dialogColors.primary),
+                const SizedBox(height: 20),
                 Text(
                   'Processing Utility Settlement',
                   style: TextStyle(
-                      color: Colors.white,
+                      color: dialogColors.textPrimary,
                       fontSize: 16,
                       fontWeight: FontWeight.bold),
                 ),
-                SizedBox(height: 8),
+                const SizedBox(height: 8),
                 Text(
                   'Checking payment status. Please don\'t pay again yet.',
                   textAlign: TextAlign.center,
                   style: TextStyle(
-                      color: AppColors.darkTextSecondary, fontSize: 12),
+                      color: dialogColors.textSecondary, fontSize: 12),
                 ),
               ],
             ),
@@ -837,19 +860,20 @@ class _SpendScreenState extends ConsumerState<SpendScreen> {
     showDialog(
       context: context,
       builder: (ctx) {
+        final dialogColors = ctx.colors;
         return AlertDialog(
-          backgroundColor: AppColors.darkSurfaceCard,
+          backgroundColor: dialogColors.surfaceCard,
           shape:
               RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-          title: const Row(
+          title: Row(
             children: [
-              Icon(Icons.warning_amber_rounded,
+              const Icon(Icons.warning_amber_rounded,
                   color: AppColors.warning, size: 24),
-              SizedBox(width: 8),
+              const SizedBox(width: 8),
               Text(
                 'Checking Payment Status',
                 style: TextStyle(
-                    color: Colors.white,
+                    color: dialogColors.textPrimary,
                     fontWeight: FontWeight.bold,
                     fontSize: 16),
               ),
@@ -859,26 +883,26 @@ class _SpendScreenState extends ConsumerState<SpendScreen> {
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const Text(
+              Text(
                 'Checking payment status — please do not attempt duplicate payment.',
                 style: TextStyle(
-                    color: Colors.white,
+                    color: dialogColors.textPrimary,
                     fontWeight: FontWeight.w600,
                     fontSize: 14),
               ),
               const SizedBox(height: 8),
               Text(
                 'Your payment is being verified with the network operator. You can monitor the transaction timeline in your Activity tab.',
-                style: TextStyle(
-                    color: Colors.white.withValues(alpha: 0.7), fontSize: 12),
+                style:
+                    TextStyle(color: dialogColors.textSecondary, fontSize: 12),
               ),
             ],
           ),
           actions: [
             ElevatedButton(
               style: ElevatedButton.styleFrom(
-                backgroundColor: AppColors.primary,
-                foregroundColor: Colors.black,
+                backgroundColor: dialogColors.primary,
+                foregroundColor: AppColors.charcoal,
               ),
               onPressed: () => Navigator.of(ctx).pop(),
               child: const Text('Understood',
@@ -894,18 +918,21 @@ class _SpendScreenState extends ConsumerState<SpendScreen> {
     showDialog(
       context: context,
       builder: (ctx) {
+        final dialogColors = ctx.colors;
         return AlertDialog(
-          backgroundColor: AppColors.darkSurface,
+          backgroundColor: dialogColors.surfaceCard,
           shape:
               RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-          title: const Row(
+          title: Row(
             children: [
-              Icon(Icons.check_circle, color: AppColors.success, size: 24),
-              SizedBox(width: 8),
+              const Icon(Icons.check_circle,
+                  color: AppColors.success, size: 24),
+              const SizedBox(width: 8),
               Text(
                 'Payment Receipt',
-                style:
-                    TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+                style: TextStyle(
+                    color: dialogColors.textPrimary,
+                    fontWeight: FontWeight.bold),
               ),
             ],
           ),
@@ -918,15 +945,16 @@ class _SpendScreenState extends ConsumerState<SpendScreen> {
                       color: AppColors.success, fontWeight: FontWeight.bold)),
               const SizedBox(height: 8),
               Text('Biller: ${biller.name}',
-                  style: const TextStyle(color: Colors.white70)),
+                  style: TextStyle(color: dialogColors.textSecondary)),
               Text(
                   'Receipt #: ${tx.receiptNumber ?? "REC-${tx.id.substring(0, 8)}"}',
-                  style: const TextStyle(color: Colors.white70)),
+                  style: TextStyle(color: dialogColors.textSecondary)),
               Text('Account: ${tx.customerAccount}',
-                  style: const TextStyle(color: Colors.white70)),
+                  style: TextStyle(color: dialogColors.textSecondary)),
               Text('Paid: ${tx.amountSats} sats',
-                  style: const TextStyle(
-                      color: Colors.white, fontWeight: FontWeight.bold)),
+                  style: TextStyle(
+                      color: dialogColors.textPrimary,
+                      fontWeight: FontWeight.bold)),
               if (tx.tokenCode != null) ...[
                 const SizedBox(height: 12),
                 Container(
@@ -954,8 +982,8 @@ class _SpendScreenState extends ConsumerState<SpendScreen> {
                           Expanded(
                             child: Text(
                               tx.tokenCode!,
-                              style: const TextStyle(
-                                color: Colors.white,
+                              style: TextStyle(
+                                color: dialogColors.textPrimary,
                                 fontSize: 14,
                                 fontFamily: 'monospace',
                                 fontWeight: FontWeight.bold,
@@ -963,8 +991,8 @@ class _SpendScreenState extends ConsumerState<SpendScreen> {
                             ),
                           ),
                           IconButton(
-                            icon: const Icon(Icons.copy,
-                                color: AppColors.primary, size: 18),
+                            icon: Icon(Icons.copy,
+                                color: dialogColors.primary, size: 18),
                             onPressed: () {
                               Clipboard.setData(
                                   ClipboardData(text: tx.tokenCode!));
@@ -985,8 +1013,8 @@ class _SpendScreenState extends ConsumerState<SpendScreen> {
           actions: [
             ElevatedButton(
               style: ElevatedButton.styleFrom(
-                backgroundColor: AppColors.primary,
-                foregroundColor: Colors.black,
+                backgroundColor: dialogColors.primary,
+                foregroundColor: AppColors.charcoal,
               ),
               onPressed: () => Navigator.of(ctx).pop(),
               child: const Text('Done',

@@ -242,7 +242,7 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(find.text('Money & Balances'), findsOneWidget);
-      expect(find.text('BITCOIN BALANCE'), findsOneWidget);
+      expect(find.text('Your Bitcoin balance'), findsOneWidget);
       expect(find.text('Available to spend'), findsOneWidget);
       expect(find.text('Money in motion'), findsOneWidget);
       expect(find.text('Protected payments'), findsOneWidget);

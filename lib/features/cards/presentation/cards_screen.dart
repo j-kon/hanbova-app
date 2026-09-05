@@ -16,19 +16,21 @@ class _CardsScreenState extends ConsumerState<CardsScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final colors = context.colors;
     final demoState = ref.watch(demoModeProvider);
     final currency = ref.watch(currencyProvider);
     final card = demoState.demoCard;
 
     return Scaffold(
-      backgroundColor: AppColors.darkBackground,
+      backgroundColor: colors.background,
       appBar: AppBar(
-        backgroundColor: AppColors.darkBackground,
+        backgroundColor: colors.background,
         elevation: 0,
-        title: const Text(
+        iconTheme: IconThemeData(color: colors.textPrimary),
+        title: Text(
           'Virtual Cards (Sandbox)',
           style: TextStyle(
-            color: Colors.white,
+            color: colors.textPrimary,
             fontSize: 20,
             fontWeight: FontWeight.bold,
           ),
@@ -42,22 +44,22 @@ class _CardsScreenState extends ConsumerState<CardsScreen> {
                   Icon(
                     Icons.credit_card_off_outlined,
                     size: 64,
-                    color: AppColors.darkTextSecondary.withValues(alpha: 0.5),
+                    color: colors.textSecondary.withValues(alpha: 0.5),
                   ),
                   const SizedBox(height: 16),
-                  const Text(
+                  Text(
                     'No Cards Created',
                     style: TextStyle(
-                      color: Colors.white,
+                      color: colors.textPrimary,
                       fontSize: 18,
                       fontWeight: FontWeight.bold,
                     ),
                   ),
                   const SizedBox(height: 8),
-                  const Text(
+                  Text(
                     'Create an instant virtual Visa card for online global payments.',
                     style: TextStyle(
-                      color: AppColors.darkTextSecondary,
+                      color: colors.textSecondary,
                       fontSize: 13,
                     ),
                   ),
@@ -74,25 +76,28 @@ class _CardsScreenState extends ConsumerState<CardsScreen> {
                     padding:
                         const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
                     decoration: BoxDecoration(
-                      color: AppColors.primary.withValues(alpha: 0.15),
+                      color: colors.primary.withValues(alpha: 0.15),
                       borderRadius: BorderRadius.circular(10),
                       border: Border.all(
-                        color: AppColors.primary.withValues(alpha: 0.4),
+                        color: colors.primary.withValues(alpha: 0.4),
                       ),
                     ),
-                    child: const Row(
+                    child: Row(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
                         Icon(Icons.info_outline,
-                            size: 16, color: AppColors.primary),
-                        SizedBox(width: 8),
-                        Text(
-                          'DEMO MODE • SAMPLE DATA • NO REAL MONEY',
-                          style: TextStyle(
-                            color: AppColors.primary,
-                            fontSize: 11,
-                            fontWeight: FontWeight.bold,
-                            letterSpacing: 0.8,
+                            size: 16, color: colors.primary),
+                        const SizedBox(width: 8),
+                        Expanded(
+                          child: Text(
+                            'DEMO MODE • SAMPLE DATA • NO REAL MONEY',
+                            textAlign: TextAlign.center,
+                            style: TextStyle(
+                              color: colors.primary,
+                              fontSize: 11,
+                              fontWeight: FontWeight.bold,
+                              letterSpacing: 0.8,
+                            ),
                           ),
                         ),
                       ],
@@ -103,22 +108,22 @@ class _CardsScreenState extends ConsumerState<CardsScreen> {
                 Container(
                   padding: const EdgeInsets.all(12),
                   decoration: BoxDecoration(
-                    color: const Color(0xFF1E293B),
+                    color: colors.surfaceElevated,
                     borderRadius: BorderRadius.circular(12),
                     border: Border.all(
-                      color: AppColors.primary.withValues(alpha: 0.4),
+                      color: colors.primary.withValues(alpha: 0.4),
                     ),
                   ),
-                  child: const Row(
+                  child: Row(
                     children: [
                       Icon(Icons.science_outlined,
-                          size: 18, color: AppColors.primary),
-                      SizedBox(width: 8),
+                          size: 18, color: colors.primary),
+                      const SizedBox(width: 8),
                       Expanded(
                         child: Text(
                           'Sandbox / Demo Experience. Virtual cards fund directly from Bitcoin satoshis for global subscriptions.',
                           style: TextStyle(
-                            color: AppColors.darkTextSecondary,
+                            color: colors.textSecondary,
                             fontSize: 11,
                           ),
                         ),
@@ -208,18 +213,22 @@ class _CardsScreenState extends ConsumerState<CardsScreen> {
                             },
                             child: Row(
                               children: [
-                                Text(
-                                  _revealDetails
-                                      ? card.cardNumber
-                                      : '•••• •••• •••• 9821',
-                                  style: const TextStyle(
-                                    color: Colors.white,
-                                    fontSize: 18,
-                                    fontWeight: FontWeight.w700,
-                                    letterSpacing: 2.0,
-                                    fontFamily: 'Courier',
-                                  ),
-                                ),
+                                Expanded(
+                                    child: FittedBox(
+                                        fit: BoxFit.scaleDown,
+                                        alignment: Alignment.centerLeft,
+                                        child: Text(
+                                          _revealDetails
+                                              ? card.cardNumber
+                                              : '•••• •••• •••• 9821',
+                                          style: const TextStyle(
+                                            color: Colors.white,
+                                            fontSize: 18,
+                                            fontWeight: FontWeight.w700,
+                                            letterSpacing: 2.0,
+                                            fontFamily: 'Courier',
+                                          ),
+                                        ))),
                                 const SizedBox(width: 8),
                                 Icon(
                                   _revealDetails
@@ -232,8 +241,9 @@ class _CardsScreenState extends ConsumerState<CardsScreen> {
                             ),
                           ),
                           const SizedBox(height: 6),
-                          Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          Wrap(
+                            spacing: 16,
+                            runSpacing: 4,
                             children: [
                               Text(
                                 card.cardholderName,
@@ -265,20 +275,23 @@ class _CardsScreenState extends ConsumerState<CardsScreen> {
                 Container(
                   padding: const EdgeInsets.all(16),
                   decoration: BoxDecoration(
-                    color: AppColors.darkCardBackground,
+                    color: colors.surfaceCard,
                     borderRadius: BorderRadius.circular(16),
-                    border: Border.all(color: AppColors.darkBorder),
+                    border: Border.all(color: colors.border),
                   ),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  child: Wrap(
+                    alignment: WrapAlignment.spaceBetween,
+                    crossAxisAlignment: WrapCrossAlignment.center,
+                    spacing: 16,
+                    runSpacing: 12,
                     children: [
                       Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          const Text(
+                          Text(
                             'CARD BALANCE',
                             style: TextStyle(
-                              color: AppColors.darkTextSecondary,
+                              color: colors.textSecondary,
                               fontSize: 11,
                               fontWeight: FontWeight.bold,
                               letterSpacing: 1.0,
@@ -287,16 +300,16 @@ class _CardsScreenState extends ConsumerState<CardsScreen> {
                           const SizedBox(height: 4),
                           Text(
                             '\$${card.balanceUsd.toStringAsFixed(2)} USD',
-                            style: const TextStyle(
-                              color: Colors.white,
+                            style: TextStyle(
+                              color: colors.textPrimary,
                               fontSize: 20,
                               fontWeight: FontWeight.bold,
                             ),
                           ),
                           Text(
                             '≈ ${currency.format(currency.fiatToSats(card.balanceUsd * 60000.0 / 60000.0))}',
-                            style: const TextStyle(
-                              color: AppColors.darkTextSecondary,
+                            style: TextStyle(
+                              color: colors.textSecondary,
                               fontSize: 12,
                             ),
                           ),
@@ -307,8 +320,8 @@ class _CardsScreenState extends ConsumerState<CardsScreen> {
                         icon: const Icon(Icons.add, size: 16),
                         label: const Text('Fund Card'),
                         style: ElevatedButton.styleFrom(
-                          backgroundColor: AppColors.primary,
-                          foregroundColor: Colors.black,
+                          backgroundColor: colors.primary,
+                          foregroundColor: AppColors.charcoal,
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(10),
                           ),
@@ -325,9 +338,9 @@ class _CardsScreenState extends ConsumerState<CardsScreen> {
                   padding:
                       const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                   decoration: BoxDecoration(
-                    color: AppColors.darkCardBackground,
+                    color: colors.surfaceCard,
                     borderRadius: BorderRadius.circular(16),
-                    border: Border.all(color: AppColors.darkBorder),
+                    border: Border.all(color: colors.border),
                   ),
                   child: Material(
                     color: Colors.transparent,
@@ -335,8 +348,8 @@ class _CardsScreenState extends ConsumerState<CardsScreen> {
                       contentPadding: EdgeInsets.zero,
                       title: Text(
                         card.isFrozen ? 'Card is Frozen' : 'Card is Active',
-                        style: const TextStyle(
-                          color: Colors.white,
+                        style: TextStyle(
+                          color: colors.textPrimary,
                           fontSize: 14,
                           fontWeight: FontWeight.bold,
                         ),
@@ -345,8 +358,8 @@ class _CardsScreenState extends ConsumerState<CardsScreen> {
                         card.isFrozen
                             ? 'Transactions are blocked. Tap to reactivate.'
                             : 'Online payments enabled. Tap to temporarily lock.',
-                        style: const TextStyle(
-                          color: AppColors.darkTextSecondary,
+                        style: TextStyle(
+                          color: colors.textSecondary,
                           fontSize: 11,
                         ),
                       ),
@@ -362,10 +375,10 @@ class _CardsScreenState extends ConsumerState<CardsScreen> {
                 const SizedBox(height: 20),
 
                 // Card Transactions History
-                const Text(
+                Text(
                   'Recent Card Activity',
                   style: TextStyle(
-                    color: Colors.white,
+                    color: colors.textPrimary,
                     fontSize: 16,
                     fontWeight: FontWeight.bold,
                   ),
@@ -373,11 +386,11 @@ class _CardsScreenState extends ConsumerState<CardsScreen> {
                 const SizedBox(height: 10),
 
                 _buildCardTxRow(
-                    'Netflix Subscription', '-\$15.99', 'Aug 28, 2026'),
+                    'Netflix Subscription', '-\$15.99', 'Aug 28, 2026', colors),
                 _buildCardTxRow(
-                    'Amazon Web Services', '-\$42.50', 'Aug 21, 2026'),
-                _buildCardTxRow(
-                    'Card Funding (via Sats)', '+\$100.00', 'Aug 15, 2026',
+                    'Amazon Web Services', '-\$42.50', 'Aug 21, 2026', colors),
+                _buildCardTxRow('Card Funding (via Sats)', '+\$100.00',
+                    'Aug 15, 2026', colors,
                     isPositive: true),
 
                 const SizedBox(height: 30),
@@ -386,62 +399,68 @@ class _CardsScreenState extends ConsumerState<CardsScreen> {
     );
   }
 
-  Widget _buildCardTxRow(String merchant, String amount, String date,
+  Widget _buildCardTxRow(
+      String merchant, String amount, String date, HanbovaColors colors,
       {bool isPositive = false}) {
     return Container(
       margin: const EdgeInsets.only(bottom: 8),
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-        color: AppColors.darkCardBackground,
+        color: colors.surfaceCard,
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: AppColors.darkBorder),
+        border: Border.all(color: colors.border),
       ),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          Row(
+          Expanded(
+              child: Row(
             children: [
               Container(
                 padding: const EdgeInsets.all(8),
                 decoration: BoxDecoration(
                   color: isPositive
                       ? const Color(0xFF10B981).withValues(alpha: 0.15)
-                      : Colors.white.withValues(alpha: 0.05),
+                      : colors.surfaceElevated,
                   shape: BoxShape.circle,
                 ),
                 child: Icon(
                   isPositive ? Icons.add_rounded : Icons.shopping_bag_outlined,
-                  color: isPositive ? const Color(0xFF10B981) : Colors.white70,
+                  color: isPositive
+                      ? const Color(0xFF10B981)
+                      : colors.textSecondary,
                   size: 16,
                 ),
               ),
               const SizedBox(width: 10),
-              Column(
+              Expanded(
+                  child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
                     merchant,
-                    style: const TextStyle(
-                      color: Colors.white,
+                    style: TextStyle(
+                      color: colors.textPrimary,
                       fontSize: 13,
                       fontWeight: FontWeight.w600,
                     ),
                   ),
                   Text(
                     date,
-                    style: const TextStyle(
-                      color: AppColors.darkTextSecondary,
+                    style: TextStyle(
+                      color: colors.textSecondary,
                       fontSize: 11,
                     ),
                   ),
                 ],
-              ),
+              )),
             ],
-          ),
+          )),
+          const SizedBox(width: 12),
           Text(
             amount,
             style: TextStyle(
-              color: isPositive ? const Color(0xFF10B981) : Colors.white,
+              color: isPositive ? const Color(0xFF10B981) : colors.textPrimary,
               fontSize: 13,
               fontWeight: FontWeight.bold,
             ),
@@ -452,48 +471,52 @@ class _CardsScreenState extends ConsumerState<CardsScreen> {
   }
 
   void _showFundCardDialog(BuildContext context) {
+    final colors = context.colors;
     final amountCtrl = TextEditingController(text: '50.00');
 
     showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
-        backgroundColor: AppColors.darkCardBackground,
-        title: const Text('Fund Virtual Card',
-            style: TextStyle(color: Colors.white)),
+        backgroundColor: colors.surfaceCard,
+        title: Text('Fund Virtual Card',
+            style: TextStyle(color: colors.textPrimary)),
         content: Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Text(
+            Text(
               'Enter USD amount to load onto your card. Funds will be converted from Bitcoin sats.',
-              style:
-                  TextStyle(color: AppColors.darkTextSecondary, fontSize: 12),
+              style: TextStyle(color: colors.textSecondary, fontSize: 12),
             ),
             const SizedBox(height: 12),
             TextField(
               controller: amountCtrl,
               keyboardType:
                   const TextInputType.numberWithOptions(decimal: true),
-              style: const TextStyle(color: Colors.white, fontSize: 20),
-              decoration: const InputDecoration(
+              style: TextStyle(color: colors.textPrimary, fontSize: 20),
+              decoration: InputDecoration(
                 prefixText: '\$ ',
-                prefixStyle: TextStyle(color: AppColors.primary, fontSize: 20),
+                prefixStyle: TextStyle(color: colors.primary, fontSize: 20),
                 labelText: 'Amount (USD)',
-                labelStyle: TextStyle(color: AppColors.darkTextSecondary),
+                labelStyle: TextStyle(color: colors.textSecondary),
+                enabledBorder: UnderlineInputBorder(
+                    borderSide: BorderSide(color: colors.border)),
+                focusedBorder: UnderlineInputBorder(
+                    borderSide: BorderSide(color: colors.primary)),
               ),
             ),
             const SizedBox(height: 8),
-            const Text(
+            Text(
               '≈ 75,000 sats at reference rate',
-              style: TextStyle(color: AppColors.primary, fontSize: 11),
+              style: TextStyle(color: colors.primary, fontSize: 11),
             ),
           ],
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx),
-            child: const Text('Cancel',
-                style: TextStyle(color: AppColors.darkTextSecondary)),
+            child:
+                Text('Cancel', style: TextStyle(color: colors.textSecondary)),
           ),
           ElevatedButton(
             onPressed: () {
@@ -511,8 +534,8 @@ class _CardsScreenState extends ConsumerState<CardsScreen> {
               }
             },
             style: ElevatedButton.styleFrom(
-              backgroundColor: AppColors.primary,
-              foregroundColor: Colors.black,
+              backgroundColor: colors.primary,
+              foregroundColor: AppColors.charcoal,
             ),
             child: const Text('Fund Now'),
           ),

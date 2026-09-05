@@ -5,6 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 
 import '../../../core/wallet/wallet_context.dart';
+import '../../protected/data/protected_message_service.dart';
 import '../../protected_send/domain/protected_payment_intent.dart';
 import '../data/secure_transaction_ledger.dart';
 import '../data/transaction_ledger.dart';
@@ -413,16 +414,19 @@ class TransactionsNotifier extends StateNotifier<TransactionsState> {
   }
 
   Future<List<TransactionModel>> syncIncomingMessages({
-    required List<dynamic> inbox,
-    Future<dynamic> Function(String intentId)? getIntentDetails,
+    required List<RemoteProtectedMessage> inbox,
+    Future<ProtectedPaymentIntent?> Function(String intentId)? getIntentDetails,
   }) async {
     final List<TransactionModel> newIncoming = [];
-    for (final rawMsg in inbox) {
-      final msg = rawMsg as dynamic;
-      final paymentIntentId = msg.paymentIntentId as String;
-      final senderUsername = msg.senderUsername as String;
-      final createdAt = msg.createdAt as DateTime;
-      final status = (msg.status as String?)?.toLowerCase() ?? '';
+    for (final msg in inbox) {
+      if (!mounted) return newIncoming;
+      final paymentIntentId = msg.paymentIntentId;
+      // Unlinked envelopes are supported by the relay, but cannot create a
+      // financial ledger entry until they have a payment intent.
+      if (paymentIntentId == null || paymentIntentId.isEmpty) continue;
+      final senderUsername = msg.senderUsername;
+      final createdAt = msg.createdAt;
+      final status = msg.status.toLowerCase();
 
       if (status == 'claimed') {
         final idx = state.items.indexWhere((t) => t.id == paymentIntentId);
@@ -452,47 +456,35 @@ class TransactionsNotifier extends StateNotifier<TransactionsState> {
       final existingIndex =
           state.items.indexWhere((t) => t.id == paymentIntentId);
       if (existingIndex >= 0) {
-        final existing = state.items[existingIndex];
-        if (existing.status == TransactionStatus.claimed ||
-            existing.status == TransactionStatus.completed ||
-            existing.status == TransactionStatus.refunded) {
-          continue;
-        }
+        // Re-delivery must not reset local settlement/recovery progress.
+        continue;
       }
 
-      int amountSats = 0;
-      DateTime expiresAt = createdAt.add(const Duration(hours: 24));
-      String? description;
-      String claimRef = paymentIntentId;
-
-      if (getIntentDetails != null) {
-        try {
-          final dynamic intent = await getIntentDetails(paymentIntentId);
-          if (intent != null) {
-            final intentStatus = (intent.status as String).toLowerCase();
-            if (intentStatus == 'claimed' ||
-                intentStatus == 'refunded' ||
-                intentStatus == 'expired') {
-              continue;
-            }
-            amountSats = intent.amountSats as int;
-            expiresAt = intent.expiresAt as DateTime;
-            description = intent.description as String?;
-            claimRef = (intent.claimReference as String?) ?? paymentIntentId;
-          }
-        } catch (_) {}
+      final intent = await getIntentDetails?.call(paymentIntentId);
+      if (!mounted) return newIncoming;
+      // A local settlement may have arrived while the lookup was in flight.
+      // Never replace that record with this older inbox snapshot.
+      if (state.items.any((item) => item.id == paymentIntentId)) continue;
+      if (intent == null ||
+          intent.id != paymentIntentId ||
+          intent.paymentType != 'protected' ||
+          intent.amountSats <= 0) {
+        throw StateError('Protected payment details are unavailable.');
       }
+      final intentStatus = intent.status.toLowerCase();
+      if (intentStatus == 'claimed' || intentStatus == 'refunded') continue;
+      // Locktime enables the refund path; it does not revoke recipient claims.
 
       final incomingTx = TransactionModel(
         id: paymentIntentId,
         type: TransactionType.protectedClaim,
         status: TransactionStatus.waitingForRecipient,
-        amountSats: amountSats,
+        amountSats: intent.amountSats,
         recipientOrSender: '@$senderUsername',
-        description: description ?? 'Incoming Protected Payment',
+        description: intent.description ?? 'Incoming Protected Payment',
         createdAt: createdAt,
-        expiresAt: expiresAt,
-        claimReference: claimRef,
+        expiresAt: intent.expiresAt,
+        claimReference: intent.claimReference ?? paymentIntentId,
       );
 
       await updateTransaction(incomingTx);
@@ -574,6 +566,12 @@ class TransactionsNotifier extends StateNotifier<TransactionsState> {
       final idx = updatedList.indexWhere((t) => t.id == intent.id);
       if (idx >= 0) {
         final local = updatedList[idx];
+        if (local.status == TransactionStatus.claimed ||
+            local.status == TransactionStatus.completed ||
+            local.status == TransactionStatus.refunded) {
+          // Preserve mint-settled net amounts, fees and local receipt data.
+          continue;
+        }
         final finalStatus = (local.status == TransactionStatus.claimed ||
                 local.status == TransactionStatus.completed ||
                 local.status == TransactionStatus.refunded)

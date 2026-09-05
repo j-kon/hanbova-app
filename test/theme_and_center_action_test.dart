@@ -14,6 +14,11 @@ import 'package:hanbova_app/features/money/presentation/money_screen.dart';
 import 'package:hanbova_app/features/profile/providers/profile_provider.dart';
 import 'package:hanbova_app/features/spend/presentation/pay_hub_screen.dart';
 import 'package:hanbova_app/features/transactions/presentation/transactions_screen.dart';
+import 'package:hanbova_app/features/beneficiaries/presentation/beneficiaries_screen.dart';
+import 'package:hanbova_app/features/cards/presentation/cards_screen.dart';
+import 'package:hanbova_app/features/insights/presentation/insights_screen.dart';
+import 'package:hanbova_app/features/statements/presentation/statements_screen.dart';
+import 'package:hanbova_app/features/auth/screens/sign_up_screen.dart';
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
@@ -186,7 +191,7 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(find.text('Money & Balances'), findsOneWidget);
-      expect(find.text('BITCOIN BALANCE'), findsOneWidget);
+      expect(find.text('Your Bitcoin balance'), findsOneWidget);
       expect(find.text('Protected payments'), findsOneWidget);
 
       // 4b. Light mode
@@ -206,7 +211,7 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(find.text('Money & Balances'), findsOneWidget);
-      expect(find.text('BITCOIN BALANCE'), findsOneWidget);
+      expect(find.text('Your Bitcoin balance'), findsOneWidget);
       expect(find.text('Protected payments'), findsOneWidget);
     });
 
@@ -295,6 +300,147 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(find.text('Activity'), findsOneWidget);
+    });
+
+    testWidgets(
+        '7. BeneficiariesScreen and Add Beneficiary Dialog adapt to Light and Dark mode',
+        (tester) async {
+      tester.view.physicalSize = const Size(1080, 2400);
+      tester.view.devicePixelRatio = 2.5;
+      addTearDown(tester.view.reset);
+
+      // 7a. Light mode test
+      await tester.pumpWidget(
+        ProviderScope(
+          overrides: [
+            demoModeProvider.overrideWith((ref) => DemoModeNotifier()),
+            currencyProvider.overrideWith((ref) => CurrencyNotifier()),
+          ],
+          child: MaterialApp(
+            theme: AppTheme.lightTheme,
+            home: const BeneficiariesScreen(),
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      expect(find.text('People & Beneficiaries'), findsOneWidget);
+      // Tap Add Beneficiary button
+      await tester.tap(find.text('Add Recipient'));
+      await tester.pumpAndSettle();
+
+      // Check dialog opened
+      final alertDialogFinder = find.byType(AlertDialog);
+      expect(alertDialogFinder, findsOneWidget);
+      final alertDialog = tester.widget<AlertDialog>(alertDialogFinder);
+      // Dialog background should match light surfaceCard
+      final lightColors = AppTheme.lightTheme.extension<HanbovaColors>()!;
+      expect(alertDialog.backgroundColor, equals(lightColors.surfaceCard));
+
+      // Close dialog
+      await tester.tap(find.text('Cancel'));
+      await tester.pumpAndSettle();
+
+      // 7b. Dark mode test
+      await tester.pumpWidget(
+        ProviderScope(
+          overrides: [
+            demoModeProvider.overrideWith((ref) => DemoModeNotifier()),
+            currencyProvider.overrideWith((ref) => CurrencyNotifier()),
+          ],
+          child: MaterialApp(
+            theme: AppTheme.darkTheme,
+            home: const BeneficiariesScreen(),
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      await tester.tap(find.text('Add Recipient'));
+      await tester.pumpAndSettle();
+
+      final darkDialog = tester.widget<AlertDialog>(find.byType(AlertDialog));
+      final darkColors = AppTheme.darkTheme.extension<HanbovaColors>()!;
+      expect(darkDialog.backgroundColor, equals(darkColors.surfaceCard));
+    });
+
+    testWidgets(
+        '8. Cards, Insights, and Statements screens render in Light and Dark mode',
+        (tester) async {
+      tester.view.physicalSize = const Size(1080, 2400);
+      tester.view.devicePixelRatio = 2.5;
+      addTearDown(tester.view.reset);
+
+      for (final theme in [AppTheme.lightTheme, AppTheme.darkTheme]) {
+        await tester.pumpWidget(
+          ProviderScope(
+            overrides: [
+              demoModeProvider.overrideWith((ref) => DemoModeNotifier()),
+              currencyProvider.overrideWith((ref) => CurrencyNotifier()),
+            ],
+            child: MaterialApp(
+              theme: theme,
+              home: const CardsScreen(),
+            ),
+          ),
+        );
+        await tester.pumpAndSettle();
+        expect(find.text('Virtual Cards (Sandbox)'), findsOneWidget);
+
+        await tester.pumpWidget(
+          ProviderScope(
+            overrides: [
+              demoModeProvider.overrideWith((ref) => DemoModeNotifier()),
+              currencyProvider.overrideWith((ref) => CurrencyNotifier()),
+            ],
+            child: MaterialApp(
+              theme: theme,
+              home: const InsightsScreen(),
+            ),
+          ),
+        );
+        await tester.pumpAndSettle();
+        expect(find.text('Financial Insights'), findsOneWidget);
+
+        await tester.pumpWidget(
+          ProviderScope(
+            overrides: [
+              demoModeProvider.overrideWith((ref) => DemoModeNotifier()),
+              currencyProvider.overrideWith((ref) => CurrencyNotifier()),
+            ],
+            child: MaterialApp(
+              theme: theme,
+              home: const StatementsScreen(),
+            ),
+          ),
+        );
+        await tester.pumpAndSettle();
+        expect(find.text('Hanbova Activity Statements'), findsOneWidget);
+      }
+    });
+
+    testWidgets('9. SignUpScreen renders in Light and Dark mode',
+        (tester) async {
+      tester.view.physicalSize = const Size(1080, 2400);
+      tester.view.devicePixelRatio = 2.5;
+      addTearDown(tester.view.reset);
+
+      for (final theme in [AppTheme.lightTheme, AppTheme.darkTheme]) {
+        await tester.pumpWidget(
+          ProviderScope(
+            overrides: [
+              marketProvider.overrideWith((ref) => MarketNotifier()),
+              profileProvider.overrideWith((ref) => ProfileNotifier()),
+            ],
+            child: MaterialApp(
+              theme: theme,
+              home: const SignUpScreen(),
+            ),
+          ),
+        );
+        await tester.pumpAndSettle();
+        expect(find.text('Create an account'), findsOneWidget);
+      }
     });
   });
 }

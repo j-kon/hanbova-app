@@ -57,12 +57,14 @@ final class WalletSyncCoordinator extends ChangeNotifier
   Future<void>? _inFlight;
   Timer? _timer;
   bool _started = false;
+  bool _disposed = false;
   bool _isResumed = true;
   Duration _currentInterval = const Duration(seconds: 15);
 
   Duration get currentInterval => _currentInterval;
 
   Future<void> syncNow() {
+    if (_disposed) return Future.error(StateError('Wallet sync is disposed.'));
     final active = _inFlight;
     if (active != null) return active;
 
@@ -77,24 +79,27 @@ final class WalletSyncCoordinator extends ChangeNotifier
     notifyListeners();
     try {
       await _runSync();
+      if (_disposed) return;
       _currentInterval = successInterval;
       _state = WalletSyncState(
         isSyncing: false,
         lastSuccessfulSyncAt: DateTime.now(),
       );
     } catch (_) {
-      _currentInterval = failureInterval;
-      _state = _state.copyWith(isSyncing: false, hasFailure: true);
+      if (!_disposed) {
+        _currentInterval = failureInterval;
+        _state = _state.copyWith(isSyncing: false, hasFailure: true);
+      }
       rethrow;
     } finally {
       _inFlight = null;
       if (_started && _isResumed) _scheduleNext();
-      notifyListeners();
+      if (!_disposed) notifyListeners();
     }
   }
 
   void start() {
-    if (_started) return;
+    if (_started || _disposed) return;
     _started = true;
     // Let Riverpod finish constructing this coordinator before the initial
     // sync can publish transaction state. Starting synchronously here causes
@@ -128,6 +133,7 @@ final class WalletSyncCoordinator extends ChangeNotifier
 
   @override
   void dispose() {
+    _disposed = true;
     _started = false;
     _timer?.cancel();
     super.dispose();
@@ -190,6 +196,7 @@ final walletSyncCoordinatorProvider = Provider<WalletSyncCoordinator?>((ref) {
         inbox: inbox,
         getIntentDetails: intentRepository.getPaymentIntent,
       );
+      if (!contextIsCurrent()) throw const WalletSyncContextChanged();
       if (newTransactions.isNotEmpty) {
         final newest = newTransactions.first;
         notifications.show(
