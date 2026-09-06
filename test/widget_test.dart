@@ -22,24 +22,24 @@ void main() {
 
     // Verify header and balance card
     expect(find.byType(HomeScreen), findsOneWidget);
-    expect(find.text('Total Balance'), findsOneWidget);
-    expect(find.text('Send'), findsOneWidget);
-    expect(find.text('Receive'), findsOneWidget);
+    expect(find.text('Bitcoin'), findsOneWidget);
+    expect(find.text('Send'), findsWidgets);
+    expect(find.text('Receive'), findsWidgets);
+    expect(find.text('Protected'), findsWidgets);
+    expect(find.text('Scan'), findsWidgets);
 
-    // Verify Quick Claim Banner & Protected Summary
-    expect(find.text('Protected Payments'), findsOneWidget);
-    expect(find.text('Have a claim code?'), findsOneWidget);
-    expect(find.text('Claim'), findsOneWidget);
-
-    // Verify Bottom Navigation Items
+    // Verify Navigation Items
     expect(find.text('Home'), findsOneWidget);
     expect(find.text('Activity'), findsOneWidget);
-    expect(find.byIcon(Icons.shield_outlined), findsWidgets);
-    expect(find.text('Me'), findsOneWidget);
+    expect(
+        find.byKey(const Key('navbar_center_action_button')), findsOneWidget);
+    expect(find.text('Money'), findsOneWidget);
+    expect(find.text('Profile'), findsOneWidget);
   });
 
   testWidgets(
-      'Bottom navigation tabs switch between Home, Activity, Protected, Me', (
+      'Bottom navigation tabs switch between Home, Center Action, Activity, Money, Profile',
+      (
     WidgetTester tester,
   ) async {
     tester.view.physicalSize = const Size(800, 1600);
@@ -53,29 +53,36 @@ void main() {
     );
     await tester.pumpAndSettle();
 
+    // Tap Center Action Button and select Pay Everyday Bills
+    await tester.tap(find.byKey(const Key('navbar_center_action_button')));
+    await tester.pumpAndSettle();
+    expect(find.text('Pay Everyday Bills'), findsOneWidget);
+    await tester.tap(find.text('Pay Everyday Bills'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Send Money'), findsOneWidget);
+    expect(find.text('Recent'), findsOneWidget);
+    expect(find.text('Everyday'), findsOneWidget);
+    expect(find.text('Airtime'), findsOneWidget);
+
     // Switch to Activity Tab
-    await tester.tap(find.text('Activity'));
+    await tester.tap(find.byIcon(Icons.receipt_long_outlined));
     await tester.pumpAndSettle();
     expect(find.text('Money In'), findsOneWidget);
     expect(find.text('Money Out'), findsOneWidget);
 
-    // Switch to Protected Tab via Bottom Navigation icon
-    await tester.tap(find.byIcon(Icons.shield_outlined).last);
+    // Switch to Money Tab
+    await tester.tap(find.byIcon(Icons.account_balance_wallet_outlined));
     await tester.pumpAndSettle();
-    expect(find.textContaining('Active'), findsOneWidget);
-    expect(find.textContaining('Incoming'), findsOneWidget);
-    expect(find.textContaining('Completed'), findsOneWidget);
+    expect(find.text('Money & Balances'), findsOneWidget);
 
-    // Switch to Me Tab
-    await tester.tap(find.text('Me'));
+    // Switch to Profile Tab
+    await tester.tap(find.byIcon(Icons.person_outline_rounded));
     await tester.pumpAndSettle();
-    expect(find.text('Recovery Phrase Backup'), findsOneWidget);
-    expect(find.text('Appearance'), findsOneWidget);
-    expect(find.text('Display Currency'), findsOneWidget);
-    expect(find.text('Sign out'), findsOneWidget);
+    expect(find.text('Edit Profile'), findsOneWidget);
   });
 
-  testWidgets('Center Pay button opens Pay Action Sheet modal', (
+  testWidgets('Pay Tab displays Pay Again carousel and Everyday services', (
     WidgetTester tester,
   ) async {
     tester.view.physicalSize = const Size(800, 1600);
@@ -89,15 +96,18 @@ void main() {
     );
     await tester.pumpAndSettle();
 
-    // Tap center Pay button
-    await tester.tap(find.byIcon(Icons.arrow_upward_rounded).last);
+    // Tap center action button to launch Pay
+    await tester.tap(find.byKey(const Key('navbar_center_action_button')));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Pay Everyday Bills'));
     await tester.pumpAndSettle();
 
-    // Verify modal sheet contents
-    expect(find.text('What would you like to do?'), findsOneWidget);
-    expect(find.text('Send Instant'), findsOneWidget);
-    expect(find.text('Send Protected'), findsOneWidget);
-    expect(find.text('Receive Bitcoin'), findsOneWidget);
-    expect(find.text('Scan'), findsOneWidget);
+    // Verify Pay Hub content
+    expect(find.text('Pay'), findsWidgets);
+    expect(find.text('Recent'), findsOneWidget);
+    expect(find.text('Airtime'), findsOneWidget);
+    expect(find.text('Data Bundles'), findsOneWidget);
+    expect(find.text('Electricity'), findsOneWidget);
+    expect(find.text('TV Cables'), findsOneWidget);
   });
 }

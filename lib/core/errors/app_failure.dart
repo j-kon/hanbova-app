@@ -1,7 +1,7 @@
 class AppFailure {
   final String message;
   final String? code;
-  final dynamic originalError;
+  final Object? originalError;
 
   const AppFailure({
     required this.message,

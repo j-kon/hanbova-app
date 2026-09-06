@@ -18,6 +18,7 @@ class _BeneficiariesScreenState extends ConsumerState<BeneficiariesScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final colors = context.colors;
     final demoState = ref.watch(demoModeProvider);
     final beneficiaries = demoState.demoBeneficiaries;
 
@@ -38,14 +39,15 @@ class _BeneficiariesScreenState extends ConsumerState<BeneficiariesScreen> {
           }).toList();
 
     return Scaffold(
-      backgroundColor: AppColors.darkBackground,
+      backgroundColor: colors.background,
       appBar: AppBar(
-        backgroundColor: AppColors.darkBackground,
+        backgroundColor: colors.background,
         elevation: 0,
-        title: const Text(
+        iconTheme: IconThemeData(color: colors.textPrimary),
+        title: Text(
           'People & Beneficiaries',
           style: TextStyle(
-            color: Colors.white,
+            color: colors.textPrimary,
             fontSize: 20,
             fontWeight: FontWeight.bold,
           ),
@@ -53,8 +55,8 @@ class _BeneficiariesScreenState extends ConsumerState<BeneficiariesScreen> {
       ),
       floatingActionButton: FloatingActionButton.extended(
         onPressed: () => _showAddBeneficiaryDialog(context),
-        backgroundColor: AppColors.primary,
-        foregroundColor: Colors.black,
+        backgroundColor: colors.primary,
+        foregroundColor: AppColors.charcoal,
         icon: const Icon(Icons.person_add_alt_1_outlined),
         label: const Text('Add Recipient',
             style: TextStyle(fontWeight: FontWeight.bold)),
@@ -74,15 +76,20 @@ class _BeneficiariesScreenState extends ConsumerState<BeneficiariesScreen> {
                     label: Text(
                       cat,
                       style: TextStyle(
-                        color: isSelected ? Colors.black : Colors.white,
+                        color: isSelected
+                            ? AppColors.charcoal
+                            : colors.textPrimary,
                         fontWeight:
                             isSelected ? FontWeight.bold : FontWeight.normal,
                         fontSize: 12,
                       ),
                     ),
                     selected: isSelected,
-                    selectedColor: AppColors.primary,
-                    backgroundColor: AppColors.darkCardBackground,
+                    selectedColor: colors.primary,
+                    backgroundColor: colors.surfaceCard,
+                    side: BorderSide(
+                      color: isSelected ? colors.primary : colors.border,
+                    ),
                     onSelected: (val) {
                       if (val) {
                         setState(() => _selectedFilter = cat);
@@ -103,23 +110,22 @@ class _BeneficiariesScreenState extends ConsumerState<BeneficiariesScreen> {
                         Icon(
                           Icons.people_outline_rounded,
                           size: 64,
-                          color: AppColors.darkTextSecondary
-                              .withValues(alpha: 0.5),
+                          color: colors.textSecondary.withValues(alpha: 0.5),
                         ),
                         const SizedBox(height: 16),
-                        const Text(
+                        Text(
                           'No Beneficiaries Found',
                           style: TextStyle(
-                            color: Colors.white,
+                            color: colors.textPrimary,
                             fontSize: 18,
                             fontWeight: FontWeight.bold,
                           ),
                         ),
                         const SizedBox(height: 8),
-                        const Text(
+                        Text(
                           'Save frequent recipients for instant one-tap transfers.',
                           style: TextStyle(
-                            color: AppColors.darkTextSecondary,
+                            color: colors.textSecondary,
                             fontSize: 13,
                           ),
                         ),
@@ -131,7 +137,7 @@ class _BeneficiariesScreenState extends ConsumerState<BeneficiariesScreen> {
                     itemCount: filtered.length,
                     itemBuilder: (context, index) {
                       final ben = filtered[index];
-                      return _buildBeneficiaryCard(ben);
+                      return _buildBeneficiaryCard(ben, colors);
                     },
                   ),
           ),
@@ -140,7 +146,7 @@ class _BeneficiariesScreenState extends ConsumerState<BeneficiariesScreen> {
     );
   }
 
-  Widget _buildBeneficiaryCard(BeneficiaryItem ben) {
+  Widget _buildBeneficiaryCard(BeneficiaryItem ben, HanbovaColors colors) {
     final (icon, color, typeLabel) = _getTypeVisuals(ben.type);
     final lastUsed = DateFormat('MMM d, yyyy').format(ben.lastUsedAt);
 
@@ -148,9 +154,9 @@ class _BeneficiariesScreenState extends ConsumerState<BeneficiariesScreen> {
       margin: const EdgeInsets.only(bottom: 12),
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
-        color: AppColors.darkCardBackground,
+        color: colors.surfaceCard,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: AppColors.darkBorder),
+        border: Border.all(color: colors.border),
       ),
       child: Row(
         children: [
@@ -174,8 +180,8 @@ class _BeneficiariesScreenState extends ConsumerState<BeneficiariesScreen> {
                         ben.name,
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
-                        style: const TextStyle(
-                          color: Colors.white,
+                        style: TextStyle(
+                          color: colors.textPrimary,
                           fontSize: 15,
                           fontWeight: FontWeight.bold,
                         ),
@@ -186,13 +192,14 @@ class _BeneficiariesScreenState extends ConsumerState<BeneficiariesScreen> {
                       padding: const EdgeInsets.symmetric(
                           horizontal: 6, vertical: 2),
                       decoration: BoxDecoration(
-                        color: AppColors.darkBorder,
+                        color: colors.surfaceElevated,
                         borderRadius: BorderRadius.circular(4),
+                        border: Border.all(color: colors.border),
                       ),
                       child: Text(
                         typeLabel,
-                        style: const TextStyle(
-                          color: AppColors.darkTextSecondary,
+                        style: TextStyle(
+                          color: colors.textSecondary,
                           fontSize: 10,
                           fontWeight: FontWeight.w600,
                         ),
@@ -206,7 +213,7 @@ class _BeneficiariesScreenState extends ConsumerState<BeneficiariesScreen> {
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                   style: TextStyle(
-                    color: AppColors.primary.withValues(alpha: 0.9),
+                    color: colors.primary.withValues(alpha: 0.9),
                     fontSize: 12,
                     fontWeight: FontWeight.w500,
                   ),
@@ -217,8 +224,8 @@ class _BeneficiariesScreenState extends ConsumerState<BeneficiariesScreen> {
                     '${ben.bankOrOperator} • Last sent: $lastUsed',
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
-                    style: const TextStyle(
-                      color: AppColors.darkTextSecondary,
+                    style: TextStyle(
+                      color: colors.textSecondary,
                       fontSize: 11,
                     ),
                   ),
@@ -229,8 +236,7 @@ class _BeneficiariesScreenState extends ConsumerState<BeneficiariesScreen> {
           IconButton(
             constraints: const BoxConstraints(),
             padding: const EdgeInsets.all(8),
-            icon: const Icon(Icons.send_rounded,
-                color: AppColors.primary, size: 20),
+            icon: Icon(Icons.send_rounded, color: colors.primary, size: 20),
             onPressed: () {
               Navigator.push(
                 context,
@@ -241,16 +247,15 @@ class _BeneficiariesScreenState extends ConsumerState<BeneficiariesScreen> {
           PopupMenuButton<String>(
             constraints: const BoxConstraints(),
             padding: const EdgeInsets.all(6),
-            icon: const Icon(Icons.more_vert,
-                color: AppColors.darkTextSecondary, size: 18),
-            color: AppColors.darkCardBackground,
+            icon: Icon(Icons.more_vert, color: colors.textSecondary, size: 18),
+            color: colors.surfaceCard,
             onSelected: (val) {
               if (val == 'delete') {
                 ref.read(demoModeProvider.notifier).removeBeneficiary(ben.id);
                 ScaffoldMessenger.of(context).showSnackBar(
                   SnackBar(
                     content: Text('${ben.name} removed from beneficiaries'),
-                    backgroundColor: AppColors.primary,
+                    backgroundColor: colors.primary,
                   ),
                 );
               }
@@ -293,6 +298,7 @@ class _BeneficiariesScreenState extends ConsumerState<BeneficiariesScreen> {
   }
 
   void _showAddBeneficiaryDialog(BuildContext context) {
+    final colors = context.colors;
     final nameCtrl = TextEditingController();
     final handleCtrl = TextEditingController();
     String type = 'lightning';
@@ -301,40 +307,55 @@ class _BeneficiariesScreenState extends ConsumerState<BeneficiariesScreen> {
       context: context,
       builder: (ctx) => StatefulBuilder(
         builder: (context, setState) => AlertDialog(
-          backgroundColor: AppColors.darkCardBackground,
-          title: const Text('Add Recipient',
-              style: TextStyle(color: Colors.white)),
+          backgroundColor: colors.surfaceCard,
+          title: Text('Add Recipient',
+              style: TextStyle(color: colors.textPrimary)),
           content: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
               TextField(
                 controller: nameCtrl,
-                style: const TextStyle(color: Colors.white),
-                decoration: const InputDecoration(
+                style: TextStyle(color: colors.textPrimary),
+                decoration: InputDecoration(
                   labelText: 'Recipient Name',
-                  labelStyle: TextStyle(color: AppColors.darkTextSecondary),
+                  labelStyle: TextStyle(color: colors.textSecondary),
                   enabledBorder: UnderlineInputBorder(
-                      borderSide: BorderSide(color: AppColors.darkBorder)),
+                      borderSide: BorderSide(color: colors.border)),
+                  focusedBorder: UnderlineInputBorder(
+                      borderSide: BorderSide(color: colors.primary)),
                 ),
               ),
               const SizedBox(height: 12),
               DropdownButtonFormField<String>(
+                isExpanded: true,
                 initialValue: type,
-                dropdownColor: AppColors.darkCardBackground,
-                style: const TextStyle(color: Colors.white),
-                decoration: const InputDecoration(
+                dropdownColor: colors.surfaceCard,
+                style: TextStyle(color: colors.textPrimary),
+                decoration: InputDecoration(
                   labelText: 'Payment Method',
-                  labelStyle: TextStyle(color: AppColors.darkTextSecondary),
+                  labelStyle: TextStyle(color: colors.textSecondary),
+                  enabledBorder: UnderlineInputBorder(
+                      borderSide: BorderSide(color: colors.border)),
+                  focusedBorder: UnderlineInputBorder(
+                      borderSide: BorderSide(color: colors.primary)),
                 ),
-                items: const [
+                items: [
                   DropdownMenuItem(
-                      value: 'lightning', child: Text('Lightning Address')),
+                      value: 'lightning',
+                      child: Text('Lightning Address',
+                          style: TextStyle(color: colors.textPrimary))),
                   DropdownMenuItem(
                       value: 'mobile_money',
-                      child: Text('Mobile Money Number')),
-                  DropdownMenuItem(value: 'bank', child: Text('Bank Account')),
+                      child: Text('Mobile Money Number',
+                          style: TextStyle(color: colors.textPrimary))),
                   DropdownMenuItem(
-                      value: 'bitcoin', child: Text('Bitcoin Onchain Address')),
+                      value: 'bank',
+                      child: Text('Bank Account',
+                          style: TextStyle(color: colors.textPrimary))),
+                  DropdownMenuItem(
+                      value: 'bitcoin',
+                      child: Text('Bitcoin Onchain Address',
+                          style: TextStyle(color: colors.textPrimary))),
                 ],
                 onChanged: (val) {
                   if (val != null) setState(() => type = val);
@@ -343,7 +364,7 @@ class _BeneficiariesScreenState extends ConsumerState<BeneficiariesScreen> {
               const SizedBox(height: 12),
               TextField(
                 controller: handleCtrl,
-                style: const TextStyle(color: Colors.white),
+                style: TextStyle(color: colors.textPrimary),
                 decoration: InputDecoration(
                   labelText: type == 'lightning'
                       ? 'e.g. user@getalby.com'
@@ -352,10 +373,11 @@ class _BeneficiariesScreenState extends ConsumerState<BeneficiariesScreen> {
                           : type == 'bank'
                               ? 'Account Number & Bank'
                               : 'bc1q...',
-                  labelStyle:
-                      const TextStyle(color: AppColors.darkTextSecondary),
-                  enabledBorder: const UnderlineInputBorder(
-                      borderSide: BorderSide(color: AppColors.darkBorder)),
+                  labelStyle: TextStyle(color: colors.textSecondary),
+                  enabledBorder: UnderlineInputBorder(
+                      borderSide: BorderSide(color: colors.border)),
+                  focusedBorder: UnderlineInputBorder(
+                      borderSide: BorderSide(color: colors.primary)),
                 ),
               ),
             ],
@@ -363,8 +385,8 @@ class _BeneficiariesScreenState extends ConsumerState<BeneficiariesScreen> {
           actions: [
             TextButton(
               onPressed: () => Navigator.pop(ctx),
-              child: const Text('Cancel',
-                  style: TextStyle(color: AppColors.darkTextSecondary)),
+              child:
+                  Text('Cancel', style: TextStyle(color: colors.textSecondary)),
             ),
             ElevatedButton(
               onPressed: () {
@@ -395,8 +417,8 @@ class _BeneficiariesScreenState extends ConsumerState<BeneficiariesScreen> {
                 }
               },
               style: ElevatedButton.styleFrom(
-                backgroundColor: AppColors.primary,
-                foregroundColor: Colors.black,
+                backgroundColor: colors.primary,
+                foregroundColor: AppColors.charcoal,
               ),
               child: const Text('Save'),
             ),

@@ -1,7 +1,7 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:hanbova_app/features/transactions/domain/activity_export_service.dart';
 import 'package:hanbova_app/features/transactions/domain/transaction_model.dart';
-import 'package:hanbova_app/features/transactions/presentation/transactions_provider.dart';
+import 'support/memory_transaction_ledger.dart';
 
 void main() {
   group('Unified Transaction Model & Category Tests', () {
@@ -104,10 +104,10 @@ void main() {
 
     test(
         'TransactionsNotifier records bill payments and travel items correctly',
-        () {
-      final notifier = TransactionsNotifier();
+        () async {
+      final notifier = await createMemoryTransactionsNotifier();
 
-      notifier.recordBillPayment(
+      await notifier.recordBillPayment(
         id: 'bill-101',
         type: TransactionType.electricity,
         billerName: 'Kenya Power (KPLC Prepaid)',
@@ -129,7 +129,7 @@ void main() {
       expect(recorded.receiptReference, equals('REC-KPLC-84910'));
       expect(recorded.category, equals(TransactionCategory.bills));
 
-      notifier.recordEsimPurchase(
+      await notifier.recordEsimPurchase(
         id: '8901260000000000123',
         planName: 'Kenya Roaming 3GB',
         amountSats: 5000,

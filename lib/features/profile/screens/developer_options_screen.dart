@@ -12,6 +12,8 @@ import '../../../core/theme/app_radius.dart';
 import '../../../core/theme/app_spacing.dart';
 import '../../../core/theme/app_typography.dart';
 import '../../auth/providers/auth_provider.dart';
+import '../../../core/demo/demo_personas.dart';
+import '../../transactions/presentation/transactions_provider.dart';
 
 class DeveloperOptionsScreen extends ConsumerStatefulWidget {
   const DeveloperOptionsScreen({super.key});
@@ -53,6 +55,17 @@ class _DeveloperOptionsScreenState
   void _onSelectNetwork(HanbovaNetwork selectedNet, HanbovaNetwork currentNet) {
     if (selectedNet == currentNet) return;
 
+    if (selectedNet == HanbovaNetwork.mainnet &&
+        !NetworkConfig.isMainnetPilotBuild) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Mainnet is unavailable in this build.'),
+          backgroundColor: Colors.redAccent,
+        ),
+      );
+      return;
+    }
+
     if (selectedNet == HanbovaNetwork.mainnet) {
       showDialog(
         context: context,
@@ -88,11 +101,10 @@ class _DeveloperOptionsScreenState
             ElevatedButton(
               onPressed: () {
                 Navigator.pop(ctx);
-                ref.read(mainnetPilotOverrideProvider.notifier).state = true;
                 ref.read(selectedMintUrlProvider.notifier).state = null;
                 ref
                     .read(networkEnvironmentProvider.notifier)
-                    .setNetwork(HanbovaNetwork.mainnet, pilotOverride: true);
+                    .setNetwork(HanbovaNetwork.mainnet);
                 ref.invalidate(cashuBalanceProvider);
                 ScaffoldMessenger.of(context).showSnackBar(
                   const SnackBar(
@@ -265,6 +277,78 @@ class _DeveloperOptionsScreenState
                 ],
               ),
             ),
+            // Market Experience Personas
+            _SectionHeader(title: 'Market Experience Personas'),
+            Container(
+              padding: const EdgeInsets.all(AppSpacing.md),
+              decoration: BoxDecoration(
+                color: colors.surfaceCard,
+                borderRadius: AppRadius.mdRadius,
+                border: Border.all(color: colors.border),
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'Quick switch between architecture personas to test adaptive capabilities, rail states, and currency handling.',
+                    style: AppTypography.bodySmall
+                        .copyWith(color: colors.textSecondary),
+                  ),
+                  const SizedBox(height: AppSpacing.md),
+                  ...[
+                    DemoPersonas.personaA,
+                    DemoPersonas.personaB,
+                    DemoPersonas.personaC,
+                  ].map((persona) => Padding(
+                        padding: const EdgeInsets.only(bottom: 8),
+                        child: SizedBox(
+                          width: double.infinity,
+                          child: OutlinedButton(
+                            onPressed: () async {
+                              await applyPersona(ref, persona);
+                              if (context.mounted) {
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  SnackBar(
+                                    content: Text(
+                                      'Applied ${persona.name}: ${persona.residenceCountry} (Roam: ${persona.roamEnabled ? persona.roamDestination : "Off"})',
+                                    ),
+                                    backgroundColor: colors.primary,
+                                  ),
+                                );
+                              }
+                            },
+                            style: OutlinedButton.styleFrom(
+                              foregroundColor: colors.textPrimary,
+                              side: BorderSide(color: colors.border),
+                              alignment: Alignment.centerLeft,
+                              padding: const EdgeInsets.symmetric(
+                                  horizontal: 14, vertical: 10),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: AppRadius.smRadius,
+                              ),
+                            ),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(persona.name,
+                                    style: const TextStyle(
+                                        fontWeight: FontWeight.bold)),
+                                const SizedBox(height: 2),
+                                Text(
+                                  persona.description,
+                                  style: TextStyle(
+                                    color: colors.textTertiary,
+                                    fontSize: 11,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                      )),
+                ],
+              ),
+            ),
             const SizedBox(height: AppSpacing.md),
 
             // Active Keys Card
@@ -339,6 +423,54 @@ class _DeveloperOptionsScreenState
             const _InfoTile(
                 label: 'NUT-00 to NUT-06',
                 value: 'Supported (Mint, Keysets, Tokens, Split, Melt)'),
+            _SectionHeader(title: 'Presentation & Demo Controls'),
+            Container(
+              margin: const EdgeInsets.only(bottom: AppSpacing.md),
+              padding: const EdgeInsets.all(AppSpacing.md),
+              decoration: BoxDecoration(
+                color: colors.surfaceCard,
+                borderRadius: AppRadius.mdRadius,
+                border:
+                    Border.all(color: colors.primary.withValues(alpha: 0.3)),
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  Row(
+                    children: [
+                      Icon(Icons.slideshow_rounded, color: colors.primary),
+                      const SizedBox(width: AppSpacing.sm),
+                      Text('Fellowship Demo Seeder',
+                          style: AppTypography.titleSmall
+                              .copyWith(color: colors.textPrimary)),
+                    ],
+                  ),
+                  const SizedBox(height: AppSpacing.xs),
+                  Text(
+                    'Populate realistic African commerce transactions (Instant Lightning, Protected Escrow, Claims, and Refunds) for live pitch demos.',
+                    style: AppTypography.bodySmall
+                        .copyWith(color: colors.textSecondary, fontSize: 12),
+                  ),
+                  const SizedBox(height: AppSpacing.md),
+                  ElevatedButton.icon(
+                    onPressed: () async {
+                      final messenger = ScaffoldMessenger.of(context);
+                      await ref
+                          .read(transactionsProvider.notifier)
+                          .seedDemoTransactions();
+                      if (!mounted) return;
+                      messenger.showSnackBar(
+                        const SnackBar(
+                            content: Text(
+                                'Populated demo transactions across all 4 categories!')),
+                      );
+                    },
+                    icon: const Icon(Icons.auto_fix_high_rounded, size: 18),
+                    label: const Text('Seed Demo Transactions'),
+                  ),
+                ],
+              ),
+            ),
 
             OutlinedButton(
               onPressed: () {

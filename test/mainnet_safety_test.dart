@@ -36,8 +36,7 @@ void main() {
       final local = NetworkConfig.fromNetwork(HanbovaNetwork.local);
       final testnet = NetworkConfig.fromNetwork(HanbovaNetwork.cashuTest);
       final mainnetLocked = NetworkConfig.fromNetwork(HanbovaNetwork.mainnet);
-      final mainnetPilot =
-          NetworkConfig.fromNetwork(HanbovaNetwork.mainnet, pilotActive: true);
+      const mainnetPilot = NetworkConfig.mainnetPilot;
 
       // Verify storage prefix isolation
       expect(local.storagePrefix, 'wallet_local');
@@ -124,8 +123,7 @@ void main() {
     test(
         'Controlled Mainnet Pilot config enforces strict caps and allowlisted mint',
         () {
-      final pilot =
-          NetworkConfig.fromNetwork(HanbovaNetwork.mainnet, pilotActive: true);
+      const pilot = NetworkConfig.mainnetPilot;
       expect(pilot.isPilot, isTrue);
       expect(pilot.isEnabled, isTrue);
       expect(pilot.maxWalletBalanceSats, 10000);
@@ -135,9 +133,16 @@ void main() {
       expect(pilot.displayName, contains('Pilot'));
     });
 
-    test(
-        'Active Network Config Provider correctly resolves pilot override & allowlisted mint',
-        () {
+    test('runtime pilot flags cannot unlock mainnet in an ordinary build', () {
+      final config = NetworkConfig.fromNetwork(HanbovaNetwork.mainnet);
+
+      expect(config, same(NetworkConfig.mainnetLocked));
+      expect(config.isEnabled, isFalse);
+      expect(config.storagePrefix, 'wallet_mainnet');
+    });
+
+    test('Active Network Config Provider cannot be runtime-overridden',
+        () async {
       final container = ProviderContainer();
       addTearDown(container.dispose);
 
@@ -152,26 +157,14 @@ void main() {
       expect(container.read(selectedMintUrlProvider),
           'https://testnut.cashu.space');
 
-      // Enable Controlled Mainnet Pilot override
-      container.read(mainnetPilotOverrideProvider.notifier).state = true;
-      container.read(networkEnvironmentProvider.notifier).setNetwork(
-            HanbovaNetwork.mainnet,
-            pilotOverride: true,
-          );
+      await container
+          .read(networkEnvironmentProvider.notifier)
+          .setNetwork(HanbovaNetwork.mainnet);
 
-      final pilotConfig = container.read(activeNetworkConfigProvider);
-      expect(pilotConfig.isPilot, isTrue);
-      expect(pilotConfig.network, HanbovaNetwork.mainnet);
-      expect(pilotConfig.defaultMintUrl, 'https://mint.minibits.cash/Bitcoin');
-      expect(pilotConfig.maxWalletBalanceSats, 10000);
-      expect(pilotConfig.maxSendSats, 5000);
-
-      // In pilot mode, effective mint URL MUST ALWAYS be Minibits allowlist
-      final effectiveMintUrl = pilotConfig.isPilot
-          ? pilotConfig.defaultMintUrl
-          : (container.read(selectedMintUrlProvider) ??
-              pilotConfig.defaultMintUrl);
-      expect(effectiveMintUrl, 'https://mint.minibits.cash/Bitcoin');
+      expect(container.read(networkEnvironmentProvider), HanbovaNetwork.local);
+      final config = container.read(activeNetworkConfigProvider);
+      expect(config.network, HanbovaNetwork.local);
+      expect(config.isPilot, isFalse);
     });
 
     test('Total balance cap calculations enforce 10,000 sats limit fail-closed',

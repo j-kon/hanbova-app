@@ -2,11 +2,15 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+
+import '../../../core/network/network_environment.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_radius.dart';
 import '../../../core/theme/app_spacing.dart';
 import '../../../core/theme/app_typography.dart';
+import '../../send/domain/lightning_request_parser.dart';
 
+/// Manual payment-request entry while camera scanning is unavailable.
 class ScanScreen extends ConsumerStatefulWidget {
   const ScanScreen({super.key});
 
@@ -16,7 +20,7 @@ class ScanScreen extends ConsumerStatefulWidget {
 
 class _ScanScreenState extends ConsumerState<ScanScreen> {
   final _manualInputController = TextEditingController();
-  bool _showManualInput = false;
+  String? _validationMessage;
 
   @override
   void dispose() {
@@ -24,25 +28,43 @@ class _ScanScreenState extends ConsumerState<ScanScreen> {
     super.dispose();
   }
 
-  void _processScannedCode(String rawCode) {
-    final code = rawCode.trim();
-    if (code.isEmpty) return;
-
-    if (code.startsWith('hnbv_claim_') || code.contains('/claim/')) {
-      // Hanbova Claim code
-      context.push('/claim?code=$code');
-    } else if (code.startsWith('lnbc') ||
-        code.startsWith('LNBC') ||
-        code.startsWith('lightning:')) {
-      // Lightning invoice
-      context.push('/send?invoice=$code');
-    } else if (code.startsWith('@')) {
-      // Hanbova handle
-      context.push('/send?recipient=$code');
-    } else {
-      // Default to claim
-      context.push('/claim?code=$code');
+  void _continueWithRequest() {
+    final value = _manualInputController.text.trim();
+    if (value.isEmpty) {
+      setState(
+          () => _validationMessage = 'Paste a payment request to continue.');
+      return;
     }
+    if (value.toLowerCase().startsWith('cashua') ||
+        value.toLowerCase().startsWith('cashub')) {
+      setState(
+        () => _validationMessage = 'Cashu token import is not available yet.',
+      );
+      return;
+    }
+    if (value.startsWith('hnbv_claim_') || value.contains('/claim/')) {
+      context.push('/claim?code=${Uri.encodeComponent(value)}');
+      return;
+    }
+
+    try {
+      final invoice = LightningRequestParser.parse(
+        value,
+        ref.read(networkEnvironmentProvider),
+      );
+      context.push('/send?invoice=${Uri.encodeComponent(invoice)}');
+    } on InvalidLightningRequest catch (error) {
+      setState(() => _validationMessage = error.message);
+    }
+  }
+
+  Future<void> _pasteFromClipboard() async {
+    final data = await Clipboard.getData('text/plain');
+    if (!mounted || data?.text == null) return;
+    setState(() {
+      _manualInputController.text = data!.text!;
+      _validationMessage = null;
+    });
   }
 
   @override
@@ -50,160 +72,103 @@ class _ScanScreenState extends ConsumerState<ScanScreen> {
     final colors = context.colors;
 
     return Scaffold(
-      backgroundColor: Colors.black,
+      backgroundColor: colors.background,
       appBar: AppBar(
-        backgroundColor: Colors.transparent,
-        title:
-            const Text('Scan QR Code', style: TextStyle(color: Colors.white)),
+        backgroundColor: colors.background,
+        title: const Text('Enter payment request'),
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: Colors.white),
+          tooltip: 'Back',
+          icon: const Icon(Icons.arrow_back),
           onPressed: () => context.pop(),
         ),
-        actions: [
-          IconButton(
-            icon: Icon(
-                _showManualInput ? Icons.qr_code_scanner : Icons.keyboard,
-                color: Colors.white),
-            onPressed: () =>
-                setState(() => _showManualInput = !_showManualInput),
-          ),
-        ],
       ),
       body: SafeArea(
-        child: Column(
-          children: [
-            Expanded(
-              child: _showManualInput
-                  ? Container(
-                      color: colors.background,
-                      padding: const EdgeInsets.all(AppSpacing.xl),
+        child: SingleChildScrollView(
+          padding: const EdgeInsets.all(AppSpacing.lg),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Container(
+                padding: const EdgeInsets.all(AppSpacing.md),
+                decoration: BoxDecoration(
+                  color: colors.surfaceCard,
+                  border: Border.all(color: colors.border),
+                  borderRadius: AppRadius.mdRadius,
+                ),
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Icon(
+                      Icons.photo_camera_outlined,
+                      color: colors.textSecondary,
+                    ),
+                    const SizedBox(width: AppSpacing.sm),
+                    Expanded(
                       child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.stretch,
+                        crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
-                            'Enter code or invoice',
-                            style: AppTypography.titleMedium
-                                .copyWith(color: colors.textPrimary),
-                          ),
-                          const SizedBox(height: AppSpacing.sm),
-                          TextField(
-                            controller: _manualInputController,
-                            maxLines: 4,
-                            decoration: const InputDecoration(
-                              hintText:
-                                  'Paste Lightning invoice, Cashu token, or Hanbova claim code...',
+                            'Camera scanning coming soon',
+                            style: AppTypography.titleSmall.copyWith(
+                              color: colors.textPrimary,
                             ),
                           ),
-                          const SizedBox(height: AppSpacing.md),
-                          ElevatedButton(
-                            onPressed: () => _processScannedCode(
-                                _manualInputController.text),
-                            child: const Text('Continue'),
-                          ),
-                          const SizedBox(height: AppSpacing.sm),
-                          OutlinedButton.icon(
-                            onPressed: () async {
-                              final data =
-                                  await Clipboard.getData('text/plain');
-                              if (data?.text != null) {
-                                _manualInputController.text = data!.text!;
-                              }
-                            },
-                            icon: const Icon(Icons.paste, size: 18),
-                            label: const Text('Paste from clipboard'),
+                          const SizedBox(height: AppSpacing.xs),
+                          Text(
+                            'For now, paste a Lightning invoice or Hanbova claim code.',
+                            style: AppTypography.bodySmall.copyWith(
+                              color: colors.textSecondary,
+                            ),
                           ),
                         ],
                       ),
-                    )
-                  : Stack(
-                      alignment: Alignment.center,
-                      children: [
-                        // Viewfinder Box
-                        Container(
-                          width: 260,
-                          height: 260,
-                          decoration: BoxDecoration(
-                            border: Border.all(color: colors.primary, width: 2),
-                            borderRadius: AppRadius.lgRadius,
-                          ),
-                          child: Stack(
-                            children: [
-                              Positioned(
-                                top: 8,
-                                left: 8,
-                                child: Container(
-                                    width: 24,
-                                    height: 24,
-                                    decoration: BoxDecoration(
-                                        border: Border(
-                                            top: BorderSide(
-                                                color: colors.primary,
-                                                width: 4),
-                                            left: BorderSide(
-                                                color: colors.primary,
-                                                width: 4)))),
-                              ),
-                              Positioned(
-                                top: 8,
-                                right: 8,
-                                child: Container(
-                                    width: 24,
-                                    height: 24,
-                                    decoration: BoxDecoration(
-                                        border: Border(
-                                            top: BorderSide(
-                                                color: colors.primary,
-                                                width: 4),
-                                            right: BorderSide(
-                                                color: colors.primary,
-                                                width: 4)))),
-                              ),
-                              Positioned(
-                                bottom: 8,
-                                left: 8,
-                                child: Container(
-                                    width: 24,
-                                    height: 24,
-                                    decoration: BoxDecoration(
-                                        border: Border(
-                                            bottom: BorderSide(
-                                                color: colors.primary,
-                                                width: 4),
-                                            left: BorderSide(
-                                                color: colors.primary,
-                                                width: 4)))),
-                              ),
-                              Positioned(
-                                bottom: 8,
-                                right: 8,
-                                child: Container(
-                                    width: 24,
-                                    height: 24,
-                                    decoration: BoxDecoration(
-                                        border: Border(
-                                            bottom: BorderSide(
-                                                color: colors.primary,
-                                                width: 4),
-                                            right: BorderSide(
-                                                color: colors.primary,
-                                                width: 4)))),
-                              ),
-                            ],
-                          ),
-                        ),
-                      ],
                     ),
-            ),
-            Container(
-              padding: const EdgeInsets.all(AppSpacing.lg),
-              color: Colors.black,
-              child: Text(
-                'Align the QR code within the frame to scan automatically',
-                style: AppTypography.bodySmall.copyWith(color: Colors.white70),
-                textAlign: TextAlign.center,
+                  ],
+                ),
               ),
-            ),
-          ],
+              const SizedBox(height: AppSpacing.xl),
+              Text(
+                'Paste payment request',
+                style: AppTypography.titleMedium.copyWith(
+                  color: colors.textPrimary,
+                ),
+              ),
+              const SizedBox(height: AppSpacing.sm),
+              TextField(
+                controller: _manualInputController,
+                minLines: 3,
+                maxLines: 5,
+                textInputAction: TextInputAction.done,
+                onChanged: (_) {
+                  if (_validationMessage != null) {
+                    setState(() => _validationMessage = null);
+                  }
+                },
+                decoration: InputDecoration(
+                  hintText: 'Lightning invoice or Hanbova claim code',
+                  errorText: _validationMessage,
+                  alignLabelWithHint: true,
+                ),
+              ),
+              const SizedBox(height: AppSpacing.md),
+              OutlinedButton.icon(
+                onPressed: _pasteFromClipboard,
+                icon: const Icon(Icons.paste_outlined),
+                label: const Text('Paste from clipboard'),
+                style: OutlinedButton.styleFrom(
+                  minimumSize: const Size.fromHeight(48),
+                ),
+              ),
+              const SizedBox(height: AppSpacing.sm),
+              ElevatedButton(
+                onPressed: _continueWithRequest,
+                style: ElevatedButton.styleFrom(
+                  minimumSize: const Size.fromHeight(48),
+                ),
+                child: const Text('Continue'),
+              ),
+            ],
+          ),
         ),
       ),
     );

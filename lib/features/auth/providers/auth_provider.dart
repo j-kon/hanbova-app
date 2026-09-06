@@ -1,5 +1,6 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
+import '../../../core/errors/user_facing_error.dart';
 import '../../../core/networking/api_client.dart';
 import '../models/user_profile.dart';
 import '../services/auth_api_service.dart';
@@ -138,7 +139,7 @@ class AuthNotifier extends StateNotifier<AuthState> {
       state = AuthState.authenticated(profile, token);
       return true;
     } catch (e) {
-      state = AuthState.error(e.toString().replaceAll('Exception:', '').trim());
+      state = AuthState.error(UserFacingErrorMapper.from(e).message);
       return false;
     }
   }
@@ -166,7 +167,7 @@ class AuthNotifier extends StateNotifier<AuthState> {
       state = AuthState.authenticated(profile, token);
       return true;
     } catch (e) {
-      state = AuthState.error(e.toString().replaceAll('Exception:', '').trim());
+      state = AuthState.error(UserFacingErrorMapper.from(e).message);
       return false;
     }
   }

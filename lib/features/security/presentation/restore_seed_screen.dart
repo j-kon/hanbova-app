@@ -2,11 +2,15 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../../core/crypto/mnemonic_service.dart';
+import '../../../core/errors/app_failure.dart';
+import '../../../core/errors/user_facing_error.dart';
+import '../../../core/security/sensitive_screen_protection.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_radius.dart';
 import '../../../core/theme/app_spacing.dart';
 import '../../../core/theme/app_typography.dart';
 import '../../../core/wallet/wallet_context.dart';
+import '../../../l10n/app_localizations.dart';
 import '../application/restore_wallet_controller.dart';
 
 const restoredMessage =
@@ -80,12 +84,11 @@ class _RestoreSeedScreenState extends ConsumerState<RestoreSeedScreen> {
   }
 
   Future<void> _restoreWallet() async {
+    final l10n = AppLocalizations.of(context)!;
     final words = _controllers.map((c) => c.text.trim().toLowerCase()).toList();
     if (words.any((w) => w.isEmpty)) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-            content:
-                Text('Please fill in all 12 words of your recovery phrase')),
+        SnackBar(content: Text(l10n.restoreAllWordsRequired)),
       );
       return;
     }
@@ -95,9 +98,8 @@ class _RestoreSeedScreenState extends ConsumerState<RestoreSeedScreen> {
     if (!mounted) return;
     if (!isValid) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text(
-              'Invalid recovery phrase or checksum mismatch. Please check spelling.'),
+        SnackBar(
+          content: Text(l10n.invalidRecoveryPhrase),
           backgroundColor: Colors.redAccent,
         ),
       );
@@ -108,18 +110,16 @@ class _RestoreSeedScreenState extends ConsumerState<RestoreSeedScreen> {
       context: context,
       barrierDismissible: false,
       builder: (dialogContext) => AlertDialog(
-        title: const Text('Replace wallet identity?'),
-        content: const Text(
-          'This replaces the wallet identity for the signed-in account in this wallet environment.',
-        ),
+        title: Text(l10n.replaceWalletIdentity),
+        content: Text(l10n.replaceWalletIdentityDescription),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(dialogContext, false),
-            child: const Text('Cancel'),
+            child: Text(l10n.cancel),
           ),
           ElevatedButton(
             onPressed: () => Navigator.pop(dialogContext, true),
-            child: const Text('Replace Wallet'),
+            child: Text(l10n.replaceWallet),
           ),
         ],
       ),
@@ -142,16 +142,20 @@ class _RestoreSeedScreenState extends ConsumerState<RestoreSeedScreen> {
       setState(() => _isRestoring = false);
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text(failure.message),
+          content: Text(
+            UserFacingErrorMapper.from(
+              AppFailure(message: 'Wallet restore failed', code: failure.code),
+            ).message,
+          ),
           backgroundColor: Colors.redAccent,
         ),
       );
-    } catch (_) {
+    } catch (error) {
       if (!mounted) return;
       setState(() => _isRestoring = false);
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Wallet restore could not be completed.'),
+        SnackBar(
+          content: Text(UserFacingErrorMapper.from(error).message),
           backgroundColor: Colors.redAccent,
         ),
       );
@@ -159,11 +163,12 @@ class _RestoreSeedScreenState extends ConsumerState<RestoreSeedScreen> {
   }
 
   Future<void> _showRestoredDialog() {
+    final l10n = AppLocalizations.of(context)!;
     return showDialog<void>(
       context: context,
       barrierDismissible: false,
       builder: (dialogContext) => AlertDialog(
-        title: const Text('Wallet Restored'),
+        title: Text(l10n.walletRestored),
         content: const Text(restoredMessage),
         actions: [
           ElevatedButton(
@@ -171,7 +176,7 @@ class _RestoreSeedScreenState extends ConsumerState<RestoreSeedScreen> {
               Navigator.pop(dialogContext);
               context.go('/home');
             },
-            child: const Text('Go to Wallet'),
+            child: Text(l10n.goToWallet),
           ),
         ],
       ),
@@ -179,11 +184,12 @@ class _RestoreSeedScreenState extends ConsumerState<RestoreSeedScreen> {
   }
 
   Future<void> _showSyncPendingDialog() {
+    final l10n = AppLocalizations.of(context)!;
     return showDialog<void>(
       context: context,
       barrierDismissible: false,
       builder: (dialogContext) => AlertDialog(
-        title: const Text('Wallet Restored — Sync Pending'),
+        title: Text(l10n.walletRestoredSyncPending),
         content: const Text(syncPendingMessage),
         actions: [
           TextButton(
@@ -198,19 +204,19 @@ class _RestoreSeedScreenState extends ConsumerState<RestoreSeedScreen> {
                 return;
               }
               ScaffoldMessenger.of(dialogContext).showSnackBar(
-                const SnackBar(
-                  content: Text('Payment-key sync is still pending.'),
+                SnackBar(
+                  content: Text(l10n.syncStillPending),
                 ),
               );
             },
-            child: const Text('Retry sync'),
+            child: Text(l10n.retrySync),
           ),
           ElevatedButton(
             onPressed: () {
               Navigator.pop(dialogContext);
               context.go('/home');
             },
-            child: const Text('Continue'),
+            child: Text(l10n.continueLabel),
           ),
         ],
       ),
@@ -220,151 +226,157 @@ class _RestoreSeedScreenState extends ConsumerState<RestoreSeedScreen> {
   @override
   Widget build(BuildContext context) {
     final colors = context.colors;
+    final l10n = AppLocalizations.of(context)!;
     final activeContext = ref.watch(activeWalletContextKeyProvider);
 
-    return Scaffold(
-      backgroundColor: colors.background,
-      appBar: AppBar(
-        title: const Text('Restore from Phrase'),
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back),
-          onPressed: () => context.pop(),
+    return SensitiveScreenProtection(
+      child: Scaffold(
+        backgroundColor: colors.background,
+        appBar: AppBar(
+          title: Text(l10n.restoreFromPhrase),
+          leading: IconButton(
+            icon: const Icon(Icons.arrow_back),
+            onPressed: () => context.pop(),
+          ),
         ),
-      ),
-      body: SafeArea(
-        child: activeContext == null
-            ? _buildAuthenticationRequired(colors)
-            : Column(
-                children: [
-                  Expanded(
-                    child: SingleChildScrollView(
-                      padding: const EdgeInsets.all(AppSpacing.md),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.stretch,
-                        children: [
-                          Text(
-                            'Enter Your 12-Word Phrase',
-                            style: AppTypography.titleMedium
-                                .copyWith(color: colors.textPrimary),
-                          ),
-                          const SizedBox(height: AppSpacing.xs),
-                          Text(
-                            'Type in your recovery words in the exact sequence they were generated.',
-                            style: AppTypography.bodySmall
-                                .copyWith(color: colors.textSecondary),
-                          ),
-                          const SizedBox(height: AppSpacing.md),
-
-                          // 12 Words Input Grid
-                          GridView.builder(
-                            shrinkWrap: true,
-                            physics: const NeverScrollableScrollPhysics(),
-                            gridDelegate:
-                                const SliverGridDelegateWithFixedCrossAxisCount(
-                              crossAxisCount: 2,
-                              childAspectRatio: 2.8,
-                              crossAxisSpacing: AppSpacing.sm,
-                              mainAxisSpacing: AppSpacing.sm,
+        body: SafeArea(
+          child: activeContext == null
+              ? _buildAuthenticationRequired(colors)
+              : Column(
+                  children: [
+                    Expanded(
+                      child: SingleChildScrollView(
+                        padding: const EdgeInsets.all(AppSpacing.md),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.stretch,
+                          children: [
+                            Text(
+                              l10n.enterTwelveWordPhrase,
+                              style: AppTypography.titleMedium
+                                  .copyWith(color: colors.textPrimary),
                             ),
-                            itemCount: 12,
-                            itemBuilder: (context, i) {
-                              return Container(
-                                decoration: BoxDecoration(
-                                  color: colors.surfaceCard,
-                                  borderRadius: AppRadius.smRadius,
-                                  border: Border.all(
-                                    color: _activeField == i
-                                        ? colors.primary
-                                        : colors.border,
+                            const SizedBox(height: AppSpacing.xs),
+                            Text(
+                              l10n.enterRecoveryPhraseDescription,
+                              style: AppTypography.bodySmall
+                                  .copyWith(color: colors.textSecondary),
+                            ),
+                            const SizedBox(height: AppSpacing.md),
+
+                            // 12 Words Input Grid
+                            GridView.builder(
+                              shrinkWrap: true,
+                              physics: const NeverScrollableScrollPhysics(),
+                              gridDelegate:
+                                  const SliverGridDelegateWithFixedCrossAxisCount(
+                                crossAxisCount: 2,
+                                childAspectRatio: 2.8,
+                                crossAxisSpacing: AppSpacing.sm,
+                                mainAxisSpacing: AppSpacing.sm,
+                              ),
+                              itemCount: 12,
+                              itemBuilder: (context, i) {
+                                return Container(
+                                  decoration: BoxDecoration(
+                                    color: colors.surfaceCard,
+                                    borderRadius: AppRadius.smRadius,
+                                    border: Border.all(
+                                      color: _activeField == i
+                                          ? colors.primary
+                                          : colors.border,
+                                    ),
                                   ),
-                                ),
-                                child: Row(
-                                  children: [
-                                    Padding(
-                                      padding: const EdgeInsets.only(
-                                          left: 10, right: 4),
-                                      child: Text(
-                                        '${i + 1}.',
-                                        style: AppTypography.labelSmall
-                                            .copyWith(
-                                                color: colors.textTertiary),
-                                      ),
-                                    ),
-                                    Expanded(
-                                      child: TextField(
-                                        controller: _controllers[i],
-                                        focusNode: _focusNodes[i],
-                                        autocorrect: false,
-                                        enableSuggestions: false,
-                                        style: AppTypography.titleSmall
-                                            .copyWith(
-                                                color: colors.textPrimary,
-                                                fontSize: 13),
-                                        decoration: const InputDecoration(
-                                          border: InputBorder.none,
-                                          isDense: true,
-                                          contentPadding: EdgeInsets.symmetric(
-                                              horizontal: 4, vertical: 8),
+                                  child: Row(
+                                    children: [
+                                      Padding(
+                                        padding: const EdgeInsets.only(
+                                            left: 10, right: 4),
+                                        child: Text(
+                                          '${i + 1}.',
+                                          style: AppTypography.labelSmall
+                                              .copyWith(
+                                                  color: colors.textTertiary),
                                         ),
-                                        onChanged: (val) =>
-                                            _updateSuggestions(val),
                                       ),
-                                    ),
-                                  ],
-                                ),
-                              );
-                            },
-                          ),
-                          const SizedBox(height: AppSpacing.lg),
+                                      Expanded(
+                                        child: TextField(
+                                          controller: _controllers[i],
+                                          focusNode: _focusNodes[i],
+                                          autocorrect: false,
+                                          enableSuggestions: false,
+                                          style: AppTypography.titleSmall
+                                              .copyWith(
+                                                  color: colors.textPrimary,
+                                                  fontSize: 13),
+                                          decoration: const InputDecoration(
+                                            border: InputBorder.none,
+                                            isDense: true,
+                                            contentPadding:
+                                                EdgeInsets.symmetric(
+                                                    horizontal: 4, vertical: 8),
+                                          ),
+                                          onChanged: (val) =>
+                                              _updateSuggestions(val),
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                );
+                              },
+                            ),
+                            const SizedBox(height: AppSpacing.lg),
 
-                          ElevatedButton.icon(
-                            onPressed: _isRestoring ? null : _restoreWallet,
-                            icon: _isRestoring
-                                ? const SizedBox(
-                                    width: 18,
-                                    height: 18,
-                                    child: CircularProgressIndicator(
-                                        strokeWidth: 2))
-                                : const Icon(Icons.download_rounded, size: 18),
-                            label: const Text('Restore Wallet'),
-                          ),
-                        ],
+                            ElevatedButton.icon(
+                              onPressed: _isRestoring ? null : _restoreWallet,
+                              icon: _isRestoring
+                                  ? const SizedBox(
+                                      width: 18,
+                                      height: 18,
+                                      child: CircularProgressIndicator(
+                                          strokeWidth: 2))
+                                  : const Icon(Icons.download_rounded,
+                                      size: 18),
+                              label: Text(l10n.restoreWallet),
+                            ),
+                          ],
+                        ),
                       ),
                     ),
-                  ),
 
-                  // Word Autocomplete Strip
-                  if (_suggestions.isNotEmpty)
-                    Container(
-                      height: 52,
-                      color: colors.surfaceElevated,
-                      padding:
-                          const EdgeInsets.symmetric(horizontal: AppSpacing.sm),
-                      child: ListView.separated(
-                        scrollDirection: Axis.horizontal,
-                        itemCount: _suggestions.length,
-                        separatorBuilder: (_, __) =>
-                            const SizedBox(width: AppSpacing.xs),
-                        itemBuilder: (context, idx) {
-                          final sug = _suggestions[idx];
-                          return ActionChip(
-                            label: Text(sug),
-                            onPressed: () => _selectSuggestion(sug),
-                            backgroundColor: colors.surfaceCard,
-                            labelStyle: AppTypography.bodySmall.copyWith(
-                                color: colors.primary,
-                                fontWeight: FontWeight.w600),
-                          );
-                        },
+                    // Word Autocomplete Strip
+                    if (_suggestions.isNotEmpty)
+                      Container(
+                        height: 52,
+                        color: colors.surfaceElevated,
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: AppSpacing.sm),
+                        child: ListView.separated(
+                          scrollDirection: Axis.horizontal,
+                          itemCount: _suggestions.length,
+                          separatorBuilder: (_, __) =>
+                              const SizedBox(width: AppSpacing.xs),
+                          itemBuilder: (context, idx) {
+                            final sug = _suggestions[idx];
+                            return ActionChip(
+                              label: Text(sug),
+                              onPressed: () => _selectSuggestion(sug),
+                              backgroundColor: colors.surfaceCard,
+                              labelStyle: AppTypography.bodySmall.copyWith(
+                                  color: colors.primary,
+                                  fontWeight: FontWeight.w600),
+                            );
+                          },
+                        ),
                       ),
-                    ),
-                ],
-              ),
+                  ],
+                ),
+        ),
       ),
     );
   }
 
   Widget _buildAuthenticationRequired(HanbovaColors colors) {
+    final l10n = AppLocalizations.of(context)!;
     return Center(
       child: Padding(
         padding: const EdgeInsets.all(AppSpacing.lg),
@@ -374,7 +386,7 @@ class _RestoreSeedScreenState extends ConsumerState<RestoreSeedScreen> {
             Icon(Icons.lock_outline, size: 42, color: colors.textSecondary),
             const SizedBox(height: AppSpacing.sm),
             Text(
-              'Sign in to restore your wallet',
+              l10n.signInToRestoreWallet,
               style: AppTypography.titleMedium.copyWith(
                 color: colors.textPrimary,
               ),
@@ -383,7 +395,7 @@ class _RestoreSeedScreenState extends ConsumerState<RestoreSeedScreen> {
             const SizedBox(height: AppSpacing.md),
             ElevatedButton(
               onPressed: () => context.go('/login?next=%2Frestore-seed'),
-              child: const Text('Sign in'),
+              child: Text(l10n.signIn),
             ),
           ],
         ),

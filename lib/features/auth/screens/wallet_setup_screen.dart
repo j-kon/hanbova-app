@@ -6,6 +6,7 @@ import '../../../core/cashu/cashu_wallet_provider.dart';
 import '../../../core/cashu/mint_validator.dart';
 import '../../../core/crypto/bip39_words.dart';
 import '../../../core/crypto/crypto_identity_service.dart';
+import '../../../core/errors/user_facing_error.dart';
 import '../../../core/network/network_environment.dart';
 import '../../../core/networking/api_client.dart';
 import '../../../core/security/wallet_backup_store.dart';
@@ -130,7 +131,7 @@ class _WalletSetupScreenState extends ConsumerState<WalletSetupScreen> {
       if (!mounted) return;
       setState(() {
         _isInitializing = false;
-        _initError = e.toString();
+        _initError = UserFacingErrorMapper.from(e).message;
       });
     }
   }
@@ -164,7 +165,7 @@ class _WalletSetupScreenState extends ConsumerState<WalletSetupScreen> {
     } catch (e) {
       setState(() {
         _keyPubStatus = KeyPublicationStatus.syncPending;
-        _keyPubError = 'Key directory sync failed: $e';
+        _keyPubError = UserFacingErrorMapper.from(e).message;
       });
     }
   }
@@ -260,7 +261,7 @@ class _WalletSetupScreenState extends ConsumerState<WalletSetupScreen> {
       setState(() {
         _isProbingMint = false;
         _mintProbeSuccess = false;
-        _mintProbeError = 'Mint probe failed: $e';
+        _mintProbeError = UserFacingErrorMapper.from(e).message;
       });
     }
   }

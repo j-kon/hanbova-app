@@ -9,6 +9,14 @@ class AppTypography {
     height: 1.2,
   );
 
+  static const TextStyle displaySmall = TextStyle(
+    fontFamily: 'Poppins',
+    fontSize: 28,
+    fontWeight: FontWeight.w700,
+    letterSpacing: -0.4,
+    height: 1.25,
+  );
+
   static const TextStyle headline = TextStyle(
     fontFamily: 'Poppins',
     fontSize: 24,

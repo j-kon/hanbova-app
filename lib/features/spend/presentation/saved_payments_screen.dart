@@ -50,15 +50,16 @@ class _SavedPaymentsScreenState extends ConsumerState<SavedPaymentsScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final colors = context.colors;
     return Scaffold(
-      backgroundColor: AppColors.darkBackground,
+      backgroundColor: colors.background,
       appBar: AppBar(
-        backgroundColor: AppColors.darkBackground,
+        backgroundColor: colors.background,
         elevation: 0,
-        title: const Text(
+        title: Text(
           'Saved Billers & Payments',
           style: TextStyle(
-            color: Colors.white,
+            color: colors.textPrimary,
             fontSize: 20,
             fontWeight: FontWeight.bold,
           ),
@@ -72,23 +73,23 @@ class _SavedPaymentsScreenState extends ConsumerState<SavedPaymentsScreen> {
                   Icon(
                     Icons.bookmark_border_rounded,
                     size: 64,
-                    color: AppColors.darkTextSecondary.withValues(alpha: 0.5),
+                    color: colors.textSecondary.withValues(alpha: 0.5),
                   ),
                   const SizedBox(height: 16),
-                  const Text(
+                  Text(
                     'No Saved Billers',
                     style: TextStyle(
-                      color: Colors.white,
+                      color: colors.textPrimary,
                       fontSize: 18,
                       fontWeight: FontWeight.bold,
                     ),
                   ),
                   const SizedBox(height: 8),
-                  const Text(
+                  Text(
                     'Save your meters, phone numbers, and utility accounts for quick recurring payments.',
                     textAlign: TextAlign.center,
                     style: TextStyle(
-                      color: AppColors.darkTextSecondary,
+                      color: colors.textSecondary,
                       fontSize: 13,
                     ),
                   ),
@@ -107,13 +108,14 @@ class _SavedPaymentsScreenState extends ConsumerState<SavedPaymentsScreen> {
   }
 
   Widget _buildSavedBillerCard(SavedBillerItem item) {
+    final colors = context.colors;
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: AppColors.darkCardBackground,
+        color: colors.surfaceCard,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: AppColors.darkBorder),
+        border: Border.all(color: colors.border),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -123,11 +125,11 @@ class _SavedPaymentsScreenState extends ConsumerState<SavedPaymentsScreen> {
               Container(
                 padding: const EdgeInsets.all(8),
                 decoration: BoxDecoration(
-                  color: AppColors.primary.withValues(alpha: 0.15),
+                  color: colors.primary.withValues(alpha: 0.15),
                   shape: BoxShape.circle,
                 ),
-                child: const Icon(Icons.flash_on_outlined,
-                    color: AppColors.primary, size: 20),
+                child: Icon(Icons.flash_on_outlined,
+                    color: colors.primary, size: 20),
               ),
               const SizedBox(width: 12),
               Expanded(
@@ -136,8 +138,8 @@ class _SavedPaymentsScreenState extends ConsumerState<SavedPaymentsScreen> {
                   children: [
                     Text(
                       item.billerName,
-                      style: const TextStyle(
-                        color: Colors.white,
+                      style: TextStyle(
+                        color: colors.textPrimary,
                         fontSize: 15,
                         fontWeight: FontWeight.bold,
                       ),
@@ -146,18 +148,18 @@ class _SavedPaymentsScreenState extends ConsumerState<SavedPaymentsScreen> {
                     Text(
                       'Account / Ref: ${item.accountReference}',
                       style: TextStyle(
-                        color: AppColors.primary.withValues(alpha: 0.9),
+                        color: colors.primary,
                         fontSize: 12,
-                        fontWeight: FontWeight.w500,
+                        fontWeight: FontWeight.w600,
                       ),
                     ),
                   ],
                 ),
               ),
               PopupMenuButton<String>(
-                icon: const Icon(Icons.more_vert,
-                    color: AppColors.darkTextSecondary, size: 18),
-                color: AppColors.darkCardBackground,
+                icon: Icon(Icons.more_vert,
+                    color: colors.textSecondary, size: 18),
+                color: colors.surfaceCard,
                 onSelected: (val) {
                   if (val == 'edit') {
                     _showEditDialog(item);
@@ -169,35 +171,39 @@ class _SavedPaymentsScreenState extends ConsumerState<SavedPaymentsScreen> {
                       SnackBar(
                         content: Text(
                             '${item.billerName} removed from saved billers'),
-                        backgroundColor: AppColors.primary,
+                        backgroundColor: colors.primary,
                       ),
                     );
                   }
                 },
-                itemBuilder: (ctx) => [
-                  const PopupMenuItem(
-                    value: 'edit',
-                    child: Row(
-                      children: [
-                        Icon(Icons.edit_outlined,
-                            color: Colors.white, size: 18),
-                        SizedBox(width: 8),
-                        Text('Edit Reference',
-                            style: TextStyle(color: Colors.white)),
-                      ],
+                itemBuilder: (ctx) {
+                  final popupColors = ctx.colors;
+                  return [
+                    PopupMenuItem(
+                      value: 'edit',
+                      child: Row(
+                        children: [
+                          Icon(Icons.edit_outlined,
+                              color: popupColors.textPrimary, size: 18),
+                          const SizedBox(width: 8),
+                          Text('Edit Reference',
+                              style: TextStyle(color: popupColors.textPrimary)),
+                        ],
+                      ),
                     ),
-                  ),
-                  const PopupMenuItem(
-                    value: 'delete',
-                    child: Row(
-                      children: [
-                        Icon(Icons.delete_outline, color: Colors.red, size: 18),
-                        SizedBox(width: 8),
-                        Text('Delete', style: TextStyle(color: Colors.red)),
-                      ],
+                    const PopupMenuItem(
+                      value: 'delete',
+                      child: Row(
+                        children: [
+                          Icon(Icons.delete_outline,
+                              color: Colors.red, size: 18),
+                          SizedBox(width: 8),
+                          Text('Delete', style: TextStyle(color: Colors.red)),
+                        ],
+                      ),
                     ),
-                  ),
-                ],
+                  ];
+                },
               ),
             ],
           ),
@@ -214,8 +220,8 @@ class _SavedPaymentsScreenState extends ConsumerState<SavedPaymentsScreen> {
               icon: const Icon(Icons.payment_rounded, size: 16),
               label: const Text('Pay Again', style: TextStyle(fontSize: 13)),
               style: ElevatedButton.styleFrom(
-                backgroundColor: AppColors.primary,
-                foregroundColor: Colors.black,
+                backgroundColor: colors.primary,
+                foregroundColor: AppColors.charcoal,
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(10),
                 ),
@@ -233,56 +239,59 @@ class _SavedPaymentsScreenState extends ConsumerState<SavedPaymentsScreen> {
 
     showDialog(
       context: context,
-      builder: (ctx) => AlertDialog(
-        backgroundColor: AppColors.darkCardBackground,
-        title: const Text('Edit Saved Biller',
-            style: TextStyle(color: Colors.white)),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            TextField(
-              controller: nameCtrl,
-              style: const TextStyle(color: Colors.white),
-              decoration: const InputDecoration(
-                labelText: 'Label / Name',
-                labelStyle: TextStyle(color: AppColors.darkTextSecondary),
+      builder: (ctx) {
+        final dialogColors = ctx.colors;
+        return AlertDialog(
+          backgroundColor: dialogColors.surfaceCard,
+          title: Text('Edit Saved Biller',
+              style: TextStyle(color: dialogColors.textPrimary)),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              TextField(
+                controller: nameCtrl,
+                style: TextStyle(color: dialogColors.textPrimary),
+                decoration: InputDecoration(
+                  labelText: 'Label / Name',
+                  labelStyle: TextStyle(color: dialogColors.textSecondary),
+                ),
               ),
+              const SizedBox(height: 10),
+              TextField(
+                controller: refCtrl,
+                style: TextStyle(color: dialogColors.textPrimary),
+                decoration: InputDecoration(
+                  labelText: 'Account / Meter Number',
+                  labelStyle: TextStyle(color: dialogColors.textSecondary),
+                ),
+              ),
+            ],
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(ctx),
+              child: Text('Cancel',
+                  style: TextStyle(color: dialogColors.textSecondary)),
             ),
-            const SizedBox(height: 10),
-            TextField(
-              controller: refCtrl,
-              style: const TextStyle(color: Colors.white),
-              decoration: const InputDecoration(
-                labelText: 'Account / Meter Number',
-                labelStyle: TextStyle(color: AppColors.darkTextSecondary),
+            ElevatedButton(
+              onPressed: () {
+                Navigator.pop(ctx);
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(
+                    content: Text('Saved biller updated!'),
+                    backgroundColor: Color(0xFF10B981),
+                  ),
+                );
+              },
+              style: ElevatedButton.styleFrom(
+                backgroundColor: dialogColors.primary,
+                foregroundColor: AppColors.charcoal,
               ),
+              child: const Text('Save Changes'),
             ),
           ],
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(ctx),
-            child: const Text('Cancel',
-                style: TextStyle(color: AppColors.darkTextSecondary)),
-          ),
-          ElevatedButton(
-            onPressed: () {
-              Navigator.pop(ctx);
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(
-                  content: Text('Saved biller updated!'),
-                  backgroundColor: Color(0xFF10B981),
-                ),
-              );
-            },
-            style: ElevatedButton.styleFrom(
-              backgroundColor: AppColors.primary,
-              foregroundColor: Colors.black,
-            ),
-            child: const Text('Save Changes'),
-          ),
-        ],
-      ),
+        );
+      },
     );
   }
 }

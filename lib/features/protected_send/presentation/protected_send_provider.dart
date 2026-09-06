@@ -1,31 +1,35 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/cashu/cashu_wallet_provider.dart';
-import '../../../core/cashu/cashu_wallet_storage.dart';
+import '../../../core/cashu/wallet_policy.dart';
 import '../../../core/crypto/crypto_identity_service.dart';
 import '../../../core/crypto/encrypted_envelope_service.dart';
+import '../../../core/errors/user_facing_error.dart';
 import '../../../core/network/network_environment.dart';
 import '../../../core/notifications/in_app_notification.dart';
-import '../../../core/utils/consumer_error_translator.dart';
 import '../../../core/utils/formatters.dart';
+import '../../../core/wallet/wallet_context.dart';
 import '../../auth/providers/auth_provider.dart';
 import '../../protected/data/protected_message_service.dart';
 import '../../transactions/domain/transaction_model.dart';
 import '../../transactions/presentation/transactions_provider.dart';
 import '../data/payment_intent_repository.dart';
 import '../domain/protected_payment_intent.dart';
+import '../domain/protected_send_draft.dart';
 
 class ProtectedSendState {
   final bool isLoading;
   final String? errorMessage;
   final ProtectedPaymentIntent? createdIntent;
   final UserPaymentProfile? resolvedRecipient;
+  final ProtectedSendDraft? preparedDraft;
 
   const ProtectedSendState({
     this.isLoading = false,
     this.errorMessage,
     this.createdIntent,
     this.resolvedRecipient,
+    this.preparedDraft,
   });
 
   ProtectedSendState copyWith({
@@ -33,7 +37,9 @@ class ProtectedSendState {
     String? errorMessage,
     ProtectedPaymentIntent? createdIntent,
     UserPaymentProfile? resolvedRecipient,
+    ProtectedSendDraft? preparedDraft,
     bool clearResolvedRecipient = false,
+    bool clearPreparedDraft = false,
   }) {
     return ProtectedSendState(
       isLoading: isLoading ?? this.isLoading,
@@ -42,6 +48,8 @@ class ProtectedSendState {
       resolvedRecipient: clearResolvedRecipient
           ? null
           : (resolvedRecipient ?? this.resolvedRecipient),
+      preparedDraft:
+          clearPreparedDraft ? null : (preparedDraft ?? this.preparedDraft),
     );
   }
 }
@@ -101,6 +109,79 @@ class ProtectedSendNotifier extends StateNotifier<ProtectedSendState> {
     required String description,
     required int expirationSeconds,
   }) async {
+    try {
+      final draft = await prepareDraft(
+        username: recipientIdentifier,
+        amountSats: amountSats,
+        description: description,
+        expirationSeconds: expirationSeconds,
+      );
+      return await confirmDraft(draft);
+    } catch (e) {
+      state = state.copyWith(
+        isLoading: false,
+        errorMessage: UserFacingErrorMapper.from(e).message,
+      );
+      return false;
+    }
+  }
+
+  Future<ProtectedSendDraft> prepareDraft({
+    required String username,
+    required int amountSats,
+    required String description,
+    required int expirationSeconds,
+  }) async {
+    final authState = _ref.read(authProvider);
+    final walletContext = _ref.read(activeWalletContextKeyProvider);
+    final config = _ref.read(activeNetworkConfigProvider);
+    if (authState.user == null) {
+      throw StateError(
+        'User must be authenticated to send protected payments.',
+      );
+    }
+    if (walletContext == null ||
+        walletContext.userId != authState.user!.id ||
+        walletContext.network != config.network ||
+        walletContext.storagePrefix != config.storagePrefix) {
+      throw StateError('An authenticated wallet context is required.');
+    }
+    WalletPolicy(config).validateSend(amountSats: amountSats);
+
+    final recipient = await resolveRecipient(username);
+    if (recipient == null ||
+        recipient.walletEnvironment != config.storagePrefix) {
+      final display = username.trim().startsWith('@')
+          ? username.trim()
+          : '@${username.trim()}';
+      throw StateError(
+        'Recipient $display could not be found or has not registered payment keys.',
+      );
+    }
+    if (_ref.read(activeWalletContextKeyProvider) != walletContext) {
+      throw StateError('The active wallet context changed.');
+    }
+
+    final draft = ProtectedSendDraft(
+      walletContext: walletContext,
+      recipient: recipient,
+      amountSats: amountSats,
+      description: description,
+      expirationSeconds: expirationSeconds,
+      networkLabel: config.displayName,
+    );
+    state = state.copyWith(
+      isLoading: false,
+      errorMessage: null,
+      preparedDraft: draft,
+    );
+    return draft;
+  }
+
+  Future<bool> confirmDraft(ProtectedSendDraft draft) async {
+    if (_ref.read(activeWalletContextKeyProvider) != draft.walletContext) {
+      throw StateError('The active wallet context changed.');
+    }
     state = state.copyWith(isLoading: true, errorMessage: null);
 
     try {
@@ -111,42 +192,26 @@ class ProtectedSendNotifier extends StateNotifier<ProtectedSendState> {
       }
 
       final config = _ref.read(activeNetworkConfigProvider);
-      if (amountSats > config.maxSendSats) {
-        throw StateError(
-            'Amount of $amountSats sats exceeds maximum send limit of ${config.maxSendSats} sats for ${config.displayName}.');
+      if (config.network != draft.walletContext.network ||
+          config.storagePrefix != draft.walletContext.storagePrefix) {
+        throw StateError('The active wallet context changed.');
       }
+      WalletPolicy(config).validateSend(amountSats: draft.amountSats);
 
       final senderUsername = authState.user!.username;
       final senderId = authState.user!.id;
-      final cleanRecipient = recipientIdentifier.trim().startsWith('@')
-          ? recipientIdentifier.trim().substring(1).toLowerCase()
-          : recipientIdentifier.trim().toLowerCase();
-
-      // 1. Resolve recipient keys strictly matching current entered recipient
-      UserPaymentProfile? recipientProfile;
-      if (state.resolvedRecipient != null &&
-          (state.resolvedRecipient!.username.toLowerCase() == cleanRecipient ||
-              state.resolvedRecipient!.handle.toLowerCase() == cleanRecipient ||
-              state.resolvedRecipient!.handle.toLowerCase() ==
-                  '@$cleanRecipient') &&
-          state.resolvedRecipient!.walletEnvironment == config.storagePrefix) {
-        recipientProfile = state.resolvedRecipient;
-      } else {
-        recipientProfile = await resolveRecipient(cleanRecipient);
-      }
-
-      if (recipientProfile == null) {
-        final display = recipientIdentifier.trim().startsWith('@') ||
-                recipientIdentifier.contains('@')
-            ? recipientIdentifier.trim()
-            : '@${recipientIdentifier.trim()}';
-        throw StateError(
-            'Recipient $display could not be found or has not registered payment keys.');
-      }
+      final amountSats = draft.amountSats;
+      final description = draft.description;
+      final expirationSeconds = draft.expirationSeconds;
+      final recipientProfile = draft.recipient;
+      final cleanRecipient = recipientProfile.username;
 
       // 2. Generate or load Sender Cryptographic Identity
       final cryptoService = _ref.read(cryptoIdentityProvider.notifier);
       await cryptoService.requireIdentity();
+      if (_ref.read(activeWalletContextKeyProvider) != draft.walletContext) {
+        throw StateError('The active wallet context changed.');
+      }
 
       final now = DateTime.now();
       final expiry = now.add(Duration(seconds: expirationSeconds));
@@ -172,6 +237,9 @@ class ProtectedSendNotifier extends StateNotifier<ProtectedSendState> {
 
       String cashuToken;
       try {
+        if (_ref.read(activeWalletContextKeyProvider) != draft.walletContext) {
+          throw StateError('The active wallet context changed.');
+        }
         cashuToken = await cashuWallet.createProtectedSend(
           amountSats: amountSats,
           recipientPubkey: recipientProfile.protectedPaymentPubkey,
@@ -196,13 +264,13 @@ class ProtectedSendNotifier extends StateNotifier<ProtectedSendState> {
         expiresAt: intent.expiresAt,
         claimReference: intent.claimReference ?? intent.id,
       );
-      _ref.read(transactionsProvider.notifier).addTransaction(activeTx);
+      await _ref.read(transactionsProvider.notifier).addTransaction(activeTx);
 
       // Lifecycle: funds successfully locked in CDK -> update backend to Protected
       try {
         await _repository.updatePaymentStatus(canonicalPaymentId, 'protected');
       } catch (_) {
-        _ref
+        await _ref
             .read(transactionsProvider.notifier)
             .markCoordinationSyncPending(canonicalPaymentId, 'protected');
       }
@@ -227,7 +295,7 @@ class ProtectedSendNotifier extends StateNotifier<ProtectedSendState> {
               recipientProfile.transportEncryptionPubkey,
         );
       } catch (encError) {
-        _ref.read(transactionsProvider.notifier).updateTransaction(
+        await _ref.read(transactionsProvider.notifier).updateTransaction(
               activeTx.copyWith(
                 description: 'Encryption pending: $encError',
               ),
@@ -250,7 +318,7 @@ class ProtectedSendNotifier extends StateNotifier<ProtectedSendState> {
         );
 
         // Lifecycle: encrypted message accepted by relay -> update local to Claimable
-        _ref.read(transactionsProvider.notifier).updateTransaction(
+        await _ref.read(transactionsProvider.notifier).updateTransaction(
               activeTx.copyWith(
                 status: TransactionStatus.claimable,
                 description: description,
@@ -260,18 +328,18 @@ class ProtectedSendNotifier extends StateNotifier<ProtectedSendState> {
         try {
           await _repository.updatePaymentStatus(
               canonicalPaymentId, 'claimable');
-          _ref
+          await _ref
               .read(transactionsProvider.notifier)
               .clearCoordinationSyncPending(canonicalPaymentId);
         } catch (_) {
-          _ref
+          await _ref
               .read(transactionsProvider.notifier)
               .markCoordinationSyncPending(canonicalPaymentId, 'claimable');
         }
       } catch (deliveryError) {
         // Backend delivery failed, but CDK value is locked in redb!
         // Local transaction is preserved with pending status.
-        _ref.read(transactionsProvider.notifier).updateTransaction(
+        await _ref.read(transactionsProvider.notifier).updateTransaction(
               activeTx.copyWith(
                 status: TransactionStatus.pending,
                 description: 'Delivery pending: $deliveryError',
@@ -284,13 +352,13 @@ class ProtectedSendNotifier extends StateNotifier<ProtectedSendState> {
       _ref.read(inAppNotificationProvider.notifier).show(
             title: 'Protected Payment Sent',
             message:
-                'Sent ${Formatters.formatSats(amountSats)} Protected payment to $recipientIdentifier',
+                'Sent ${Formatters.formatSats(amountSats)} Protected payment to ${recipientProfile.handle}',
             icon: Icons.shield_outlined,
             type: InAppNotificationType.protected,
           );
       return true;
     } catch (e) {
-      final cleanMsg = ConsumerErrorTranslator.translate(e);
+      final cleanMsg = UserFacingErrorMapper.from(e).message;
       state = state.copyWith(isLoading: false, errorMessage: cleanMsg);
       return false;
     }
@@ -329,15 +397,21 @@ class ProtectedSendNotifier extends StateNotifier<ProtectedSendState> {
         throw StateError('Recipient $display could not be found');
       }
 
+      final walletContext = _ref.read(activeWalletContextKeyProvider);
+      if (walletContext == null || walletContext.userId != authState.user!.id) {
+        throw StateError('The active wallet context is unavailable.');
+      }
       final config = _ref.read(activeNetworkConfigProvider);
+      if (config.network != walletContext.network ||
+          config.storagePrefix != walletContext.storagePrefix) {
+        throw StateError('The active wallet context changed.');
+      }
 
       // Load the existing escrow record from client storage (no new token minted or locked)
-      final storage = CashuWalletStorage();
-      final escrow = await storage.getEscrowRecord(
-        authState.user!.id,
-        config.network,
+      final storage = _ref.read(cashuWalletStorageProvider);
+      final escrow = await storage.getEscrowRecordForContext(
+        walletContext,
         canonicalPaymentId,
-        storagePrefix: config.storagePrefix,
       );
       if (escrow == null) {
         throw StateError(
@@ -369,6 +443,10 @@ class ProtectedSendNotifier extends StateNotifier<ProtectedSendState> {
         recipientTransportPubkeyHex: recipientProfile.transportEncryptionPubkey,
       );
 
+      if (_ref.read(activeWalletContextKeyProvider) != walletContext) {
+        throw StateError('The active wallet context changed.');
+      }
+
       await _messageService.sendProtectedMessage(
         recipientUsername: recipientProfile.username,
         encryptedPayload: ciphertext,
@@ -381,18 +459,18 @@ class ProtectedSendNotifier extends StateNotifier<ProtectedSendState> {
         walletEnvironment: config.storagePrefix,
       );
 
-      _ref.read(transactionsProvider.notifier).updateTransactionStatus(
+      await _ref.read(transactionsProvider.notifier).updateTransactionStatus(
             canonicalPaymentId,
             TransactionStatus.claimable,
           );
 
       try {
         await _repository.updatePaymentStatus(canonicalPaymentId, 'claimable');
-        _ref
+        await _ref
             .read(transactionsProvider.notifier)
             .clearCoordinationSyncPending(canonicalPaymentId);
       } catch (_) {
-        _ref
+        await _ref
             .read(transactionsProvider.notifier)
             .markCoordinationSyncPending(canonicalPaymentId, 'claimable');
       }
@@ -400,7 +478,7 @@ class ProtectedSendNotifier extends StateNotifier<ProtectedSendState> {
       state = state.copyWith(isLoading: false);
       return true;
     } catch (e) {
-      final cleanMsg = ConsumerErrorTranslator.translate(e);
+      final cleanMsg = UserFacingErrorMapper.from(e).message;
       state = state.copyWith(isLoading: false, errorMessage: cleanMsg);
       return false;
     }
@@ -408,5 +486,13 @@ class ProtectedSendNotifier extends StateNotifier<ProtectedSendState> {
 
   void reset() {
     state = const ProtectedSendState();
+  }
+
+  void clearDraft() {
+    state = state.copyWith(
+      isLoading: false,
+      errorMessage: null,
+      clearPreparedDraft: true,
+    );
   }
 }

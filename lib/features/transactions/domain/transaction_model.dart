@@ -20,6 +20,18 @@ enum TransactionType {
   cardFunding,
   cardPayment,
   cardRefund,
+  // Stablecoins
+  usdtSent,
+  usdtReceived,
+  usdcSent,
+  usdcReceived,
+  // Conversions
+  btcToUsdtConversion,
+  btcToUsdcConversion,
+  usdtToBtcConversion,
+  usdcToBtcConversion,
+  usdtToUsdcConversion,
+  usdcToUsdtConversion,
 }
 
 enum TransactionStatus {
@@ -46,6 +58,8 @@ enum TransactionCategory {
   bills,
   travel,
   cards,
+  conversions,
+  stablecoins,
 }
 
 class TransactionModel {
@@ -74,6 +88,14 @@ class TransactionModel {
   final String? planName;
   final Map<String, dynamic>? metadata;
 
+  // Conversion & Stablecoin specific fields
+  final String? sourceAsset;
+  final double? sourceAmount;
+  final String? destinationAsset;
+  final double? destinationAmount;
+  final double? exchangeRate;
+  final String? hanbovaReference;
+
   const TransactionModel({
     required this.id,
     required this.type,
@@ -97,6 +119,12 @@ class TransactionModel {
     this.receiptReference,
     this.planName,
     this.metadata,
+    this.sourceAsset,
+    this.sourceAmount,
+    this.destinationAsset,
+    this.destinationAmount,
+    this.exchangeRate,
+    this.hanbovaReference,
   });
 
   bool get isOutgoing {
@@ -117,15 +145,39 @@ class TransactionModel {
       case TransactionType.mobileMoneyPayout:
       case TransactionType.cardFunding:
       case TransactionType.cardPayment:
+      case TransactionType.usdtSent:
+      case TransactionType.usdcSent:
         return true;
       case TransactionType.bitcoinReceived:
       case TransactionType.instantReceive:
       case TransactionType.protectedClaim:
       case TransactionType.protectedRefund:
       case TransactionType.cardRefund:
+      case TransactionType.usdtReceived:
+      case TransactionType.usdcReceived:
+      case TransactionType.btcToUsdtConversion:
+      case TransactionType.btcToUsdcConversion:
+      case TransactionType.usdtToBtcConversion:
+      case TransactionType.usdcToBtcConversion:
+      case TransactionType.usdtToUsdcConversion:
+      case TransactionType.usdcToUsdtConversion:
         return false;
     }
   }
+
+  bool get isConversion =>
+      type == TransactionType.btcToUsdtConversion ||
+      type == TransactionType.btcToUsdcConversion ||
+      type == TransactionType.usdtToBtcConversion ||
+      type == TransactionType.usdcToBtcConversion ||
+      type == TransactionType.usdtToUsdcConversion ||
+      type == TransactionType.usdcToUsdtConversion;
+
+  bool get isStablecoin =>
+      type == TransactionType.usdtSent ||
+      type == TransactionType.usdtReceived ||
+      type == TransactionType.usdcSent ||
+      type == TransactionType.usdcReceived;
 
   TransactionCategory get category {
     switch (type) {
@@ -156,6 +208,18 @@ class TransactionModel {
       case TransactionType.cardFunding:
       case TransactionType.cardPayment:
         return TransactionCategory.cards;
+      case TransactionType.usdtSent:
+      case TransactionType.usdcSent:
+      case TransactionType.usdtReceived:
+      case TransactionType.usdcReceived:
+        return TransactionCategory.stablecoins;
+      case TransactionType.btcToUsdtConversion:
+      case TransactionType.btcToUsdcConversion:
+      case TransactionType.usdtToBtcConversion:
+      case TransactionType.usdcToBtcConversion:
+      case TransactionType.usdtToUsdcConversion:
+      case TransactionType.usdcToUsdtConversion:
+        return TransactionCategory.conversions;
     }
   }
 
@@ -200,6 +264,26 @@ class TransactionModel {
         return 'Card Payment';
       case TransactionType.cardRefund:
         return 'Card Refund';
+      case TransactionType.usdtSent:
+        return 'USDT Sent';
+      case TransactionType.usdtReceived:
+        return 'USDT Received';
+      case TransactionType.usdcSent:
+        return 'USDC Sent';
+      case TransactionType.usdcReceived:
+        return 'USDC Received';
+      case TransactionType.btcToUsdtConversion:
+        return 'BTC → USDT Conversion';
+      case TransactionType.btcToUsdcConversion:
+        return 'BTC → USDC Conversion';
+      case TransactionType.usdtToBtcConversion:
+        return 'USDT → BTC Conversion';
+      case TransactionType.usdcToBtcConversion:
+        return 'USDC → BTC Conversion';
+      case TransactionType.usdtToUsdcConversion:
+        return 'USDT → USDC Conversion';
+      case TransactionType.usdcToUsdtConversion:
+        return 'USDC → USDT Conversion';
     }
   }
 
@@ -232,6 +316,87 @@ class TransactionModel {
     }
   }
 
+  Map<String, Object?> toJson() => {
+        'id': id,
+        'type': type.name,
+        'status': status.name,
+        'amountSats': amountSats,
+        'recipientOrSender': recipientOrSender,
+        'description': description,
+        'createdAt': createdAt.toUtc().toIso8601String(),
+        'expiresAt': expiresAt?.toUtc().toIso8601String(),
+        'claimReference': claimReference,
+        'coordinationSyncPending': coordinationSyncPending,
+        'syncPendingStatus': syncPendingStatus,
+      };
+
+  factory TransactionModel.fromJson(Map<String, dynamic> json) {
+    T enumValue<T extends Enum>(List<T> values, Object? raw, String field) {
+      if (raw is! String) {
+        throw FormatException('Invalid transaction $field.');
+      }
+      return values.firstWhere(
+        (value) => value.name == raw,
+        orElse: () => throw FormatException('Invalid transaction $field.'),
+      );
+    }
+
+    String requiredString(String field) {
+      final value = json[field];
+      if (value is! String || value.isEmpty) {
+        throw FormatException('Invalid transaction $field.');
+      }
+      return value;
+    }
+
+    DateTime requiredDate(String field) {
+      final raw = requiredString(field);
+      return DateTime.tryParse(raw)?.toUtc() ??
+          (throw FormatException('Invalid transaction $field.'));
+    }
+
+    DateTime? optionalDate(String field) {
+      final raw = json[field];
+      if (raw == null) return null;
+      if (raw is! String) {
+        throw FormatException('Invalid transaction $field.');
+      }
+      return DateTime.tryParse(raw)?.toUtc() ??
+          (throw FormatException('Invalid transaction $field.'));
+    }
+
+    String? optionalString(String field) {
+      final value = json[field];
+      if (value == null) return null;
+      if (value is! String) {
+        throw FormatException('Invalid transaction $field.');
+      }
+      return value;
+    }
+
+    final amountSats = json['amountSats'];
+    final coordinationSyncPending = json['coordinationSyncPending'] ?? false;
+    if (amountSats is! int ||
+        amountSats < 0 ||
+        coordinationSyncPending is! bool) {
+      throw const FormatException('Invalid transaction values.');
+    }
+
+    return TransactionModel(
+      id: requiredString('id'),
+      type: enumValue(TransactionType.values, json['type'], 'type'),
+      status: enumValue(TransactionStatus.values, json['status'], 'status'),
+      amountSats: amountSats,
+      recipientOrSender: requiredString('recipientOrSender'),
+      description: optionalString('description'),
+      createdAt: requiredDate('createdAt'),
+      expiresAt: optionalDate('expiresAt'),
+      claimReference: optionalString('claimReference'),
+      coordinationSyncPending: coordinationSyncPending,
+      syncPendingStatus: optionalString('syncPendingStatus'),
+    );
+  }
+
   static const Object _sentinel = Object();
 
   TransactionModel copyWith({
@@ -258,6 +423,12 @@ class TransactionModel {
     String? receiptReference,
     String? planName,
     Map<String, dynamic>? metadata,
+    String? sourceAsset,
+    double? sourceAmount,
+    String? destinationAsset,
+    double? destinationAmount,
+    double? exchangeRate,
+    String? hanbovaReference,
   }) {
     final effectiveSyncPendingStatus = clearSyncPendingStatus
         ? null
@@ -289,6 +460,12 @@ class TransactionModel {
       receiptReference: receiptReference ?? this.receiptReference,
       planName: planName ?? this.planName,
       metadata: metadata ?? this.metadata,
+      sourceAsset: sourceAsset ?? this.sourceAsset,
+      sourceAmount: sourceAmount ?? this.sourceAmount,
+      destinationAsset: destinationAsset ?? this.destinationAsset,
+      destinationAmount: destinationAmount ?? this.destinationAmount,
+      exchangeRate: exchangeRate ?? this.exchangeRate,
+      hanbovaReference: hanbovaReference ?? this.hanbovaReference,
     );
   }
 }

@@ -11,7 +11,7 @@ import 'package:hanbova_app/core/crypto/mnemonic_service.dart';
 import 'package:hanbova_app/core/crypto/secp256k1_service.dart';
 import 'package:hanbova_app/core/network/network_environment.dart';
 import 'package:hanbova_app/features/transactions/domain/transaction_model.dart';
-import 'package:hanbova_app/features/transactions/presentation/transactions_provider.dart';
+import 'support/memory_transaction_ledger.dart';
 
 class InMemoryCashuWalletStorage extends CashuWalletStorage {
   final Map<String, String> _data = {};
@@ -405,8 +405,8 @@ void main() {
         );
 
         // Verify Activity Deduplication
-        final txNotifier = TransactionsNotifier();
-        txNotifier.addTransaction(TransactionModel(
+        final txNotifier = await createMemoryTransactionsNotifier();
+        await txNotifier.addTransaction(TransactionModel(
           id: paymentIdA,
           type: TransactionType.protectedClaim,
           status: TransactionStatus.claimable,
@@ -415,7 +415,7 @@ void main() {
           description: 'Incoming Protected Payment',
           createdAt: DateTime.now(),
         ));
-        txNotifier.addTransaction(TransactionModel(
+        await txNotifier.addTransaction(TransactionModel(
           id: paymentIdA,
           type: TransactionType.protectedClaim,
           status: TransactionStatus.completed,

@@ -136,35 +136,23 @@ class ProtectedMessageService {
   }
 
   /// Fetches incoming encrypted messages for the logged-in recipient.
-  Future<List<RemoteProtectedMessage>> getInbox() async {
-    try {
-      final response = await _apiClient.get('/protected-messages/inbox');
-      final list = response['data'] is List
-          ? response['data'] as List
-          : (response is List ? response as List : []);
-      return list
-          .map((item) =>
-              RemoteProtectedMessage.fromJson(item as Map<String, dynamic>))
-          .toList();
-    } catch (_) {
-      return [];
-    }
-  }
+  Future<List<RemoteProtectedMessage>> getInbox() =>
+      _getMessages('/protected-messages/inbox');
 
   /// Fetches sent encrypted messages for the logged-in sender.
-  Future<List<RemoteProtectedMessage>> getOutbox() async {
-    try {
-      final response = await _apiClient.get('/protected-messages/outbox');
-      final list = response['data'] is List
-          ? response['data'] as List
-          : (response is List ? response as List : []);
-      return list
-          .map((item) =>
-              RemoteProtectedMessage.fromJson(item as Map<String, dynamic>))
-          .toList();
-    } catch (_) {
-      return [];
+  Future<List<RemoteProtectedMessage>> getOutbox() =>
+      _getMessages('/protected-messages/outbox');
+
+  Future<List<RemoteProtectedMessage>> _getMessages(String path) async {
+    final response = await _apiClient.get(path);
+    final list = response['data'];
+    if (list is! List) {
+      throw const FormatException('Invalid protected message list.');
     }
+    return list
+        .map((item) =>
+            RemoteProtectedMessage.fromJson(item as Map<String, dynamic>))
+        .toList();
   }
 
   /// Acknowledges or updates delivery status of a message.

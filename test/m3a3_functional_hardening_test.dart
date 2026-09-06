@@ -4,7 +4,7 @@ import 'package:hanbova_app/features/protected/data/protected_message_service.da
 import 'package:hanbova_app/features/protected_send/domain/protected_payment_intent.dart';
 import 'package:hanbova_app/features/security/presentation/restore_seed_screen.dart';
 import 'package:hanbova_app/features/transactions/domain/transaction_model.dart';
-import 'package:hanbova_app/features/transactions/presentation/transactions_provider.dart';
+import 'support/memory_transaction_ledger.dart';
 
 void main() {
   group('Milestone 3A.3 - Consumer Error Translator Tests', () {
@@ -72,8 +72,8 @@ void main() {
       () {
     test(
         'TransactionsNotifier preserves client financial authority on backend sync',
-        () {
-      final notifier = TransactionsNotifier();
+        () async {
+      final notifier = await createMemoryTransactionsNotifier();
 
       // 1. Add locally completed claim
       final localTx = TransactionModel(
@@ -85,7 +85,7 @@ void main() {
         description: 'Test Claim',
         createdAt: DateTime.now(),
       );
-      notifier.addTransaction(localTx);
+      await notifier.addTransaction(localTx);
 
       // 2. Backend still reports 'claimable' (e.g. sync lag or pending backend coordination)
       final backendIntent = ProtectedPaymentIntent(
@@ -99,7 +99,7 @@ void main() {
         expiresAt: DateTime.now().add(const Duration(hours: 24)),
       );
 
-      notifier.syncPaymentIntents(
+      await notifier.syncPaymentIntents(
         intents: [backendIntent],
         currentUserId: 'bob',
         currentUsername: 'bob',
@@ -112,8 +112,8 @@ void main() {
 
     test(
         'TransactionsNotifier preserves refunded status against stale intent status',
-        () {
-      final notifier = TransactionsNotifier();
+        () async {
+      final notifier = await createMemoryTransactionsNotifier();
 
       final localTx = TransactionModel(
         id: 'intent_456',
@@ -124,7 +124,7 @@ void main() {
         description: 'Test Send',
         createdAt: DateTime.now(),
       );
-      notifier.addTransaction(localTx);
+      await notifier.addTransaction(localTx);
 
       final backendIntent = ProtectedPaymentIntent(
         id: 'intent_456',
@@ -137,7 +137,7 @@ void main() {
         expiresAt: DateTime.now().add(const Duration(hours: 24)),
       );
 
-      notifier.syncPaymentIntents(
+      await notifier.syncPaymentIntents(
         intents: [backendIntent],
         currentUserId: 'alice',
         currentUsername: 'alice',
@@ -150,7 +150,7 @@ void main() {
     test(
         'syncIncomingMessages maps refunded to refunded and claimed to completed',
         () async {
-      final notifier = TransactionsNotifier();
+      final notifier = await createMemoryTransactionsNotifier();
 
       // Initial claimable transaction
       final initialTx = TransactionModel(
@@ -162,7 +162,7 @@ void main() {
         description: 'Incoming Protected Payment',
         createdAt: DateTime.now(),
       );
-      notifier.addTransaction(initialTx);
+      await notifier.addTransaction(initialTx);
 
       final inboxItem = RemoteProtectedMessage(
         id: 'msg_1',
@@ -184,8 +184,8 @@ void main() {
 
     test(
         'addTransaction performs idempotent upsert without creating duplicate IDs',
-        () {
-      final notifier = TransactionsNotifier();
+        () async {
+      final notifier = await createMemoryTransactionsNotifier();
 
       final tx1 = TransactionModel(
         id: 'canonical_id_100',
@@ -196,7 +196,7 @@ void main() {
         description: 'Pending Claim',
         createdAt: DateTime.now(),
       );
-      notifier.addTransaction(tx1);
+      await notifier.addTransaction(tx1);
       expect(notifier.state.length, equals(1));
 
       // Attempt manual claim / upsert with same canonical ID
@@ -209,7 +209,7 @@ void main() {
         description: 'Claimed Payment',
         createdAt: DateTime.now(),
       );
-      notifier.addTransaction(tx2);
+      await notifier.addTransaction(tx2);
 
       // Must still be exactly ONE transaction with updated status
       expect(notifier.state.length, equals(1));

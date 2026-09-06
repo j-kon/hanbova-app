@@ -55,7 +55,7 @@ class SettingsScreen extends ConsumerWidget {
             _SettingsTile(
               icon: Icons.fingerprint_rounded,
               title: 'Biometric Confirmation',
-              subtitle: 'Enabled for Protected Sends',
+              subtitle: 'Required for wallet recovery actions',
             ),
             const SizedBox(height: AppSpacing.md),
             _SectionHeader(title: 'About'),

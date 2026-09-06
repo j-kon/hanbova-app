@@ -10,6 +10,7 @@ import 'package:hanbova_app/features/auth/screens/sign_in_screen.dart';
 import 'package:hanbova_app/features/auth/screens/welcome_screen.dart';
 import 'package:hanbova_app/features/security/application/restore_wallet_controller.dart';
 import 'package:hanbova_app/features/security/presentation/restore_seed_screen.dart';
+import 'package:hanbova_app/l10n/app_localizations.dart';
 
 const validMnemonic =
     'abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon about';
@@ -51,6 +52,8 @@ Future<RestoreCallRecorder> pumpRestoreScreen(
       ],
       child: MaterialApp(
         theme: AppTheme.darkTheme,
+        localizationsDelegates: AppLocalizations.localizationsDelegates,
+        supportedLocales: AppLocalizations.supportedLocales,
         home: const RestoreSeedScreen(),
       ),
     ),

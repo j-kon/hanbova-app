@@ -33,6 +33,10 @@ class DevelopmentExchangeRateProvider implements ExchangeRateProvider {
         return 160000000.0; // 1 BTC = 160M TZS
       case FiatCurrency.usd:
         return 60000.0; // 1 BTC = $60k USD
+      case FiatCurrency.eur:
+        return 55000.0; // 1 BTC = €55k EUR
+      case FiatCurrency.gbp:
+        return 47000.0; // 1 BTC = £47k GBP
     }
   }
 }
@@ -49,12 +53,39 @@ enum FiatCurrency {
   rwf('RWF', 'FRw '),
   ugx('UGX', 'USh '),
   tzs('TZS', 'TSh '),
-  zar('ZAR', 'R ');
+  zar('ZAR', 'R '),
+  eur('EUR', '€'),
+  gbp('GBP', '£');
 
   final String code;
   final String symbol;
 
   const FiatCurrency(this.code, this.symbol);
+
+  String get currencyName {
+    switch (this) {
+      case FiatCurrency.ngn:
+        return 'Nigerian Naira';
+      case FiatCurrency.usd:
+        return 'US Dollar';
+      case FiatCurrency.kes:
+        return 'Kenyan Shilling';
+      case FiatCurrency.ghs:
+        return 'Ghanaian Cedi';
+      case FiatCurrency.rwf:
+        return 'Rwandan Franc';
+      case FiatCurrency.ugx:
+        return 'Ugandan Shilling';
+      case FiatCurrency.tzs:
+        return 'Tanzanian Shilling';
+      case FiatCurrency.zar:
+        return 'South African Rand';
+      case FiatCurrency.eur:
+        return 'Euro';
+      case FiatCurrency.gbp:
+        return 'British Pound';
+    }
+  }
 
   double satsToFiat(int sats,
       [ExchangeRateProvider rateProvider =

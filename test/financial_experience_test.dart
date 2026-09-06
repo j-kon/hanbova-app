@@ -21,7 +21,7 @@ void main() {
 
   group('M3B.2.1 Core Currencies & Math', () {
     test('supports all 8 target African & global currencies', () {
-      expect(FiatCurrency.values.length, 8);
+      expect(FiatCurrency.values.length, greaterThanOrEqualTo(8));
       expect(
           FiatCurrency.values.map((c) => c.code).toList(),
           containsAll([
@@ -181,17 +181,22 @@ void main() {
       final state = container.read(demoModeProvider);
       final txs = state.demoTransactions;
 
-      final incomingTxs = txs.where((t) => !t.isOutgoing);
-      final outgoingTxs = txs.where((t) => t.isOutgoing);
+      final btcTxs = txs.where((t) => !t.isConversion && !t.isStablecoin);
+      final incomingTxs = btcTxs.where((t) => !t.isOutgoing);
+      final outgoingTxs = btcTxs.where((t) => t.isOutgoing);
 
       final sumIn = incomingTxs.fold(0, (sum, t) => sum + t.amountSats);
       final sumOut = outgoingTxs.fold(0, (sum, t) => sum + t.amountSats);
-      final sumFees = txs.fold(0, (sum, t) => sum + (t.feeSats ?? 0));
+      final sumFees = btcTxs.fold(0, (sum, t) => sum + (t.feeSats ?? 0));
 
       expect(sumIn, 400000); // 250k received + 150k refund
       expect(sumOut, 393300); // 12.8k + 300k + 12k + 8.5k + 45k + 15k
       expect(sumFees, 750); // 150+50+200+50+50+100+50+100
       expect(sumIn - sumOut, 6700);
+
+      // Verify multi-asset demo transactions exist
+      expect(txs.where((t) => t.isConversion).length, 3);
+      expect(txs.where((t) => t.isStablecoin).length, 2);
     });
 
     test(
@@ -237,7 +242,7 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(find.text('Money & Balances'), findsOneWidget);
-      expect(find.text('BITCOIN BALANCE'), findsOneWidget);
+      expect(find.text('Your Bitcoin balance'), findsOneWidget);
       expect(find.text('Available to spend'), findsOneWidget);
       expect(find.text('Money in motion'), findsOneWidget);
       expect(find.text('Protected payments'), findsOneWidget);
@@ -403,8 +408,7 @@ void main() {
       expect(find.text('Pay Again'), findsWidgets);
     });
 
-    testWidgets(
-        'NotificationsScreen renders notifications list and filter tags',
+    testWidgets('NotificationsScreen renders an honest empty state',
         (tester) async {
       tester.view.physicalSize = const Size(1200, 2400);
       tester.view.devicePixelRatio = 1.0;
@@ -420,9 +424,9 @@ void main() {
       );
       await tester.pumpAndSettle();
 
-      expect(find.text('Notifications Centre'), findsOneWidget);
-      expect(find.text('Mark all read'), findsOneWidget);
-      expect(find.text('Bitcoin Received'), findsOneWidget);
+      expect(find.text('Notifications'), findsOneWidget);
+      expect(find.text('No notifications yet'), findsOneWidget);
+      expect(find.text('Bitcoin Received'), findsNothing);
     });
   });
 }

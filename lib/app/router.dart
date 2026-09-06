@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../features/auth/providers/auth_provider.dart';
@@ -10,14 +11,20 @@ import '../features/auth/screens/wallet_setup_screen.dart';
 import '../features/auth/screens/welcome_screen.dart';
 import '../features/beneficiaries/presentation/beneficiaries_screen.dart';
 import '../features/cards/presentation/cards_screen.dart';
+import '../features/conversion/presentation/conversion_flow_screen.dart';
 import '../features/home/presentation/home_screen.dart';
 import '../features/insights/presentation/insights_screen.dart';
 import '../features/mints/presentation/mints_screen.dart';
+import '../features/money/presentation/bitcoin_detail_screen.dart';
 import '../features/money/presentation/money_screen.dart';
+import '../features/money/presentation/stablecoin_detail_screen.dart';
+import '../features/wallet/domain/asset_model.dart';
 import '../features/notifications/presentation/notifications_screen.dart';
 import '../features/pending/presentation/pending_centre_screen.dart';
 import '../features/profile/screens/developer_options_screen.dart';
+import '../features/profile/screens/edit_profile_screen.dart';
 import '../features/profile/screens/profile_screen.dart';
+import '../features/profile/screens/settings_screen.dart';
 import '../features/protected/presentation/protected_screen.dart';
 import '../features/protected_send/presentation/claim_payment_screen.dart';
 import '../features/protected_send/presentation/protected_send_screen.dart';
@@ -35,8 +42,16 @@ import '../features/transactions/domain/transaction_model.dart';
 import '../features/transactions/presentation/transaction_details_screen.dart';
 import '../features/transactions/presentation/transactions_screen.dart';
 import '../features/travel/presentation/esim_screen.dart';
-import '../features/travel/presentation/travel_screen.dart';
+import '../features/roam/presentation/roam_screen.dart';
 import 'shell/app_shell.dart';
+
+import '../features/spend/presentation/airtime_flow_screen.dart';
+import '../features/spend/presentation/data_bundle_flow_screen.dart';
+import '../features/spend/presentation/electricity_flow_screen.dart';
+import '../features/spend/presentation/internet_flow_screen.dart';
+import '../features/spend/presentation/pay_hub_screen.dart';
+import '../features/spend/presentation/tv_subscription_flow_screen.dart';
+import '../features/spend/presentation/water_flow_screen.dart';
 
 final GlobalKey<NavigatorState> _rootNavigatorKey = GlobalKey<NavigatorState>();
 
@@ -67,10 +82,27 @@ final appRouterProvider = Provider<GoRouter>((ref) {
       final isAuth = authState.isAuthenticated;
       final location = state.uri.path;
 
+      if (location == '/auth/welcome') {
+        return '/welcome';
+      }
+      if (location == '/auth/login') {
+        return '/login';
+      }
+      if (location == '/auth/signup') {
+        return '/signup';
+      }
+
+      if (location == '/developer-options' && !kDebugMode) {
+        return '/settings';
+      }
+
       final isAuthRoute = location == '/splash' ||
           location == '/welcome' ||
+          location == '/auth/welcome' ||
           location == '/login' ||
+          location == '/auth/login' ||
           location == '/signup' ||
+          location == '/auth/signup' ||
           location == '/forgot-password' ||
           location == '/reset-password' ||
           location == '/wallet-setup';
@@ -80,12 +112,16 @@ final appRouterProvider = Provider<GoRouter>((ref) {
         return '/welcome';
       }
 
-      if (isAuth && location == '/login') {
+      if (isAuth && (location == '/login' || location == '/auth/login')) {
         return safePostLoginPath(state.uri);
       }
 
       // If authenticated and on another entry page, redirect to home.
-      if (isAuth && (location == '/welcome' || location == '/signup')) {
+      if (isAuth &&
+          (location == '/welcome' ||
+              location == '/auth/welcome' ||
+              location == '/signup' ||
+              location == '/auth/signup')) {
         return '/home';
       }
 
@@ -107,14 +143,26 @@ final appRouterProvider = Provider<GoRouter>((ref) {
         },
       ),
       GoRoute(
+        path: '/auth/welcome',
+        redirect: (context, state) => '/welcome',
+      ),
+      GoRoute(
         path: '/signup',
         builder: (context, state) => const SignUpScreen(),
+      ),
+      GoRoute(
+        path: '/auth/signup',
+        redirect: (context, state) => '/signup',
       ),
       GoRoute(
         path: '/login',
         builder: (context, state) => SignInScreen(
           postLoginPath: safePostLoginPath(state.uri),
         ),
+      ),
+      GoRoute(
+        path: '/auth/login',
+        redirect: (context, state) => '/login',
       ),
       GoRoute(
         path: '/forgot-password',
@@ -132,7 +180,7 @@ final appRouterProvider = Provider<GoRouter>((ref) {
         builder: (context, state) => const WalletSetupScreen(),
       ),
 
-      // Main Navigation Shell
+      // Main Navigation Shell (5 Standard Tabs: Home, Pay, Activity, Travel, Me)
       StatefulShellRoute.indexedStack(
         builder: (context, state, navigationShell) {
           return AppShell(navigationShell: navigationShell);
@@ -147,7 +195,16 @@ final appRouterProvider = Provider<GoRouter>((ref) {
               ),
             ],
           ),
-          // Branch 1: Activity
+          // Branch 1: Pay Hub
+          StatefulShellBranch(
+            routes: [
+              GoRoute(
+                path: '/pay',
+                builder: (context, state) => const PayHubScreen(),
+              ),
+            ],
+          ),
+          // Branch 2: Activity
           StatefulShellBranch(
             routes: [
               GoRoute(
@@ -156,20 +213,20 @@ final appRouterProvider = Provider<GoRouter>((ref) {
               ),
             ],
           ),
-          // Branch 2: Protected
+          // Branch 3: Money (Balances, Protected, Pending, Insights, Statements)
           StatefulShellBranch(
             routes: [
               GoRoute(
-                path: '/protected',
-                builder: (context, state) => const ProtectedScreen(),
+                path: '/money',
+                builder: (context, state) => const MoneyScreen(),
               ),
             ],
           ),
-          // Branch 3: Me
+          // Branch 4: Profile (Identity, Account, Preferences, Settings)
           StatefulShellBranch(
             routes: [
               GoRoute(
-                path: '/me',
+                path: '/profile',
                 builder: (context, state) => const ProfileScreen(),
               ),
             ],
@@ -179,9 +236,45 @@ final appRouterProvider = Provider<GoRouter>((ref) {
 
       // Modal & Feature routes
       GoRoute(
-        path: '/money',
+        path: '/pay/airtime',
         parentNavigatorKey: _rootNavigatorKey,
-        builder: (context, state) => const MoneyScreen(),
+        builder: (context, state) => const AirtimeFlowScreen(),
+      ),
+      GoRoute(
+        path: '/pay/data',
+        parentNavigatorKey: _rootNavigatorKey,
+        builder: (context, state) => const DataBundleFlowScreen(),
+      ),
+      GoRoute(
+        path: '/pay/electricity',
+        parentNavigatorKey: _rootNavigatorKey,
+        builder: (context, state) => const ElectricityFlowScreen(),
+      ),
+      GoRoute(
+        path: '/pay/tv',
+        parentNavigatorKey: _rootNavigatorKey,
+        builder: (context, state) => const TvSubscriptionFlowScreen(),
+      ),
+      GoRoute(
+        path: '/pay/internet',
+        parentNavigatorKey: _rootNavigatorKey,
+        builder: (context, state) => const InternetFlowScreen(),
+      ),
+      GoRoute(
+        path: '/pay/water',
+        parentNavigatorKey: _rootNavigatorKey,
+        builder: (context, state) => const WaterFlowScreen(),
+      ),
+      GoRoute(
+        path: '/protected',
+        parentNavigatorKey: _rootNavigatorKey,
+        builder: (context, state) => const ProtectedScreen(),
+      ),
+
+      // Modal & Feature routes
+      GoRoute(
+        path: '/me',
+        redirect: (context, state) => '/profile',
       ),
       GoRoute(
         path: '/insights',
@@ -232,14 +325,64 @@ final appRouterProvider = Provider<GoRouter>((ref) {
         builder: (context, state) {
           final invoice = state.uri.queryParameters['invoice'];
           final recipient = state.uri.queryParameters['recipient'];
+          final assetParam = state.uri.queryParameters['asset'];
+          final asset = assetParam != null
+              ? AssetType.values.firstWhere(
+                  (a) => a.symbol.toLowerCase() == assetParam.toLowerCase(),
+                  orElse: () => AssetType.btc,
+                )
+              : AssetType.btc;
           return SendScreen(
-              initialInvoice: invoice, initialRecipient: recipient);
+            initialInvoice: invoice,
+            initialRecipient: recipient,
+            initialAsset: asset,
+          );
         },
       ),
       GoRoute(
         path: '/receive',
         parentNavigatorKey: _rootNavigatorKey,
-        builder: (context, state) => const ReceiveScreen(),
+        builder: (context, state) {
+          final assetParam = state.uri.queryParameters['asset'];
+          final asset = assetParam != null
+              ? AssetType.values.firstWhere(
+                  (a) => a.symbol.toLowerCase() == assetParam.toLowerCase(),
+                  orElse: () => AssetType.btc,
+                )
+              : AssetType.btc;
+          return ReceiveScreen(initialAsset: asset);
+        },
+      ),
+      GoRoute(
+        path: '/convert',
+        parentNavigatorKey: _rootNavigatorKey,
+        builder: (context, state) {
+          final fromParam = state.uri.queryParameters['from'];
+          final fromAsset = fromParam != null
+              ? AssetType.values.firstWhere(
+                  (a) => a.symbol.toLowerCase() == fromParam.toLowerCase(),
+                  orElse: () => AssetType.btc,
+                )
+              : AssetType.btc;
+          return ConversionFlowScreen(initialFromAsset: fromAsset);
+        },
+      ),
+      GoRoute(
+        path: '/money/bitcoin',
+        parentNavigatorKey: _rootNavigatorKey,
+        builder: (context, state) => const BitcoinDetailScreen(),
+      ),
+      GoRoute(
+        path: '/money/usdt',
+        parentNavigatorKey: _rootNavigatorKey,
+        builder: (context, state) =>
+            const StablecoinDetailScreen(asset: AssetType.usdt),
+      ),
+      GoRoute(
+        path: '/money/usdc',
+        parentNavigatorKey: _rootNavigatorKey,
+        builder: (context, state) =>
+            const StablecoinDetailScreen(asset: AssetType.usdc),
       ),
       GoRoute(
         path: '/protected-send',
@@ -270,6 +413,21 @@ final appRouterProvider = Provider<GoRouter>((ref) {
         builder: (context, state) => const DeveloperOptionsScreen(),
       ),
       GoRoute(
+        path: '/edit-profile',
+        parentNavigatorKey: _rootNavigatorKey,
+        builder: (context, state) => const EditProfileScreen(),
+      ),
+      GoRoute(
+        path: '/settings',
+        parentNavigatorKey: _rootNavigatorKey,
+        builder: (context, state) => const SettingsScreen(),
+      ),
+      GoRoute(
+        path: '/roam',
+        parentNavigatorKey: _rootNavigatorKey,
+        builder: (context, state) => const RoamScreen(),
+      ),
+      GoRoute(
         path: '/backup-seed',
         parentNavigatorKey: _rootNavigatorKey,
         builder: (context, state) => const BackupSeedScreen(),
@@ -286,8 +444,7 @@ final appRouterProvider = Provider<GoRouter>((ref) {
       ),
       GoRoute(
         path: '/travel',
-        parentNavigatorKey: _rootNavigatorKey,
-        builder: (context, state) => const TravelScreen(),
+        redirect: (context, state) => '/roam',
       ),
       GoRoute(
         path: '/esim',
