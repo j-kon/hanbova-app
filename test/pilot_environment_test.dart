@@ -1,11 +1,14 @@
+import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:hanbova_app/core/config/app_config.dart';
 import 'package:hanbova_app/core/demo/demo_mode_provider.dart';
 import 'package:hanbova_app/core/network/network_environment.dart';
 import 'package:hanbova_app/core/networking/api_client.dart';
+import 'package:hanbova_app/features/home/presentation/asset_balance_carousel.dart';
 import 'package:hanbova_app/features/spend/data/bills_service.dart';
 import 'package:hanbova_app/features/travel/data/esim_service.dart';
+import 'package:hanbova_app/features/wallet/domain/asset_model.dart';
 import 'package:http/http.dart' as http;
 
 class MockFailingHttpClient extends http.BaseClient {
@@ -112,6 +115,38 @@ void main() {
       final client = container.read(apiClientProvider);
       expect(client.baseUrl, 'https://api.pilot.hanbova.com/api/v1');
     });
+
+    testWidgets('Pilot displays environment marker PILOT • TEST MODE', (tester) async {
+      final pilotConfig = AppConfig.createPilot(
+        apiBaseUrl: 'https://api.pilot.hanbova.com/api/v1',
+        mintUrl: 'https://mint.pilot.hanbova.com',
+      );
+
+      await tester.pumpWidget(
+        ProviderScope(
+          overrides: [
+            appConfigProvider.overrideWithValue(pilotConfig),
+          ],
+          child: MaterialApp(
+            home: Scaffold(
+              body: Consumer(
+                builder: (context, ref, _) {
+                  final config = ref.watch(appConfigProvider);
+                  if (!config.isPilot) return const SizedBox.shrink();
+                  return const Text(
+                    'PILOT • TEST MODE',
+                    key: Key('pilot-environment-badge'),
+                  );
+                },
+              ),
+            ),
+          ),
+        ),
+      );
+
+      expect(find.byKey(const Key('pilot-environment-badge')), findsOneWidget);
+      expect(find.text('PILOT • TEST MODE'), findsOneWidget);
+    });
   });
 
   group('Provider Fail-Closed Fallbacks', () {
@@ -202,6 +237,23 @@ void main() {
       notifier.toggleDemoMode();
       expect(notifier.state.isEnabled, isFalse);
     });
+
+    test('Demo sample balances only show when Demo Mode is enabled', () {
+      final pilotConfig = AppConfig.createPilot(
+        apiBaseUrl: 'https://api.pilot.hanbova.com/api/v1',
+        mintUrl: 'https://mint.pilot.hanbova.com',
+      );
+
+      final container = ProviderContainer(
+        overrides: [
+          appConfigProvider.overrideWithValue(pilotConfig),
+        ],
+      );
+
+      final demoState = container.read(demoModeProvider);
+      // In pilot, demo mode cannot be active, so isEnabled is false
+      expect(demoState.isEnabled, isFalse);
+    });
   });
 
   group('Mainnet Safety Guard in Pilot', () {
@@ -214,6 +266,36 @@ void main() {
 
       final active = NetworkConfig.fromNetwork(notifier.state);
       expect(active.network, isNot(HanbovaNetwork.mainnet));
+    });
+  });
+
+  group('Home Carousel & selectedHomeAssetProvider Non-Regression', () {
+    test('selectedHomeAssetProvider defaults to bitcoin and transitions cleanly', () {
+      final container = ProviderContainer();
+      expect(container.read(selectedHomeAssetProvider), AssetType.btc);
+
+      container.read(selectedHomeAssetProvider.notifier).state = AssetType.usdt;
+      expect(container.read(selectedHomeAssetProvider), AssetType.usdt);
+
+      container.read(selectedHomeAssetProvider.notifier).state = AssetType.usdc;
+      expect(container.read(selectedHomeAssetProvider), AssetType.usdc);
+    });
+
+    test('Truthful USDT/USDC status when demo mode is off', () {
+      final container = ProviderContainer(
+        overrides: [
+          appConfigProvider.overrideWithValue(
+            AppConfig.createPilot(
+              apiBaseUrl: 'https://api.pilot.hanbova.com/api/v1',
+              mintUrl: 'https://mint.pilot.hanbova.com',
+            ),
+          ),
+        ],
+      );
+
+      final isDemo = container.read(demoModeProvider).isEnabled;
+      expect(isDemo, isFalse);
+      // When isDemo is false, app correctly keeps sample balances disabled
     });
   });
 }

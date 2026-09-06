@@ -214,7 +214,7 @@ class _AppShellState extends State<AppShell>
                       ),
                     ),
                     child: const Text(
-                      'PILOT',
+                      'PILOT • TEST MODE',
                       key: Key('pilot-environment-badge'),
                       style: TextStyle(
                         fontSize: 9,
