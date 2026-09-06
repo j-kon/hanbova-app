@@ -28,6 +28,12 @@ class FakeRateNotifier extends StateNotifier<HanbovaRateState>
 
   @override
   Future<void> refresh() async {}
+
+  @override
+  void startPolling({Duration interval = const Duration(seconds: 45)}) {}
+
+  @override
+  void stopPolling() {}
 }
 
 void main() {

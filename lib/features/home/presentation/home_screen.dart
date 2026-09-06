@@ -4,7 +4,8 @@ import 'package:go_router/go_router.dart';
 import '../../../core/cashu/cashu_wallet_models.dart';
 import '../../../core/cashu/cashu_wallet_provider.dart';
 import '../../../core/security/privacy_provider.dart';
-import 'home_balance_card.dart';
+import 'asset_balance_carousel.dart';
+import '../../wallet/domain/asset_model.dart';
 import '../../transactions/presentation/activity_transaction_tile.dart';
 import '../../../core/currency/currency_provider.dart';
 import '../../../core/network/network_environment.dart';
@@ -18,12 +19,12 @@ import '../../auth/providers/auth_provider.dart';
 import '../../security/presentation/mainnet_safety_dialog.dart';
 import '../../transactions/domain/transaction_model.dart';
 import '../../transactions/presentation/transactions_provider.dart';
-import '../../wallet/presentation/unified_deposit_sheet.dart';
 import '../../../core/demo/demo_mode_provider.dart';
 import '../../../core/market/country_model.dart';
 import '../../../core/market/market_provider.dart';
 import '../../../core/widgets/hanbova_rate_card.dart';
 import '../../../core/rates/hanbova_rate_provider.dart';
+import '../../../core/rates/hanbova_all_rates_provider.dart';
 import '../../profile/providers/profile_provider.dart';
 import '../../request_money/presentation/request_money_screen.dart';
 
@@ -87,9 +88,6 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     final protectedSats = demoState.isEnabled
         ? demoState.protectedTotalSats
         : cashuBalance.lockedEscrowSats;
-    final spendableSats = demoState.isEnabled
-        ? demoState.availableBalanceSats
-        : cashuBalance.spendableSats;
 
     final profile = ref.watch(profileProvider);
     final residence = profile.residenceCountryInfo;
@@ -102,7 +100,9 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     final netConfig = ref.watch(activeNetworkConfigProvider);
     final isMainnet = currentNetwork == HanbovaNetwork.mainnet;
 
-    final actionRailItems = _getActionRailItems(context, colors, market);
+    final selectedAsset = ref.watch(selectedHomeAssetProvider);
+    final actionRailItems =
+        _getActionRailItems(context, colors, market, selectedAsset);
 
     return Scaffold(
       backgroundColor: colors.background,
@@ -111,6 +111,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
           onRefresh: () async {
             ref.invalidate(cashuBalanceProvider);
             ref.read(hanbovaRateProvider.notifier).refresh();
+            ref.read(allHanbovaRatesProvider.notifier).refresh();
             try {
               await ref.read(walletSyncCoordinatorProvider)?.syncNow();
             } catch (_) {}
@@ -285,22 +286,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                   ),
                 ],
 
-                HomeBalanceCard(
-                  amount: isBalanceVisible
-                      ? currency.format(spendableSats)
-                      : '••••••',
-                  sats: isBalanceVisible
-                      ? '${Formatters.formatSatsNumber(spendableSats)} ${isMainnet ? "sats" : "test sats"}'
-                      : '•••• sats',
-                  protectedAmount: balanceStatus ??
-                      (isBalanceVisible
-                          ? Formatters.formatSats(protectedSats)
-                          : '••••'),
-                  pendingAmount: !demoState.isEnabled
-                      ? 'Check status'
-                      : isBalanceVisible
-                          ? Formatters.formatSats(demoState.pendingBalanceSats)
-                          : '••••',
+                AssetBalanceCarousel(
                   environmentLabel: demoState.isEnabled
                       ? ''
                       : isMainnet
@@ -308,17 +294,25 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                               ? 'Pilot · Real Bitcoin · 10,000 sats limit'
                               : 'Mainnet locked')
                           : 'Test mode · No monetary value',
-                  isHidden: !isBalanceVisible,
-                  isLoading:
-                      !demoState.isEnabled && cashuBalanceAsync.isLoading,
-                  hasError: !demoState.isEnabled && cashuBalanceAsync.hasError,
-                  onRetry: () => ref.invalidate(cashuBalanceProvider),
-                  onToggleVisibility: () =>
-                      ref.read(privacyProvider.notifier).toggleBalanceHidden(),
-                  onProtected: () => context.push('/protected'),
-                  onPending: () => context.push('/pending'),
-                  onEnvironment: () => MainnetSafetyDialog.show(context),
+                  onEnvironmentTap: () => MainnetSafetyDialog.show(context),
                 ),
+
+                // BTC Motion Panel (Protected & Pending sats): visible only when BTC card is selected
+                if (selectedAsset == AssetType.btc) ...[
+                  const SizedBox(height: AppSpacing.sm),
+                  _buildBtcMotionPanel(
+                    context,
+                    colors: colors,
+                    isBalanceVisible: isBalanceVisible,
+                    protectedSats: protectedSats,
+                    pendingSats:
+                        demoState.isEnabled ? demoState.pendingBalanceSats : 0,
+                    isDemo: demoState.isEnabled,
+                    balanceStatus: balanceStatus,
+                    onProtected: () => context.push('/protected'),
+                    onPending: () => context.push('/pending'),
+                  ),
+                ],
                 const SizedBox(height: AppSpacing.sm),
 
                 ListTile(
@@ -1101,71 +1095,282 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
   }
 
   List<ActionRailItemData> _getActionRailItems(
-      BuildContext context, HanbovaColors colors, UserCountryContext market) {
-    return [
-      ActionRailItemData(
-        id: 'send',
-        label: 'Send',
-        icon: Icons.arrow_upward_rounded,
-        color: colors.primary,
-        onTap: () => context.push('/send'),
-      ),
-      ActionRailItemData(
-        id: 'receive',
-        label: 'Receive',
-        icon: Icons.arrow_downward_rounded,
-        color: const Color(0xFF10B981),
-        onTap: () => UnifiedDepositSheet.show(context),
-      ),
-      ActionRailItemData(
-        id: 'protected',
-        label: 'Protected',
-        icon: Icons.shield_outlined,
-        color: colors.protected,
-        onTap: () => context.push('/protected-send'),
-      ),
-      ActionRailItemData(
-        id: 'scan',
-        label: 'Scan',
-        icon: Icons.qr_code_scanner_rounded,
-        color: const Color(0xFF38BDF8),
-        onTap: () => context.push('/scan'),
-      ),
-      ActionRailItemData(
-        id: 'request',
-        label: 'Request',
-        icon: Icons.call_received_rounded,
-        color: const Color(0xFFEC4899),
-        onTap: () => showModalBottomSheet(
-          context: context,
-          isScrollControlled: true,
-          backgroundColor: Colors.transparent,
-          builder: (ctx) => const RequestMoneyScreen(),
-        ),
-      ),
-      ActionRailItemData(
-        id: 'convert',
-        label: 'Convert',
-        icon: Icons.swap_horiz_rounded,
-        color: const Color(0xFF38BDF8),
-        onTap: () => context.push('/convert'),
-      ),
-      if (market.capabilities.airtime)
+      BuildContext context,
+      HanbovaColors colors,
+      UserCountryContext market,
+      AssetType selectedAsset) {
+    final assetParam = selectedAsset.symbol.toLowerCase();
+
+    if (selectedAsset == AssetType.btc) {
+      return [
         ActionRailItemData(
-          id: 'airtime',
-          label: 'Airtime',
-          icon: Icons.phone_android_rounded,
-          color: AppColors.primary,
-          onTap: () => context.push('/pay/airtime'),
+          id: 'send',
+          label: 'Send',
+          icon: Icons.arrow_upward_rounded,
+          color: colors.primary,
+          onTap: () => context.push('/send?asset=btc'),
         ),
-      ActionRailItemData(
-        id: 'more',
-        label: 'More',
-        icon: Icons.more_horiz_rounded,
-        color: const Color(0xFF94A3B8),
-        onTap: () => _showActionCatalogueSheet(context),
+        ActionRailItemData(
+          id: 'receive',
+          label: 'Receive',
+          icon: Icons.arrow_downward_rounded,
+          color: const Color(0xFF10B981),
+          onTap: () => context.push('/receive?asset=btc'),
+        ),
+        ActionRailItemData(
+          id: 'protected',
+          label: 'Protected',
+          icon: Icons.shield_outlined,
+          color: colors.protected,
+          onTap: () => context.push('/protected-send'),
+        ),
+        ActionRailItemData(
+          id: 'scan',
+          label: 'Scan',
+          icon: Icons.qr_code_scanner_rounded,
+          color: const Color(0xFF38BDF8),
+          onTap: () => context.push('/scan'),
+        ),
+        ActionRailItemData(
+          id: 'request',
+          label: 'Request',
+          icon: Icons.call_received_rounded,
+          color: const Color(0xFFEC4899),
+          onTap: () => showModalBottomSheet(
+            context: context,
+            isScrollControlled: true,
+            backgroundColor: Colors.transparent,
+            builder: (ctx) => const RequestMoneyScreen(),
+          ),
+        ),
+        ActionRailItemData(
+          id: 'convert',
+          label: 'Convert',
+          icon: Icons.swap_horiz_rounded,
+          color: const Color(0xFF38BDF8),
+          onTap: () => context.push('/convert?from=btc'),
+        ),
+        if (market.capabilities.airtime)
+          ActionRailItemData(
+            id: 'airtime',
+            label: 'Airtime',
+            icon: Icons.phone_android_rounded,
+            color: AppColors.primary,
+            onTap: () => context.push('/pay/airtime'),
+          ),
+        ActionRailItemData(
+          id: 'more',
+          label: 'More',
+          icon: Icons.more_horiz_rounded,
+          color: const Color(0xFF94A3B8),
+          onTap: () => _showActionCatalogueSheet(context),
+        ),
+      ];
+    } else {
+      // Stablecoin selected (USDT / USDC)
+      // Requirement 12: PROTECTED SEND MUST REMAIN BTC/CASHU ONLY.
+      return [
+        ActionRailItemData(
+          id: 'send',
+          label: 'Send',
+          icon: Icons.arrow_upward_rounded,
+          color: selectedAsset.color,
+          onTap: () => context.push('/send?asset=$assetParam'),
+        ),
+        ActionRailItemData(
+          id: 'receive',
+          label: 'Receive',
+          icon: Icons.arrow_downward_rounded,
+          color: const Color(0xFF10B981),
+          onTap: () => context.push('/receive?asset=$assetParam'),
+        ),
+        ActionRailItemData(
+          id: 'convert',
+          label: 'Convert',
+          icon: Icons.swap_horiz_rounded,
+          color: const Color(0xFF38BDF8),
+          onTap: () => context.push('/convert?from=$assetParam'),
+        ),
+        ActionRailItemData(
+          id: 'scan',
+          label: 'Scan',
+          icon: Icons.qr_code_scanner_rounded,
+          color: const Color(0xFF38BDF8),
+          onTap: () => context.push('/scan'),
+        ),
+        ActionRailItemData(
+          id: 'request',
+          label: 'Request',
+          icon: Icons.call_received_rounded,
+          color: const Color(0xFFEC4899),
+          onTap: () => showModalBottomSheet(
+            context: context,
+            isScrollControlled: true,
+            backgroundColor: Colors.transparent,
+            builder: (ctx) => const RequestMoneyScreen(),
+          ),
+        ),
+        if (market.capabilities.airtime)
+          ActionRailItemData(
+            id: 'airtime',
+            label: 'Airtime',
+            icon: Icons.phone_android_rounded,
+            color: AppColors.primary,
+            onTap: () => context.push('/pay/airtime'),
+          ),
+        ActionRailItemData(
+          id: 'more',
+          label: 'More',
+          icon: Icons.more_horiz_rounded,
+          color: const Color(0xFF94A3B8),
+          onTap: () => _showActionCatalogueSheet(context),
+        ),
+      ];
+    }
+  }
+
+  Widget _buildBtcMotionPanel(
+    BuildContext context, {
+    required HanbovaColors colors,
+    required bool isBalanceVisible,
+    required int protectedSats,
+    required int pendingSats,
+    required bool isDemo,
+    required String? balanceStatus,
+    required VoidCallback onProtected,
+    required VoidCallback onPending,
+  }) {
+    final protectedText = balanceStatus ??
+        (isBalanceVisible ? Formatters.formatSats(protectedSats) : '••••');
+    final pendingText = !isDemo
+        ? (balanceStatus ?? 'Check status')
+        : (isBalanceVisible ? Formatters.formatSats(pendingSats) : '••••');
+
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+      decoration: BoxDecoration(
+        color: colors.surfaceCard,
+        borderRadius: AppRadius.mdRadius,
+        border: Border.all(color: colors.border.withValues(alpha: 0.7)),
       ),
-    ];
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Icon(Icons.shield_outlined, size: 14, color: colors.primary),
+              const SizedBox(width: 6),
+              Expanded(
+                child: Text(
+                  'Money in motion',
+                  style: AppTypography.caption.copyWith(
+                    color: colors.textSecondary,
+                    fontWeight: FontWeight.w600,
+                    letterSpacing: 0.5,
+                  ),
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 10),
+          Row(
+            children: [
+              Expanded(
+                child: InkWell(
+                  onTap: onProtected,
+                  borderRadius: BorderRadius.circular(10),
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(vertical: 4),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Row(
+                          children: [
+                            Icon(Icons.lock_outline_rounded,
+                                size: 14, color: colors.primary),
+                            const SizedBox(width: 4),
+                            Expanded(
+                              child: Text(
+                                'Protected',
+                                style: AppTypography.caption.copyWith(
+                                  color: colors.textSecondary,
+                                ),
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 4),
+                        FittedBox(
+                          fit: BoxFit.scaleDown,
+                          alignment: Alignment.centerLeft,
+                          child: Text(
+                            protectedText,
+                            style: AppTypography.titleSmall.copyWith(
+                              color: colors.textPrimary,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+              Container(
+                width: 1,
+                height: 36,
+                color: colors.border.withValues(alpha: 0.5),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: InkWell(
+                  onTap: onPending,
+                  borderRadius: BorderRadius.circular(10),
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(vertical: 4),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Row(
+                          children: [
+                            Icon(Icons.schedule_rounded,
+                                size: 14, color: colors.warning),
+                            const SizedBox(width: 4),
+                            Expanded(
+                              child: Text(
+                                'Pending',
+                                style: AppTypography.caption.copyWith(
+                                  color: colors.textSecondary,
+                                ),
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 4),
+                        FittedBox(
+                          fit: BoxFit.scaleDown,
+                          alignment: Alignment.centerLeft,
+                          child: Text(
+                            pendingText,
+                            style: AppTypography.titleSmall.copyWith(
+                              color: colors.textPrimary,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
   }
 
   Widget _buildActionRailItem(

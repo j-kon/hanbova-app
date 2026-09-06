@@ -73,6 +73,17 @@ enum AssetType {
         return Icons.monetization_on_rounded;
     }
   }
+
+  /// Default backend settlement network for each asset type.
+  String get defaultSettlementNetwork {
+    switch (this) {
+      case AssetType.btc:
+        return 'Lightning';
+      case AssetType.usdt:
+      case AssetType.usdc:
+        return 'TRC-20';
+    }
+  }
 }
 
 /// Normalized lifecycle and availability state for an asset.

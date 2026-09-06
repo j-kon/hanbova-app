@@ -9,6 +9,7 @@ import 'package:hanbova_app/features/pending/presentation/pending_centre_screen.
 import 'package:hanbova_app/features/protected/presentation/protected_screen.dart';
 import 'package:intl/intl.dart';
 import '../../../core/cashu/cashu_wallet_provider.dart';
+import '../../../core/utils/formatters.dart';
 import '../../../core/widgets/hanbova_rate_card.dart';
 import '../../home/presentation/home_balance_card.dart';
 
@@ -210,10 +211,12 @@ class MoneyScreen extends ConsumerWidget {
                 ? 'Sample stablecoin balance'
                 : 'Coming soon',
             amountDisplay: demoState.isEnabled
-                ? (privacy.isBalanceHidden ? '••••' : '\$1,250.00')
+                ? (privacy.isBalanceHidden
+                    ? '••••'
+                    : '\$${Formatters.formatFiatAmount(demoState.demoUsdtBalance)}')
                 : '\$0.00',
             fiatEstimate: demoState.isEnabled && !privacy.isBalanceHidden
-                ? '1,250.00 USDT'
+                ? '${Formatters.formatFiatAmount(demoState.demoUsdtBalance)} USDT'
                 : null,
             stateBadge: demoState.isEnabled ? 'Demo' : 'Coming soon',
             badgeColor:
@@ -233,10 +236,12 @@ class MoneyScreen extends ConsumerWidget {
                 ? 'Sample stablecoin balance'
                 : 'Coming soon',
             amountDisplay: demoState.isEnabled
-                ? (privacy.isBalanceHidden ? '••••' : '\$750.00')
+                ? (privacy.isBalanceHidden
+                    ? '••••'
+                    : '\$${Formatters.formatFiatAmount(demoState.demoUsdcBalance)}')
                 : '\$0.00',
             fiatEstimate: demoState.isEnabled && !privacy.isBalanceHidden
-                ? '750.00 USDC'
+                ? '${Formatters.formatFiatAmount(demoState.demoUsdcBalance)} USDC'
                 : null,
             stateBadge: demoState.isEnabled ? 'Demo' : 'Coming soon',
             badgeColor:

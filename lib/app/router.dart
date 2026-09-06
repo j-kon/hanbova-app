@@ -325,19 +325,47 @@ final appRouterProvider = Provider<GoRouter>((ref) {
         builder: (context, state) {
           final invoice = state.uri.queryParameters['invoice'];
           final recipient = state.uri.queryParameters['recipient'];
+          final assetParam = state.uri.queryParameters['asset'];
+          final asset = assetParam != null
+              ? AssetType.values.firstWhere(
+                  (a) => a.symbol.toLowerCase() == assetParam.toLowerCase(),
+                  orElse: () => AssetType.btc,
+                )
+              : AssetType.btc;
           return SendScreen(
-              initialInvoice: invoice, initialRecipient: recipient);
+            initialInvoice: invoice,
+            initialRecipient: recipient,
+            initialAsset: asset,
+          );
         },
       ),
       GoRoute(
         path: '/receive',
         parentNavigatorKey: _rootNavigatorKey,
-        builder: (context, state) => const ReceiveScreen(),
+        builder: (context, state) {
+          final assetParam = state.uri.queryParameters['asset'];
+          final asset = assetParam != null
+              ? AssetType.values.firstWhere(
+                  (a) => a.symbol.toLowerCase() == assetParam.toLowerCase(),
+                  orElse: () => AssetType.btc,
+                )
+              : AssetType.btc;
+          return ReceiveScreen(initialAsset: asset);
+        },
       ),
       GoRoute(
         path: '/convert',
         parentNavigatorKey: _rootNavigatorKey,
-        builder: (context, state) => const ConversionFlowScreen(),
+        builder: (context, state) {
+          final fromParam = state.uri.queryParameters['from'];
+          final fromAsset = fromParam != null
+              ? AssetType.values.firstWhere(
+                  (a) => a.symbol.toLowerCase() == fromParam.toLowerCase(),
+                  orElse: () => AssetType.btc,
+                )
+              : AssetType.btc;
+          return ConversionFlowScreen(initialFromAsset: fromAsset);
+        },
       ),
       GoRoute(
         path: '/money/bitcoin',

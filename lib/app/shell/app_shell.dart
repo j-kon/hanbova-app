@@ -25,19 +25,19 @@ class AppShell extends StatelessWidget {
     final selectedIndex = navigationShell.currentIndex;
 
     return Scaffold(
-      backgroundColor: colors.background,
+      // backgroundColor: colors.background,
       body: navigationShell,
       bottomNavigationBar: MediaQuery.viewInsetsOf(context).bottom > 0
           ? null
           : SafeArea(
-              top: false,
-              minimum: const EdgeInsets.fromLTRB(12, 8, 12, 12),
+              // top: false,
+              minimum: const EdgeInsets.fromLTRB(16, 0, 16, 0),
               child: Container(
                 key: const Key('main-navigation'),
-                padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 8),
+                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                 decoration: BoxDecoration(
                   color: colors.surfaceCard,
-                  borderRadius: BorderRadius.circular(24),
+                  borderRadius: BorderRadius.circular(35),
                   border: Border.all(color: colors.border),
                 ),
                 child: Row(children: [
@@ -56,16 +56,20 @@ class AppShell extends StatelessWidget {
                           isSelected: selectedIndex == 2,
                           onTap: () => _onTap(context, 2))),
                   Expanded(
-                      child: Column(mainAxisSize: MainAxisSize.min, children: [
-                    _CenterActionButton(
-                        key: const Key('navbar_center_action_button'),
-                        onTap: () => PayActionSheet.show(context)),
-                    const SizedBox(height: 2),
-                    ExcludeSemantics(
-                        child: Text('Pay',
-                            style: AppTypography.labelSmall
-                                .copyWith(color: colors.textPrimary))),
-                  ])),
+                    child: Column(mainAxisSize: MainAxisSize.min, children: [
+                      _CenterActionButton(
+                          key: const Key('navbar_center_action_button'),
+                          onTap: () => PayActionSheet.show(context)),
+                      //const SizedBox(height: 2),
+                      // ExcludeSemantics(
+                      //   child: Text(
+                      //     'Pay',
+                      //     style: AppTypography.labelSmall
+                      //         .copyWith(color: colors.textPrimary),
+                      //   ),
+                      // ),
+                    ]),
+                  ),
                   Expanded(
                       child: _IosNavItem(
                           icon: Icons.account_balance_wallet_outlined,
@@ -199,7 +203,7 @@ class _IosNavItem extends StatelessWidget {
               color: isSelected
                   ? activeColor.withValues(alpha: isDark ? 0.16 : 0.09)
                   : Colors.transparent,
-              borderRadius: BorderRadius.circular(16),
+              borderRadius: BorderRadius.circular(35),
             ),
             child: FittedBox(
               fit: BoxFit.scaleDown,

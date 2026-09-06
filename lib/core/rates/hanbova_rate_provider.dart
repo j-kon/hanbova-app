@@ -37,16 +37,27 @@ class HanbovaRateNotifier extends StateNotifier<HanbovaRateState> {
       );
     } else if (autoFetch) {
       fetchRate();
-      // Periodically refresh indicative rate in the background every 45s
-      _pollingTimer = Timer.periodic(const Duration(seconds: 45), (_) {
-        fetchRate(silent: true);
-      });
     }
+  }
+
+  /// Optional opt-in periodic polling for active foreground screens.
+  void startPolling({Duration interval = const Duration(seconds: 45)}) {
+    _pollingTimer?.cancel();
+    _pollingTimer = Timer.periodic(interval, (_) {
+      fetchRate(silent: true);
+    });
+  }
+
+  /// Stops any active background rate polling.
+  void stopPolling() {
+    _pollingTimer?.cancel();
+    _pollingTimer = null;
   }
 
   @override
   void dispose() {
     _pollingTimer?.cancel();
+    _pollingTimer = null;
     super.dispose();
   }
 

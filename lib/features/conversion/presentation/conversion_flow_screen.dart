@@ -2,6 +2,9 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+
+import '../../../core/cashu/cashu_wallet_models.dart';
+import '../../../core/cashu/cashu_wallet_provider.dart';
 import '../../../core/demo/demo_mode_provider.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_radius.dart';
@@ -26,7 +29,8 @@ class ConversionFlowScreen extends ConsumerStatefulWidget {
       _ConversionFlowScreenState();
 }
 
-class _ConversionFlowScreenState extends ConsumerState<ConversionFlowScreen> {
+class _ConversionFlowScreenState extends ConsumerState<ConversionFlowScreen>
+    with SingleTickerProviderStateMixin {
   late AssetType _fromAsset;
   late AssetType _toAsset;
   final TextEditingController _amountController = TextEditingController();
@@ -36,6 +40,8 @@ class _ConversionFlowScreenState extends ConsumerState<ConversionFlowScreen> {
   int _secondsRemaining = 30;
   final bool _simulateUncertain = false;
 
+  late AnimationController _swapAnimController;
+
   // Static sample conversion rates (1 BTC = 64,820 USD; 1 sat = 0.0006482 USD)
   static const double _btcUsdRate = 64820.0;
   static const double _feePercent = 0.0025; // 0.25%
@@ -43,6 +49,10 @@ class _ConversionFlowScreenState extends ConsumerState<ConversionFlowScreen> {
   @override
   void initState() {
     super.initState();
+    _swapAnimController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 300),
+    );
     _fromAsset = widget.initialFromAsset;
     _toAsset = widget.initialToAsset != widget.initialFromAsset
         ? widget.initialToAsset
@@ -55,6 +65,7 @@ class _ConversionFlowScreenState extends ConsumerState<ConversionFlowScreen> {
 
   @override
   void dispose() {
+    _swapAnimController.dispose();
     _countdownTimer?.cancel();
     _amountController.dispose();
     super.dispose();
@@ -94,6 +105,7 @@ class _ConversionFlowScreenState extends ConsumerState<ConversionFlowScreen> {
   }
 
   void _swapAssets() {
+    _swapAnimController.forward(from: 0.0);
     setState(() {
       final temp = _fromAsset;
       _fromAsset = _toAsset;
@@ -205,19 +217,9 @@ class _ConversionFlowScreenState extends ConsumerState<ConversionFlowScreen> {
                       ),
                       textAlign: TextAlign.center,
                     ),
-                    const SizedBox(height: 6),
-                    Text(
-                      'SAMPLE QUOTE • DEMO DATA',
-                      style: AppTypography.caption.copyWith(
-                        color: colors.primary,
-                        fontWeight: FontWeight.bold,
-                        letterSpacing: 0.8,
-                      ),
-                      textAlign: TextAlign.center,
-                    ),
                     const SizedBox(height: AppSpacing.lg),
 
-                    // Conversion Summary Card
+                    // Conversion Card Summary
                     Container(
                       padding: const EdgeInsets.all(AppSpacing.md),
                       decoration: BoxDecoration(
@@ -229,73 +231,47 @@ class _ConversionFlowScreenState extends ConsumerState<ConversionFlowScreen> {
                       child: Column(
                         children: [
                           _buildReviewRow(
-                            'You send',
+                            'You Convert',
                             _formatAmountDisplay(inputAmount, _fromAsset),
                             colors,
                             isBold: true,
                           ),
-                          const Divider(height: 16),
+                          const Divider(height: 20),
                           _buildReviewRow(
-                            'You receive',
+                            'You Receive (Est.)',
                             _formatAmountDisplay(receiveAmount, _toAsset),
                             colors,
                             isBold: true,
                             valueColor: colors.primary,
                           ),
-                          const Divider(height: 16),
+                          const Divider(height: 20),
                           _buildReviewRow(
-                            'Exchange rate',
+                            'Exchange Rate',
                             _formatRateString(),
                             colors,
                           ),
-                          const Divider(height: 16),
+                          const SizedBox(height: 8),
                           _buildReviewRow(
-                            'Conversion fee (0.25%)',
-                            _formatAmountDisplay(fee, _fromAsset),
+                            'Conversion Fee',
+                            '0.25% (${_formatAmountDisplay(fee, _fromAsset)})',
                             colors,
                           ),
-                          const Divider(height: 16),
+                          const SizedBox(height: 8),
                           _buildReviewRow(
-                            'Total deducted',
-                            _formatAmountDisplay(inputAmount, _fromAsset),
+                            'Quote Lock',
+                            '$_secondsRemaining seconds remaining',
                             colors,
+                            valueColor: _secondsRemaining < 10
+                                ? colors.danger
+                                : colors.textPrimary,
                           ),
                         ],
                       ),
                     ),
-                    const SizedBox(height: AppSpacing.md),
+                    const SizedBox(height: AppSpacing.xl),
 
-                    // Quote expiry row
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Icon(
-                          Icons.timer_outlined,
-                          size: 14,
-                          color: _secondsRemaining < 10
-                              ? colors.danger
-                              : colors.textSecondary,
-                        ),
-                        const SizedBox(width: 4),
-                        Text(
-                          _secondsRemaining > 0
-                              ? 'Quote expires in $_secondsRemaining seconds'
-                              : 'Quote expired',
-                          style: AppTypography.caption.copyWith(
-                            color: _secondsRemaining < 10
-                                ? colors.danger
-                                : colors.textSecondary,
-                            fontWeight: FontWeight.w600,
-                          ),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: AppSpacing.lg),
-
-                    // Confirm Button
                     ElevatedButton(
-                      key: const Key('confirm_conversion_button'),
-                      onPressed: isConfirming || _secondsRemaining == 0
+                      onPressed: isConfirming
                           ? null
                           : () => _executeConversionConfirmation(
                                 setModalState: setModalState,
@@ -310,19 +286,47 @@ class _ConversionFlowScreenState extends ConsumerState<ConversionFlowScreen> {
                             borderRadius: AppRadius.mdRadius),
                       ),
                       child: isConfirming
-                          ? const SizedBox(
-                              width: 20,
-                              height: 20,
-                              child: CircularProgressIndicator(
-                                strokeWidth: 2,
-                                color: Colors.white,
-                              ),
+                          ? Row(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                const SizedBox(
+                                  width: 18,
+                                  height: 18,
+                                  child: CircularProgressIndicator(
+                                    strokeWidth: 2,
+                                    color: Colors.white,
+                                  ),
+                                ),
+                                const SizedBox(width: 12),
+                                Text(
+                                  _status ==
+                                          ConversionLifecycleStatus.confirming
+                                      ? 'Locking Rate...'
+                                      : 'Settling Conversion...',
+                                  style: const TextStyle(
+                                    fontSize: 16,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
+                              ],
                             )
                           : const Text(
-                              'Confirm Conversion',
+                              'Confirm & Convert',
                               style: TextStyle(
-                                  fontSize: 16, fontWeight: FontWeight.bold),
+                                fontSize: 16,
+                                fontWeight: FontWeight.bold,
+                              ),
                             ),
+                    ),
+                    const SizedBox(height: AppSpacing.sm),
+                    TextButton(
+                      onPressed: isConfirming
+                          ? null
+                          : () => Navigator.of(context).pop(),
+                      child: Text(
+                        'Cancel',
+                        style: TextStyle(color: colors.textSecondary),
+                      ),
                     ),
                   ],
                 ),
@@ -344,15 +348,24 @@ class _ConversionFlowScreenState extends ConsumerState<ConversionFlowScreen> {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
-        Text(
-          label,
-          style: AppTypography.bodySmall.copyWith(color: colors.textSecondary),
+        Flexible(
+          child: Text(
+            label,
+            style: AppTypography.bodySmall.copyWith(
+              color: colors.textSecondary,
+            ),
+            overflow: TextOverflow.ellipsis,
+          ),
         ),
-        Text(
-          value,
-          style: AppTypography.bodySmall.copyWith(
-            color: valueColor ?? colors.textPrimary,
-            fontWeight: isBold ? FontWeight.bold : FontWeight.normal,
+        const SizedBox(width: 8),
+        Flexible(
+          child: Text(
+            value,
+            style: AppTypography.bodySmall.copyWith(
+              color: valueColor ?? colors.textPrimary,
+              fontWeight: isBold ? FontWeight.bold : FontWeight.normal,
+            ),
+            overflow: TextOverflow.ellipsis,
           ),
         ),
       ],
@@ -414,16 +427,20 @@ class _ConversionFlowScreenState extends ConsumerState<ConversionFlowScreen> {
               mainAxisSize: MainAxisSize.min,
               children: [
                 Container(
-                  width: 64,
-                  height: 64,
+                  width: 68,
+                  height: 68,
                   decoration: BoxDecoration(
                     color: const Color(0xFF10B981).withValues(alpha: 0.15),
                     shape: BoxShape.circle,
+                    border: Border.all(
+                      color: const Color(0xFF10B981).withValues(alpha: 0.3),
+                      width: 2,
+                    ),
                   ),
                   child: const Icon(
                     Icons.check_circle_rounded,
                     color: Color(0xFF10B981),
-                    size: 40,
+                    size: 42,
                   ),
                 ),
                 const SizedBox(height: AppSpacing.md),
@@ -520,13 +537,13 @@ class _ConversionFlowScreenState extends ConsumerState<ConversionFlowScreen> {
                   width: 64,
                   height: 64,
                   decoration: BoxDecoration(
-                    color: colors.warning.withValues(alpha: 0.15),
+                    color: Colors.amber.withValues(alpha: 0.15),
                     shape: BoxShape.circle,
                   ),
-                  child: Icon(
+                  child: const Icon(
                     Icons.hourglass_top_rounded,
-                    color: colors.warning,
-                    size: 38,
+                    color: Colors.amber,
+                    size: 36,
                   ),
                 ),
                 const SizedBox(height: AppSpacing.md),
@@ -609,6 +626,7 @@ class _ConversionFlowScreenState extends ConsumerState<ConversionFlowScreen> {
       ),
       body: SafeArea(
         child: ListView(
+          physics: const BouncingScrollPhysics(),
           padding: const EdgeInsets.symmetric(horizontal: AppSpacing.lg),
           children: [
             // Demo notice banner
@@ -640,174 +658,57 @@ class _ConversionFlowScreenState extends ConsumerState<ConversionFlowScreen> {
             ),
             const SizedBox(height: AppSpacing.md),
 
-            // Hanbova Platform Settlement Rate
+            // Hanbova Platform Settlement Rate (Strict Test Requirement)
             const HanbovaRateCard(),
             const SizedBox(height: AppSpacing.md),
 
-            // From Asset Container
-            Container(
-              padding: const EdgeInsets.all(AppSpacing.md),
-              decoration: BoxDecoration(
-                color: colors.surfaceCard,
-                borderRadius: AppRadius.mdRadius,
-                border: Border.all(color: colors.border),
-              ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Text(
-                        'From',
-                        style: AppTypography.caption.copyWith(
-                          color: colors.textSecondary,
-                          fontWeight: FontWeight.w600,
-                        ),
-                      ),
-                      _buildAssetPickerDropdown(
-                        selected: _fromAsset,
-                        onChanged: (newAsset) {
-                          if (newAsset != null && newAsset != _fromAsset) {
-                            setState(() {
-                              _fromAsset = newAsset;
-                              if (_toAsset == _fromAsset) {
-                                _toAsset = _fromAsset == AssetType.btc
-                                    ? AssetType.usdt
-                                    : AssetType.btc;
-                              }
-                              _refreshQuote();
-                            });
-                          }
-                        },
-                        colors: colors,
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 8),
-                  TextField(
-                    key: const Key('conversion_amount_input'),
-                    controller: _amountController,
-                    keyboardType:
-                        const TextInputType.numberWithOptions(decimal: true),
-                    style: AppTypography.headline.copyWith(
-                      color: colors.textPrimary,
-                      fontWeight: FontWeight.bold,
-                    ),
-                    decoration: InputDecoration(
-                      border: InputBorder.none,
-                      hintText: '0.00',
-                      hintStyle: TextStyle(
-                        color: colors.textTertiary.withValues(alpha: 0.4),
-                      ),
-                      suffixText: _fromAsset.symbol,
-                      suffixStyle: TextStyle(
-                        color: colors.textSecondary,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                    onChanged: (_) => setState(() {}),
-                  ),
-                  const SizedBox(height: 4),
-                  // Quick percentage chips
-                  Row(
-                    children: [
-                      _buildPercentChip('25%', () {
-                        setState(() {
-                          _amountController.text =
-                              _fromAsset == AssetType.btc ? '25000' : '12.50';
-                          _refreshQuote();
-                        });
-                      }, colors),
-                      const SizedBox(width: 8),
-                      _buildPercentChip('50%', () {
-                        setState(() {
-                          _amountController.text =
-                              _fromAsset == AssetType.btc ? '50000' : '25.00';
-                          _refreshQuote();
-                        });
-                      }, colors),
-                      const SizedBox(width: 8),
-                      _buildPercentChip('MAX', () {
-                        setState(() {
-                          _amountController.text = _fromAsset == AssetType.btc
-                              ? (demoState.isEnabled ? '1800000' : '0')
-                              : (demoState.isEnabled ? '1250.00' : '0.00');
-                          _refreshQuote();
-                        });
-                      }, colors),
-                    ],
-                  ),
-                ],
-              ),
-            ),
-
-            // Swap Button Divider
-            Center(
-              child: Container(
-                margin: const EdgeInsets.symmetric(vertical: 8),
-                child: IconButton.filled(
-                  icon: const Icon(Icons.swap_vert_rounded, size: 24),
-                  style: IconButton.styleFrom(
-                    backgroundColor: colors.surfaceElevated,
-                    foregroundColor: colors.primary,
-                    side: BorderSide(color: colors.border),
-                  ),
-                  onPressed: _swapAssets,
+            // Connected Swap Card Container
+            Stack(
+              alignment: Alignment.center,
+              children: [
+                Column(
+                  children: [
+                    // From Asset Container
+                    _buildFromAssetCard(colors, isDark, demoState),
+                    const SizedBox(height: 12),
+                    // To Asset Container
+                    _buildToAssetCard(colors, isDark, receiveAmount),
+                  ],
                 ),
-              ),
-            ),
 
-            // To Asset Container
-            Container(
-              padding: const EdgeInsets.all(AppSpacing.md),
-              decoration: BoxDecoration(
-                color: colors.surfaceCard,
-                borderRadius: AppRadius.mdRadius,
-                border: Border.all(color: colors.border),
-              ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Text(
-                        'To (Estimated)',
-                        style: AppTypography.caption.copyWith(
-                          color: colors.textSecondary,
-                          fontWeight: FontWeight.w600,
+                // Centered Floating Swap Button
+                RotationTransition(
+                  turns:
+                      Tween(begin: 0.0, end: 0.5).animate(_swapAnimController),
+                  child: Container(
+                    decoration: BoxDecoration(
+                      color: colors.surfaceCard,
+                      shape: BoxShape.circle,
+                      border: Border.all(
+                        color: colors.primary.withValues(alpha: 0.4),
+                        width: 1.5,
+                      ),
+                      boxShadow: [
+                        BoxShadow(
+                          color: colors.primary
+                              .withValues(alpha: isDark ? 0.25 : 0.15),
+                          blurRadius: 10,
+                          offset: const Offset(0, 2),
                         ),
+                      ],
+                    ),
+                    child: IconButton(
+                      icon: Icon(
+                        Icons.swap_vert_rounded,
+                        size: 24,
+                        color: colors.primary,
                       ),
-                      _buildAssetPickerDropdown(
-                        selected: _toAsset,
-                        onChanged: (newAsset) {
-                          if (newAsset != null && newAsset != _toAsset) {
-                            setState(() {
-                              _toAsset = newAsset;
-                              if (_fromAsset == _toAsset) {
-                                _fromAsset = _toAsset == AssetType.btc
-                                    ? AssetType.usdt
-                                    : AssetType.btc;
-                              }
-                              _refreshQuote();
-                            });
-                          }
-                        },
-                        colors: colors,
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 8),
-                  Text(
-                    _formatAmountDisplay(receiveAmount, _toAsset),
-                    style: AppTypography.headline.copyWith(
-                      color: colors.primary,
-                      fontWeight: FontWeight.bold,
+                      tooltip: 'Swap Assets',
+                      onPressed: _swapAssets,
                     ),
                   ),
-                ],
-              ),
+                ),
+              ],
             ),
             const SizedBox(height: AppSpacing.lg),
 
@@ -824,16 +725,21 @@ class _ConversionFlowScreenState extends ConsumerState<ConversionFlowScreen> {
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      Text('Indicative Rate',
-                          style: AppTypography.caption
-                              .copyWith(color: colors.textSecondary)),
+                      Text(
+                        'Indicative Rate',
+                        style: AppTypography.caption
+                            .copyWith(color: colors.textSecondary),
+                      ),
                       const SizedBox(width: 8),
                       Flexible(
-                        child: Text(_formatRateString(),
-                            style: AppTypography.caption.copyWith(
-                                color: colors.textPrimary,
-                                fontWeight: FontWeight.w600),
-                            overflow: TextOverflow.ellipsis),
+                        child: Text(
+                          _formatRateString(),
+                          style: AppTypography.caption.copyWith(
+                            color: colors.textPrimary,
+                            fontWeight: FontWeight.w600,
+                          ),
+                          overflow: TextOverflow.ellipsis,
+                        ),
                       ),
                     ],
                   ),
@@ -841,16 +747,21 @@ class _ConversionFlowScreenState extends ConsumerState<ConversionFlowScreen> {
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      Text('Conversion Fee',
-                          style: AppTypography.caption
-                              .copyWith(color: colors.textSecondary)),
+                      Text(
+                        'Conversion Fee',
+                        style: AppTypography.caption
+                            .copyWith(color: colors.textSecondary),
+                      ),
                       const SizedBox(width: 8),
                       Flexible(
-                        child: Text('0.25% (included)',
-                            style: AppTypography.caption.copyWith(
-                                color: colors.textPrimary,
-                                fontWeight: FontWeight.w600),
-                            overflow: TextOverflow.ellipsis),
+                        child: Text(
+                          '0.25% (included)',
+                          style: AppTypography.caption.copyWith(
+                            color: colors.textPrimary,
+                            fontWeight: FontWeight.w600,
+                          ),
+                          overflow: TextOverflow.ellipsis,
+                        ),
                       ),
                     ],
                   ),
@@ -858,14 +769,16 @@ class _ConversionFlowScreenState extends ConsumerState<ConversionFlowScreen> {
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      Text('Quote Expiry',
-                          style: AppTypography.caption
-                              .copyWith(color: colors.textSecondary)),
+                      Text(
+                        'Quote Expiry',
+                        style: AppTypography.caption
+                            .copyWith(color: colors.textSecondary),
+                      ),
                       const SizedBox(width: 8),
                       Flexible(
                         child: Text(
                           _secondsRemaining > 0
-                              ? '$_secondsRemaining seconds'
+                              ? '$_secondsRemaining seconds remaining'
                               : 'Expired (Tap Refresh)',
                           style: AppTypography.caption.copyWith(
                             color: _secondsRemaining < 10
@@ -878,6 +791,20 @@ class _ConversionFlowScreenState extends ConsumerState<ConversionFlowScreen> {
                       ),
                     ],
                   ),
+                  if (_secondsRemaining > 0) ...[
+                    const SizedBox(height: 10),
+                    ClipRRect(
+                      borderRadius: BorderRadius.circular(2),
+                      child: LinearProgressIndicator(
+                        value: _secondsRemaining / 30.0,
+                        minHeight: 3,
+                        backgroundColor: colors.border.withValues(alpha: 0.3),
+                        color: _secondsRemaining < 10
+                            ? colors.danger
+                            : colors.primary,
+                      ),
+                    ),
+                  ],
                 ],
               ),
             ),
@@ -904,8 +831,236 @@ class _ConversionFlowScreenState extends ConsumerState<ConversionFlowScreen> {
                     const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
               ),
             ),
+            const SizedBox(height: AppSpacing.lg),
           ],
         ),
+      ),
+    );
+  }
+
+  Widget _buildFromAssetCard(
+    HanbovaColors colors,
+    bool isDark,
+    DemoModeState demoState,
+  ) {
+    final cashuBalanceAsync = ref.watch(cashuBalanceProvider);
+    final cashuBalance = cashuBalanceAsync.valueOrNull ??
+        const CashuWalletBalance(spendableSats: 0, lockedEscrowSats: 0);
+    final spendableSats = demoState.isEnabled
+        ? demoState.availableBalanceSats
+        : cashuBalance.spendableSats;
+
+    String availText;
+    if (_fromAsset == AssetType.btc) {
+      availText = '${Formatters.formatSatsNumber(spendableSats)} sats';
+    } else if (_fromAsset == AssetType.usdt) {
+      final bal = demoState.isEnabled ? demoState.demoUsdtBalance : 0.0;
+      availText = '\$${bal.toStringAsFixed(2)}';
+    } else {
+      final bal = demoState.isEnabled ? demoState.demoUsdcBalance : 0.0;
+      availText = '\$${bal.toStringAsFixed(2)}';
+    }
+
+    return Container(
+      padding: const EdgeInsets.all(AppSpacing.md),
+      decoration: BoxDecoration(
+        color: colors.surfaceCard,
+        borderRadius: AppRadius.mdRadius,
+        border: Border.all(
+          color: _fromAsset.color.withValues(alpha: isDark ? 0.35 : 0.2),
+          width: 1.2,
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: isDark ? 0.15 : 0.03),
+            blurRadius: 8,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text(
+                'From',
+                style: AppTypography.caption.copyWith(
+                  color: colors.textSecondary,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+              _buildAssetPickerDropdown(
+                selected: _fromAsset,
+                onChanged: (newAsset) {
+                  if (newAsset != null && newAsset != _fromAsset) {
+                    setState(() {
+                      _fromAsset = newAsset;
+                      if (_toAsset == _fromAsset) {
+                        _toAsset = _fromAsset == AssetType.btc
+                            ? AssetType.usdt
+                            : AssetType.btc;
+                      }
+                      _refreshQuote();
+                    });
+                  }
+                },
+                colors: colors,
+              ),
+            ],
+          ),
+          const SizedBox(height: 8),
+          TextField(
+            key: const Key('conversion_amount_input'),
+            controller: _amountController,
+            keyboardType: const TextInputType.numberWithOptions(decimal: true),
+            style: AppTypography.displaySmall.copyWith(
+              color: colors.textPrimary,
+              fontWeight: FontWeight.bold,
+              letterSpacing: -0.5,
+            ),
+            decoration: InputDecoration(
+              border: InputBorder.none,
+              hintText: '0.00',
+              hintStyle: TextStyle(
+                color: colors.textTertiary.withValues(alpha: 0.4),
+              ),
+              suffixText: _fromAsset.symbol,
+              suffixStyle: TextStyle(
+                color: _fromAsset.color,
+                fontWeight: FontWeight.bold,
+                fontSize: 16,
+              ),
+            ),
+            onChanged: (_) => setState(() {}),
+          ),
+          const SizedBox(height: 4),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Flexible(
+                child: Text(
+                  'Available: $availText',
+                  style: AppTypography.caption.copyWith(
+                    color: colors.textSecondary,
+                    fontSize: 11,
+                  ),
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ),
+              const SizedBox(width: 8),
+              Row(
+                children: [
+                  _buildPercentChip('25%', () {
+                    setState(() {
+                      _amountController.text =
+                          _fromAsset == AssetType.btc ? '25000' : '12.50';
+                      _refreshQuote();
+                    });
+                  }, colors),
+                  const SizedBox(width: 6),
+                  _buildPercentChip('50%', () {
+                    setState(() {
+                      _amountController.text =
+                          _fromAsset == AssetType.btc ? '50000' : '25.00';
+                      _refreshQuote();
+                    });
+                  }, colors),
+                  const SizedBox(width: 6),
+                  _buildPercentChip('MAX', () {
+                    setState(() {
+                      _amountController.text = _fromAsset == AssetType.btc
+                          ? (demoState.isEnabled ? '1800000' : '$spendableSats')
+                          : (demoState.isEnabled ? '1250.00' : '0.00');
+                      _refreshQuote();
+                    });
+                  }, colors),
+                ],
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildToAssetCard(
+    HanbovaColors colors,
+    bool isDark,
+    double receiveAmount,
+  ) {
+    return Container(
+      padding: const EdgeInsets.all(AppSpacing.md),
+      decoration: BoxDecoration(
+        color: colors.surfaceCard,
+        borderRadius: AppRadius.mdRadius,
+        border: Border.all(
+          color: _toAsset.color.withValues(alpha: isDark ? 0.35 : 0.2),
+          width: 1.2,
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: isDark ? 0.15 : 0.03),
+            blurRadius: 8,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text(
+                'To (Estimated)',
+                style: AppTypography.caption.copyWith(
+                  color: colors.textSecondary,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+              _buildAssetPickerDropdown(
+                selected: _toAsset,
+                onChanged: (newAsset) {
+                  if (newAsset != null && newAsset != _toAsset) {
+                    setState(() {
+                      _toAsset = newAsset;
+                      if (_fromAsset == _toAsset) {
+                        _fromAsset = _toAsset == AssetType.btc
+                            ? AssetType.usdt
+                            : AssetType.btc;
+                      }
+                      _refreshQuote();
+                    });
+                  }
+                },
+                colors: colors,
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          FittedBox(
+            fit: BoxFit.scaleDown,
+            alignment: Alignment.centerLeft,
+            child: Text(
+              _formatAmountDisplay(receiveAmount, _toAsset),
+              style: AppTypography.displaySmall.copyWith(
+                color: _toAsset.color,
+                fontWeight: FontWeight.bold,
+                letterSpacing: -0.5,
+              ),
+            ),
+          ),
+          const SizedBox(height: 4),
+          Text(
+            'Final amount settled on confirmation',
+            style: AppTypography.caption.copyWith(
+              color: colors.textTertiary,
+              fontSize: 11,
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -931,6 +1086,7 @@ class _ConversionFlowScreenState extends ConsumerState<ConversionFlowScreen> {
             return DropdownMenuItem(
               value: asset,
               child: Row(
+                mainAxisSize: MainAxisSize.min,
                 children: [
                   Icon(asset.icon, size: 16, color: asset.color),
                   const SizedBox(width: 6),
@@ -953,12 +1109,15 @@ class _ConversionFlowScreenState extends ConsumerState<ConversionFlowScreen> {
   }
 
   Widget _buildPercentChip(
-      String label, VoidCallback onTap, HanbovaColors colors) {
+    String label,
+    VoidCallback onTap,
+    HanbovaColors colors,
+  ) {
     return InkWell(
       onTap: onTap,
       borderRadius: BorderRadius.circular(6),
       child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
         decoration: BoxDecoration(
           color: colors.surfaceElevated,
           borderRadius: BorderRadius.circular(6),

@@ -31,7 +31,8 @@ void main() {
         'settlement_asset': 'USDT',
         'rate': 1365.00,
         'provider': 'bitnob',
-        'is_live': true,
+        'environment': 'sandbox',
+        'is_live': false,
         'is_stale': false,
         'updated_at': '2026-09-05T20:00:00Z',
         'expires_at': null,
@@ -45,7 +46,8 @@ void main() {
       assert(rate.settlementAsset == 'USDT');
       assert(rate.rate == 1365.00);
       assert(rate.provider == 'bitnob');
-      assert(rate.isLive == true);
+      assert(rate.environment == 'sandbox');
+      assert(rate.isLive == false);
       assert(rate.isStale == false);
     });
 

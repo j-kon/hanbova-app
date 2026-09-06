@@ -2,6 +2,12 @@ import 'package:intl/intl.dart';
 
 class Formatters {
   static final _numberFormat = NumberFormat('#,##0', 'en_US');
+  static final _fiatFormat = NumberFormat('#,##0.00', 'en_US');
+
+  /// Formats fiat numbers with 2 decimal places and commas (e.g. 1,250.00).
+  static String formatFiatAmount(double amount) {
+    return _fiatFormat.format(amount);
+  }
 
   /// Formats satoshi amounts cleanly with commas (e.g. 100,000 sats).
   static String formatSats(int sats) {

@@ -1,5 +1,6 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:hanbova_app/features/transactions/domain/transaction_model.dart';
+import 'package:hanbova_app/features/wallet/domain/asset_model.dart';
 
 /// Beneficiary model for People / Beneficiaries management
 class BeneficiaryItem {
@@ -570,6 +571,18 @@ class DemoModeNotifier extends StateNotifier<DemoModeState> {
         balanceUsd: state.demoCard!.balanceUsd + usdAmount,
       );
       state = state.copyWith(demoCard: updated);
+    }
+  }
+
+  void deductStablecoin({required AssetType asset, required double amount}) {
+    if (asset == AssetType.usdt) {
+      final updated =
+          (state.demoUsdtBalance - amount).clamp(0.0, double.infinity);
+      state = state.copyWith(demoUsdtBalance: updated);
+    } else if (asset == AssetType.usdc) {
+      final updated =
+          (state.demoUsdcBalance - amount).clamp(0.0, double.infinity);
+      state = state.copyWith(demoUsdcBalance: updated);
     }
   }
 

@@ -341,9 +341,10 @@ class _PaymentConfirmationSheetState extends State<PaymentConfirmationSheet> {
               ],
             ),
           ),
-          if (widget.fiatCurrency.toUpperCase() == 'NGN') ...[
+          if (const {'NGN', 'KES', 'GHS', 'ZAR', 'UGX', 'RWF', 'TZS', 'USD'}
+              .contains(widget.fiatCurrency.toUpperCase())) ...[
             const SizedBox(height: 12),
-            const HanbovaRateCard.inline(),
+            HanbovaRateCard.inline(currency: widget.fiatCurrency),
           ],
           const SizedBox(height: 16),
 

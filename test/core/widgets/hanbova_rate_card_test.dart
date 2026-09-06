@@ -46,6 +46,12 @@ class FakeRateNotifier extends StateNotifier<HanbovaRateState>
 
   @override
   Future<void> refresh() async {}
+
+  @override
+  void startPolling({Duration interval = const Duration(seconds: 45)}) {}
+
+  @override
+  void stopPolling() {}
 }
 
 void main() {
@@ -142,7 +148,7 @@ void main() {
         ),
       ));
 
-      expect(find.text('Demo rate'), findsOneWidget);
+      expect(find.text('Demo Rate'), findsOneWidget);
       expect(find.text(r'$1 = ₦1,365.00'), findsOneWidget);
       expect(find.text('USDT → NGN'), findsOneWidget);
     });

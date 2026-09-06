@@ -10,6 +10,7 @@ class HanbovaRate {
   final String settlementAsset;
   final double rate;
   final String provider;
+  final String environment;
   final bool isLive;
   final bool isStale;
   final DateTime updatedAt;
@@ -23,6 +24,7 @@ class HanbovaRate {
     required this.settlementAsset,
     required this.rate,
     required this.provider,
+    this.environment = 'mock',
     required this.isLive,
     required this.isStale,
     required this.updatedAt,
@@ -36,6 +38,7 @@ class HanbovaRate {
     final settlementAsset = json['settlement_asset'] as String? ?? 'USDT';
     final rate = (json['rate'] as num?)?.toDouble() ?? 0.0;
     final provider = json['provider'] as String? ?? 'bitnob';
+    final environment = json['environment'] as String? ?? 'mock';
     final isLive = json['is_live'] as bool? ?? false;
     final isStale = json['is_stale'] as bool? ?? false;
     final updatedAt = json['updated_at'] != null
@@ -56,6 +59,7 @@ class HanbovaRate {
       settlementAsset: settlementAsset,
       rate: rate,
       provider: provider,
+      environment: environment,
       isLive: isLive,
       isStale: isStale,
       updatedAt: updatedAt,
@@ -72,6 +76,7 @@ class HanbovaRate {
     String quote = 'NGN',
     String settlementAsset = 'USDT',
     double rate = 1365.00,
+    String environment = 'mock',
     bool isStale = false,
     DateTime? updatedAt,
   }) {
@@ -83,6 +88,7 @@ class HanbovaRate {
       settlementAsset: settlementAsset,
       rate: rate,
       provider: 'bitnob',
+      environment: environment,
       isLive: false, // Explicitly not live
       isStale: isStale,
       updatedAt: updatedAt ?? DateTime.now(),
@@ -93,7 +99,17 @@ class HanbovaRate {
     required String base,
     required String quote,
     required double rate,
+    String settlementAsset = 'USDT',
   }) {
+    final formatter = NumberFormat('#,##0.00', 'en_US');
+    final formattedRate = formatter.format(rate);
+
+    // USD market: avoid meaningless '$1 = $1.00'. Show '1 USDT = $X.XX' instead.
+    if (quote == 'USD' || quote == 'USDT') {
+      final usdtFormatter = NumberFormat('#,##0.00##', 'en_US');
+      return '1 $settlementAsset = \$${usdtFormatter.format(rate)}';
+    }
+
     final baseSymbol = base == 'USD'
         ? r'$1'
         : base == 'EUR'
@@ -102,18 +118,16 @@ class HanbovaRate {
                 ? '£1'
                 : base;
 
-    final formatter = NumberFormat('#,##0.00', 'en_US');
-    final formattedRate = formatter.format(rate);
-
-    final quoteSymbol = quote == 'NGN'
-        ? '₦'
-        : quote == 'KES'
-            ? 'KSh '
-            : quote == 'GHS'
-                ? 'GH₵ '
-                : quote == 'ZAR'
-                    ? 'R '
-                    : '$quote ';
+    final quoteSymbol = switch (quote) {
+      'NGN' => '₦',
+      'KES' => 'KSh ',
+      'GHS' => 'GH₵ ',
+      'ZAR' => 'R ',
+      'UGX' => 'USh ',
+      'RWF' => 'RWF ',
+      'TZS' => 'TSh ',
+      _ => '$quote ',
+    };
 
     return '$baseSymbol = $quoteSymbol$formattedRate';
   }
@@ -126,6 +140,7 @@ class HanbovaRate {
     String? settlementAsset,
     double? rate,
     String? provider,
+    String? environment,
     bool? isLive,
     bool? isStale,
     DateTime? updatedAt,
@@ -139,6 +154,7 @@ class HanbovaRate {
       settlementAsset: settlementAsset ?? this.settlementAsset,
       rate: rate ?? this.rate,
       provider: provider ?? this.provider,
+      environment: environment ?? this.environment,
       isLive: isLive ?? this.isLive,
       isStale: isStale ?? this.isStale,
       updatedAt: updatedAt ?? this.updatedAt,

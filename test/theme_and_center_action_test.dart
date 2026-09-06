@@ -192,7 +192,9 @@ void main() {
 
       expect(find.text('Money & Balances'), findsOneWidget);
       expect(find.text('Your Bitcoin balance'), findsOneWidget);
+      await tester.scrollUntilVisible(find.text('Protected payments'), 200);
       expect(find.text('Protected payments'), findsOneWidget);
+      await tester.scrollUntilVisible(find.text('Your Bitcoin balance'), -200);
 
       // 4b. Light mode
       await tester.pumpWidget(
@@ -212,6 +214,7 @@ void main() {
 
       expect(find.text('Money & Balances'), findsOneWidget);
       expect(find.text('Your Bitcoin balance'), findsOneWidget);
+      await tester.scrollUntilVisible(find.text('Protected payments'), 200);
       expect(find.text('Protected payments'), findsOneWidget);
     });
 
