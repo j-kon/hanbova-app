@@ -632,9 +632,8 @@ class _LiquidNavItemState extends State<_LiquidNavItem>
                     style: AppTypography.labelSmall.copyWith(
                       color: widget.isSelected ? activeColor : inactiveColor,
                       fontSize: 10.5,
-                      fontWeight: widget.isSelected
-                          ? FontWeight.w600
-                          : FontWeight.w500,
+                      fontWeight:
+                          widget.isSelected ? FontWeight.w600 : FontWeight.w500,
                       letterSpacing: -0.1,
                     ),
                   ),

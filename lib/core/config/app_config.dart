@@ -55,10 +55,12 @@ class AppConfig {
     String appVersion = '0.1.0',
   }) {
     if (apiBaseUrl.trim().isEmpty) {
-      throw StateError('Pilot environment requires HANBOVA_API_BASE_URL to be set');
+      throw StateError(
+          'Pilot environment requires HANBOVA_API_BASE_URL to be set');
     }
     if (!apiBaseUrl.startsWith('https://')) {
-      throw StateError('Pilot environment requires HTTPS API URL, got: $apiBaseUrl');
+      throw StateError(
+          'Pilot environment requires HTTPS API URL, got: $apiBaseUrl');
     }
     if (apiBaseUrl.contains('localhost') ||
         apiBaseUrl.contains('127.0.0.1') ||
@@ -71,7 +73,8 @@ class AppConfig {
       throw StateError('Pilot environment requires HANBOVA_MINT_URL to be set');
     }
     if (!mintUrl.startsWith('https://')) {
-      throw StateError('Pilot environment requires HTTPS Mint URL, got: $mintUrl');
+      throw StateError(
+          'Pilot environment requires HTTPS Mint URL, got: $mintUrl');
     }
     if (mintUrl.contains('localhost') ||
         mintUrl.contains('127.0.0.1') ||
@@ -99,8 +102,20 @@ class AppConfig {
     if (apiBaseUrl.trim().isEmpty || !apiBaseUrl.startsWith('https://')) {
       throw StateError('Production requires HTTPS API URL');
     }
+    if (apiBaseUrl.contains('localhost') ||
+        apiBaseUrl.contains('127.0.0.1') ||
+        apiBaseUrl.contains('10.0.2.2')) {
+      throw StateError(
+          'Production environment cannot use localhost or private IP for API URL, got: $apiBaseUrl');
+    }
     if (mintUrl.trim().isEmpty || !mintUrl.startsWith('https://')) {
       throw StateError('Production requires HTTPS Mint URL');
+    }
+    if (mintUrl.contains('localhost') ||
+        mintUrl.contains('127.0.0.1') ||
+        mintUrl.contains('10.0.2.2')) {
+      throw StateError(
+          'Production environment cannot use localhost or private IP for Mint URL, got: $mintUrl');
     }
     return AppConfig(
       appName: appName,
@@ -118,8 +133,7 @@ class AppConfig {
     const apiBase =
         String.fromEnvironment('HANBOVA_API_BASE_URL', defaultValue: '');
     const mint = String.fromEnvironment('HANBOVA_MINT_URL', defaultValue: '');
-    const appVer =
-        String.fromEnvironment('APP_VERSION', defaultValue: '0.1.0');
+    const appVer = String.fromEnvironment('APP_VERSION', defaultValue: '0.1.0');
     const appNm = String.fromEnvironment('APP_NAME', defaultValue: 'Hanbova');
 
     if (env == 'pilot') {

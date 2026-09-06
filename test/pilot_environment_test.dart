@@ -14,7 +14,8 @@ import 'package:http/http.dart' as http;
 class MockFailingHttpClient extends http.BaseClient {
   @override
   Future<http.StreamedResponse> send(http.BaseRequest request) {
-    return Future.error(http.ClientException('Connection failed to hosted backend'));
+    return Future.error(
+        http.ClientException('Connection failed to hosted backend'));
   }
 }
 
@@ -97,6 +98,32 @@ void main() {
         throwsA(isA<StateError>()),
       );
     });
+
+    test('createProduction rejects non-HTTPS or local URLs', () {
+      expect(
+        () => AppConfig.createProduction(
+          apiBaseUrl: 'https://127.0.0.1:8080/api/v1',
+          mintUrl: 'https://mint.hanbova.com',
+        ),
+        throwsA(isA<StateError>()),
+      );
+
+      expect(
+        () => AppConfig.createProduction(
+          apiBaseUrl: 'https://localhost:8080/api/v1',
+          mintUrl: 'https://mint.hanbova.com',
+        ),
+        throwsA(isA<StateError>()),
+      );
+
+      expect(
+        () => AppConfig.createProduction(
+          apiBaseUrl: 'https://api.hanbova.com/api/v1',
+          mintUrl: 'https://10.0.2.2:3338',
+        ),
+        throwsA(isA<StateError>()),
+      );
+    });
   });
 
   group('ApiClient Pilot Behavior', () {
@@ -116,7 +143,8 @@ void main() {
       expect(client.baseUrl, 'https://api.pilot.hanbova.com/api/v1');
     });
 
-    testWidgets('Pilot displays environment marker PILOT • TEST MODE', (tester) async {
+    testWidgets('Pilot displays environment marker PILOT • TEST MODE',
+        (tester) async {
       final pilotConfig = AppConfig.createPilot(
         apiBaseUrl: 'https://api.pilot.hanbova.com/api/v1',
         mintUrl: 'https://mint.pilot.hanbova.com',
@@ -150,7 +178,9 @@ void main() {
   });
 
   group('Provider Fail-Closed Fallbacks', () {
-    test('BillsService.validateCustomer throws when backend fails in pilot (no fake customer)', () async {
+    test(
+        'BillsService.validateCustomer throws when backend fails in pilot (no fake customer)',
+        () async {
       final pilotConfig = AppConfig.createPilot(
         apiBaseUrl: 'https://api.pilot.hanbova.com/api/v1',
         mintUrl: 'https://mint.pilot.hanbova.com',
@@ -167,7 +197,8 @@ void main() {
       );
     });
 
-    test('BillsService.validateCustomer returns mock only in mock environment', () async {
+    test('BillsService.validateCustomer returns mock only in mock environment',
+        () async {
       final mockConfig = AppConfig.mock;
       final apiClient = ApiClient(
         baseUrl: mockConfig.apiBaseUrl,
@@ -175,12 +206,15 @@ void main() {
       );
       final billsService = BillsService(apiClient, config: mockConfig);
 
-      final result = await billsService.validateCustomer('ke_kplc', '14123456789');
+      final result =
+          await billsService.validateCustomer('ke_kplc', '14123456789');
       expect(result.isValid, isTrue);
       expect(result.customerName, 'Verified Customer (Mock)');
     });
 
-    test('TravelService.checkCardEligibility returns ineligible when backend fails in pilot', () async {
+    test(
+        'TravelService.checkCardEligibility returns ineligible when backend fails in pilot',
+        () async {
       final pilotConfig = AppConfig.createPilot(
         apiBaseUrl: 'https://api.pilot.hanbova.com/api/v1',
         mintUrl: 'https://mint.pilot.hanbova.com',
@@ -197,7 +231,9 @@ void main() {
       expect(result.reason, contains('unavailable'));
     });
 
-    test('TravelService.checkCardEligibility returns mock only in mock environment', () async {
+    test(
+        'TravelService.checkCardEligibility returns mock only in mock environment',
+        () async {
       final mockConfig = AppConfig.mock;
       final apiClient = ApiClient(
         baseUrl: mockConfig.apiBaseUrl,
@@ -270,7 +306,9 @@ void main() {
   });
 
   group('Home Carousel & selectedHomeAssetProvider Non-Regression', () {
-    test('selectedHomeAssetProvider defaults to bitcoin and transitions cleanly', () {
+    test(
+        'selectedHomeAssetProvider defaults to bitcoin and transitions cleanly',
+        () {
       final container = ProviderContainer();
       expect(container.read(selectedHomeAssetProvider), AssetType.btc);
 
