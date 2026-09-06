@@ -7,7 +7,7 @@ import 'package:hanbova_app/core/theme/app_theme.dart';
 
 void main() {
   testWidgets(
-      'Bottom navigation bar has transparent background and liquid touch items',
+      'Bottom navigation bar has transparent background, no dot, and liquid transfer stream',
       (tester) async {
     final router = GoRouter(
       initialLocation: '/home',
@@ -73,17 +73,40 @@ void main() {
     expect(
         find.byKey(const Key('navbar_center_action_button')), findsOneWidget);
 
-    // 4. Test liquid touch interaction on tab
-    final activityTab = find.text('Activity');
-    final gesture = await tester.createGesture();
-    await gesture.down(tester.getCenter(activityTab));
-    await tester.pump(const Duration(milliseconds: 50));
-    await gesture.up();
-    await tester.pumpAndSettle();
+    // 4. Verify the dot is removed (no 4x4 circle dot below labels)
+    expect(find.byWidgetPredicate((widget) {
+      if (widget is Container &&
+          widget.constraints?.maxWidth == 4 &&
+          widget.constraints?.maxHeight == 4) {
+        return true;
+      }
+      return false;
+    }), findsNothing);
 
+    // 5. Test liquid transfer stream from Home -> Activity
+    final activityTab = find.text('Activity');
+    await tester.tap(activityTab);
+    // Pump mid-animation frame to verify fluid transfer stream is running
+    await tester.pump(const Duration(milliseconds: 150));
+    // Verify Positioned widget exists representing the active transferring liquid pill
+    expect(find.byType(Positioned), findsWidgets);
+    await tester.pumpAndSettle();
     expect(find.text('Screen /activity'), findsOneWidget);
 
-    // 5. Test center action button
+    // 6. Test liquid transfer passing through center from Activity -> Money
+    final moneyTab = find.text('Money');
+    await tester.tap(moneyTab);
+    await tester.pump(const Duration(milliseconds: 150));
+    await tester.pumpAndSettle();
+    expect(find.text('Screen /money'), findsOneWidget);
+
+    // 7. Test liquid transfer Money -> Profile
+    final profileTab = find.text('Profile');
+    await tester.tap(profileTab);
+    await tester.pumpAndSettle();
+    expect(find.text('Screen /profile'), findsOneWidget);
+
+    // 8. Test center action button
     final centerBtn = find.byKey(const Key('navbar_center_action_button'));
     await tester.tap(centerBtn);
     await tester.pumpAndSettle();
