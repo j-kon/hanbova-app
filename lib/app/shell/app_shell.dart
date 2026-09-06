@@ -2,7 +2,9 @@ import 'dart:math' as math;
 import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import '../../core/networking/api_client.dart';
 import '../../core/theme/app_colors.dart';
 import '../../core/theme/app_typography.dart';
 import 'pay_action_sheet.dart';
@@ -189,7 +191,45 @@ class _AppShellState extends State<AppShell>
 
     return Scaffold(
       backgroundColor: colors.background,
-      body: widget.navigationShell,
+      body: Stack(
+        children: [
+          widget.navigationShell,
+          Consumer(
+            builder: (context, ref, _) {
+              final config = ref.watch(appConfigProvider);
+              if (!config.isPilot) return const SizedBox.shrink();
+              return Positioned(
+                top: MediaQuery.of(context).padding.top + 4,
+                right: 12,
+                child: IgnorePointer(
+                  child: Container(
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                    decoration: BoxDecoration(
+                      color: Colors.amber.withValues(alpha: 0.2),
+                      borderRadius: BorderRadius.circular(4),
+                      border: Border.all(
+                        color: Colors.amber.withValues(alpha: 0.6),
+                        width: 0.8,
+                      ),
+                    ),
+                    child: const Text(
+                      'PILOT',
+                      key: Key('pilot-environment-badge'),
+                      style: TextStyle(
+                        fontSize: 9,
+                        fontWeight: FontWeight.w700,
+                        color: Colors.amber,
+                        letterSpacing: 0.8,
+                      ),
+                    ),
+                  ),
+                ),
+              );
+            },
+          ),
+        ],
+      ),
       bottomNavigationBar: MediaQuery.viewInsetsOf(context).bottom > 0
           ? null
           : SafeArea(

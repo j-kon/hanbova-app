@@ -7,14 +7,15 @@ import '../config/app_config.dart';
 import '../errors/app_failure.dart';
 
 final appConfigProvider = Provider<AppConfig>((ref) {
-  return AppConfig.development;
+  return AppConfig.fromEnvironment();
 });
 
 final apiClientProvider = Provider<ApiClient>((ref) {
   final config = ref.watch(appConfigProvider);
   String effectiveBaseUrl = config.apiBaseUrl;
   try {
-    if (Platform.isAndroid &&
+    if (config.isDevelopment &&
+        Platform.isAndroid &&
         (effectiveBaseUrl.contains('127.0.0.1') ||
             effectiveBaseUrl.contains('localhost'))) {
       effectiveBaseUrl = effectiveBaseUrl
