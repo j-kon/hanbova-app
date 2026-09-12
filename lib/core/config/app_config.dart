@@ -1,5 +1,7 @@
 import 'dart:io';
 
+import 'hosted_url.dart';
+
 class AppConfig {
   final String appName;
   final String appVersion;
@@ -54,34 +56,7 @@ class AppConfig {
     String appName = 'Hanbova',
     String appVersion = '0.1.0',
   }) {
-    if (apiBaseUrl.trim().isEmpty) {
-      throw StateError(
-          'Pilot environment requires HANBOVA_API_BASE_URL to be set');
-    }
-    if (!apiBaseUrl.startsWith('https://')) {
-      throw StateError(
-          'Pilot environment requires HTTPS API URL, got: $apiBaseUrl');
-    }
-    if (apiBaseUrl.contains('localhost') ||
-        apiBaseUrl.contains('127.0.0.1') ||
-        apiBaseUrl.contains('10.0.2.2')) {
-      throw StateError(
-          'Pilot environment cannot use localhost or private IP for API URL, got: $apiBaseUrl');
-    }
-
-    if (mintUrl.trim().isEmpty) {
-      throw StateError('Pilot environment requires HANBOVA_MINT_URL to be set');
-    }
-    if (!mintUrl.startsWith('https://')) {
-      throw StateError(
-          'Pilot environment requires HTTPS Mint URL, got: $mintUrl');
-    }
-    if (mintUrl.contains('localhost') ||
-        mintUrl.contains('127.0.0.1') ||
-        mintUrl.contains('10.0.2.2')) {
-      throw StateError(
-          'Pilot environment cannot use localhost or private IP for Mint URL, got: $mintUrl');
-    }
+    _validateHostedEndpoints(apiBaseUrl, mintUrl, 'Pilot');
 
     return AppConfig(
       appName: appName,
@@ -99,24 +74,7 @@ class AppConfig {
     String appName = 'Hanbova',
     String appVersion = '0.1.0',
   }) {
-    if (apiBaseUrl.trim().isEmpty || !apiBaseUrl.startsWith('https://')) {
-      throw StateError('Production requires HTTPS API URL');
-    }
-    if (apiBaseUrl.contains('localhost') ||
-        apiBaseUrl.contains('127.0.0.1') ||
-        apiBaseUrl.contains('10.0.2.2')) {
-      throw StateError(
-          'Production environment cannot use localhost or private IP for API URL, got: $apiBaseUrl');
-    }
-    if (mintUrl.trim().isEmpty || !mintUrl.startsWith('https://')) {
-      throw StateError('Production requires HTTPS Mint URL');
-    }
-    if (mintUrl.contains('localhost') ||
-        mintUrl.contains('127.0.0.1') ||
-        mintUrl.contains('10.0.2.2')) {
-      throw StateError(
-          'Production environment cannot use localhost or private IP for Mint URL, got: $mintUrl');
-    }
+    _validateHostedEndpoints(apiBaseUrl, mintUrl, 'Production');
     return AppConfig(
       appName: appName,
       appVersion: appVersion,
@@ -153,6 +111,10 @@ class AppConfig {
     } else if (env == 'mock') {
       return mock;
     }
+    if (env != 'development' && env != 'test') {
+      throw StateError(
+          'Unsupported HANBOVA_ENV; use development, test, mock, pilot or production');
+    }
 
     return AppConfig(
       appName: appNm,
@@ -160,8 +122,20 @@ class AppConfig {
       apiBaseUrl:
           apiBase.isNotEmpty ? apiBase : 'http://$defaultHost:8080/api/v1',
       mintUrl: mint.isNotEmpty ? mint : 'http://$defaultHost:3338',
-      environment: 'development',
+      environment: env,
       isMockEnvironment: false,
     );
+  }
+
+  static void _validateHostedEndpoints(
+      String api, String mint, String environment) {
+    if (!isHostedHttpsUrl(api)) {
+      throw StateError(
+          '$environment requires a public HTTPS API URL without credentials, query or fragment');
+    }
+    if (!isHostedHttpsUrl(mint)) {
+      throw StateError(
+          '$environment requires a public HTTPS Mint URL without credentials, query or fragment');
+    }
   }
 }

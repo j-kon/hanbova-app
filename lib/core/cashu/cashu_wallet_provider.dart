@@ -59,7 +59,7 @@ final cashuWalletServiceProvider = Provider<CashuWalletService?>((ref) {
   // When Controlled Mainnet Pilot is active:
   // effective mint URL MUST ALWAYS equal config.defaultMintUrl (Minibits Bitcoin mint).
   // cashuWalletServiceProvider must ignore selectedMintUrlProvider in pilot mode.
-  final effectiveMintUrl = config.isPilot
+  final effectiveMintUrl = config.isPilot || config.lockMintSelection
       ? config.defaultMintUrl
       : (selectedMint ?? config.defaultMintUrl);
 

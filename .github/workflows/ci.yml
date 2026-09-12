@@ -2,7 +2,7 @@ name: Hanbova App CI
 
 on:
   push:
-    branches: [ main, 'milestone/**' ]
+    branches: [ main, 'milestone/**', 'feat/**' ]
   pull_request:
     branches: [ main ]
 
@@ -37,6 +37,19 @@ jobs:
 
       - name: Run Test Suite
         run: flutter test --coverage
+
+      - name: Verify compile-time environment safety
+        run: |
+          for environment in test pilto; do
+            flutter test test/app_config_build_contract_test.dart --dart-define=HANBOVA_ENV=$environment
+          done
+          for environment in pilot production; do
+            flutter test test/app_config_build_contract_test.dart test/pilot_wallet_routing_test.dart test/cashu_wallet_context_test.dart \
+              --dart-define=HANBOVA_ENV=$environment \
+              --dart-define=HANBOVA_API_BASE_URL=https://api.pilot.example.com/api/v1 \
+              --dart-define=HANBOVA_MINT_URL=https://mint.pilot.example.com \
+              --dart-define=MAINNET_DEMO_PILOT=true
+          done
 
       - name: Verify Android Debug Build
         run: flutter build apk --debug

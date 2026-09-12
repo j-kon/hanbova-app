@@ -26,11 +26,13 @@ class CustomMintEntry {
 final configuredMintsProvider = StateProvider<List<CustomMintEntry>>((ref) {
   final netCfg = ref.watch(activeNetworkConfigProvider);
 
-  if (netCfg.isPilot) {
+  if (netCfg.isPilot || netCfg.lockMintSelection) {
     return [
       CustomMintEntry(
         url: netCfg.defaultMintUrl,
-        name: 'Minibits Bitcoin Mint (Allowlisted)',
+        name: netCfg.isPilot
+            ? 'Minibits Bitcoin Mint (Allowlisted)'
+            : netCfg.displayName,
         isNut11Supported: true,
         isDefault: true,
       ),
@@ -73,6 +75,8 @@ class _MintsScreenState extends ConsumerState<MintsScreen> {
   }
 
   void _showAddMintSheet() {
+    final config = ref.read(activeNetworkConfigProvider);
+    if (config.isPilot || config.lockMintSelection) return;
     _mintUrlController.clear();
     _probeError = null;
 
@@ -207,6 +211,7 @@ class _MintsScreenState extends ConsumerState<MintsScreen> {
   Widget build(BuildContext context) {
     final colors = context.colors;
     final netCfg = ref.watch(activeNetworkConfigProvider);
+    final mintLocked = netCfg.isPilot || netCfg.lockMintSelection;
     final mints = ref.watch(configuredMintsProvider);
 
     return Scaffold(
@@ -218,7 +223,7 @@ class _MintsScreenState extends ConsumerState<MintsScreen> {
           onPressed: () => context.pop(),
         ),
         actions: [
-          if (!netCfg.isPilot)
+          if (!mintLocked)
             IconButton(
               icon: const Icon(Icons.add),
               tooltip: 'Add Custom Mint',
@@ -254,7 +259,9 @@ class _MintsScreenState extends ConsumerState<MintsScreen> {
                     child: Text(
                       netCfg.isPilot
                           ? 'Controlled Mainnet Pilot: Arbitrary mint selection is disabled for safety. All transactions route through the single allowlisted Minibits Bitcoin mint.'
-                          : 'Hanbova supports multi-mint routing. Never combine proofs across different mints.',
+                          : netCfg.lockMintSelection
+                              ? 'Private pilot uses only the configured test mint. Test funds have no monetary value. Mint selection is locked for this build.'
+                              : 'Hanbova supports multi-mint routing. Never combine proofs across different mints.',
                       style: AppTypography.bodySmall
                           .copyWith(color: colors.textPrimary),
                     ),
@@ -264,33 +271,27 @@ class _MintsScreenState extends ConsumerState<MintsScreen> {
             ),
             const SizedBox(height: AppSpacing.md),
             ...mints.map((mint) {
-              final activeMintUrl = netCfg.isPilot
+              final activeMintUrl = mintLocked
                   ? netCfg.defaultMintUrl
                   : (ref.watch(selectedMintUrlProvider) ??
                       netCfg.defaultMintUrl);
               final isActive = mint.url == activeMintUrl;
 
               return InkWell(
-                onTap: () {
-                  if (netCfg.isPilot) {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(
-                        content: Text(
-                            'Arbitrary mint selection is disabled for the Controlled Mainnet Pilot.'),
-                        duration: Duration(seconds: 2),
-                      ),
-                    );
-                    return;
-                  }
-                  ref.read(selectedMintUrlProvider.notifier).state = mint.url;
-                  ref.invalidate(cashuBalanceProvider);
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(
-                      content: Text('Switched active mint to ${mint.name}'),
-                      duration: const Duration(seconds: 2),
-                    ),
-                  );
-                },
+                onTap: mintLocked
+                    ? null
+                    : () {
+                        ref.read(selectedMintUrlProvider.notifier).state =
+                            mint.url;
+                        ref.invalidate(cashuBalanceProvider);
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(
+                            content:
+                                Text('Switched active mint to ${mint.name}'),
+                            duration: const Duration(seconds: 2),
+                          ),
+                        );
+                      },
                 borderRadius: AppRadius.mdRadius,
                 child: Container(
                   margin: const EdgeInsets.only(bottom: AppSpacing.sm),
@@ -323,9 +324,11 @@ class _MintsScreenState extends ConsumerState<MintsScreen> {
                           children: [
                             Row(
                               children: [
-                                Text(mint.name,
-                                    style: AppTypography.titleSmall
-                                        .copyWith(color: colors.textPrimary)),
+                                Expanded(
+                                    child: Text(mint.name,
+                                        style: AppTypography.titleSmall
+                                            .copyWith(
+                                                color: colors.textPrimary))),
                                 if (isActive) ...[
                                   const SizedBox(width: AppSpacing.xs),
                                   Container(
@@ -364,11 +367,12 @@ class _MintsScreenState extends ConsumerState<MintsScreen> {
               );
             }),
             const SizedBox(height: AppSpacing.md),
-            OutlinedButton.icon(
-              onPressed: _showAddMintSheet,
-              icon: const Icon(Icons.add),
-              label: const Text('Add Another Mint'),
-            ),
+            if (!mintLocked)
+              OutlinedButton.icon(
+                onPressed: _showAddMintSheet,
+                icon: const Icon(Icons.add),
+                label: const Text('Add Another Mint'),
+              ),
           ],
         ),
       ),
