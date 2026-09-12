@@ -4,6 +4,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:hanbova_app/core/cashu/cashu_wallet_provider.dart';
 import 'package:hanbova_app/core/cashu/cashu_wallet_service.dart';
 import 'package:hanbova_app/core/cashu/cashu_wallet_storage.dart';
+import 'package:hanbova_app/core/config/app_config.dart';
 import 'package:hanbova_app/core/crypto/crypto_identity_service.dart';
 import 'package:hanbova_app/core/network/network_environment.dart';
 import 'package:hanbova_app/core/wallet/wallet_context.dart';
@@ -124,6 +125,37 @@ ProviderContainer walletContainer({
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
+
+  test('private pilot wallet factory ignores a selected third-party mint',
+      () async {
+    final config = NetworkConfig.privatePilot(AppConfig.createPilot(
+      apiBaseUrl: 'https://api.pilot.example.com/api/v1',
+      mintUrl: 'https://mint.pilot.example.com',
+    ));
+    final context = WalletContextKey(
+        userId: 'alice',
+        network: config.network,
+        storagePrefix: config.storagePrefix);
+    String? actualMint;
+    final container = walletContainer(
+        activeContext: context,
+        identity: await identityFor(context),
+        config: config,
+        factory: (
+            {required context,
+            required identity,
+            required mintUrl,
+            required storage}) {
+          actualMint = mintUrl;
+          return RecordingCashuWalletService();
+        });
+    addTearDown(container.dispose);
+    container.read(selectedMintUrlProvider.notifier).state =
+        'https://other-mint.example.com';
+    await container.read(cryptoIdentityProvider.future);
+    expect(container.read(cashuWalletServiceProvider), isNotNull);
+    expect(actualMint, 'https://mint.pilot.example.com');
+  });
 
   test('Cashu provider stays unavailable for another account identity',
       () async {

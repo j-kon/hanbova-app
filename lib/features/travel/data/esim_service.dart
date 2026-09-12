@@ -1,16 +1,19 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:hanbova_app/core/config/app_config.dart';
 import 'package:hanbova_app/core/networking/api_client.dart';
 import 'package:hanbova_app/features/travel/domain/esim_models.dart';
 
 final travelServiceProvider = Provider<TravelService>((ref) {
   final apiClient = ref.watch(apiClientProvider);
-  return TravelService(apiClient);
+  final config = ref.watch(appConfigProvider);
+  return TravelService(apiClient, config: config);
 });
 
 class TravelService {
   final ApiClient _apiClient;
+  final AppConfig? _config;
 
-  TravelService(this._apiClient);
+  TravelService(this._apiClient, {AppConfig? config}) : _config = config;
 
   Future<List<EsimPackage>> getEsimPackages(String country) async {
     final clean = country.trim().toUpperCase();
@@ -60,12 +63,22 @@ class TravelService {
     try {
       final data = await _apiClient.get('/cards/eligibility?country=$clean');
       return CardEligibilityInfo.fromJson(data);
-    } catch (_) {}
-    return CardEligibilityInfo(
-      isEligible: true,
-      country: clean,
-      supportedTypes: const ['virtual_visa', 'virtual_mastercard'],
-      minFundingSats: 5000,
-    );
+    } catch (_) {
+      if (_config != null && _config!.isMock) {
+        return CardEligibilityInfo(
+          isEligible: true,
+          country: clean,
+          supportedTypes: const ['virtual_visa', 'virtual_mastercard'],
+          minFundingSats: 5000,
+        );
+      }
+      return CardEligibilityInfo(
+        isEligible: false,
+        country: clean,
+        supportedTypes: const [],
+        minFundingSats: 0,
+        reason: 'Card services unavailable in this region',
+      );
+    }
   }
 }

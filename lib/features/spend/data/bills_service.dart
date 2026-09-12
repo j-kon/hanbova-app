@@ -1,16 +1,19 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:hanbova_app/core/config/app_config.dart';
 import 'package:hanbova_app/core/networking/api_client.dart';
 import 'package:hanbova_app/features/spend/domain/bill_models.dart';
 
 final billsServiceProvider = Provider<BillsService>((ref) {
   final apiClient = ref.watch(apiClientProvider);
-  return BillsService(apiClient);
+  final config = ref.watch(appConfigProvider);
+  return BillsService(apiClient, config: config);
 });
 
 class BillsService {
   final ApiClient _apiClient;
+  final AppConfig? _config;
 
-  BillsService(this._apiClient);
+  BillsService(this._apiClient, {AppConfig? config}) : _config = config;
 
   Future<List<Biller>> getBillers(String country,
       {BillServiceType? service}) async {
@@ -51,13 +54,17 @@ class BillsService {
         },
       );
       return CustomerValidation.fromJson(data);
-    } catch (_) {}
-    return CustomerValidation(
-      isValid: accountReference.length >= 5,
-      billerId: billerId,
-      customerAccount: accountReference,
-      customerName: 'Verified Customer (Sandbox)',
-    );
+    } catch (e) {
+      if (_config != null && _config!.isMock) {
+        return CustomerValidation(
+          isValid: accountReference.length >= 5,
+          billerId: billerId,
+          customerAccount: accountReference,
+          customerName: 'Verified Customer (Mock)',
+        );
+      }
+      rethrow;
+    }
   }
 
   Future<BillQuote> createQuote({

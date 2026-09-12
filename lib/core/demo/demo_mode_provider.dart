@@ -1,4 +1,6 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:hanbova_app/core/config/app_config.dart';
+import 'package:hanbova_app/core/networking/api_client.dart';
 import 'package:hanbova_app/features/transactions/domain/transaction_model.dart';
 import 'package:hanbova_app/features/wallet/domain/asset_model.dart';
 
@@ -242,17 +244,22 @@ class DemoModeState {
 
 final demoModeProvider =
     StateNotifierProvider<DemoModeNotifier, DemoModeState>((ref) {
-  return DemoModeNotifier();
+  final config = ref.watch(appConfigProvider);
+  return DemoModeNotifier(config: config);
 });
 
 class DemoModeNotifier extends StateNotifier<DemoModeState> {
-  DemoModeNotifier() : super(_buildInitialDemoState());
+  final AppConfig? _config;
+
+  DemoModeNotifier({AppConfig? config})
+      : _config = config,
+        super(_buildInitialDemoState(config));
 
   void setPersona(DemoPersona persona) {
     state = state.copyWith(currentPersona: persona);
   }
 
-  static DemoModeState _buildInitialDemoState() {
+  static DemoModeState _buildInitialDemoState([AppConfig? config]) {
     final now = DateTime.now();
 
     final txs = [
@@ -537,8 +544,11 @@ class DemoModeNotifier extends StateNotifier<DemoModeState> {
       status: 'active',
     );
 
+    final isDemoAllowed =
+        config == null || (!config.isPilot && !config.isProduction);
+
     return DemoModeState(
-      isEnabled: true, // Enabled by default for public product demos
+      isEnabled: isDemoAllowed, // Disabled in pilot and production
       totalBalanceSats: 2450000,
       availableBalanceSats: 1800000,
       protectedWaitingSats: 300000,
@@ -553,6 +563,9 @@ class DemoModeNotifier extends StateNotifier<DemoModeState> {
   }
 
   void toggleDemoMode() {
+    if (_config != null && (_config!.isPilot || _config!.isProduction)) {
+      return;
+    }
     state = state.copyWith(isEnabled: !state.isEnabled);
   }
 
